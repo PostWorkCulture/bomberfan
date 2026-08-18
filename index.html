@@ -1990,7 +1990,7 @@
   }
 
   /* BOMBER FAN CHARACTER SELECT V6 */
-  /* One large live model, one compact twelve-fighter roster, no prize ladder. */
+  /* One large live model, one compact sixteen-fighter roster, no prize ladder. */
   #select {
     --fighter: #ff5148;
     padding: clamp(10px, 1.6vh, 18px) clamp(16px, 3vw, 44px) clamp(10px, 1.4vh, 16px) !important;
@@ -2033,7 +2033,7 @@
   }
   #select .sbody {
     display: grid !important;
-    grid-template-columns: minmax(430px, 1.45fr) minmax(330px, .82fr) !important;
+    grid-template-columns: minmax(430px, 1.18fr) minmax(460px, 1fr) !important;
     align-items: stretch !important;
     flex: 1 1 auto;
     gap: clamp(18px, 2.5vw, 38px) !important;
@@ -2055,7 +2055,7 @@
   }
   #select .scol {
     display: grid !important;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
     width: auto !important;
     min-width: 0 !important;
     min-height: 0;
@@ -2097,6 +2097,7 @@
     font: 900 8px/1 system-ui, sans-serif;
     letter-spacing: 2px;
     text-shadow: 0 0 10px var(--fighter);
+    display: none;
   }
   #spreview .sname {
     z-index: 3;
@@ -2113,6 +2114,7 @@
     border-radius: 7px;
     background: linear-gradient(90deg, color-mix(in srgb, var(--fighter) 15%, rgba(12,13,18,.96)), rgba(9,10,14,.92));
     box-shadow: inset 0 1px rgba(255,255,255,.04), 0 8px 20px rgba(0,0,0,.34);
+    display: none;
   }
   #select .smeta { display: flex; align-items: center; gap: 10px; }
   #select .srole {
@@ -2138,11 +2140,11 @@
   #select .sroster {
     pointer-events: auto;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-rows: repeat(4, minmax(62px, 1fr));
     align-self: center;
     gap: clamp(6px, .8vw, 10px);
-    width: min(100%, 430px);
+    width: min(100%, 540px);
     max-height: min(55vh, 470px);
     padding: clamp(9px, 1.1vw, 13px);
     border: 1px solid rgba(255,255,255,.10);
@@ -2160,7 +2162,7 @@
     align-items: center;
     gap: 7px;
     min-width: 0;
-    padding: 8px 7px;
+    padding: 8px;
     overflow: hidden;
     border: 1px solid rgba(255,255,255,.09);
     border-radius: 8px;
@@ -2185,14 +2187,14 @@
   }
   #select .charface {
     position: relative;
-    width: clamp(38px, 3.5vw, 48px);
-    height: clamp(42px, 4vw, 54px);
+    width: clamp(48px, 4.2vw, 58px);
+    height: clamp(54px, 4.8vw, 66px);
     flex: 0 0 auto;
     border: 1px solid color-mix(in srgb, var(--fighter) 45%, rgba(255,255,255,.14));
     border-radius: 7px;
     background-image: url('assets/fighter-faces.png');
     background-repeat: no-repeat;
-    background-size: 300% 400%;
+    background-size: 400% 400%;
     background-position: var(--face-x) var(--face-y);
     box-shadow: inset 0 0 12px rgba(0,0,0,.34), 0 0 10px color-mix(in srgb, var(--fighter) 16%, transparent);
     overflow: hidden;
@@ -2209,6 +2211,7 @@
     color: var(--fighter);
     font: 1000 8px/1 system-ui, sans-serif;
     opacity: .78;
+    display: none;
   }
   #select .charcopy { position: relative; display: block; min-width: 0; }
   #select .charcopy b,
@@ -2225,6 +2228,7 @@
     font: 800 clamp(6px, .54vw, 8px)/1 system-ui, sans-serif;
     letter-spacing: .5px;
     text-transform: uppercase;
+    display: none;
   }
   #select .charpick:hover,
   #select .charpick.sel,
@@ -6804,33 +6808,41 @@ const CURSES = [
   { id: 'reverse',  label: 'Reversed' },
 ];
 
-// Twelve mechanically identical fighters with deliberately different visual
+// Sixteen mechanically identical fighters with deliberately different visual
 // architecture. Role, bio and movement copy belong to character select only.
 const PLAYER_DEFS = [
-  { name: 'Heavy', color: 0xff3b30, belly: 0xffe2b8, trim: 0xffd166, accent: 0x8f1d14,
-    role: 'Squat Tank Hull', move: 'Piston Stomp', bio: 'Armoured low and wide. Built to look immovable.' },
+  { name: 'Piglet', color: 0xff9dcc, belly: 0xffc8df, trim: 0xf04ca6, accent: 0x9e246f,
+    role: 'Brave Little Pig', move: 'Nervous Bounce', bio: 'Small, pink and much braver than the trembling suggests.' },
   { name: 'Reaper', color: 0x2f7bff, belly: 0xe6f3ff, trim: 0xbfe6ff, accent: 0x123f7d,
     role: 'Skeletal Wraith', move: 'Grave Float', bio: 'A hovering bone spectre with long ember claws.' },
-  { name: 'Cyclops', color: 0x33cc55, belly: 0xe0ffd4, trim: 0xd8ff9e, accent: 0x1a6b2f,
+  { name: 'Cyclops', color: 0xf2f5ff, belly: 0xffffff, trim: 0x9edcff, accent: 0x66738b,
     role: 'Visor Cyclops', move: 'Target March', bio: 'One glowing sightline. Nothing escapes its scan.' },
   { name: 'Jester', color: 0xff2fd1, belly: 0xffe8fb, trim: 0x8d2cff, accent: 0x630054,
     role: 'Manic Trickster', move: 'Bell Hop', bio: 'A diamond-bodied menace with a weaponised grin.' },
   { name: 'Inferno', color: 0xff5a16, belly: 0xffe1a6, trim: 0xffc21a, accent: 0x7f1c00,
     role: 'Living Furnace', move: 'Boiler Rattle', bio: 'A walking firebox driven by a molten core.' },
-  { name: 'Xeno', color: 0x6dff54, belly: 0xe6ffdd, trim: 0xb4ff28, accent: 0x176c1d,
-    role: 'Alien Stalker', move: 'Predator Sway', bio: 'Long-limbed, ribbed and very far from home.' },
+  { name: 'Hulk', color: 0x54e63f, belly: 0x9b45df, trim: 0xd8ff8a, accent: 0x287f27,
+    role: 'Gamma Powerhouse', move: 'Ground Smash', bio: 'Huge green fists, purple shorts and a temper that shakes the floor.' },
   { name: 'Devil', color: 0xff2349, belly: 0xffdfdf, trim: 0xff9b22, accent: 0x790018,
     role: 'Horned Fiend', move: 'Hell Stomp', bio: 'A crimson idol with sweeping horns and ember eyes.' },
   { name: 'Maw', color: 0xd6ff18, belly: 0xf6ffc8, trim: 0xff4bde, accent: 0x5e7000,
     role: 'Neon Nightmare', move: 'Chomp Bounce', bio: 'Mostly teeth, appetite and toxic green trouble.' },
   { name: 'Assault', color: 0x20d8ff, belly: 0xdffaff, trim: 0xffe11f, accent: 0x00617c,
     role: 'Rocket Trooper', move: 'Launcher Recoil', bio: 'A bright field unit carrying its own heavy answer.' },
-  { name: 'Plague', color: 0x7dff38, belly: 0xeaffd5, trim: 0x35ffcb, accent: 0x266d08,
+  { name: 'Plague', color: 0xff4fd8, belly: 0xfff06a, trim: 0x45e8ff, accent: 0x8a42ff,
     role: 'Toxic Horror', move: 'Hazmat Shuffle', bio: 'Sealed tanks, glowing lenses and a very bad atmosphere.' },
   { name: 'Phantom', color: 0x9f46ff, belly: 0xeee0ff, trim: 0x61e8ff, accent: 0x3a0974,
     role: 'Void Apparition', move: 'Spectral Glide', bio: 'A vivid purple spirit with no feet and no patience.' },
   { name: 'Joker', color: 0x7b2cff, belly: 0xf3eee2, trim: 0x35ff59, accent: 0xff244f,
     role: 'Chaotic Villain', move: 'Cane Dance', bio: 'Purple suit, acid hair and one deeply unhelpful smile.' },
+  { name: 'Deadpool', color: 0xf12b36, belly: 0x191b22, trim: 0xffffff, accent: 0x781017,
+    role: 'Masked Mercenary', move: 'Sword Flourish', bio: 'A loud red fighter with twin blades and absolutely no indoor voice.' },
+  { name: 'Blondie', color: 0xff8a19, belly: 0x1857d8, trim: 0xffe347, accent: 0x2145a2,
+    role: 'Storm Ninja', move: 'Ninja Dash', bio: 'Spiked golden hair, impossible speed and a bright orange battle suit.' },
+  { name: 'Dino', color: 0x63d83f, belly: 0xb8f16d, trim: 0xffd447, accent: 0x257327,
+    role: 'Tiny Tyrant', move: 'Rex Roar', bio: 'A chunky green dinosaur with tiny arms and a very large opinion.' },
+  { name: 'Wario', color: 0xffd51f, belly: 0x8f35d9, trim: 0x44d9ff, accent: 0x5b268c,
+    role: 'Greedy Bruiser', move: 'Belly Bump', bio: 'Big cap, bigger moustache and enough swagger to fill the arena.' },
 ];
 
 // Fixed spawn corners in grid coordinates
@@ -7347,6 +7359,10 @@ const COSMETIC_SLOTS = ['finish', 'hat', 'extra', 'bomb', 'sound'];
 function defaultLoadout() {
   const kit = {};
   COSMETIC_SLOTS.forEach(slot => { kit[slot] = COSMETICS[slot].def; });
+  // The prize wardrobe is no longer part of the game. The sixteen fighters use
+  // their authored silhouettes without the old default horns or an extra.
+  kit.hat = null;
+  kit.extra = null;
   return kit;
 }
 
@@ -11918,51 +11934,81 @@ class Player {
     const glowOrb = (radius, p, parent) =>
       add(new THREE.SphereGeometry(radius, 10, 8), combatGlowMat, p, null, null, parent);
 
-    if (combatClass === 'heavy') {
-      // HEAVY: low centre of gravity, continuous tank hull, brutal squared helmet.
+    if (combatClass === 'piglet') {
+      // PIGLET: oversized round head, very long ears, soft snout and a striped
+      // magenta jumper. The silhouette is small and anxious rather than a tank
+      // with pig parts attached to it.
       const rig = new THREE.Group();
       rig.position.y = -0.01;
       g.add(rig);
-      capsule(0.31, 0.12, bodyMat, [0, 0.35, 0], [1.03, 0.9, 0.92], null, rig);
-      const hull = add(new THREE.DodecahedronGeometry(0.34, 0), combatGunMat,
-        [0, 0.43, 0.015], [1.04, 0.78, 0.9], [0.02, 0, 0], rig);
-      add(new THREE.DodecahedronGeometry(0.25, 0), bodyMat,
-        [0, 0.43, 0.16], [1.0, 0.72, 0.42], [-0.08, 0, 0], rig);
-      const reactor = add(new THREE.OctahedronGeometry(0.105, 0), combatGlowMat,
-        [0, 0.44, 0.335], [1.25, 0.72, 0.32], [0, 0, Math.PI / 4], rig);
+      const pigPink = mat(0xffa6cf, {
+        roughness: 0.58, metalness: 0.02, emissive: 0x6d173f, emissiveIntensity: 0.08 });
+      const pigLight = mat(0xffd1e3, { roughness: 0.62, metalness: 0.01 });
+      const pigMagenta = mat(0xd83492, {
+        roughness: 0.54, metalness: 0.04, emissive: 0x5e083c, emissiveIntensity: 0.12 });
+      const pigDarkStripe = mat(0x7c205f, { roughness: 0.66, metalness: 0.02 });
+      const pigFace = mat(0x28101e, { roughness: 0.72, metalness: 0.0 });
 
+      // Pear-shaped striped body.
+      add(new THREE.CapsuleGeometry(0.225, 0.24, 6, 14), pigMagenta,
+        [0, 0.37, 0], [0.96, 1.04, 0.82], null, rig);
+      [-0.08, 0.02, 0.12].forEach((dy, i) => add(
+        new THREE.TorusGeometry(0.205 - i * 0.012, 0.025, 7, 18), pigDarkStripe,
+        [0, 0.35 + dy, 0], [1, 1, 0.82], [Math.PI / 2, 0, 0], rig));
+
+      const arms = [];
       [-1, 1].forEach(side => {
-        // Shoulder and arm overlap into one armoured mass instead of floating blocks.
-        add(new THREE.SphereGeometry(0.14, 10, 8), combatGunMat,
-          [side * 0.275, 0.48, 0.015], [0.92, 0.72, 1.0], [0, 0, side * -0.12], rig);
-        add(new THREE.CylinderGeometry(0.085, 0.115, 0.27, 7), combatBlackMat,
-          [side * 0.31, 0.29, 0.035], null, [0, 0, side * -0.08], rig);
-        add(new THREE.TorusGeometry(0.09, 0.018, 6, 14, Math.PI * 1.35), combatGlowMat,
-          [side * 0.305, 0.34, 0.075], [1, 1, 0.72], [Math.PI / 2, 0, side > 0 ? 0.55 : 2.6], rig);
-        add(new THREE.CylinderGeometry(0.12, 0.14, 0.14, 7), shoeMat,
-          [side * 0.18, 0.085, 0.08], [1, 1, 1.25], [Math.PI / 2, 0, 0], rig);
+        const arm = capsule(0.042, 0.3, pigPink,
+          [side * 0.265, 0.34, 0.02], [0.9, 1, 0.82], [0, 0, side * -0.22], rig);
+        arms.push({ arm, side, rest: arm.rotation.z });
+        add(new THREE.SphereGeometry(0.05, 10, 7), pigLight,
+          [side * 0.315, 0.19, 0.07], [1, 0.78, 0.9], null, rig);
+        capsule(0.05, 0.22, pigPink,
+          [side * 0.13, 0.14, 0], [0.92, 1, 0.82], [0, 0, side * 0.09], rig);
+        add(new THREE.SphereGeometry(0.075, 10, 7), pigFace,
+          [side * 0.145, 0.045, 0.08], [1.05, 0.48, 1.28], null, rig);
       });
 
-      const helmet = add(new THREE.DodecahedronGeometry(0.275, 0), brightShellMat,
-        [0, 0.75, 0.015], [1.03, 0.78, 0.9], [0.04, 0, 0], rig);
-      add(new THREE.CylinderGeometry(0.19, 0.23, 0.16, 6), bodyMat,
-        [0, 0.69, 0.09], [1, 0.9, 0.88], [0.04, 0, 0], rig);
-      add(new THREE.BoxGeometry(0.37, 0.105, 0.07), combatBlackMat,
-        [0, 0.75, 0.235], null, [-0.05, 0, 0], rig);
+      const headRig = new THREE.Group();
+      rig.add(headRig);
+      const head = add(new THREE.SphereGeometry(0.285, 14, 10), pigPink,
+        [0, 0.78, 0.015], [0.94, 1.0, 0.86], null, headRig);
+      // Cheeks soften the low-poly face and keep the head recognisably pig-like.
+      [-1, 1].forEach(side => add(new THREE.SphereGeometry(0.09, 10, 8), pigLight,
+        [side * 0.15, 0.74, 0.19], [1, 0.82, 0.52], null, headRig));
+      const snout = add(new THREE.CylinderGeometry(0.105, 0.13, 0.14, 12), pigLight,
+        [0, 0.72, 0.27], [1, 0.78, 1], [Math.PI / 2, 0, 0], headRig);
+      [-1, 1].forEach(side => add(new THREE.SphereGeometry(0.018, 8, 6), pigFace,
+        [side * 0.043, 0.73, 0.348], [0.8, 1.1, 0.55], null, headRig));
       [-1, 1].forEach(side => {
-        add(new THREE.BoxGeometry(0.115, 0.026, 0.018), combatHotMat,
-          [side * 0.085, 0.765, 0.276], null, [0, 0, side * -0.12], rig);
+        add(new THREE.SphereGeometry(0.027, 9, 7), pigFace,
+          [side * 0.095, 0.83, 0.255], [0.8, 1.1, 0.55], null, headRig);
+        add(new THREE.BoxGeometry(0.075, 0.018, 0.014), pigFace,
+          [side * 0.095, 0.875, 0.252], null, [0, 0, side * -0.18], headRig);
       });
-      add(new THREE.CylinderGeometry(0.032, 0.055, 0.28, 5), combatGunMat,
-        [0, 0.94, 0], null, [0.06, 0, 0], rig);
-      add(new THREE.TorusGeometry(0.24, 0.027, 7, 18, Math.PI), combatGunMat,
-        [0, 0.65, 0.04], [1, 1, 0.8], [Math.PI / 2, 0, 0], rig);
+
+      const ears = [];
+      [-1, 1].forEach(side => {
+        const ear = new THREE.Group();
+        ear.position.set(side * 0.14, 0.99, -0.01);
+        ear.rotation.z = side * -0.13;
+        headRig.add(ear);
+        capsule(0.065, 0.2, pigPink, [0, 0.1, 0], [0.86, 1, 0.72], null, ear);
+        capsule(0.03, 0.14, pigMagenta, [0, 0.1, 0.045], [0.72, 1, 0.42], null, ear);
+        ears.push({ ear, side, rest: ear.rotation.z });
+      });
+
       anims.push(t => {
-        const p = 1 + Math.sin(t * 2.2) * 0.035;
-        reactor.scale.set(1.25 * p, 0.72 * p, 0.32 * p);
-        combatGlowMat.emissiveIntensity = 0.72 + (p - 1) * 7;
-        helmet.rotation.y = Math.sin(t * 0.7) * 0.035;
-        hull.rotation.z = Math.sin(t * 1.1) * 0.008;
+        const tremble = Math.sin(t * 5.2);
+        headRig.rotation.y = Math.sin(t * 0.72) * 0.09;
+        head.rotation.z = tremble * 0.012;
+        snout.scale.z = 1 + Math.max(0, Math.sin(t * 2.8)) * 0.045;
+        ears.forEach(({ ear, side, rest }, i) => {
+          ear.rotation.z = rest + side * Math.sin(t * 2.1 + i * 0.6) * 0.07;
+        });
+        arms.forEach(({ arm, side, rest }, i) => {
+          arm.rotation.z = rest + side * Math.sin(t * 2.6 + i) * 0.035;
+        });
       });
     } else if (combatClass === 'reaper') {
       // REAPER: tall inverted wedge, floating skull, long arms and torn lower points.
@@ -12098,37 +12144,75 @@ class Player {
         head.rotation.y = Math.sin(t * 0.85) * 0.12;
         rig.rotation.z = Math.sin(t * 1.4) * 0.018;
       });
-    } else if (combatClass === 'xeno') {
-      // XENO: elongated skull, narrow rib cage, hooked limbs and a curling tail.
+    } else if (combatClass === 'hulk') {
+      // HULK: an exaggerated green powerhouse with a huge shoulder line,
+      // oversized fists, square jaw and torn purple shorts.
       const rig = new THREE.Group();
-      rig.rotation.x = 0.06;
+      rig.scale.y = 1.1;
       g.add(rig);
-      add(new THREE.CapsuleGeometry(0.18, 0.35, 5, 11), darkClothMat,
-        [0, 0.4, 0], [0.86, 1, 0.72], null, rig);
-      [-1, 0, 1].forEach(i => add(new THREE.TorusGeometry(0.17 - Math.abs(i) * 0.025, 0.018, 5, 12, Math.PI), boneMat,
-        [0, 0.43 + i * 0.08, 0.13], [1, 0.62, 0.55], [Math.PI / 2, 0, 0], rig));
-      const limbs = [];
+      const hulkGreenMat = mat(0x54e63f, {
+        roughness: 0.5, metalness: 0.02, emissive: 0x174f15, emissiveIntensity: 0.14 });
+      const hulkLightMat = mat(0x9aff72, { roughness: 0.55, metalness: 0.01 });
+      const shortsMat = mat(0x9b45df, {
+        roughness: 0.58, metalness: 0.04, emissive: 0x4d137c, emissiveIntensity: 0.1 });
+      const hairMat = mat(0x18341a, { roughness: 0.82, metalness: 0 });
+      const teethMat = mat(0xfff4d2, { roughness: 0.48, metalness: 0.01 });
+
+      // Inverted-triangle torso and high shoulders establish the mass before
+      // any detail is added.
+      const torso = add(new THREE.DodecahedronGeometry(0.34, 0), hulkGreenMat,
+        [0, 0.48, 0], [1, 0.88, 0.72], null, rig);
+      add(new THREE.SphereGeometry(0.24, 11, 8), hulkLightMat,
+        [0, 0.43, 0.21], [1.12, 0.75, 0.3], null, rig);
+      add(new THREE.BoxGeometry(0.44, 0.18, 0.28), shortsMat,
+        [0, 0.25, 0], null, null, rig);
+      [-1, 1].forEach(side => add(new THREE.ConeGeometry(0.12, 0.19, 5), shortsMat,
+        [side * 0.15, 0.16, 0.01], [1, 1, 0.9], [Math.PI, 0, side * 0.08], rig));
+
+      const arms = [];
       [-1, 1].forEach(side => {
-        const arm = capsule(0.043, 0.46, bodyMat,
-          [side * 0.27, 0.38, 0.02], [0.82, 1, 0.75], [0, 0, side * -0.35], rig);
-        limbs.push(arm);
-        add(new THREE.ConeGeometry(0.038, 0.2, 5), combatHotMat,
-          [side * 0.38, 0.13, 0.1], [0.7, 1, 0.6], [Math.PI, 0, side * -0.2], rig);
-        add(new THREE.ConeGeometry(0.055, 0.34, 5), bodyMat,
-          [side * 0.13, 0.16, -0.01], [0.78, 1, 0.7], [Math.PI, 0, side * 0.09], rig);
+        const arm = new THREE.Group();
+        arm.position.set(side * 0.285, 0.56, 0);
+        arm.rotation.z = side * -0.14;
+        rig.add(arm);
+        capsule(0.105, 0.31, hulkGreenMat, [0, -0.15, 0], [1, 1, 0.82], null, arm);
+        const fist = add(new THREE.DodecahedronGeometry(0.115, 0), hulkLightMat,
+          [0, -0.36, 0.08], [1, 0.92, 1.08], null, arm);
+        [-1, 0, 1].forEach(i => add(new THREE.SphereGeometry(0.036, 7, 5), hulkGreenMat,
+          [i * 0.055, -0.41, 0.14], [1, 0.65, 0.7], null, arm));
+        arms.push({ arm, fist, side, rest: arm.rotation.z });
+        capsule(0.105, 0.25, hulkGreenMat,
+          [side * 0.145, 0.12, 0], [1, 1, 0.86], [0, 0, side * 0.04], rig);
+        add(new THREE.SphereGeometry(0.125, 10, 7), hulkGreenMat,
+          [side * 0.16, 0.045, 0.12], [1, 0.42, 1.32], null, rig);
       });
-      const skull = add(new THREE.SphereGeometry(0.24, 12, 8), brightShellMat,
-        [0, 0.78, -0.02], [0.88, 0.82, 1.38], [0.16, 0, 0], rig);
-      add(new THREE.ConeGeometry(0.19, 0.46, 8), brightShellMat,
-        [0, 0.87, -0.2], [0.9, 1, 0.9], [-Math.PI / 2, 0, 0], rig);
-      [-1, 0, 1].forEach((node, i) => add(new THREE.SphereGeometry(0.055 - Math.abs(node) * 0.008, 9, 7), combatGlowMat,
-        [node * 0.115, 0.91 + Math.abs(node) * 0.025, -0.11 - i * 0.045], null, null, rig));
-      [-1, 1].forEach(side => glowOrb(0.035, [side * 0.075, 0.79, 0.25], rig));
-      add(new THREE.TorusGeometry(0.26, 0.035, 6, 18, Math.PI * 1.35), bodyMat,
-        [0.08, 0.28, -0.18], [0.9, 1, 0.75], [Math.PI / 2, 0, 0.5], rig);
+
+      const headRig = new THREE.Group();
+      rig.add(headRig);
+      const head = add(new THREE.BoxGeometry(0.35, 0.3, 0.29), hulkGreenMat,
+        [0, 0.79, 0.035], [1, 1, 0.9], null, headRig);
+      add(new THREE.BoxGeometry(0.29, 0.11, 0.25), hulkLightMat,
+        [0, 0.69, 0.12], null, null, headRig);
+      [-1, 1].forEach(side => {
+        add(new THREE.BoxGeometry(0.105, 0.03, 0.025), hairMat,
+          [side * 0.09, 0.83, 0.19], null, [0, 0, side * -0.16], headRig);
+        add(new THREE.SphereGeometry(0.025, 8, 6), teethMat,
+          [side * 0.075, 0.795, 0.207], [1.2, 0.62, 0.35], null, headRig);
+      });
+      add(new THREE.BoxGeometry(0.22, 0.055, 0.025), hairMat,
+        [0, 0.68, 0.258], null, null, headRig);
+      [-1, 0, 1].forEach(i => add(new THREE.ConeGeometry(0.085, 0.22, 6), hairMat,
+        [i * 0.1, 0.98 + (i === 0 ? 0.03 : 0), -0.015], [1, 1, 0.85], [0, 0, i * -0.18], headRig));
       anims.push(t => {
-        skull.rotation.y = Math.sin(t * 0.55) * 0.1;
-        limbs.forEach((arm, i) => arm.rotation.z += Math.sin(t * 1.4 + i) * 0.002);
+        const rage = Math.max(0, Math.sin(t * 2.5));
+        headRig.rotation.x = rage * 0.06;
+        headRig.rotation.y = Math.sin(t * 0.72) * 0.08;
+        torso.scale.y = 0.88 + rage * 0.035;
+        arms.forEach(({ arm, fist, side, rest }) => {
+          arm.rotation.z = rest + side * rage * 0.18;
+          arm.rotation.x = -rage * 0.28;
+          fist.rotation.y = side * rage * 0.16;
+        });
       });
     } else if (combatClass === 'devil') {
       // DEVIL: broad crimson idol, cloven stance, sweeping horns and ember eyes.
@@ -12233,33 +12317,50 @@ class Player {
         launcher.position.z = 0.05 - Math.pow(Math.max(0, Math.sin(t * 2.6)), 10) * 0.055;
       });
     } else if (combatClass === 'plague') {
-      // PLAGUE: sealed containment suit and unmistakable gas-mask face.
+      // PLAGUE: sealed containment suit and unmistakable gas-mask face. Each
+      // major panel owns a different saturated hue, so "rainbow" survives the
+      // low-poly lighting instead of collapsing into one muddy blended colour.
       const rig = new THREE.Group();
       g.add(rig);
-      add(new THREE.SphereGeometry(0.32, 12, 9), bodyMat,
+      const plaguePink = mat(0xff3aa7, {
+        roughness: 0.34, metalness: 0.18, emissive: 0xa90062, emissiveIntensity: 0.28 });
+      const plagueOrange = mat(0xff7a24, {
+        roughness: 0.34, metalness: 0.2, emissive: 0xa92c00, emissiveIntensity: 0.32 });
+      const plagueYellow = mat(0xffee38, {
+        roughness: 0.3, metalness: 0.16, emissive: 0xa98200, emissiveIntensity: 0.34 });
+      const plagueGreen = mat(0x55f15b, {
+        roughness: 0.32, metalness: 0.16, emissive: 0x0a8b26, emissiveIntensity: 0.28 });
+      const plagueCyan = mat(0x39dfff, {
+        roughness: 0.28, metalness: 0.22, emissive: 0x007da8, emissiveIntensity: 0.36 });
+      const plagueBlue = mat(0x4776ff, {
+        roughness: 0.3, metalness: 0.24, emissive: 0x1732a4, emissiveIntensity: 0.34 });
+      const plaguePurple = mat(0xa449ff, {
+        roughness: 0.3, metalness: 0.2, emissive: 0x5410aa, emissiveIntensity: 0.34 });
+      add(new THREE.SphereGeometry(0.32, 12, 9), plaguePink,
         [0, 0.39, 0], [0.94, 0.9, 0.8], null, rig);
-      add(new THREE.CylinderGeometry(0.26, 0.31, 0.36, 10), darkClothMat,
+      add(new THREE.CylinderGeometry(0.26, 0.31, 0.36, 10), plagueCyan,
         [0, 0.36, 0.02], [1, 1, 0.78], null, rig);
       const tanks = [];
       [-1, 1].forEach(side => {
-        tanks.push(capsule(0.075, 0.26, combatGunMat,
+        const tankMat = side < 0 ? plagueOrange : plaguePurple;
+        tanks.push(capsule(0.075, 0.26, tankMat,
           [side * 0.25, 0.45, -0.13], [1, 1, 0.88], null, rig));
-        capsule(0.06, 0.25, bodyMat,
+        capsule(0.06, 0.25, side < 0 ? plagueGreen : plagueBlue,
           [side * 0.31, 0.28, 0.02], null, [0, 0, side * -0.08], rig);
-        add(new THREE.SphereGeometry(0.1, 9, 7), shoeMat,
+        add(new THREE.SphereGeometry(0.1, 9, 7), side < 0 ? plagueYellow : plaguePink,
           [side * 0.15, 0.075, 0.08], [0.92, 0.45, 1.3], null, rig);
       });
-      const hood = add(new THREE.SphereGeometry(0.255, 12, 9), brightShellMat,
+      const hood = add(new THREE.SphereGeometry(0.255, 12, 9), plagueYellow,
         [0, 0.76, 0], [1, 1.05, 0.9], null, rig);
       add(new THREE.CylinderGeometry(0.13, 0.18, 0.2, 8), combatBlackMat,
         [0, 0.7, 0.235], [1, 1, 0.8], [Math.PI / 2, 0, 0], rig);
       [-1, 1].forEach(side => {
-        add(new THREE.CylinderGeometry(0.07, 0.07, 0.035, 10), combatGlowMat,
+        add(new THREE.CylinderGeometry(0.07, 0.07, 0.035, 10), side < 0 ? plagueGreen : plagueCyan,
           [side * 0.09, 0.79, 0.22], null, [Math.PI / 2, 0, 0], rig);
         add(new THREE.TorusGeometry(0.055, 0.012, 5, 12), combatGunMat,
           [side * 0.09, 0.79, 0.243], null, null, rig);
       });
-      add(new THREE.CylinderGeometry(0.065, 0.105, 0.15, 8), combatGunMat,
+      add(new THREE.CylinderGeometry(0.065, 0.105, 0.15, 8), plagueOrange,
         [0, 0.66, 0.32], null, [Math.PI / 2, 0, 0], rig);
       anims.push(t => {
         hood.scale.y = 1.05 + Math.sin(t * 1.7) * 0.012;
@@ -12345,6 +12446,265 @@ class Player {
         head.rotation.y = Math.sin(t * 0.72) * 0.11;
         rig.rotation.z = Math.sin(t * 1.25) * 0.015;
         hair.forEach((tuft, i) => tuft.scale.setScalar(0.98 + Math.sin(t * 2.2 + i * 0.7) * 0.035));
+      });
+    } else if (combatClass === 'deadpool') {
+      // DEADPOOL: red masked mercenary, white eye lenses, utility belt and twin
+      // swords. The crossed blades and slim athletic stance define the read.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const redMat = mat(0xf12b36, {
+        roughness: 0.42, metalness: 0.18, emissive: 0x6d0710, emissiveIntensity: 0.13 });
+      const darkRedMat = mat(0x781017, { roughness: 0.58, metalness: 0.12 });
+      const lensMat = mat(0xfafcff, {
+        roughness: 0.16, metalness: 0.08, emissive: 0xddeaff, emissiveIntensity: 0.38 });
+      const steelMat = mat(0xc8d1dd, { roughness: 0.24, metalness: 0.82 });
+      const brownMat = mat(0x704125, { roughness: 0.62, metalness: 0.08 });
+
+      add(new THREE.CapsuleGeometry(0.225, 0.29, 6, 14), redMat,
+        [0, 0.43, 0], [0.9, 1.06, 0.72], null, rig);
+      add(new THREE.BoxGeometry(0.27, 0.31, 0.08), darkRedMat,
+        [0, 0.43, 0.18], [0.72, 1, 0.6], null, rig);
+      add(new THREE.BoxGeometry(0.46, 0.065, 0.24), combatBlackMat,
+        [0, 0.27, 0], null, null, rig);
+      [-1, 0, 1].forEach(i => add(new THREE.BoxGeometry(0.105, 0.095, 0.085), brownMat,
+        [i * 0.13, 0.25, 0.135], null, null, rig));
+
+      // Crossed sword scabbards stay on the animated rig, never floating behind it.
+      [-1, 1].forEach(side => {
+        add(new THREE.CylinderGeometry(0.022, 0.022, 0.76, 6), combatBlackMat,
+          [side * 0.11, 0.59, -0.14], null, [side * 0.1, 0, side * -0.55], rig);
+        add(new THREE.CylinderGeometry(0.036, 0.036, 0.16, 7), brownMat,
+          [side * 0.31, 0.9, -0.1], null, [side * 0.1, 0, side * -0.55], rig);
+      });
+
+      const arms = [];
+      [-1, 1].forEach(side => {
+        const arm = new THREE.Group();
+        arm.position.set(side * 0.255, 0.52, 0);
+        arm.rotation.z = side * -0.24;
+        rig.add(arm);
+        capsule(0.058, 0.32, redMat, [0, -0.16, 0], null, null, arm);
+        add(new THREE.SphereGeometry(0.068, 9, 7), combatBlackMat,
+          [0, -0.34, 0.055], null, null, arm);
+        arms.push({ arm, side, rest: arm.rotation.z });
+      });
+      [-1, 1].forEach(side => {
+        capsule(0.07, 0.25, redMat, [side * 0.14, 0.13, 0], null, null, rig);
+        add(new THREE.SphereGeometry(0.095, 10, 7), combatBlackMat,
+          [side * 0.15, 0.045, 0.09], [1, 0.44, 1.32], null, rig);
+      });
+
+      const head = add(new THREE.SphereGeometry(0.225, 14, 10), redMat,
+        [0, 0.82, 0.025], [0.91, 1.08, 0.83], null, rig);
+      [-1, 1].forEach(side => {
+        add(new THREE.SphereGeometry(0.105, 10, 8), combatBlackMat,
+          [side * 0.082, 0.83, 0.184], [0.8, 1.18, 0.28], [0, 0, side * -0.16], rig);
+        add(new THREE.SphereGeometry(0.054, 9, 7), lensMat,
+          [side * 0.077, 0.842, 0.213], [0.58, 1.12, 0.22], [0, 0, side * -0.16], rig);
+      });
+      anims.push(t => {
+        head.rotation.y = Math.sin(t * 0.9) * 0.1;
+        arms.forEach(({ arm, side, rest }) => {
+          arm.rotation.z = rest + side * Math.sin(t * 2.6) * 0.22;
+          arm.rotation.x = Math.sin(t * 2.6 + side) * 0.12;
+        });
+        steelMat.emissiveIntensity = 0.05 + Math.max(0, Math.sin(t * 3.2)) * 0.08;
+      });
+    } else if (combatClass === 'blondie') {
+      // BLONDIE: orange ninja suit, bright blue headband and a crown of large
+      // golden spikes. Fast, light proportions keep it separate from Cyclops.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const orangeMat = mat(0xff8a19, {
+        roughness: 0.46, metalness: 0.08, emissive: 0x7b2a00, emissiveIntensity: 0.13 });
+      const blueMat = mat(0x1857d8, {
+        roughness: 0.34, metalness: 0.25, emissive: 0x082c92, emissiveIntensity: 0.18 });
+      const hairMat = mat(0xffe347, {
+        roughness: 0.38, metalness: 0.06, emissive: 0xb87300, emissiveIntensity: 0.18 });
+      const skinMat = mat(0xffc791, { roughness: 0.61, metalness: 0 });
+      const inkMat = mat(0x342018, { roughness: 0.74, metalness: 0 });
+      const bandMetalMat = mat(0xc8d1dd, { roughness: 0.24, metalness: 0.82 });
+
+      add(new THREE.CapsuleGeometry(0.215, 0.27, 6, 13), orangeMat,
+        [0, 0.4, 0], [0.9, 1, 0.72], null, rig);
+      add(new THREE.BoxGeometry(0.31, 0.19, 0.07), blueMat,
+        [0, 0.42, 0.19], null, null, rig);
+      add(new THREE.BoxGeometry(0.36, 0.055, 0.2), blueMat,
+        [0, 0.28, 0], null, null, rig);
+      const arms = [];
+      [-1, 1].forEach(side => {
+        const arm = new THREE.Group();
+        arm.position.set(side * 0.25, 0.5, 0);
+        arm.rotation.z = side * -0.18;
+        rig.add(arm);
+        capsule(0.052, 0.33, orangeMat, [0, -0.16, 0], null, null, arm);
+        add(new THREE.SphereGeometry(0.062, 9, 7), skinMat,
+          [0, -0.35, 0.06], null, null, arm);
+        arms.push({ arm, side, rest: arm.rotation.z });
+        capsule(0.068, 0.26, orangeMat, [side * 0.14, 0.13, 0], null, null, rig);
+        add(new THREE.SphereGeometry(0.092, 9, 7), blueMat,
+          [side * 0.15, 0.045, 0.09], [1, 0.44, 1.3], null, rig);
+      });
+      const headRig = new THREE.Group();
+      rig.add(headRig);
+      const head = add(new THREE.SphereGeometry(0.215, 13, 10), skinMat,
+        [0, 0.79, 0.025], [0.92, 1.02, 0.82], null, headRig);
+      add(new THREE.BoxGeometry(0.39, 0.075, 0.24), blueMat,
+        [0, 0.89, 0.035], null, null, headRig);
+      add(new THREE.BoxGeometry(0.13, 0.08, 0.025), bandMetalMat,
+        [0, 0.89, 0.215], null, null, headRig);
+      [-1, 1].forEach(side => {
+        add(new THREE.SphereGeometry(0.025, 8, 6), inkMat,
+          [side * 0.077, 0.81, 0.205], [1.25, 0.55, 0.35], [0, 0, side * -0.08], headRig);
+        [-1, 0, 1].forEach(i => add(new THREE.BoxGeometry(0.06, 0.012, 0.012), inkMat,
+          [side * 0.145, 0.75 + i * 0.028, 0.2], null, [0, 0, side * 0.12], headRig));
+      });
+      const spikes = [];
+      [[-0.2, .94, -.02, -.58], [-.13, 1.03, -.04, -.34], [-.045, 1.08, -.05, -.1],
+       [.045, 1.08, -.05, .1], [.13, 1.03, -.04, .34], [.2, .94, -.02, .58]].forEach(p => {
+        const spike = add(new THREE.ConeGeometry(0.075, 0.29, 6), hairMat,
+          [p[0], p[1], p[2]], [1, 1, 0.85], [0, 0, p[3]], headRig);
+        spikes.push(spike);
+      });
+      anims.push(t => {
+        headRig.rotation.y = Math.sin(t * 1.25) * 0.12;
+        arms.forEach(({ arm, side, rest }) => {
+          arm.rotation.z = rest + side * Math.sin(t * 6.2) * 0.24;
+          arm.rotation.x = side * Math.sin(t * 6.2) * 0.2;
+        });
+        spikes.forEach((spike, i) => { spike.rotation.z += Math.sin(t * 4.4 + i) * 0.015; });
+        head.rotation.z = Math.sin(t * 3.1) * 0.015;
+      });
+    } else if (combatClass === 'dino') {
+      // DINO: broad tyrannosaur skull, protruding jaw, tiny forearms, heavy
+      // thighs and a long counterbalancing tail. No humanoid head or shoulders.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const greenMat = mat(0x63d83f, {
+        roughness: 0.5, metalness: 0.04, emissive: 0x185c12, emissiveIntensity: 0.12 });
+      const lightGreenMat = mat(0xb8f16d, { roughness: 0.56, metalness: 0.02 });
+      const mouthMat = mat(0x7c1637, { roughness: 0.64, metalness: 0 });
+      const toothMat = mat(0xfff4c9, { roughness: 0.5, metalness: 0.02 });
+      const eyeMat = mat(0xffd447, {
+        roughness: 0.24, emissive: 0xff8c00, emissiveIntensity: 0.34 });
+
+      add(new THREE.SphereGeometry(0.275, 12, 9), greenMat,
+        [0, 0.45, -0.02], [0.9, 1.12, 0.72], null, rig);
+      add(new THREE.SphereGeometry(0.205, 11, 8), lightGreenMat,
+        [0, 0.4, 0.18], [0.8, 1.05, 0.42], null, rig);
+      const tail = add(new THREE.ConeGeometry(0.17, 0.82, 8), greenMat,
+        [0, 0.34, -0.38], [0.9, 1, 0.7], [-Math.PI / 2, 0, 0], rig);
+      const legs = [];
+      [-1, 1].forEach(side => {
+        const leg = capsule(0.1, 0.28, greenMat,
+          [side * 0.16, 0.18, 0], [1, 1, 0.82], [0, 0, side * 0.05], rig);
+        add(new THREE.SphereGeometry(0.12, 10, 7), greenMat,
+          [side * 0.17, 0.055, 0.13], [1, 0.42, 1.4], null, rig);
+        [-1, 0, 1].forEach(i => add(new THREE.ConeGeometry(0.022, 0.09, 5), toothMat,
+          [side * 0.17 + i * 0.045, 0.045, 0.255], [1, 1, 0.75], [Math.PI / 2, 0, 0], rig));
+        legs.push({ leg, side });
+      });
+      const headRig = new THREE.Group();
+      rig.add(headRig);
+      add(new THREE.SphereGeometry(0.265, 13, 9), greenMat,
+        [0, 0.78, 0.06], [1.05, 0.84, 1.0], null, headRig);
+      const upper = add(new THREE.BoxGeometry(0.39, 0.16, 0.38), greenMat,
+        [0, 0.74, 0.22], [1, 0.82, 1], null, headRig);
+      const jaw = new THREE.Group();
+      jaw.position.set(0, 0.68, 0.17);
+      headRig.add(jaw);
+      add(new THREE.BoxGeometry(0.37, 0.11, 0.36), lightGreenMat,
+        [0, -0.02, 0.06], null, null, jaw);
+      add(new THREE.BoxGeometry(0.3, 0.025, 0.25), mouthMat,
+        [0, 0.035, 0.065], null, null, jaw);
+      [-1, -.5, 0, .5, 1].forEach(i => {
+        add(new THREE.ConeGeometry(0.021, 0.08, 5), toothMat,
+          [i * 0.12, 0.075, 0.15], null, [0, 0, Math.PI], jaw);
+        add(new THREE.ConeGeometry(0.018, 0.07, 5), toothMat,
+          [i * 0.11, -0.03, 0.16], null, null, upper);
+      });
+      [-1, 1].forEach(side => {
+        add(new THREE.SphereGeometry(0.06, 9, 7), eyeMat,
+          [side * 0.17, 0.84, 0.25], [1, 0.82, 0.65], null, headRig);
+        add(new THREE.SphereGeometry(0.021, 8, 6), combatBlackMat,
+          [side * 0.17, 0.84, 0.286], [0.7, 1.25, 0.45], null, headRig);
+        const arm = capsule(0.035, 0.18, greenMat,
+          [side * 0.24, 0.48, 0.19], null, [Math.PI / 2, 0, side * 0.5], rig);
+        add(new THREE.SphereGeometry(0.04, 8, 6), greenMat,
+          [side * 0.285, 0.43, 0.27], [1, 0.55, 1.25], null, rig);
+        legs.push({ arm, side });
+      });
+      anims.push(t => {
+        const roar = Math.max(0, Math.sin(t * 2.15));
+        jaw.rotation.x = -roar * 0.34;
+        headRig.rotation.x = -roar * 0.08;
+        headRig.rotation.y = Math.sin(t * 0.72) * 0.08;
+        tail.rotation.z = Math.sin(t * 1.5) * 0.1;
+        eyeMat.emissiveIntensity = 0.25 + roar * 0.4;
+      });
+    } else if (combatClass === 'wario') {
+      // WARIO: huge yellow cap, round nose, zigzag moustache, purple overalls
+      // and white gloves. A wide comic bruiser rather than another armoured body.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const yellowMat = mat(0xffd51f, {
+        roughness: 0.43, metalness: 0.05, emissive: 0x8c5800, emissiveIntensity: 0.14 });
+      const purpleMat = mat(0x8f35d9, {
+        roughness: 0.42, metalness: 0.13, emissive: 0x491080, emissiveIntensity: 0.16 });
+      const skinMat = mat(0xffb58d, { roughness: 0.58, metalness: 0 });
+      const gloveMat = mat(0xf6fbff, { roughness: 0.48, metalness: 0.04 });
+      const moustacheMat = mat(0x372117, { roughness: 0.77, metalness: 0 });
+      const cyanMat = mat(0x44d9ff, {
+        roughness: 0.25, emissive: 0x087ca2, emissiveIntensity: 0.28 });
+
+      const belly = add(new THREE.SphereGeometry(0.31, 13, 10), purpleMat,
+        [0, 0.4, 0], [1, 1.08, 0.78], null, rig);
+      add(new THREE.SphereGeometry(0.255, 12, 9), yellowMat,
+        [0, 0.49, 0.07], [1.06, 0.92, 0.78], null, rig);
+      [-1, 1].forEach(side => add(new THREE.BoxGeometry(0.07, 0.31, 0.055), purpleMat,
+        [side * 0.12, 0.55, 0.22], null, [0, 0, side * -0.12], rig));
+      [ -1, 1 ].forEach(side => glowOrb(0.035, [side * 0.12, 0.44, 0.26], rig));
+      const arms = [];
+      [-1, 1].forEach(side => {
+        const arm = new THREE.Group();
+        arm.position.set(side * 0.29, 0.53, 0);
+        arm.rotation.z = side * -0.22;
+        rig.add(arm);
+        capsule(0.07, 0.29, yellowMat, [0, -0.14, 0], null, null, arm);
+        add(new THREE.SphereGeometry(0.1, 10, 8), gloveMat,
+          [0, -0.33, 0.06], [1, 0.9, 1.05], null, arm);
+        arms.push({ arm, side, rest: arm.rotation.z });
+        capsule(0.08, 0.22, purpleMat, [side * 0.15, 0.13, 0], null, null, rig);
+        add(new THREE.SphereGeometry(0.12, 10, 8), cyanMat,
+          [side * 0.17, 0.045, 0.1], [1, 0.42, 1.35], null, rig);
+      });
+      const headRig = new THREE.Group();
+      rig.add(headRig);
+      const head = add(new THREE.SphereGeometry(0.225, 13, 10), skinMat,
+        [0, 0.78, 0.04], [1.06, 0.94, 0.88], null, headRig);
+      add(new THREE.SphereGeometry(0.12, 11, 8), skinMat,
+        [0, 0.74, 0.235], [1.05, 0.9, 0.82], null, headRig);
+      [-1, 1].forEach(side => {
+        add(new THREE.SphereGeometry(0.027, 8, 6), combatBlackMat,
+          [side * 0.075, 0.82, 0.22], [0.9, 1.1, 0.42], null, headRig);
+        add(new THREE.ConeGeometry(0.07, 0.18, 5), moustacheMat,
+          [side * 0.075, 0.69, 0.24], [1.1, 1, 0.5], [0, 0, side * 1.15], headRig);
+      });
+      add(new THREE.SphereGeometry(0.245, 12, 8), yellowMat,
+        [0, 0.94, 0.015], [1.08, 0.52, 0.9], null, headRig);
+      add(new THREE.BoxGeometry(0.34, 0.045, 0.24), yellowMat,
+        [-0.055, 0.9, 0.19], [1, 1, 1], [0, -0.08, 0], headRig);
+      add(new THREE.BoxGeometry(0.1, 0.1, 0.02), cyanMat,
+        [0, 0.97, 0.205], null, [0, 0, Math.PI / 4], headRig);
+      anims.push(t => {
+        const swagger = Math.sin(t * 2.2);
+        headRig.rotation.y = swagger * 0.11;
+        head.rotation.z = -swagger * 0.02;
+        arms.forEach(({ arm, side, rest }) => {
+          arm.rotation.z = rest + side * swagger * 0.16;
+          arm.rotation.x = Math.sin(t * 4.4 + side) * 0.06;
+        });
+        belly.scale.x = 1 + Math.max(0, Math.sin(t * 4.4)) * 0.045;
       });
     } else if (combatClass === 'inferno') {
       // INFERNO: a living furnace with an arched boiler body and exhaust crown.
@@ -12436,16 +12796,18 @@ class Player {
     // character is moving around the arena.
     const showcaseRig = g.children[0];
     if (showcaseRig) {
+      g.userData.showcaseRig = showcaseRig;
       const basePos = showcaseRig.position.clone();
       const baseRot = showcaseRig.rotation.clone();
       const baseScale = showcaseRig.scale.clone();
       const hop = t => Math.max(0, Math.sin(t));
       const moves = {
-        heavy: (r, t) => {
-          const beat = Math.sin(t * 4.2);
-          r.position.y += Math.abs(beat) * 0.055;
-          r.position.x += Math.sin(t * 2.1) * 0.025;
-          r.rotation.z += Math.sign(beat || 1) * 0.035;
+        piglet: (r, t) => {
+          const bounce = hop(t * 4.2);
+          r.position.y += bounce * 0.095;
+          r.position.x += Math.sin(t * 2.1) * 0.035;
+          r.rotation.z += Math.sin(t * 4.2) * 0.07;
+          r.scale.y *= 1 - bounce * 0.028;
         },
         reaper: (r, t) => {
           r.position.y += 0.06 + Math.sin(t * 1.8) * 0.085;
@@ -12469,11 +12831,14 @@ class Player {
           r.rotation.z += Math.sin(t * 10.4) * 0.018 * piston;
           r.scale.y *= 1 - piston * 0.035;
         },
-        xeno: (r, t) => {
-          r.position.x += Math.sin(t * 1.65) * 0.075;
-          r.position.y += hop(t * 3.3) * 0.035;
-          r.rotation.y += Math.sin(t * 1.65) * 0.42;
-          r.rotation.x += Math.sin(t * 3.3) * 0.055;
+        hulk: (r, t) => {
+          const smash = Math.pow(hop(t * 2.5), 8);
+          r.position.y += hop(t * 5.0) * 0.035;
+          r.position.z += smash * 0.08;
+          r.rotation.x += smash * 0.18;
+          r.rotation.y += Math.sin(t * 0.8) * 0.17;
+          r.scale.x *= 1 + smash * 0.055;
+          r.scale.y *= 1 - smash * 0.045;
         },
         devil: (r, t) => {
           const stomp = hop(t * 4.4);
@@ -12514,6 +12879,35 @@ class Player {
           r.rotation.z += Math.sin(t * 2.0) * 0.13;
           r.rotation.y += Math.sin(t) * 0.28;
         },
+        deadpool: (r, t) => {
+          const flourish = Math.sin(t * 2.6);
+          r.position.y += hop(t * 5.2) * 0.055;
+          r.rotation.y += flourish * 0.34;
+          r.rotation.z += Math.sin(t * 5.2) * 0.045;
+        },
+        blondie: (r, t) => {
+          const dash = Math.pow(hop(t * 3.2), 5);
+          r.position.x += Math.sin(t * 3.2) * 0.12;
+          r.position.y += hop(t * 6.4) * 0.055;
+          r.rotation.z -= dash * 0.16;
+          r.rotation.y += Math.sin(t * 1.6) * 0.2;
+        },
+        dino: (r, t) => {
+          const stomp = hop(t * 4.6);
+          r.position.y += stomp * 0.055;
+          r.rotation.z += Math.sin(t * 2.3) * 0.075;
+          r.rotation.y += Math.sin(t * 0.75) * 0.2;
+          r.scale.y *= 1 - stomp * 0.025;
+        },
+        wario: (r, t) => {
+          const bump = Math.pow(hop(t * 3.6), 7);
+          r.position.y += hop(t * 7.2) * 0.04;
+          r.position.z += bump * 0.09;
+          r.rotation.z += Math.sin(t * 1.8) * 0.11;
+          r.rotation.y += Math.sin(t * 0.9) * 0.28;
+          r.scale.x *= 1 + bump * 0.07;
+          r.scale.y *= 1 - bump * 0.045;
+        },
       };
       const move = moves[combatClass];
       g.userData.showcaseReset = () => {
@@ -12539,9 +12933,15 @@ class Player {
     g.userData.shoeMat = shoeMat;
     const kitCtx = { mat, def, bodyMat, bellyMat, trimMat, accentMat, seat: def.color,
                      anim: fn => anims.push(fn) };
+    const attachmentRoot = showcaseRig || g;
     ['hat', 'extra'].forEach(slot => {
+      // A blank slot is genuinely blank. Passing it through cosmeticItem would
+      // silently fall back to the retired default horns.
+      if (!kit[slot]) return;
       const item = cosmeticItem(slot, kit[slot]);
-      if (item && item.build) item.build(g, kitCtx);
+      // Anything worn belongs to the same animated hierarchy as the body, so a
+      // hop, stomp, sway or recoil cannot leave the attachment behind.
+      if (item && item.build) item.build(attachmentRoot, kitCtx);
     });
     if (anims.length) g.userData.cosAnim = anims;
 
@@ -12579,7 +12979,9 @@ class Player {
     );
     aura.position.y = 0.55;
     aura.visible = false;
-    g.add(aura);
+    // Unlike the floor ring, an aura surrounds the fighter and must follow the
+    // showcase rig during victory and selection movement.
+    attachmentRoot.add(aura);
     g.userData.aura = aura;
 
     return g;
@@ -14251,7 +14653,7 @@ const UI = (function () {
             <span class="seyebrow">LOADOUT</span>
             <h2>CHARACTER SELECT</h2>
           </div>
-          <span class="scount">12 FIGHTERS</span>
+          <span class="scount">16 FIGHTERS</span>
         </div>
         <div class="sbody">
           <div class="scol">
@@ -14764,7 +15166,7 @@ const UI = (function () {
   function showMenu(v) { menu.classList.toggle('hidden', !v); }
 
   /* ---------------------------------------------------- character select -- */
-  // Twelve fighters and one action. The old prize ladder no longer appears in
+  // Sixteen fighters and one action. The old prize ladder no longer appears in
   // this flow: this screen has one job, choosing who walks into the arena.
   function selectRows() { return PLAYER_DEFS.map((_, i) => 'class:' + i).concat(['fight']); }
 
@@ -14773,7 +15175,7 @@ const UI = (function () {
     box.innerHTML = PLAYER_DEFS.map((def, i) => {
       const colour = '#' + def.color.toString(16).padStart(6, '0');
       return `<button class="charpick" data-class="${i}" role="option" style="--fighter:${colour}">` +
-        `<span class="charface" style="--face-x:${(i % 3) * 50}%;--face-y:${Math.floor(i / 3) * 33.333}%" aria-hidden="true"></span>` +
+        `<span class="charface" style="--face-x:${(i % 4) * 33.333}%;--face-y:${Math.floor(i / 4) * 33.333}%" aria-hidden="true"></span>` +
         `<span class="charcopy"><b>${def.name}</b><small>${def.role}</small></span>` +
         `<span class="charindex">${String(i + 1).padStart(2, '0')}</span>` +
         `<i aria-hidden="true"></i>` +
@@ -15351,7 +15753,7 @@ const Game = (function () {
     opts: { humans: 1, difficulty: 'easy', wins: 2, level: 'random' },
     menuSel: 0,
     selRow: 0,             // fighter index, or 12 for FIGHT
-    selectedClass: 0,      // one of the twelve PLAYER_DEFS
+    selectedClass: 0,      // one of the sixteen PLAYER_DEFS
     preview: null,         // the select screen's own little scene
     level: LEVELS[0],
     menuPreview: 0,        // index of the level currently shown behind the menu
@@ -15500,9 +15902,9 @@ const Game = (function () {
       } else if (code === 'ArrowRight' || code === 'KeyD') {
         next = onFight ? 0 : (g.selRow + 1) % count;
       } else if (code === 'ArrowUp' || code === 'KeyW') {
-        next = onFight ? count - 2 : (g.selRow - 3 + count) % count;
+        next = onFight ? count - 2 : (g.selRow - 4 + count) % count;
       } else if (code === 'ArrowDown' || code === 'KeyS') {
-        next = onFight || g.selRow >= count - 3 ? count : g.selRow + 3;
+        next = onFight || g.selRow >= count - 4 ? count : g.selRow + 4;
       } else if (code === 'Enter' || code === 'Space') {
         if (onFight) { Audio3.menuSelect(); startMatch(); return; }
         next = count;
@@ -15743,6 +16145,10 @@ const Game = (function () {
         }
       });
     });
+    // Every newly selected fighter starts in a readable front three-quarter
+    // pose. The old turntable kept its accumulated angle between selections,
+    // which could make the entire roster appear back-first.
+    pv.turn.rotation.y = -0.28;
     pv.mesh = Player.buildMesh(PLAYER_DEFS[g.selectedClass], defaultLoadout());
     pv.mesh.position.set(0, -0.4, 0);
     pv.turn.add(pv.mesh);
@@ -15790,7 +16196,7 @@ const Game = (function () {
     g.players.forEach(p => World.scene.remove(p.mesh));
     g.players = [];
     // Put the chosen fighter in seat one, then draw three distinct opponents
-    // from the other eleven so the full roster keeps appearing across matches.
+    // from the other fifteen so the full roster keeps appearing across matches.
     const others = PLAYER_DEFS.filter((_, i) => i !== g.selectedClass);
     const rosterRng = makeRng(g.seed ^ 0xa511e9b3);
     for (let i = others.length - 1; i > 0; i--) {
@@ -16946,11 +17352,9 @@ const Game = (function () {
 
     switch (g.state) {
       case STATE.SELECT:
-        // A very slow turn keeps the unique signature movement as the focus.
-        if (g.preview) {
-          g.preview.turn.rotation.y += dt * 0.18;
-          if (g.preview.bomb) g.preview.bomb.rotation.y += dt * 0.8;
-        }
+        // Character select stays front-facing. The fighter's unique showcase
+        // animation supplies the movement; an automatic turntable can leave
+        // every option showing its back when the player switches between them.
         World.group.rotation.y += dt * 0.05;
         break;
 

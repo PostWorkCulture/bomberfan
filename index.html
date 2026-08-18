@@ -384,6 +384,50 @@
   #banner.pop #prize { animation: pop .5s .12s backwards cubic-bezier(.2,1.6,.4,1); }
   @keyframes pop { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
+  /* Full-screen winner celebration. The 3D character is rendered directly to
+     the canvas underneath this transparent type layer. */
+  #victory {
+    position: absolute; inset: 0; z-index: 14; pointer-events: none;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: space-between; text-align: center;
+    padding: clamp(22px, 4vh, 48px) 18px clamp(24px, 5vh, 56px);
+    overflow: hidden;
+  }
+  #victory.hidden { display: none; }
+  #victory .vtitle {
+    color: rgba(255,248,233,.72);
+    font: 900 clamp(11px, 1.4vw, 18px)/1 system-ui, sans-serif;
+    letter-spacing: clamp(4px, .9vw, 10px);
+    text-transform: uppercase;
+    text-shadow: 0 2px 8px #000;
+  }
+  #victory .vbottom { width: min(92vw, 900px); }
+  #victory .vname {
+    color: #fff8e9;
+    font: 1000 clamp(42px, 8vw, 104px)/.88 'Arial Black', Impact, system-ui, sans-serif;
+    letter-spacing: clamp(3px, .7vw, 10px);
+    text-transform: uppercase;
+    -webkit-text-stroke: 1px rgba(0,0,0,.5);
+    text-shadow: 0 6px 0 rgba(0,0,0,.7), 0 0 28px var(--winner), 0 0 70px var(--winner);
+  }
+  #victory .vline {
+    display: inline-block; margin-top: 12px;
+    padding: .45em 1.15em .5em;
+    border: 1px solid color-mix(in srgb, var(--winner) 72%, white);
+    border-radius: 999px;
+    background: rgba(5,7,11,.76);
+    color: #fff5e5;
+    font: 900 clamp(12px, 1.7vw, 22px)/1.1 system-ui, sans-serif;
+    letter-spacing: clamp(1px, .25vw, 4px);
+    text-transform: uppercase;
+    box-shadow: 0 0 30px color-mix(in srgb, var(--winner) 38%, transparent);
+  }
+  @media (max-width: 719px) {
+    #victory { padding-top: 18px; padding-bottom: 30px; }
+    #victory .vname { font-size: clamp(38px, 13vw, 64px); }
+    #victory .vline { max-width: 94vw; }
+  }
+
   /* ------------------------------------------------- touch controls --- */
   /* Safe-area insets keep the stick, bomb button and pause clear of the notch
      and the home indicator on phones. */
@@ -6635,7 +6679,7 @@ const CFG = {
   // the round opened on "2" — so this is 3.0 for the three numbers plus a
   // beat for the last one to finish its pop before GO!.
   ROUND_INTRO: 3.35,     // 3 - 2 - 1, then GO!
-  ROUND_OUTRO: 3.0,      // pause after a round is decided
+  ROUND_OUTRO: 6.0,      // full-screen character celebration after a round
 
   // ---- Simulation --------------------------------------------------------
   FIXED_DT: 1 / 60,
@@ -14644,7 +14688,7 @@ const AI = (function () {
    ========================================================================== */
 
 const UI = (function () {
-  let root, hud, banner, menu, pause, results, rotate, select;
+  let root, hud, banner, menu, pause, results, rotate, select, victory;
   let cards = [];
   let lastReserve = -1;      // last measured strip height, to spot growth
 
@@ -14703,6 +14747,11 @@ const UI = (function () {
       </div>
 
       <div id="banner" class="hidden"><span></span></div>
+
+      <div id="victory" class="hidden" aria-live="polite">
+        <div class="vtitle">ROUND WINNER</div>
+        <div class="vbottom"><div class="vname"></div><div class="vline"></div></div>
+      </div>
 
       <div id="menu">
         <p class="dim build"></p>
@@ -14824,6 +14873,7 @@ const UI = (function () {
     `;
     hud = document.getElementById('hud');
     banner = document.getElementById('banner');
+    victory = document.getElementById('victory');
     menu = document.getElementById('menu');
     pause = document.getElementById('pause');
     results = document.getElementById('results');
@@ -15782,11 +15832,21 @@ const UI = (function () {
       .join('');
   }
 
+  function showVictory(name, colorHex, line, isMatch, v) {
+    if (!victory) return;
+    victory.classList.toggle('hidden', !v);
+    if (!v) return;
+    victory.style.setProperty('--winner', colorHex || '#ffffff');
+    victory.querySelector('.vtitle').textContent = isMatch ? 'MATCH WINNER' : 'ROUND WINNER';
+    victory.querySelector('.vname').textContent = name || '';
+    victory.querySelector('.vline').textContent = line || '';
+  }
+
   return { init, bindMenu, bindPause, setControlToggle, isPadded, renderMenu, showMenu, alignOptionsToTitle,
     setSdBand, placeSdBand, setSdCount, placeSdCount, setCountdown, placeClock, placeCards, dropCards, sizeTouch, syncViewport, viewportH,
     hudBlockRects,
     bindSelect, renderSelect, showSelect, previewRect, setPreviewName,
-    setPauseTaunt,
+    setPauseTaunt, showVictory,
     get SELECT_ROWS() { return selectRows(); },
     punchPreviewHole, hudReserveSide, isSolo, showHome, MENU_ROWS, rowVisible, isCompact, isBlockedByOrientation, dismissOrientation, applyCompact, buildCards, updateHUD, showHUD, showTouch, hudReserveTop, bannerBusy, showBanner, tickBanner, showPause, renderMusicRow, showResults };
 })();
@@ -16263,6 +16323,153 @@ const Game = (function () {
     r.setViewport(0, 0, r.domElement.clientWidth, h);
   }
 
+  function clearVictory() {
+    const v = g.victory;
+    if (!v) return;
+    const geometries = new Set(), materials = new Set();
+    v.scene.traverse(o => {
+      if (o.geometry) geometries.add(o.geometry);
+      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => materials.add(m));
+    });
+    geometries.forEach(x => x.dispose());
+    materials.forEach(x => x.dispose());
+    g.victory = null;
+  }
+
+  function buildVictory(winner) {
+    clearVictory();
+    if (!winner) return;
+    const scene = new THREE.Scene();
+    const winnerColour = new THREE.Color(winner.def.color);
+    scene.background = winnerColour.clone().multiplyScalar(0.105);
+    scene.fog = new THREE.Fog(scene.background.clone(), 5.5, 10);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, winner.def.color, 3.0));
+    const key = new THREE.DirectionalLight(0xfff0d1, 7.2);
+    key.position.set(2.8, 4.5, 4.5); scene.add(key);
+    const rim = new THREE.DirectionalLight(winner.def.color, 8.5);
+    rim.position.set(-3.5, 2.2, -3); scene.add(rim);
+    const fill = new THREE.PointLight(0xffffff, 4.2, 8);
+    fill.position.set(-1.8, 1.3, 2.6); scene.add(fill);
+
+    const halo = new THREE.Mesh(
+      new THREE.CircleGeometry(1.45, 48),
+      new THREE.MeshBasicMaterial({
+        color: winner.def.color, transparent: true, opacity: 0.16,
+        blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+      })
+    );
+    halo.position.set(0, 0.5, -0.5);
+    scene.add(halo);
+
+    const plinth = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.72, 0.92, 0.12, 48),
+      new THREE.MeshStandardMaterial({
+        color: 0x151821, roughness: 0.32, metalness: 0.68,
+        emissive: winner.def.color, emissiveIntensity: 0.18,
+      })
+    );
+    plinth.position.y = -0.48;
+    scene.add(plinth);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.78, 0.025, 8, 48),
+      new THREE.MeshBasicMaterial({
+        color: winner.def.color, transparent: true, opacity: 0.9,
+        blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+      })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = -0.405;
+    scene.add(ring);
+
+    const points = [];
+    for (let i = 0; i < 90; i++) {
+      const a = i * 2.399963;
+      const radius = 1.15 + (i % 9) * 0.12;
+      points.push(Math.cos(a) * radius, -0.35 + (i % 15) * 0.115, -0.8 + Math.sin(a) * 0.5);
+    }
+    const sparksGeo = new THREE.BufferGeometry();
+    sparksGeo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    const sparks = new THREE.Points(sparksGeo, new THREE.PointsMaterial({
+      color: winner.def.trim || winner.def.color, size: 0.035,
+      transparent: true, opacity: 0.82, blending: THREE.AdditiveBlending,
+      depthWrite: false, toneMapped: false,
+    }));
+    scene.add(sparks);
+
+    // Six staggered fireballs keep detonating around the winner. Every burst
+    // owns its materials because opacity and scale run on different phases.
+    const explosions = [
+      [-0.62, 0.12, -0.34, 0.00], [0.62, 0.42, -0.36, 0.23],
+      [-0.50, 1.02, -0.48, 0.46], [0.50, 1.16, -0.5, 0.69],
+      [-0.72, 0.68, -0.58, 0.84], [0.72, -0.02, -0.42, 0.12],
+    ].map(spec => {
+      const group = new THREE.Group();
+      group.position.set(spec[0], spec[1], spec[2]);
+      const flameMat = new THREE.MeshBasicMaterial({
+        color: 0xff5a12, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+      });
+      const coreMat = new THREE.MeshBasicMaterial({
+        color: 0xfff2a8, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+      });
+      const shockMat = new THREE.MeshBasicMaterial({
+        color: winner.def.trim || 0xffd166, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+        side: THREE.DoubleSide, toneMapped: false,
+      });
+      const fire = new THREE.Group();
+      group.add(fire);
+      fire.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.27, 1), flameMat));
+      for (let i = 0; i < 7; i++) {
+        const a = i / 7 * Math.PI * 2;
+        const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(0.14 + (i % 3) * 0.025, 1), flameMat);
+        blob.position.set(Math.cos(a) * 0.2, Math.sin(a) * 0.18, (i % 2) * 0.04);
+        fire.add(blob);
+      }
+      const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 1), coreMat);
+      core.position.z = 0.035;
+      group.add(core);
+      const shock = new THREE.Mesh(new THREE.RingGeometry(0.18, 0.24, 32), shockMat);
+      shock.position.z = 0.025;
+      group.add(shock);
+      scene.add(group);
+      return { group, fire, core, shock, flameMat, coreMat, shockMat, phase: spec[3] };
+    });
+
+    const turn = new THREE.Group();
+    turn.rotation.y = -0.28;
+    scene.add(turn);
+    const mesh = Player.buildMesh(winner.def, winner.kit || defaultLoadout());
+    Player.applyViewScale(mesh, 1.18);
+    mesh.position.y = -0.42;
+    turn.add(mesh);
+
+    const cam = new THREE.PerspectiveCamera(28, 16 / 9, 0.1, 30);
+    g.victory = { scene, cam, turn, mesh, halo, plinth, ring, sparks, explosions };
+  }
+
+  function renderVictory() {
+    const v = g.victory;
+    if (!v) return;
+    const r = World.renderer;
+    const w = r.domElement.clientWidth, h = r.domElement.clientHeight;
+    const aspect = Math.max(0.32, w / Math.max(1, h));
+    v.cam.aspect = aspect;
+    const shake = (v.blastShake || 0) * 0.018;
+    v.cam.position.set(
+      (aspect < 0.72 ? 0.45 : 0.72) + (Math.random() - 0.5) * shake,
+      0.78 + (Math.random() - 0.5) * shake,
+      aspect < 0.72 ? 4.15 : 3.25
+    );
+    v.cam.lookAt(0, 0.38, 0);
+    v.cam.updateProjectionMatrix();
+    r.setScissorTest(false);
+    r.setViewport(0, 0, w, h);
+    r.render(v.scene, v.cam);
+  }
+
   function startMatch() {
     // The Players row is hidden with touch controls up, so make the value match
     // what the player can actually see and choose.
@@ -16298,6 +16505,9 @@ const Game = (function () {
   }
 
   function startRound() {
+    clearVictory();
+    UI.showVictory('', '#ffffff', '', false, false);
+    UI.showHUD(true);
     clearRoundEntities();
     g.roundWinner = null;
     g.seed = (g.seed * 1103515245 + 12345) >>> 0;
@@ -16407,13 +16617,22 @@ const Game = (function () {
     if (winner) {
       winner.wins++;
       Audio3.roundWin();
-      // Light the map edge in the winner's colour — that is the headline, so
-      // the text can be small and out of the way.
+      const line = nextWinLine(winner.def.name.toUpperCase());
+      const matchWinner = winner.wins >= g.opts.wins;
+      buildVictory(winner);
+      UI.showHUD(false);
+      UI.showVictory(winner.def.name.toUpperCase(),
+                     '#' + winner.def.color.toString(16).padStart(6, '0'),
+                     line, matchWinner, true);
+      g.outroDuration = CFG.ROUND_OUTRO;
+      // Keep the arena colour celebration underneath the dedicated full-screen
+      // scene so the transition back into the board remains coherent.
       World.tintWalls(winner.def.color);
-      UI.showBanner(nextWinLine(winner.def.name.toUpperCase()),
-                    '#' + winner.def.color.toString(16).padStart(6, '0'), CFG.ROUND_OUTRO, true);
     } else {
-      UI.showBanner('DRAW', '#ffd166', CFG.ROUND_OUTRO, true);
+      clearVictory();
+      UI.showVictory('', '#ffffff', '', false, false);
+      g.outroDuration = 3.0;
+      UI.showBanner('DRAW', '#ffd166', g.outroDuration, true);
     }
     UI.updateHUD(g);
   }
@@ -16426,6 +16645,8 @@ const Game = (function () {
   }
 
   function toMenu() {
+    clearVictory();
+    UI.showVictory('', '#ffffff', '', false, false);
     clearRoundEntities();
     UI.setCountdown(null);
     g.goT = 0;
@@ -17384,9 +17605,33 @@ const Game = (function () {
         Player.tickShowcase(g.preview.mesh, t);
       }
       if (g.preview && g.preview.bomb) Player.tickCosmetics(g.preview.bomb, t);
-      if ((g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) &&
-          g.roundWinner && g.roundWinner.mesh) {
-        Player.tickShowcase(g.roundWinner.mesh, t);
+      if ((g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) && g.victory) {
+        Player.tickCosmetics(g.victory.mesh, t);
+        Player.tickShowcase(g.victory.mesh, t);
+        g.victory.turn.rotation.y = -0.28 + Math.sin(t * 0.45) * 0.11;
+        g.victory.halo.rotation.z = t * 0.08;
+        g.victory.ring.rotation.z = t * 0.32;
+        g.victory.sparks.rotation.y = -t * 0.16;
+        g.victory.sparks.position.y = Math.sin(t * 0.8) * 0.035;
+        let blastShake = 0;
+        g.victory.explosions.forEach((blast, i) => {
+          const age = (t * 0.42 + blast.phase) % 1;
+          const open = Math.min(1, age / 0.1);
+          const fade = Math.max(0, 1 - age / 0.76);
+          const heat = Math.max(0, 1 - age / 0.48);
+          const scale = 0.28 + open * 0.72 + age * 0.72;
+          blast.group.scale.setScalar(scale);
+          blast.group.rotation.z = t * (i % 2 ? -0.24 : 0.24);
+          blast.fire.rotation.z = t * (i % 2 ? 0.55 : -0.48);
+          blast.core.scale.setScalar(0.65 + open * 0.72);
+          blast.shock.scale.setScalar(0.7 + age * 3.5);
+          blast.flameMat.opacity = fade * 0.92;
+          blast.coreMat.opacity = heat * 0.98;
+          blast.shockMat.opacity = fade * 0.68;
+          blast.group.visible = fade > 0.01;
+          if (age < 0.1) blastShake = Math.max(blastShake, 1 - age / 0.1);
+        });
+        g.victory.blastShake = blastShake;
       }
       if (g.sdWarned || g.suddenDeath) { UI.placeSdBand(); UI.placeSdCount(); }
     }
@@ -17412,8 +17657,10 @@ const Game = (function () {
 
     World.updateCamera();
     World.render();
-    // Drawn AFTER the arena, into its own corner of the same canvas
-    if (g.state === STATE.SELECT) renderPreview();
+    // The winner owns the whole canvas. Character select uses one scissored
+    // rectangle; both are drawn after the arena using the same renderer.
+    if ((g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) && g.victory) renderVictory();
+    else if (g.state === STATE.SELECT) renderPreview();
   }
 
   function tick(dt) {
@@ -17498,7 +17745,7 @@ const Game = (function () {
 
       case STATE.ROUND_END:
         stepSim(dt);
-        if (g.stateT >= CFG.ROUND_OUTRO) {
+        if (g.stateT >= (g.outroDuration || CFG.ROUND_OUTRO)) {
           const champ = g.players.find(p => p.wins >= g.opts.wins);
           if (champ) endMatch(champ);
           else { g.round++; startRound(); }

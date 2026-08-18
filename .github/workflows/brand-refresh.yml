@@ -41,14 +41,10 @@ jobs:
           mask.save('icon-maskable.png', optimize=True)
 
           manifest = {
-              'name': 'Bomber Fan',
-              'short_name': 'Bomber Fan',
+              'name': 'Bomber Fan', 'short_name': 'Bomber Fan',
               'description': 'A 3D local-multiplayer bomber game.',
-              'start_url': './',
-              'scope': './',
-              'display': 'fullscreen',
-              'background_color': '#0b0f18',
-              'theme_color': '#0b0f18',
+              'start_url': './', 'scope': './', 'display': 'fullscreen',
+              'background_color': '#090b10', 'theme_color': '#f28a18',
               'icons': [
                   {'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
                   {'src': 'icon-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
@@ -67,50 +63,112 @@ jobs:
               css = r'''
   /* BOMBER FAN MAIN LOGO BRAND REFRESH */
   #menu {
+    isolation: isolate;
     background:
-      radial-gradient(circle at 50% 28%, rgba(255,139,32,.24) 0%, rgba(255,104,20,.08) 26%, transparent 50%),
-      radial-gradient(ellipse at center, rgba(12,15,22,.54) 0%, rgba(4,6,11,.94) 82%);
+      radial-gradient(circle at 50% 24%, rgba(255,151,35,.28) 0%, rgba(255,93,16,.10) 24%, transparent 48%),
+      linear-gradient(180deg, rgba(7,8,11,.36), rgba(4,5,8,.94)),
+      radial-gradient(ellipse at center, rgba(19,21,26,.38), rgba(3,4,6,.97));
   }
   #menu::before {
-    content: ''; position: absolute; inset: 0; pointer-events: none;
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
     background:
-      radial-gradient(circle at 18% 18%, rgba(255,168,58,.09) 0 1px, transparent 2px),
-      radial-gradient(circle at 77% 31%, rgba(255,105,21,.10) 0 1px, transparent 2px),
-      radial-gradient(circle at 62% 74%, rgba(255,196,74,.08) 0 1px, transparent 2px);
-    background-size: 73px 73px, 91px 91px, 117px 117px;
-    mix-blend-mode: screen;
+      linear-gradient(115deg, transparent 0 43%, rgba(255,130,24,.045) 44% 45%, transparent 46% 100%),
+      radial-gradient(circle at 16% 18%, rgba(255,189,74,.18) 0 1px, transparent 2px),
+      radial-gradient(circle at 78% 28%, rgba(255,104,20,.14) 0 1px, transparent 2px),
+      radial-gradient(circle at 66% 76%, rgba(255,196,74,.10) 0 1px, transparent 2px);
+    background-size: auto, 69px 69px, 91px 91px, 121px 121px;
+    opacity: .9;
+  }
+  #menu::after {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    box-shadow: inset 0 0 120px rgba(0,0,0,.78), inset 0 -80px 100px rgba(0,0,0,.56);
   }
   #menu h1 {
-    width: min(38vw, 45vh, 400px) !important;
+    width: min(34vw, 43vh, 360px) !important;
     height: auto; aspect-ratio: 1;
-    margin: 0 0 10px !important;
+    margin: -2vh 0 8px !important;
     background: url('Main Logo.png') center / contain no-repeat;
     font-size: 0 !important; letter-spacing: 0 !important;
-    filter: drop-shadow(0 12px 14px rgba(0,0,0,.65)) drop-shadow(0 0 34px rgba(255,127,22,.28));
+    filter: drop-shadow(0 14px 16px rgba(0,0,0,.72)) drop-shadow(0 0 38px rgba(255,126,20,.32));
+    animation: bfLogoFloat 3.4s ease-in-out infinite alternate;
   }
   #menu h1 > * { opacity: 0 !important; pointer-events: none !important; }
-  #menu .opts { margin-top: 4px !important; gap: 8px; }
+  @keyframes bfLogoFloat {
+    from { transform: translateY(0) scale(1); }
+    to { transform: translateY(-4px) scale(1.012); }
+  }
+  #menu .opts {
+    width: min(500px, 88vw) !important;
+    margin-top: 2px !important;
+    gap: 9px;
+    padding: 10px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(19,20,24,.52), rgba(7,8,11,.38));
+    border: 1px solid rgba(255,171,66,.10);
+    box-shadow: 0 18px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.035);
+    backdrop-filter: blur(10px) saturate(1.12);
+  }
   #menu .opt {
-    background: linear-gradient(180deg, rgba(31,32,36,.93), rgba(11,12,15,.95));
-    border: 1px solid rgba(255,151,42,.34);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 24px rgba(0,0,0,.42);
+    min-height: 48px;
+    padding: 12px 17px;
+    border-radius: 13px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(34,35,40,.94), rgba(13,14,18,.97));
+    border: 1px solid rgba(255,156,45,.28);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.065), 0 6px 18px rgba(0,0,0,.35);
     transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease, background .12s ease;
   }
+  #menu .opt::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(100deg, transparent 0 55%, rgba(255,177,70,.07) 74%, transparent 100%);
+    transform: translateX(-35%);
+    transition: transform .24s ease;
+  }
+  #menu .opt:hover::before, #menu .opt.sel::before { transform: translateX(20%); }
   #menu .opt:hover, #menu .opt.sel, #menu .opt:focus-within {
-    transform: translateY(-1px);
-    border-color: rgba(255,165,58,.92);
-    background: linear-gradient(180deg, rgba(62,39,22,.96), rgba(20,15,12,.98));
-    box-shadow: inset 0 1px 0 rgba(255,221,171,.12), 0 0 0 1px rgba(255,123,20,.20), 0 0 22px rgba(255,118,18,.22), 0 10px 26px rgba(0,0,0,.48);
+    transform: translateY(-2px) scale(1.006);
+    border-color: rgba(255,169,62,.95);
+    background: linear-gradient(180deg, rgba(68,41,21,.97), rgba(23,16,12,.99));
+    box-shadow: inset 0 1px 0 rgba(255,228,183,.13), 0 0 0 1px rgba(255,120,18,.18), 0 0 24px rgba(255,111,13,.24), 0 12px 28px rgba(0,0,0,.48);
+  }
+  #menu .opt:active { transform: translateY(1px) scale(.997); }
+  #menu .opt .lbl {
+    color: rgba(255,255,255,.92);
+    font-weight: 800;
+    letter-spacing: .35px;
+    text-shadow: 0 1px 0 rgba(0,0,0,.65);
   }
   #menu .opt .lbl.start {
-    color: #ffd166;
-    text-shadow: 0 0 16px rgba(255,139,32,.42);
-    letter-spacing: .8px;
+    color: #ffe1a3;
+    font-weight: 950;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    text-shadow: 0 0 18px rgba(255,139,32,.46);
   }
-  #menu .opt .val { color: #ffad42; }
+  #menu .opt .val {
+    color: #ffae45;
+    font-weight: 900;
+    letter-spacing: .45px;
+    text-shadow: 0 0 12px rgba(255,131,31,.20);
+  }
+  #menu .build {
+    color: #ffb04b;
+    opacity: .34;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #menu h1 { animation: none; }
+    #menu .opt, #menu .opt::before { transition: none; }
+  }
   @media (max-height: 560px) {
-    #menu h1 { width: min(28vw, 36vh, 210px) !important; margin-bottom: 3px !important; }
-    #menu .opts { margin-top: 2px !important; gap: 4px; }
+    #menu h1 { width: min(25vw, 33vh, 188px) !important; margin: -1vh 0 2px !important; }
+    #menu .opts { width: min(470px, 80vw) !important; margin-top: 0 !important; gap: 4px; padding: 6px; border-radius: 14px; }
+    #menu .opt { min-height: 34px; padding: 6px 12px; border-radius: 9px; }
+  }
+  @media (max-height: 420px) {
+    #menu h1 { width: min(21vw, 27vh, 128px) !important; }
+    #menu .opts { gap: 3px; padding: 4px; }
+    #menu .opt { min-height: 29px; padding: 4px 10px; }
   }
 '''
               s = s.replace('</style>', css + '\n</style>', 1)
@@ -122,5 +180,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html manifest.webmanifest icon-192.png icon-512.png icon-maskable.png apple-touch-icon.png
-          git diff --cached --quiet || git commit -m "Refresh Bomber Fan logo and front screen"
+          git diff --cached --quiet || git commit -m "Refresh Bomber Fan logo, icons and front menu"
           git push

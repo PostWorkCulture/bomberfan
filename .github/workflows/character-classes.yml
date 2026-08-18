@@ -1,0 +1,26 @@
+name: Bomber Fan combat classes
+
+on:
+  push:
+    paths:
+      - '.github/workflows/character-classes.yml'
+      - '.github/scripts/character_classes.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  differentiate-classes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply four combat classes
+        run: python .github/scripts/character_classes.py
+      - name: Commit combat classes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Differentiate Bomber Fan Heavy Reaper Assault and Stealth classes"
+          git push

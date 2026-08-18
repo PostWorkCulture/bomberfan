@@ -1989,6 +1989,303 @@
     #select .classpick kbd { display: none; }
   }
 
+  /* BOMBER FAN CHARACTER SELECT V6 */
+  /* One large live model, one compact twelve-fighter roster, no prize ladder. */
+  #select {
+    --fighter: #ff5148;
+    padding: clamp(10px, 1.6vh, 18px) clamp(16px, 3vw, 44px) clamp(10px, 1.4vh, 16px) !important;
+    gap: clamp(7px, 1.2vh, 13px);
+  }
+  #select .shead,
+  #select .sbody,
+  #select .sroster,
+  #select .sfoot { position: relative; z-index: 1; }
+  #select .shead {
+    width: min(1240px, calc(100vw - 48px));
+    min-height: 52px !important;
+    margin: 0 auto;
+    padding: 0 2px 7px !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+    border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  }
+  #select .shead::before,
+  #select .shead::after { display: none !important; }
+  #select .shead > div { display: flex; align-items: baseline; gap: 14px; }
+  #select .seyebrow {
+    color: var(--fighter);
+    font: 900 clamp(9px, .85vw, 12px)/1 system-ui, sans-serif;
+    letter-spacing: 3px;
+    text-shadow: 0 0 14px color-mix(in srgb, var(--fighter) 65%, transparent);
+  }
+  #select h2 {
+    font-size: clamp(24px, 3.1vw, 42px) !important;
+    line-height: .92 !important;
+    letter-spacing: clamp(3px, .5vw, 7px) !important;
+    color: #fff6e9 !important;
+    text-shadow: 0 3px #060606, 0 0 22px color-mix(in srgb, var(--fighter) 28%, transparent) !important;
+  }
+  #select .scount {
+    color: rgba(255,245,230,.58);
+    font: 900 clamp(8px, .8vw, 11px)/1 system-ui, sans-serif;
+    letter-spacing: 2px;
+    padding-bottom: 3px;
+  }
+  #select .sbody {
+    display: grid !important;
+    grid-template-columns: minmax(430px, 1.45fr) minmax(330px, .82fr) !important;
+    align-items: stretch !important;
+    flex: 1 1 auto;
+    gap: clamp(18px, 2.5vw, 38px) !important;
+    width: min(1240px, calc(100vw - 48px)) !important;
+    max-width: 1240px !important;
+    min-height: 0;
+    margin: 0 auto !important;
+    padding: clamp(11px, 1.6vh, 17px) clamp(11px, 1.5vw, 20px) clamp(18px, 2.3vh, 25px) !important;
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(16,17,22,.54), rgba(5,6,9,.72)) !important;
+    border: 1px solid color-mix(in srgb, var(--fighter) 20%, rgba(255,255,255,.08)) !important;
+    box-shadow: inset 0 1px rgba(255,255,255,.035), 0 24px 70px rgba(0,0,0,.42) !important;
+  }
+  #select .sbody::after { display: none !important; }
+  #select .sbody::before {
+    height: 9px !important;
+    opacity: .38 !important;
+    background: repeating-linear-gradient(135deg, var(--fighter) 0 12px, #101116 12px 24px) !important;
+  }
+  #select .scol {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0;
+    gap: 10px !important;
+  }
+  #spreview {
+    position: relative;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    height: 100% !important;
+    min-height: 280px;
+    aspect-ratio: auto !important;
+    align-self: stretch !important;
+    overflow: hidden;
+    border: 3px solid rgba(255,247,229,.92) !important;
+    border-radius: 18px !important;
+    background: transparent !important;
+    box-shadow:
+      0 0 0 1px var(--fighter),
+      0 0 24px color-mix(in srgb, var(--fighter) 72%, transparent),
+      0 0 72px color-mix(in srgb, var(--fighter) 42%, transparent),
+      inset 0 0 54px rgba(255,255,255,.10),
+      0 28px 64px rgba(0,0,0,.58) !important;
+  }
+  #spreview::before { display: none !important; }
+  #spreview::after {
+    inset: 8% 5% 9% !important;
+    border-color: color-mix(in srgb, var(--fighter) 28%, transparent) !important;
+  }
+  #spreview .spreviewtag {
+    position: absolute; z-index: 3; left: 14px; top: 12px;
+    padding: 5px 8px;
+    border: 1px solid color-mix(in srgb, var(--fighter) 70%, transparent);
+    border-radius: 4px;
+    background: rgba(8,8,14,.72);
+    color: #fff4df;
+    font: 900 8px/1 system-ui, sans-serif;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px var(--fighter);
+  }
+  #spreview .sname {
+    z-index: 3;
+    bottom: clamp(12px, 2vh, 22px) !important;
+    font: 1000 clamp(25px, 3.1vw, 43px)/.9 'Arial Black', Impact, system-ui, sans-serif !important;
+    letter-spacing: clamp(3px, .6vw, 8px) !important;
+    color: #fff8ef !important;
+    text-shadow: 0 4px 0 #050506, 0 0 22px var(--fighter), 0 0 45px rgba(0,0,0,.85) !important;
+  }
+  #select .sidentity {
+    min-height: 72px;
+    padding: 10px 14px 11px;
+    border-left: 4px solid var(--fighter);
+    border-radius: 7px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--fighter) 15%, rgba(12,13,18,.96)), rgba(9,10,14,.92));
+    box-shadow: inset 0 1px rgba(255,255,255,.04), 0 8px 20px rgba(0,0,0,.34);
+  }
+  #select .smeta { display: flex; align-items: center; gap: 10px; }
+  #select .srole {
+    color: #fff6e9;
+    font: 900 clamp(10px, .95vw, 13px)/1 system-ui, sans-serif;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+  }
+  #select .smove {
+    color: var(--fighter);
+    font: 900 clamp(8px, .75vw, 10px)/1 system-ui, sans-serif;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+  }
+  #select .smove::before { content: 'SIGNATURE  '; color: rgba(255,255,255,.34); }
+  #select .sbio {
+    max-width: 62ch;
+    margin: 7px 0 0;
+    color: rgba(255,245,230,.66);
+    font: 700 clamp(9px, .82vw, 12px)/1.35 system-ui, sans-serif;
+    letter-spacing: .25px;
+  }
+  #select .sroster {
+    pointer-events: auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(62px, 1fr));
+    align-self: center;
+    gap: clamp(6px, .8vw, 10px);
+    width: min(100%, 430px);
+    max-height: min(55vh, 470px);
+    padding: clamp(9px, 1.1vw, 13px);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(24,25,31,.94), rgba(7,8,11,.97));
+    box-shadow: inset 0 1px rgba(255,255,255,.04), 0 20px 48px rgba(0,0,0,.46);
+  }
+  #select .charpick {
+    --fighter: #ff5148;
+    appearance: none;
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    padding: 8px 7px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 8px;
+    background: linear-gradient(150deg, rgba(34,35,42,.96), rgba(10,11,14,.98));
+    color: rgba(255,244,230,.66);
+    text-align: left;
+    cursor: pointer;
+    box-shadow: inset 0 1px rgba(255,255,255,.035), 0 6px 12px rgba(0,0,0,.28);
+    transition: transform .13s ease, border-color .13s ease, box-shadow .13s ease, color .13s ease;
+  }
+  #select .charpick::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 110% -10%, color-mix(in srgb, var(--fighter) 35%, transparent), transparent 58%);
+    opacity: .45;
+  }
+  #select .charpick i {
+    position: absolute; left: 0; top: 17%; bottom: 17%; width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--fighter);
+    box-shadow: 0 0 13px var(--fighter);
+  }
+  #select .charface {
+    position: relative;
+    width: clamp(38px, 3.5vw, 48px);
+    height: clamp(42px, 4vw, 54px);
+    flex: 0 0 auto;
+    border: 1px solid color-mix(in srgb, var(--fighter) 45%, rgba(255,255,255,.14));
+    border-radius: 7px;
+    background-image: url('assets/fighter-faces.png');
+    background-repeat: no-repeat;
+    background-size: 300% 400%;
+    background-position: var(--face-x) var(--face-y);
+    box-shadow: inset 0 0 12px rgba(0,0,0,.34), 0 0 10px color-mix(in srgb, var(--fighter) 16%, transparent);
+    overflow: hidden;
+  }
+  #select .charface::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(145deg, rgba(255,255,255,.13), transparent 35% 75%, rgba(0,0,0,.18));
+  }
+  #select .charindex {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    color: var(--fighter);
+    font: 1000 8px/1 system-ui, sans-serif;
+    opacity: .78;
+  }
+  #select .charcopy { position: relative; display: block; min-width: 0; }
+  #select .charcopy b,
+  #select .charcopy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #select .charcopy b {
+    color: inherit;
+    font: 1000 clamp(9px, .85vw, 12px)/1.05 system-ui, sans-serif;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  #select .charcopy small {
+    margin-top: 4px;
+    color: rgba(255,244,230,.37);
+    font: 800 clamp(6px, .54vw, 8px)/1 system-ui, sans-serif;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  #select .charpick:hover,
+  #select .charpick.sel,
+  #select .charpick.selected {
+    z-index: 2;
+    color: #fff9f0;
+    border-color: var(--fighter);
+    background: linear-gradient(150deg, color-mix(in srgb, var(--fighter) 23%, #24252d), #0a0b0e 88%);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--fighter) 25%, transparent),
+                0 0 20px color-mix(in srgb, var(--fighter) 34%, transparent),
+                inset 0 1px rgba(255,255,255,.10);
+  }
+  #select .charpick.selected { transform: translateY(-2px); }
+  #select .charpick.selected .charface {
+    border-color: var(--fighter);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--fighter) 55%, transparent), inset 0 0 10px rgba(0,0,0,.22);
+  }
+  #select .charpick.selected .charcopy small { color: color-mix(in srgb, var(--fighter) 70%, white); }
+  #select .sfoot {
+    flex: 0 0 auto;
+    min-height: 58px;
+    justify-content: center;
+  }
+  #select .sfoot .opt.go {
+    min-width: clamp(250px, 32vw, 420px) !important;
+    padding: clamp(12px, 1.7vh, 17px) 24px !important;
+    border-color: color-mix(in srgb, var(--fighter) 70%, #ffba50) !important;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--fighter) 22%, #3b1f14), #1a0d0a) !important;
+    box-shadow: 0 0 24px color-mix(in srgb, var(--fighter) 22%, transparent), 0 12px 28px rgba(0,0,0,.44) !important;
+  }
+  #select .sfoot .opt.go .lbl.start { font-size: clamp(15px, 1.45vw, 20px) !important; }
+
+  @media (max-height: 660px) and (min-width: 720px) {
+    #select { gap: 5px; padding-top: 7px !important; padding-bottom: 7px !important; }
+    #select .shead { min-height: 38px !important; padding-bottom: 4px !important; }
+    #select .sbody { padding-top: 8px !important; padding-bottom: 15px !important; }
+    #spreview { min-height: 210px; }
+    #select .sidentity { min-height: 52px; padding: 7px 11px; }
+    #select .sbio { margin-top: 4px; }
+    #select .sroster { grid-template-rows: repeat(4, minmax(48px, 1fr)); max-height: 50vh; }
+    #select .charpick { padding: 5px 6px; }
+    #select .charface { width: 34px; height: 39px; }
+    #select .sfoot { min-height: 45px; }
+  }
+  @media (max-width: 719px) {
+    #select .seyebrow, #select .scount, #select .sbio { display: none; }
+    #select .shead > div { display: block; }
+    #select .shead { min-height: 34px !important; }
+    #select .sbody {
+      grid-template-columns: minmax(180px, 1.15fr) minmax(250px, 1fr) !important;
+      gap: 10px !important;
+    }
+    #select .sroster { grid-template-rows: repeat(4, minmax(42px, 1fr)); padding: 6px; gap: 4px; }
+    #select .charpick { padding: 4px; gap: 4px; }
+    #select .charface { width: 30px; height: 34px; border-radius: 5px; }
+    #select .charcopy small { display: none; }
+    #select .charindex { font-size: 6px; }
+    #select .sidentity { min-height: 38px; padding: 6px 8px; }
+    #spreview .spreviewtag { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -6507,17 +6804,33 @@ const CURSES = [
   { id: 'reverse',  label: 'Reversed' },
 ];
 
-// Player identities. Each has a body colour, a lighter belly, a trim colour
-// for hands and feet, a darker accent, plus headgear and an extra flourish —
-// so they read as four different characters, not four recoloured blobs.
-// Colours and name only. Headgear and flourishes USED to live here, welded one
-// per character — Pyro always wore the cap. They are prizes now (section 05),
-// so everyone starts bare-headed and what you are wearing is something you won.
+// Twelve mechanically identical fighters with deliberately different visual
+// architecture. Role, bio and movement copy belong to character select only.
 const PLAYER_DEFS = [
-  { name: 'Heavy',   color: 0xff3b30, belly: 0xffe2b8, trim: 0xffd166, accent: 0x8f1d14 },
-  { name: 'Reaper',  color: 0x2f7bff, belly: 0xe6f3ff, trim: 0xbfe6ff, accent: 0x123f7d },
-  { name: 'Assault', color: 0x33cc55, belly: 0xe0ffd4, trim: 0xd8ff9e, accent: 0x1a6b2f },
-  { name: 'Stealth', color: 0xffcc00, belly: 0xfff4c9, trim: 0x8b5a00, accent: 0x9a6b00 },
+  { name: 'Heavy', color: 0xff3b30, belly: 0xffe2b8, trim: 0xffd166, accent: 0x8f1d14,
+    role: 'Squat Tank Hull', move: 'Piston Stomp', bio: 'Armoured low and wide. Built to look immovable.' },
+  { name: 'Reaper', color: 0x2f7bff, belly: 0xe6f3ff, trim: 0xbfe6ff, accent: 0x123f7d,
+    role: 'Skeletal Wraith', move: 'Grave Float', bio: 'A hovering bone spectre with long ember claws.' },
+  { name: 'Cyclops', color: 0x33cc55, belly: 0xe0ffd4, trim: 0xd8ff9e, accent: 0x1a6b2f,
+    role: 'Visor Cyclops', move: 'Target March', bio: 'One glowing sightline. Nothing escapes its scan.' },
+  { name: 'Jester', color: 0xff2fd1, belly: 0xffe8fb, trim: 0x8d2cff, accent: 0x630054,
+    role: 'Manic Trickster', move: 'Bell Hop', bio: 'A diamond-bodied menace with a weaponised grin.' },
+  { name: 'Inferno', color: 0xff5a16, belly: 0xffe1a6, trim: 0xffc21a, accent: 0x7f1c00,
+    role: 'Living Furnace', move: 'Boiler Rattle', bio: 'A walking firebox driven by a molten core.' },
+  { name: 'Xeno', color: 0x6dff54, belly: 0xe6ffdd, trim: 0xb4ff28, accent: 0x176c1d,
+    role: 'Alien Stalker', move: 'Predator Sway', bio: 'Long-limbed, ribbed and very far from home.' },
+  { name: 'Devil', color: 0xff2349, belly: 0xffdfdf, trim: 0xff9b22, accent: 0x790018,
+    role: 'Horned Fiend', move: 'Hell Stomp', bio: 'A crimson idol with sweeping horns and ember eyes.' },
+  { name: 'Maw', color: 0xd6ff18, belly: 0xf6ffc8, trim: 0xff4bde, accent: 0x5e7000,
+    role: 'Neon Nightmare', move: 'Chomp Bounce', bio: 'Mostly teeth, appetite and toxic green trouble.' },
+  { name: 'Assault', color: 0x20d8ff, belly: 0xdffaff, trim: 0xffe11f, accent: 0x00617c,
+    role: 'Rocket Trooper', move: 'Launcher Recoil', bio: 'A bright field unit carrying its own heavy answer.' },
+  { name: 'Plague', color: 0x7dff38, belly: 0xeaffd5, trim: 0x35ffcb, accent: 0x266d08,
+    role: 'Toxic Horror', move: 'Hazmat Shuffle', bio: 'Sealed tanks, glowing lenses and a very bad atmosphere.' },
+  { name: 'Phantom', color: 0x9f46ff, belly: 0xeee0ff, trim: 0x61e8ff, accent: 0x3a0974,
+    role: 'Void Apparition', move: 'Spectral Glide', bio: 'A vivid purple spirit with no feet and no patience.' },
+  { name: 'Joker', color: 0x7b2cff, belly: 0xf3eee2, trim: 0x35ff59, accent: 0xff244f,
+    role: 'Chaotic Villain', move: 'Cane Dance', bio: 'Purple suit, acid hair and one deeply unhelpful smile.' },
 ];
 
 // Fixed spawn corners in grid coordinates
@@ -7031,6 +7344,11 @@ const COSMETICS = {
   sound:  { label: 'Sound',   items: SOUNDS,    def: 'classic' },
 };
 const COSMETIC_SLOTS = ['finish', 'hat', 'extra', 'bomb', 'sound'];
+function defaultLoadout() {
+  const kit = {};
+  COSMETIC_SLOTS.forEach(slot => { kit[slot] = COSMETICS[slot].def; });
+  return kit;
+}
 
 // THE POWER THE WORN PRIZE GRANTS, or null. Derived rather than stored: one
 // prize is worn at a time, so there is exactly one answer and no state to keep
@@ -11014,18 +11332,17 @@ class Player {
     this.def = def;
     this.isHuman = isHuman;
     this.wins = 0;
-    this.kit = Locker.loadout(seat);
+    this.kit = defaultLoadout();
     this.mesh = Player.buildMesh(def, this.kit);
     this.aura = this.mesh.userData.aura;
     World.scene.add(this.mesh);
     this.reset();
   }
 
-  // Put on what this seat currently has equipped. Called at the start of every
-  // round, so a prize won at the end of one round is worn in the next.
-  // Rebuilding a character is not free, so an unchanged loadout does nothing.
+  // Rebuild with an explicit kit when a diagnostic needs it. Normal matches
+  // always use the character's standard silhouette and default bomb.
   applyLoadout(kit) {
-    const next = kit || Locker.loadout(this.seat);
+    const next = kit || defaultLoadout();
     if (this.kit && COSMETIC_SLOTS.every(s => this.kit[s] === next[s])) return false;
     this.kit = next;
     const old = this.mesh;
@@ -11508,6 +11825,16 @@ class Player {
     if (list) for (let i = 0; i < list.length; i++) list[i](t);
   }
 
+  static tickShowcase(mesh, t) {
+    const fn = mesh && mesh.userData && mesh.userData.showcaseAnim;
+    if (fn) fn(t);
+  }
+
+  static resetShowcase(mesh) {
+    const fn = mesh && mesh.userData && mesh.userData.showcaseReset;
+    if (fn) fn();
+  }
+
   static buildMesh(def, loadout) {
     const g = new THREE.Group();
     const kit = loadout || {};
@@ -11544,6 +11871,10 @@ class Player {
       roughness: 0.18, metalness: 0.42,
       emissive: def.color, emissiveIntensity: 0.72
     });
+    const brightShellMat = mat(def.color, {
+      roughness: 0.3, metalness: 0.24,
+      emissive: def.color, emissiveIntensity: 0.22
+    });
     const combatHotMat = mat(0xff4b18, {
       roughness: 0.2, metalness: 0.2,
       emissive: 0xff2600, emissiveIntensity: 1.8
@@ -11563,216 +11894,638 @@ class Player {
     const shoeMat = mat(SHOE_BLACK, { roughness: 0.42, metalness: 0.15 });
     const accentMat = mat(def.accent, styled('trim', { roughness: 0.4 }));
 
-    // --- Body and head ------------------------------------------------------
-    // Deliberately separate: a single capsule swallows anything placed on the
-    // head, which is how the first pass lost every hat inside the body.
-    const BODY_Y = 0.3;
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.14, 6, 18), bodyMat);
-    body.position.y = BODY_Y;
-    body.castShadow = true;
-    g.add(body);
-
-    // Lighter belly patch, sunk into the front so it reads as two-tone
-    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.245, 18, 14), bellyMat);
-    belly.scale.set(1.02, 1.0, 0.58);
-    belly.position.set(0, BODY_Y - 0.01, 0.2);
-    g.add(belly);
-
-    // --- Combat armour ------------------------------------------------------
-    // A faceted chest plate over the original torso. The old rounded body stays
-    // underneath so animation and silhouette remain familiar at game scale.
-    const chestPlate = new THREE.Mesh(new THREE.BoxGeometry(0.43, 0.29, 0.105), combatGunMat);
-    chestPlate.position.set(0, BODY_Y + 0.02, 0.31);
-    chestPlate.rotation.x = -0.08;
-    chestPlate.castShadow = true;
-    g.add(chestPlate);
-
-    const chestCore = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.035, 0.025), combatGlowMat);
-    chestCore.position.set(0, BODY_Y + 0.05, 0.372);
-    g.add(chestCore);
-
-    // Shoulder armour widens the upper silhouette without moving the animated arms.
-    [-1, 1].forEach(side => {
-      const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.13, 0.23), combatGunMat);
-      shoulder.position.set(side * 0.405, BODY_Y + 0.13, 0.02);
-      shoulder.rotation.z = side * -0.20;
-      shoulder.rotation.y = side * 0.08;
-      shoulder.castShadow = true;
-      g.add(shoulder);
-
-      const shoulderMark = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.065, 0.15), combatGlowMat);
-      shoulderMark.position.set(side * 0.502, BODY_Y + 0.14, 0.035);
-      shoulderMark.rotation.z = side * -0.20;
-      g.add(shoulderMark);
-
-      // Reinforced shin/boot armour: intentionally compact to keep feet readable.
-      const shin = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.19), combatBlackMat);
-      shin.position.set(side * 0.19, 0.17, 0.045);
-      shin.castShadow = true;
-      g.add(shin);
-    });
-
-    const HEAD_Y = 0.7, HEAD_R = 0.265;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 20, 16), bodyMat);
-    head.scale.set(1, 0.95, 1);
-    head.position.y = HEAD_Y;
-    head.castShadow = true;
-    g.add(head);
-
-    // Scorched slash marks: tiny raised strips so they catch light without textures.
-    const scarMat = mat(0x020304, { roughness: 0.8, metalness: 0.05 });
-    [-1, 1].forEach((side, i) => {
-      const scar = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.12 - i * 0.02, 0.012), scarMat);
-      scar.position.set(side * 0.17, HEAD_Y + 0.10 - i * 0.03, 0.225);
-      scar.rotation.z = side * 0.48;
-      g.add(scar);
-    });
-
-    // --- Face: hostile combat visor ----------------------------------------
-    // The old white eyes made the characters friendly mascots. A single smoked
-    // visor with narrow emissive slits reads much darker from both arena and locker.
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.135, 0.055), combatBlackMat);
-    visor.position.set(0, HEAD_Y + 0.015, 0.248);
-    visor.rotation.x = -0.035;
-    g.add(visor);
-
-    [-1, 1].forEach(side => {
-      const eye = new THREE.Mesh(new THREE.BoxGeometry(0.105, 0.026, 0.018), combatHotMat);
-      eye.position.set(side * 0.09, HEAD_Y + 0.022, 0.282);
-      eye.rotation.z = side * -0.16;
-      g.add(eye);
-    });
-
-    // Heavy brow and central helmet ridge make the face look armoured rather than cute.
-    [-1, 1].forEach(side => {
-      const brow = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.035, 0.055), combatGunMat);
-      brow.position.set(side * 0.085, HEAD_Y + 0.095, 0.237);
-      brow.rotation.z = side * 0.18;
-      g.add(brow);
-    });
-    const helmRidge = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.23, 0.055), combatGunMat);
-    helmRidge.position.set(0, HEAD_Y + 0.105, 0.055);
-    helmRidge.rotation.x = -0.16;
-    g.add(helmRidge);
-
-    /* BOMBER FAN COMBAT CLASSES V2 */
-    /* Four unmistakable silhouettes. Visual only: movement, blast radius,
-       bomb count, collision and damage stay identical for every operative. */
-    const combatClass =
-      def.color === 0xff3b30 ? 'heavy' :
-      def.color === 0x2f7bff ? 'reaper' :
-      def.color === 0x33cc55 ? 'assault' : 'stealth';
+    /* BOMBER FAN DISTINCT OPERATIVES V3 */
+    /* Each class owns its proportions and primary geometry. Nothing below is a
+       shared mascot with class parts stuck on afterwards. The widest solid point
+       stays inside x +/-0.41 so VIEW_SCALE preserves the gameplay footprint. */
+    const combatClass = def.name.toLowerCase();
     g.userData.combatClass = combatClass;
+    const anims = [];
+    const boneMat = mat(0xb7b2a8, { roughness: 0.58, metalness: 0.28 });
+    const stealthMat = mat(0x020307, { roughness: 0.22, metalness: 0.76 });
+    const darkClothMat = mat(0x090b10, { roughness: 0.84, metalness: 0.04 });
+    const add = (geo, material, p, s, r, parent) => {
+      const m = new THREE.Mesh(geo, material);
+      if (p) m.position.set(p[0], p[1], p[2]);
+      if (s) m.scale.set(s[0], s[1], s[2]);
+      if (r) m.rotation.set(r[0], r[1], r[2]);
+      m.castShadow = true;
+      (parent || g).add(m);
+      return m;
+    };
+    const capsule = (radius, length, material, p, s, r, parent) =>
+      add(new THREE.CapsuleGeometry(radius, length, 5, 12), material, p, s, r, parent);
+    const glowOrb = (radius, p, parent) =>
+      add(new THREE.SphereGeometry(radius, 10, 8), combatGlowMat, p, null, null, parent);
 
     if (combatClass === 'heavy') {
+      // HEAVY: low centre of gravity, continuous tank hull, brutal squared helmet.
+      const rig = new THREE.Group();
+      rig.position.y = -0.01;
+      g.add(rig);
+      capsule(0.31, 0.12, bodyMat, [0, 0.35, 0], [1.03, 0.9, 0.92], null, rig);
+      const hull = add(new THREE.DodecahedronGeometry(0.34, 0), combatGunMat,
+        [0, 0.43, 0.015], [1.04, 0.78, 0.9], [0.02, 0, 0], rig);
+      add(new THREE.DodecahedronGeometry(0.25, 0), bodyMat,
+        [0, 0.43, 0.16], [1.0, 0.72, 0.42], [-0.08, 0, 0], rig);
+      const reactor = add(new THREE.OctahedronGeometry(0.105, 0), combatGlowMat,
+        [0, 0.44, 0.335], [1.25, 0.72, 0.32], [0, 0, Math.PI / 4], rig);
+
       [-1, 1].forEach(side => {
-        const pauldron = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.18, 0.28), combatGunMat);
-        pauldron.position.set(side * 0.43, BODY_Y + 0.16, -0.005);
-        pauldron.rotation.z = side * -0.28;
-        pauldron.castShadow = true;
-        g.add(pauldron);
-        const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.11, 0.20), combatGlowMat);
-        stripe.position.set(side * 0.55, BODY_Y + 0.17, 0.015);
-        stripe.rotation.z = side * -0.28;
-        g.add(stripe);
+        // Shoulder and arm overlap into one armoured mass instead of floating blocks.
+        add(new THREE.SphereGeometry(0.14, 10, 8), combatGunMat,
+          [side * 0.275, 0.48, 0.015], [0.92, 0.72, 1.0], [0, 0, side * -0.12], rig);
+        add(new THREE.CylinderGeometry(0.085, 0.115, 0.27, 7), combatBlackMat,
+          [side * 0.31, 0.29, 0.035], null, [0, 0, side * -0.08], rig);
+        add(new THREE.TorusGeometry(0.09, 0.018, 6, 14, Math.PI * 1.35), combatGlowMat,
+          [side * 0.305, 0.34, 0.075], [1, 1, 0.72], [Math.PI / 2, 0, side > 0 ? 0.55 : 2.6], rig);
+        add(new THREE.CylinderGeometry(0.12, 0.14, 0.14, 7), shoeMat,
+          [side * 0.18, 0.085, 0.08], [1, 1, 1.25], [Math.PI / 2, 0, 0], rig);
       });
-      const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.09, 0.075), combatGunMat);
-      jaw.position.set(0, HEAD_Y - 0.105, 0.225);
-      g.add(jaw);
-      const chestSlab = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.15, 0.055), combatBlackMat);
-      chestSlab.position.set(0, BODY_Y + 0.07, 0.38);
-      g.add(chestSlab);
+
+      const helmet = add(new THREE.DodecahedronGeometry(0.275, 0), brightShellMat,
+        [0, 0.75, 0.015], [1.03, 0.78, 0.9], [0.04, 0, 0], rig);
+      add(new THREE.CylinderGeometry(0.19, 0.23, 0.16, 6), bodyMat,
+        [0, 0.69, 0.09], [1, 0.9, 0.88], [0.04, 0, 0], rig);
+      add(new THREE.BoxGeometry(0.37, 0.105, 0.07), combatBlackMat,
+        [0, 0.75, 0.235], null, [-0.05, 0, 0], rig);
+      [-1, 1].forEach(side => {
+        add(new THREE.BoxGeometry(0.115, 0.026, 0.018), combatHotMat,
+          [side * 0.085, 0.765, 0.276], null, [0, 0, side * -0.12], rig);
+      });
+      add(new THREE.CylinderGeometry(0.032, 0.055, 0.28, 5), combatGunMat,
+        [0, 0.94, 0], null, [0.06, 0, 0], rig);
+      add(new THREE.TorusGeometry(0.24, 0.027, 7, 18, Math.PI), combatGunMat,
+        [0, 0.65, 0.04], [1, 1, 0.8], [Math.PI / 2, 0, 0], rig);
+      anims.push(t => {
+        const p = 1 + Math.sin(t * 2.2) * 0.035;
+        reactor.scale.set(1.25 * p, 0.72 * p, 0.32 * p);
+        combatGlowMat.emissiveIntensity = 0.72 + (p - 1) * 7;
+        helmet.rotation.y = Math.sin(t * 0.7) * 0.035;
+        hull.rotation.z = Math.sin(t * 1.1) * 0.008;
+      });
     } else if (combatClass === 'reaper') {
-      const skullMat = mat(0x69717b, { roughness: 0.46, metalness: 0.62 });
-      const mask = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.17, 0.048), skullMat);
-      mask.position.set(0, HEAD_Y - 0.015, 0.287);
-      mask.scale.set(0.92, 1, 1);
-      g.add(mask);
+      // REAPER: tall inverted wedge, floating skull, long arms and torn lower points.
+      const rig = new THREE.Group();
+      g.add(rig);
+      add(new THREE.ConeGeometry(0.28, 0.58, 6), darkClothMat,
+        [0, 0.39, 0], [0.9, 1, 0.78], [0, 0, Math.PI], rig);
+      add(new THREE.ConeGeometry(0.235, 0.49, 6), bodyMat,
+        [0, 0.43, 0.09], [0.92, 0.88, 0.58], [0.06, 0, Math.PI], rig);
+      // Rib arcs are one coherent skeletal chest read, not armour stuck to a belly.
       [-1, 1].forEach(side => {
-        const fang = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.10, 0.04), skullMat);
-        fang.position.set(side * 0.07, HEAD_Y - 0.115, 0.284);
-        fang.rotation.z = side * 0.16;
-        g.add(fang);
-        const horn = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.25, 5), combatGunMat);
-        horn.position.set(side * 0.16, HEAD_Y + 0.27, -0.01);
-        horn.rotation.z = side * -0.34;
-        g.add(horn);
+        add(new THREE.TorusGeometry(0.15, 0.018, 6, 14, Math.PI * 0.72), boneMat,
+          [0, 0.48 + side * 0.07, 0.205], [1, 0.72, 0.45], [Math.PI / 2, 0, side > 0 ? 0.45 : 0.1], rig);
       });
-      const spine = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.31, 0.10), combatBlackMat);
-      spine.position.set(0, BODY_Y + 0.09, -0.29);
-      spine.rotation.x = -0.08;
-      g.add(spine);
+      const spineCore = glowOrb(0.055, [0, 0.46, 0.245], rig);
+      const claws = [];
+      [-1, 1].forEach(side => {
+        add(new THREE.ConeGeometry(0.075, 0.33, 6), combatGunMat,
+          [side * 0.27, 0.46, 0], [0.8, 1, 0.8], [0, 0, side * 1.0], rig);
+        const arm = capsule(0.052, 0.27, boneMat,
+          [side * 0.285, 0.31, 0.03], [0.82, 1, 0.82], [0, 0, side * 0.13], rig);
+        const claw = add(new THREE.ConeGeometry(0.05, 0.18, 5), combatHotMat,
+          [side * 0.31, 0.13, 0.09], [0.72, 1, 0.72], [Math.PI, 0, side * 0.12], rig);
+        claws.push({ arm, claw, side });
+        add(new THREE.ConeGeometry(0.055, 0.25, 5), darkClothMat,
+          [side * 0.12, 0.14, -0.02], [1, 1, 0.8], [Math.PI, 0, side * 0.08], rig);
+        add(new THREE.SphereGeometry(0.085, 10, 7), shoeMat,
+          [side * 0.17, 0.075, 0.04], [0.8, 0.48, 1.35], null, rig);
+      });
+
+      const headRig = new THREE.Group();
+      headRig.position.y = 0;
+      rig.add(headRig);
+      add(new THREE.DodecahedronGeometry(0.255, 0), darkClothMat,
+        [0, 0.79, -0.015], [0.92, 1.12, 0.88], [0, 0, 0], headRig);
+      add(new THREE.DodecahedronGeometry(0.19, 0), boneMat,
+        [0, 0.765, 0.18], [0.78, 1.02, 0.52], [0.03, 0, 0], headRig);
+      add(new THREE.ConeGeometry(0.11, 0.16, 5), boneMat,
+        [0, 0.65, 0.22], [1, 0.8, 0.58], [Math.PI, 0, 0], headRig);
+      [-1, 1].forEach(side => {
+        add(new THREE.OctahedronGeometry(0.052, 0), combatBlackMat,
+          [side * 0.07, 0.79, 0.285], [1, 0.72, 0.34], [0, 0, side * -0.18], headRig);
+        add(new THREE.SphereGeometry(0.022, 8, 6), combatHotMat,
+          [side * 0.07, 0.79, 0.315], null, null, headRig);
+      });
+      [-1, 0, 1].forEach((side, i) => {
+        add(new THREE.ConeGeometry(0.035, 0.24 + (1 - Math.abs(side)) * 0.09, 5), combatGunMat,
+          [side * 0.15, 1.005, -0.02], null, [0, 0, side * -0.38], headRig);
+      });
+      anims.push(t => {
+        headRig.position.y = Math.sin(t * 1.55) * 0.018;
+        headRig.rotation.y = Math.sin(t * 0.62) * 0.075;
+        claws.forEach(({ arm, claw, side }, i) => {
+          const sway = Math.sin(t * 1.35 + i * Math.PI) * 0.035;
+          arm.rotation.z = side * (0.13 + sway);
+          claw.rotation.z = side * (0.12 + sway * 1.4);
+        });
+        spineCore.scale.setScalar(0.86 + Math.sin(t * 4.1) * 0.13);
+      });
+    } else if (combatClass === 'cyclops') {
+      // CYCLOPS: balanced visor unit with one continuous glowing eye line.
+      const rig = new THREE.Group();
+      g.add(rig);
+      capsule(0.265, 0.22, bodyMat, [0, 0.39, 0], [0.96, 1.02, 0.86], null, rig);
+      const chest = add(new THREE.DodecahedronGeometry(0.285, 0), combatGunMat,
+        [0, 0.47, 0.055], [0.94, 0.76, 0.82], [0.02, 0, 0], rig);
+      add(new THREE.OctahedronGeometry(0.16, 0), bodyMat,
+        [0, 0.47, 0.22], [1.15, 0.8, 0.46], [0, 0, Math.PI / 4], rig);
+      const status = [];
+      [-1, 1].forEach(side => {
+        const lamp = glowOrb(0.034, [side * 0.09, 0.48, 0.335], rig);
+        status.push(lamp);
+        add(new THREE.SphereGeometry(0.13, 10, 8), combatGunMat,
+          [side * 0.285, 0.49, 0.015], [0.9, 0.68, 0.92], [0, 0, side * -0.1], rig);
+        capsule(0.068, 0.23, bodyMat,
+          [side * 0.3, 0.31, 0.03], [0.9, 1, 0.9], [0, 0, side * 0.06], rig);
+        add(new THREE.CylinderGeometry(0.07, 0.085, 0.11, 7), trimMat,
+          [side * 0.305, 0.17, 0.055], null, [0, 0, side * 0.04], rig);
+        add(new THREE.CylinderGeometry(0.095, 0.11, 0.15, 7), shoeMat,
+          [side * 0.17, 0.085, 0.09], [1, 1, 1.25], [Math.PI / 2, 0, 0], rig);
+      });
+
+      const helmet = add(new THREE.DodecahedronGeometry(0.235, 0), brightShellMat,
+        [0, 0.77, 0.01], [1.0, 0.9, 0.9], [0.02, 0, 0], rig);
+      add(new THREE.TorusGeometry(0.215, 0.035, 7, 20, Math.PI * 1.12), combatGunMat,
+        [0, 0.79, 0.01], [1, 1, 0.86], [Math.PI / 2, 0, -0.2], rig);
+      add(new THREE.BoxGeometry(0.32, 0.09, 0.052), combatBlackMat,
+        [0, 0.78, 0.225], [1, 1, 0.8], [-0.045, 0, 0], rig);
+      add(new THREE.BoxGeometry(0.24, 0.025, 0.016), combatHotMat,
+        [0, 0.792, 0.258], null, [0, 0, 0], rig);
+      // Comms mast and backpack form one asymmetrical tactical silhouette.
+      add(new THREE.CapsuleGeometry(0.09, 0.23, 5, 10), combatBlackMat,
+        [0.16, 0.46, -0.17], [0.9, 1, 0.72], [0.05, 0, -0.05], rig);
+      add(new THREE.CylinderGeometry(0.012, 0.018, 0.29, 6), combatGunMat,
+        [0.2, 0.9, -0.035], null, [0, 0, -0.13], rig);
+      const beacon = glowOrb(0.03, [0.218, 1.045, -0.035], rig);
+      anims.push(t => {
+        const pulse = 0.72 + 0.28 * Math.max(0, Math.sin(t * 4.8));
+        beacon.scale.setScalar(0.82 + pulse * 0.3);
+        status.forEach((lamp, i) => lamp.scale.setScalar(0.9 + Math.sin(t * 3.2 + i) * 0.08));
+        helmet.rotation.y = Math.sin(t * 0.72) * 0.045;
+        chest.rotation.z = Math.sin(t * 1.2) * 0.006;
+      });
+    } else if (combatClass === 'jester') {
+      // JESTER: split crown, pinched diamond body and a weaponised grin.
+      const rig = new THREE.Group();
+      g.add(rig);
+      add(new THREE.ConeGeometry(0.29, 0.54, 7), darkClothMat,
+        [0, 0.38, 0], [0.9, 1, 0.72], [0, 0, Math.PI], rig);
+      add(new THREE.OctahedronGeometry(0.25, 0), bodyMat,
+        [0, 0.5, 0.075], [0.92, 1.08, 0.7], [0, 0, Math.PI / 4], rig);
+      const bell = glowOrb(0.065, [0, 0.47, 0.29], rig);
+      [-1, 1].forEach(side => {
+        capsule(0.052, 0.34, side > 0 ? bodyMat : combatGunMat,
+          [side * 0.3, 0.35, 0.03], null, [0, 0, side * -0.32], rig);
+        glowOrb(0.055, [side * 0.39, 0.17, 0.08], rig);
+        add(new THREE.SphereGeometry(0.085, 9, 7), shoeMat,
+          [side * 0.16, 0.065, 0.1], [0.9, 0.4, 1.5], [0, side * 0.22, 0], rig);
+      });
+      const head = add(new THREE.SphereGeometry(0.225, 12, 9), boneMat,
+        [0, 0.76, 0.035], [0.92, 1.04, 0.82], null, rig);
+      add(new THREE.ConeGeometry(0.12, 0.43, 6), bodyMat,
+        [-0.13, 0.98, -0.015], [0.82, 1, 0.72], [0, 0, 0.48], rig);
+      add(new THREE.ConeGeometry(0.12, 0.43, 6), combatGunMat,
+        [0.13, 0.98, -0.015], [0.82, 1, 0.72], [0, 0, -0.48], rig);
+      [-1, 1].forEach(side => glowOrb(0.052, [side * 0.27, 1.09, 0], rig));
+      [-1, 1].forEach(side => add(new THREE.OctahedronGeometry(0.055, 0), combatBlackMat,
+        [side * 0.07, 0.79, 0.22], [1, 0.75, 0.35], [0, 0, side * -0.15], rig));
+      add(new THREE.TorusGeometry(0.11, 0.018, 6, 14, Math.PI), combatHotMat,
+        [0, 0.7, 0.245], [1, 0.55, 0.5], [Math.PI / 2, 0, Math.PI], rig);
+      anims.push(t => {
+        bell.scale.setScalar(0.9 + Math.sin(t * 4.1) * 0.12);
+        head.rotation.y = Math.sin(t * 0.85) * 0.12;
+        rig.rotation.z = Math.sin(t * 1.4) * 0.018;
+      });
+    } else if (combatClass === 'xeno') {
+      // XENO: elongated skull, narrow rib cage, hooked limbs and a curling tail.
+      const rig = new THREE.Group();
+      rig.rotation.x = 0.06;
+      g.add(rig);
+      add(new THREE.CapsuleGeometry(0.18, 0.35, 5, 11), darkClothMat,
+        [0, 0.4, 0], [0.86, 1, 0.72], null, rig);
+      [-1, 0, 1].forEach(i => add(new THREE.TorusGeometry(0.17 - Math.abs(i) * 0.025, 0.018, 5, 12, Math.PI), boneMat,
+        [0, 0.43 + i * 0.08, 0.13], [1, 0.62, 0.55], [Math.PI / 2, 0, 0], rig));
+      const limbs = [];
+      [-1, 1].forEach(side => {
+        const arm = capsule(0.043, 0.46, bodyMat,
+          [side * 0.27, 0.38, 0.02], [0.82, 1, 0.75], [0, 0, side * -0.35], rig);
+        limbs.push(arm);
+        add(new THREE.ConeGeometry(0.038, 0.2, 5), combatHotMat,
+          [side * 0.38, 0.13, 0.1], [0.7, 1, 0.6], [Math.PI, 0, side * -0.2], rig);
+        add(new THREE.ConeGeometry(0.055, 0.34, 5), bodyMat,
+          [side * 0.13, 0.16, -0.01], [0.78, 1, 0.7], [Math.PI, 0, side * 0.09], rig);
+      });
+      const skull = add(new THREE.SphereGeometry(0.24, 12, 8), brightShellMat,
+        [0, 0.78, -0.02], [0.88, 0.82, 1.38], [0.16, 0, 0], rig);
+      add(new THREE.ConeGeometry(0.19, 0.46, 8), brightShellMat,
+        [0, 0.87, -0.2], [0.9, 1, 0.9], [-Math.PI / 2, 0, 0], rig);
+      [-1, 0, 1].forEach((node, i) => add(new THREE.SphereGeometry(0.055 - Math.abs(node) * 0.008, 9, 7), combatGlowMat,
+        [node * 0.115, 0.91 + Math.abs(node) * 0.025, -0.11 - i * 0.045], null, null, rig));
+      [-1, 1].forEach(side => glowOrb(0.035, [side * 0.075, 0.79, 0.25], rig));
+      add(new THREE.TorusGeometry(0.26, 0.035, 6, 18, Math.PI * 1.35), bodyMat,
+        [0.08, 0.28, -0.18], [0.9, 1, 0.75], [Math.PI / 2, 0, 0.5], rig);
+      anims.push(t => {
+        skull.rotation.y = Math.sin(t * 0.55) * 0.1;
+        limbs.forEach((arm, i) => arm.rotation.z += Math.sin(t * 1.4 + i) * 0.002);
+      });
+    } else if (combatClass === 'devil') {
+      // DEVIL: broad crimson idol, cloven stance, sweeping horns and ember eyes.
+      const rig = new THREE.Group();
+      g.add(rig);
+      add(new THREE.DodecahedronGeometry(0.33, 0), bodyMat,
+        [0, 0.43, 0], [1, 0.82, 0.82], null, rig);
+      add(new THREE.OctahedronGeometry(0.18, 0), combatHotMat,
+        [0, 0.43, 0.24], [1.15, 0.8, 0.32], [0, 0, Math.PI / 4], rig);
+      [-1, 1].forEach(side => {
+        capsule(0.075, 0.34, combatGunMat,
+          [side * 0.31, 0.34, 0], null, [0, 0, side * -0.18], rig);
+        add(new THREE.ConeGeometry(0.075, 0.27, 5), bodyMat,
+          [side * 0.16, 0.13, 0.02], [0.9, 1, 0.8], [Math.PI, 0, side * 0.16], rig);
+        add(new THREE.ConeGeometry(0.065, 0.17, 4), combatBlackMat,
+          [side * 0.19, 0.035, 0.09], [1, 1, 1.2], [Math.PI / 2, 0, 0], rig);
+      });
+      const head = add(new THREE.DodecahedronGeometry(0.25, 0), brightShellMat,
+        [0, 0.75, 0.02], [1.05, 0.86, 0.9], null, rig);
+      [-1, 1].forEach(side => {
+        glowOrb(0.06, [side * 0.16, 0.91, 0.025], rig);
+        add(new THREE.ConeGeometry(0.075, 0.4, 7), boneMat,
+          [side * 0.18, 0.98, -0.02], [0.75, 1, 0.7], [0, 0, side * -0.65], rig);
+        add(new THREE.SphereGeometry(0.03, 8, 6), combatHotMat,
+          [side * 0.075, 0.78, 0.25], null, null, rig);
+      });
+      add(new THREE.ConeGeometry(0.1, 0.17, 5), combatGunMat,
+        [0, 0.65, 0.23], [1, 0.8, 0.7], [Math.PI, 0, 0], rig);
+      const tail = add(new THREE.TorusGeometry(0.27, 0.035, 6, 18, Math.PI * 1.4), bodyMat,
+        [0.05, 0.33, -0.16], [0.9, 1, 0.7], [Math.PI / 2, 0, 0.45], rig);
+      anims.push(t => {
+        head.rotation.y = Math.sin(t * 0.72) * 0.07;
+        tail.rotation.z = 0.45 + Math.sin(t * 1.2) * 0.08;
+      });
+    } else if (combatClass === 'maw') {
+      // MAW: fluorescent squat monster whose mouth is the entire torso.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const body = add(new THREE.SphereGeometry(0.35, 12, 9), bodyMat,
+        [0, 0.43, 0], [1, 0.9, 0.82], null, rig);
+      add(new THREE.SphereGeometry(0.245, 12, 8), combatBlackMat,
+        [0, 0.43, 0.23], [1.15, 0.72, 0.38], null, rig);
+      [-2, -1, 0, 1, 2].forEach((tooth, i) => {
+        add(new THREE.ConeGeometry(0.035, 0.15, 5), boneMat,
+          [tooth * 0.065, 0.54, 0.36], null, [Math.PI, 0, 0], rig);
+        add(new THREE.ConeGeometry(0.032, 0.13, 5), boneMat,
+          [tooth * 0.065, 0.33, 0.36], null, null, rig);
+      });
+      const tongue = add(new THREE.CapsuleGeometry(0.055, 0.21, 5, 10), combatHotMat,
+        [0.06, 0.3, 0.37], [1, 1, 0.55], [Math.PI / 2, 0, 0.25], rig);
+      [-1, 1].forEach(side => {
+        add(new THREE.CapsuleGeometry(0.075, 0.28, 5, 9), bodyMat,
+          [side * 0.33, 0.31, 0.02], null, [0, 0, side * -0.35], rig);
+        add(new THREE.SphereGeometry(0.11, 9, 7), shoeMat,
+          [side * 0.17, 0.075, 0.09], [1.05, 0.44, 1.35], null, rig);
+        const stalk = capsule(0.025, 0.18, bodyMat,
+          [side * 0.16, 0.75, 0], null, [0, 0, side * -0.28], rig);
+        glowOrb(0.065, [side * 0.2, 0.85, 0.04], rig);
+        stalk.castShadow = false;
+      });
+      anims.push(t => {
+        body.scale.y = 0.9 + Math.sin(t * 1.8) * 0.018;
+        tongue.rotation.z = 0.25 + Math.sin(t * 2.4) * 0.12;
+      });
     } else if (combatClass === 'assault') {
+      // ASSAULT: bright one-eyed rocket trooper with a shoulder-mounted launcher.
+      const rig = new THREE.Group();
+      g.add(rig);
+      add(new THREE.CylinderGeometry(0.28, 0.32, 0.48, 8), darkClothMat,
+        [0, 0.36, 0], [1, 1, 0.82], null, rig);
+      add(new THREE.SphereGeometry(0.3, 12, 9), bodyMat,
+        [0, 0.52, 0], [1, 0.92, 0.82], null, rig);
       [-1, 1].forEach(side => {
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.22, 0.06), combatGlowMat);
-        rail.position.set(side * 0.135, BODY_Y + 0.025, 0.405);
-        g.add(rail);
+        capsule(0.07, 0.35, bodyMat,
+          [side * 0.31, 0.35, 0.01], null, [0, 0, side * -0.15], rig);
+        add(new THREE.SphereGeometry(0.105, 9, 7), shoeMat,
+          [side * 0.17, 0.07, 0.08], [0.96, 0.44, 1.3], null, rig);
+        add(new THREE.ConeGeometry(0.055, 0.25, 6), combatGunMat,
+          [side * 0.24, 0.78, -0.02], [0.75, 1, 0.7], [0, 0, side * -0.58], rig);
       });
-      const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.018, 0.31, 6), combatGunMat);
-      antenna.position.set(0.19, HEAD_Y + 0.25, -0.02);
-      antenna.rotation.z = -0.14;
-      g.add(antenna);
-      const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), combatGlowMat);
-      beacon.position.set(0.22, HEAD_Y + 0.405, -0.02);
-      g.add(beacon);
-      const chin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.055, 0.06), combatGunMat);
-      chin.position.set(0, HEAD_Y - 0.11, 0.24);
-      g.add(chin);
+      const lens = add(new THREE.SphereGeometry(0.15, 12, 9), combatGlowMat,
+        [0, 0.63, 0.245], [1.22, 1, 0.42], null, rig);
+      add(new THREE.TorusGeometry(0.175, 0.035, 7, 20), combatGunMat,
+        [0, 0.63, 0.26], [1.08, 1, 0.55], null, rig);
+      add(new THREE.SphereGeometry(0.15, 11, 8), brightShellMat,
+        [0, 0.92, -0.01], [1.05, 0.9, 0.82], null, rig);
+      [-1, 1].forEach(side => glowOrb(0.055, [side * 0.13, 0.95, 0.025], rig));
+      const launcher = new THREE.Group();
+      launcher.position.set(0.3, 0.48, 0.05);
+      rig.add(launcher);
+      add(new THREE.CylinderGeometry(0.105, 0.12, 0.46, 9), combatGunMat,
+        [0, 0, 0.17], [1, 1, 0.9], [Math.PI / 2, 0, 0], launcher);
+      add(new THREE.TorusGeometry(0.105, 0.025, 7, 18), brightShellMat,
+        [0, 0, 0.41], [1, 1, 0.88], null, launcher);
+      add(new THREE.CylinderGeometry(0.06, 0.085, 0.055, 9), combatHotMat,
+        [0, 0, 0.435], [1, 1, 0.8], [Math.PI / 2, 0, 0], launcher);
+      [-1, 1].forEach(side => add(new THREE.ConeGeometry(0.035, 0.15, 4), brightShellMat,
+        [side * 0.09, -0.07, 0.08], [0.7, 1, 0.55], [0, 0, side * -0.42], launcher));
+      anims.push(t => {
+        lens.position.x = Math.sin(t * 0.9) * 0.045;
+        lens.scale.set(1.22 + Math.sin(t * 3.2) * 0.05, 1, 0.42);
+        launcher.position.z = 0.05 - Math.pow(Math.max(0, Math.sin(t * 2.6)), 10) * 0.055;
+      });
+    } else if (combatClass === 'plague') {
+      // PLAGUE: sealed containment suit and unmistakable gas-mask face.
+      const rig = new THREE.Group();
+      g.add(rig);
+      add(new THREE.SphereGeometry(0.32, 12, 9), bodyMat,
+        [0, 0.39, 0], [0.94, 0.9, 0.8], null, rig);
+      add(new THREE.CylinderGeometry(0.26, 0.31, 0.36, 10), darkClothMat,
+        [0, 0.36, 0.02], [1, 1, 0.78], null, rig);
+      const tanks = [];
+      [-1, 1].forEach(side => {
+        tanks.push(capsule(0.075, 0.26, combatGunMat,
+          [side * 0.25, 0.45, -0.13], [1, 1, 0.88], null, rig));
+        capsule(0.06, 0.25, bodyMat,
+          [side * 0.31, 0.28, 0.02], null, [0, 0, side * -0.08], rig);
+        add(new THREE.SphereGeometry(0.1, 9, 7), shoeMat,
+          [side * 0.15, 0.075, 0.08], [0.92, 0.45, 1.3], null, rig);
+      });
+      const hood = add(new THREE.SphereGeometry(0.255, 12, 9), brightShellMat,
+        [0, 0.76, 0], [1, 1.05, 0.9], null, rig);
+      add(new THREE.CylinderGeometry(0.13, 0.18, 0.2, 8), combatBlackMat,
+        [0, 0.7, 0.235], [1, 1, 0.8], [Math.PI / 2, 0, 0], rig);
+      [-1, 1].forEach(side => {
+        add(new THREE.CylinderGeometry(0.07, 0.07, 0.035, 10), combatGlowMat,
+          [side * 0.09, 0.79, 0.22], null, [Math.PI / 2, 0, 0], rig);
+        add(new THREE.TorusGeometry(0.055, 0.012, 5, 12), combatGunMat,
+          [side * 0.09, 0.79, 0.243], null, null, rig);
+      });
+      add(new THREE.CylinderGeometry(0.065, 0.105, 0.15, 8), combatGunMat,
+        [0, 0.66, 0.32], null, [Math.PI / 2, 0, 0], rig);
+      anims.push(t => {
+        hood.scale.y = 1.05 + Math.sin(t * 1.7) * 0.012;
+        tanks.forEach((tank, i) => tank.rotation.z = Math.sin(t * 1.2 + i) * 0.018);
+      });
+    } else if (combatClass === 'phantom') {
+      // PHANTOM: a floating crescent hood over torn vapour, with no legs at all.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const cloak = add(new THREE.ConeGeometry(0.34, 0.65, 7), brightShellMat,
+        [0, 0.38, 0], [0.9, 1, 0.72], [0, 0, Math.PI], rig);
+      [-1, 0, 1].forEach((side, i) => add(new THREE.ConeGeometry(0.075, 0.31 + i * 0.025, 5), brightShellMat,
+        [side * 0.17, 0.11, 0.02], [0.9, 1, 0.7], [Math.PI, 0, side * 0.12], rig));
+      const halo = add(new THREE.TorusGeometry(0.275, 0.045, 7, 20, Math.PI * 1.5), combatGlowMat,
+        [0, 0.78, -0.015], [1, 1, 0.78], [Math.PI / 2, 0, -Math.PI * 0.75], rig);
+      add(new THREE.SphereGeometry(0.205, 12, 9), brightShellMat,
+        [0, 0.77, 0.035], [0.88, 1.08, 0.72], null, rig);
+      add(new THREE.ConeGeometry(0.16, 0.29, 6), brightShellMat,
+        [0, 0.92, 0], [1.2, 1, 0.75], null, rig);
+      [-1, 1].forEach(side => {
+        add(new THREE.ConeGeometry(0.065, 0.48, 5), brightShellMat,
+          [side * 0.29, 0.43, 0], [0.8, 1, 0.65], [0, 0, side * -0.48], rig);
+        add(new THREE.ConeGeometry(0.038, 0.17, 5), combatHotMat,
+          [side * 0.37, 0.22, 0.08], [0.7, 1, 0.55], [Math.PI, 0, side * -0.16], rig);
+      });
+      add(new THREE.BoxGeometry(0.18, 0.025, 0.018), combatHotMat,
+        [0, 0.78, 0.205], null, null, rig);
+      anims.push(t => {
+        rig.position.y = 0.025 + Math.sin(t * 1.45) * 0.026;
+        cloak.rotation.y = Math.sin(t * 0.55) * 0.045;
+        halo.rotation.z = -Math.PI * 0.75 + Math.sin(t * 0.8) * 0.08;
+      });
+    } else if (combatClass === 'joker') {
+      // JOKER: pale round face, acid-green hair and a vivid purple tailcoat.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const jokerPurpleMat = mat(0x7b2cff, {
+        roughness: 0.32, metalness: 0.2, emissive: 0x5a14ba, emissiveIntensity: 0.28
+      });
+      const jokerGreenMat = mat(0x35ff59, {
+        roughness: 0.28, metalness: 0.12, emissive: 0x16b938, emissiveIntensity: 0.45
+      });
+      const jokerFaceMat = mat(0xf3eee2, { roughness: 0.52, metalness: 0.05 });
+      const jokerRedMat = mat(0xff244f, {
+        roughness: 0.26, metalness: 0.08, emissive: 0xc70b33, emissiveIntensity: 0.42
+      });
+      add(new THREE.CapsuleGeometry(0.235, 0.24, 5, 12), jokerPurpleMat,
+        [0, 0.42, 0], [1, 1, 0.78], null, rig);
+      add(new THREE.OctahedronGeometry(0.16, 0), jokerGreenMat,
+        [0, 0.46, 0.22], [0.52, 0.9, 0.26], [0, 0, Math.PI / 4], rig);
+      [-1, 1].forEach(side => add(new THREE.ConeGeometry(0.11, 0.43, 6), jokerPurpleMat,
+        [side * 0.11, 0.2, -0.01], [0.72, 1, 0.62], [Math.PI, 0, side * 0.12], rig));
+      [-1, 1].forEach(side => {
+        capsule(0.06, 0.33, jokerPurpleMat,
+          [side * 0.29, 0.35, 0.02], null, [0, 0, side * -0.2], rig);
+        add(new THREE.SphereGeometry(0.075, 9, 7), jokerGreenMat,
+          [side * 0.34, 0.17, 0.08], null, null, rig);
+        add(new THREE.SphereGeometry(0.09, 9, 7), shoeMat,
+          [side * 0.15, 0.065, 0.09], [0.92, 0.42, 1.45], [0, side * 0.18, 0], rig);
+      });
+      const head = add(new THREE.SphereGeometry(0.225, 12, 9), jokerFaceMat,
+        [0, 0.76, 0.035], [0.95, 1.04, 0.84], null, rig);
+      const hair = [];
+      [[-0.22, 0.9, -0.01], [-0.12, 1.01, -0.03], [0, 1.07, -0.05],
+       [0.12, 1.01, -0.03], [0.22, 0.9, -0.01]].forEach((p, i) => {
+        const tuft = add(new THREE.SphereGeometry(i === 2 ? 0.125 : 0.105, 10, 8), jokerGreenMat,
+          p, [1.08, 1.22, 0.95], null, rig);
+        hair.push(tuft);
+      });
+      [-1, 1].forEach(side => {
+        add(new THREE.OctahedronGeometry(0.05, 0), combatBlackMat,
+          [side * 0.072, 0.79, 0.23], [1, 0.7, 0.33], [0, 0, side * -0.15], rig);
+        add(new THREE.SphereGeometry(0.018, 8, 6), jokerGreenMat,
+          [side * 0.072, 0.79, 0.258], null, null, rig);
+      });
+      add(new THREE.TorusGeometry(0.115, 0.022, 6, 16, Math.PI), jokerRedMat,
+        [0, 0.69, 0.25], [1, 0.62, 0.52], [Math.PI / 2, 0, Math.PI], rig);
+      add(new THREE.CylinderGeometry(0.018, 0.018, 0.56, 7), jokerGreenMat,
+        [0.39, 0.32, -0.01], null, [0, 0, -0.05], rig);
+      add(new THREE.TorusGeometry(0.07, 0.018, 6, 12, Math.PI), jokerGreenMat,
+        [0.35, 0.61, -0.01], null, [0, 0, -Math.PI / 2], rig);
+      anims.push(t => {
+        head.rotation.y = Math.sin(t * 0.72) * 0.11;
+        rig.rotation.z = Math.sin(t * 1.25) * 0.015;
+        hair.forEach((tuft, i) => tuft.scale.setScalar(0.98 + Math.sin(t * 2.2 + i * 0.7) * 0.035));
+      });
+    } else if (combatClass === 'inferno') {
+      // INFERNO: a living furnace with an arched boiler body and exhaust crown.
+      const rig = new THREE.Group();
+      g.add(rig);
+      add(new THREE.CylinderGeometry(0.29, 0.32, 0.55, 10), combatGunMat,
+        [0, 0.4, 0], [1, 1, 0.84], null, rig);
+      add(new THREE.SphereGeometry(0.29, 11, 8), bodyMat,
+        [0, 0.48, 0.02], [1, 0.86, 0.78], null, rig);
+      const fire = add(new THREE.SphereGeometry(0.12, 9, 7), combatHotMat,
+        [0, 0.4, 0.31], [1, 1, 0.42], null, rig);
+      add(new THREE.TorusGeometry(0.18, 0.035, 7, 18), boneMat,
+        [0, 0.4, 0.285], [1, 1, 0.6], null, rig);
+      [-1, 1].forEach(side => {
+        capsule(0.08, 0.3, bodyMat, [side * 0.31, 0.35, 0], null, null, rig);
+        add(new THREE.SphereGeometry(0.11, 9, 7), shoeMat,
+          [side * 0.16, 0.075, 0.07], [1, 0.45, 1.3], null, rig);
+        add(new THREE.CylinderGeometry(0.05, 0.07, 0.3, 7), combatGunMat,
+          [side * 0.14, 0.9, -0.02], null, [0, 0, side * -0.08], rig);
+      });
+      const head = add(new THREE.CylinderGeometry(0.2, 0.23, 0.25, 9), brightShellMat,
+        [0, 0.75, 0.02], [1, 1, 0.85], null, rig);
+      [-1, 1].forEach(side => glowOrb(0.055, [side * 0.13, 0.9, 0.03], rig));
+      add(new THREE.BoxGeometry(0.28, 0.065, 0.045), combatBlackMat,
+        [0, 0.76, 0.225], null, null, rig);
+      add(new THREE.BoxGeometry(0.19, 0.022, 0.016), combatHotMat,
+        [0, 0.765, 0.255], null, null, rig);
+      add(new THREE.CylinderGeometry(0.065, 0.09, 0.37, 8), combatGunMat,
+        [0, 0.97, -0.03], null, null, rig);
+      anims.push(t => {
+        const pulse = 1 + Math.sin(t * 3.4) * 0.12;
+        fire.scale.set(pulse, pulse, 0.42 * pulse);
+        combatHotMat.emissiveIntensity = 1.5 + Math.max(0, Math.sin(t * 3.4)) * 0.8;
+        head.rotation.y = Math.sin(t * 0.5) * 0.035;
+      });
     } else {
-      const stealthMat = mat(0x030407, { roughness: 0.20, metalness: 0.70 });
+      // STEALTH: compact diamond mass, crouched limbs and swept blade silhouette.
+      const rig = new THREE.Group();
+      rig.position.y = -0.015;
+      g.add(rig);
+      const torso = add(new THREE.OctahedronGeometry(0.32, 0), stealthMat,
+        [0, 0.4, 0], [0.79, 0.96, 0.72], [0, 0, 0], rig);
+      add(new THREE.OctahedronGeometry(0.235, 0), bodyMat,
+        [0, 0.43, 0.13], [0.78, 0.8, 0.5], [0, 0, 0], rig);
+      const core = add(new THREE.OctahedronGeometry(0.082, 0), combatGlowMat,
+        [0, 0.45, 0.285], [1.25, 0.5, 0.3], [0, 0, Math.PI / 4], rig);
+      const fins = [];
       [-1, 1].forEach(side => {
-        const hood = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.28, 0.16), stealthMat);
-        hood.position.set(side * 0.19, HEAD_Y + 0.03, 0.02);
-        hood.rotation.z = side * 0.24;
-        hood.rotation.y = side * -0.12;
-        g.add(hood);
-        const blade = new THREE.Mesh(new THREE.ConeGeometry(0.038, 0.25, 4), stealthMat);
-        blade.position.set(side * 0.39, BODY_Y + 0.20, -0.02);
-        blade.rotation.z = side * -0.58;
-        g.add(blade);
+        const fin = add(new THREE.ConeGeometry(0.075, 0.34, 4), stealthMat,
+          [side * 0.285, 0.5, -0.015], [0.72, 1, 0.62], [0, 0, side * -1.0], rig);
+        fins.push(fin);
+        capsule(0.052, 0.21, combatBlackMat,
+          [side * 0.22, 0.3, 0.12], [0.8, 1, 0.78], [0, 0, side * -0.62], rig);
+        add(new THREE.ConeGeometry(0.045, 0.17, 4), trimMat,
+          [side * 0.29, 0.23, 0.16], [0.72, 1, 0.65], [0, 0, side * -1.05], rig);
+        add(new THREE.SphereGeometry(0.09, 9, 7), shoeMat,
+          [side * 0.145, 0.07, 0.1], [0.86, 0.42, 1.42], [0, side * 0.2, 0], rig);
+        add(new THREE.ConeGeometry(0.05, 0.22, 4), darkClothMat,
+          [side * 0.105, 0.16, -0.03], [0.8, 1, 0.7], [Math.PI, 0, side * 0.12], rig);
       });
-      const browBlade = new THREE.Mesh(new THREE.BoxGeometry(0.31, 0.038, 0.055), stealthMat);
-      browBlade.position.set(0, HEAD_Y + 0.105, 0.268);
-      browBlade.rotation.x = -0.03;
-      g.add(browBlade);
-      const stealthCore = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, 0.022), combatGlowMat);
-      stealthCore.position.set(0, BODY_Y + 0.04, 0.414);
-      g.add(stealthCore);
+
+      const headRig = new THREE.Group();
+      rig.add(headRig);
+      add(new THREE.OctahedronGeometry(0.29, 0), stealthMat,
+        [0, 0.73, 0], [0.83, 0.92, 0.79], [0, 0, 0], headRig);
+      add(new THREE.ConeGeometry(0.13, 0.26, 4), combatGunMat,
+        [0, 0.925, -0.015], [0.88, 1, 0.8], [0, 0, 0], headRig);
+      add(new THREE.OctahedronGeometry(0.185, 0), combatBlackMat,
+        [0, 0.72, 0.205], [0.95, 0.55, 0.35], [0, 0, 0], headRig);
+      const scan = add(new THREE.BoxGeometry(0.245, 0.023, 0.016), combatHotMat,
+        [0, 0.755, 0.28], null, [0, 0, 0], headRig);
+      add(new THREE.ConeGeometry(0.045, 0.24, 4), stealthMat,
+        [-0.2, 0.82, -0.02], null, [0, 0, 0.72], headRig);
+      add(new THREE.ConeGeometry(0.045, 0.24, 4), stealthMat,
+        [0.2, 0.82, -0.02], null, [0, 0, -0.72], headRig);
+      anims.push(t => {
+        const scanX = Math.sin(t * 1.8) * 0.035;
+        scan.position.x = scanX;
+        headRig.rotation.y = Math.sin(t * 0.8) * 0.09;
+        const breath = Math.sin(t * 1.9) * 0.012;
+        torso.scale.y = 0.96 + breath;
+        core.scale.set(1.25 + breath * 3, 0.5 + breath, 0.3);
+        fins.forEach((fin, i) => { fin.rotation.y = Math.sin(t * 1.2 + i) * 0.025; });
+      });
     }
 
-    // Cheek flashes in the accent colour, so the face is not just eyes
-    [-1, 1].forEach(side => {
-      const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), accentMat);
-      cheek.scale.set(1, 0.6, 0.35);
-      cheek.position.set(side * 0.2, HEAD_Y - 0.07, 0.175);
-      g.add(cheek);
-    });
-
-    // --- Hands and feet -----------------------------------------------------
-    [-1, 1].forEach(side => {
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), trimMat);
-      hand.scale.set(1, 0.95, 1.05);
-      hand.position.set(side * 0.31, 0.33, 0.04);
-      hand.castShadow = true;
-      g.add(hand);
-    });
-    // BOOTS, sized to be SEEN. The old foot sat at x 0.155 with the body a 0.3
-    // capsule around it, so from the play camera it projected ENTIRELY inside
-    // the body's own silhouette: measured, the shoes owned 14 pixels of a
-    // 705-pixel character and turning Kick on moved 12 of them. The same
-    // failure the jetpack had, and the reason gold feet were never a tell.
-    // These are wide enough to break the body's outline at the sides and long
-    // enough in the toe to show below it. Held inside the hands' 0.41, so the
-    // character's footprint and its on-screen size are both unchanged, and the
-    // toe stops at PLAYER_RADIUS once VIEW_SCALE is applied, so a boot never
-    // pokes through the wall the body is standing flush against.
-    [-1, 1].forEach(side => {
-      const foot = new THREE.Mesh(new THREE.SphereGeometry(0.125, 14, 10), shoeMat);
-      foot.scale.set(1.3, 0.76, 1.72);
-      foot.position.set(side * 0.245, 0.092, 0.085);
-      foot.castShadow = true;
-      g.add(foot);
-    });
+    // Showcase movement is intentionally separate from cosmetic animation.
+    // It runs in character select and on the round winner only, never while a
+    // character is moving around the arena.
+    const showcaseRig = g.children[0];
+    if (showcaseRig) {
+      const basePos = showcaseRig.position.clone();
+      const baseRot = showcaseRig.rotation.clone();
+      const baseScale = showcaseRig.scale.clone();
+      const hop = t => Math.max(0, Math.sin(t));
+      const moves = {
+        heavy: (r, t) => {
+          const beat = Math.sin(t * 4.2);
+          r.position.y += Math.abs(beat) * 0.055;
+          r.position.x += Math.sin(t * 2.1) * 0.025;
+          r.rotation.z += Math.sign(beat || 1) * 0.035;
+        },
+        reaper: (r, t) => {
+          r.position.y += 0.06 + Math.sin(t * 1.8) * 0.085;
+          r.rotation.y += Math.sin(t * 0.9) * 0.48;
+          r.rotation.z += Math.sin(t * 1.8) * 0.045;
+        },
+        cyclops: (r, t) => {
+          r.position.x += Math.sin(t * 2.4) * 0.075;
+          r.position.y += hop(t * 4.8) * 0.045;
+          r.rotation.z += Math.sin(t * 2.4) * 0.075;
+          r.rotation.y += Math.sin(t * 1.2) * 0.16;
+        },
+        jester: (r, t) => {
+          r.position.y += hop(t * 3.6) * 0.14;
+          r.rotation.y += Math.sin(t * 1.8) * 0.55;
+          r.rotation.z += Math.sin(t * 3.6) * 0.11;
+        },
+        inferno: (r, t) => {
+          const piston = hop(t * 5.2);
+          r.position.y += piston * 0.07;
+          r.rotation.z += Math.sin(t * 10.4) * 0.018 * piston;
+          r.scale.y *= 1 - piston * 0.035;
+        },
+        xeno: (r, t) => {
+          r.position.x += Math.sin(t * 1.65) * 0.075;
+          r.position.y += hop(t * 3.3) * 0.035;
+          r.rotation.y += Math.sin(t * 1.65) * 0.42;
+          r.rotation.x += Math.sin(t * 3.3) * 0.055;
+        },
+        devil: (r, t) => {
+          const stomp = hop(t * 4.4);
+          r.position.y += stomp * 0.075;
+          r.rotation.x += Math.sin(t * 4.4) * 0.09;
+          r.rotation.y += Math.sin(t * 1.1) * 0.24;
+        },
+        maw: (r, t) => {
+          const bounce = hop(t * 3.8);
+          r.position.y += bounce * 0.12;
+          r.scale.x *= 1 + bounce * 0.07;
+          r.scale.y *= 1 - bounce * 0.055;
+          r.rotation.z += Math.sin(t * 3.8) * 0.065;
+        },
+        assault: (r, t) => {
+          const recoil = Math.pow(hop(t * 2.7), 9);
+          r.position.z -= recoil * 0.095;
+          r.position.y += hop(t * 5.4) * 0.035;
+          r.rotation.x -= recoil * 0.13;
+          r.rotation.z += Math.sin(t * 1.35) * 0.045;
+        },
+        plague: (r, t) => {
+          r.position.x += Math.sin(t * 2.0) * 0.07;
+          r.position.y += hop(t * 4.0) * 0.035;
+          r.rotation.z += Math.sin(t * 2.0) * 0.095;
+          r.rotation.y += Math.sin(t) * 0.2;
+        },
+        phantom: (r, t) => {
+          r.position.x += Math.sin(t * 1.4) * 0.055;
+          r.position.y += 0.08 + Math.sin(t * 2.0) * 0.09;
+          r.rotation.y += Math.sin(t * 0.7) * 0.62;
+          r.rotation.z += Math.sin(t * 1.4) * 0.055;
+        },
+        joker: (r, t) => {
+          const step = hop(t * 4.0);
+          r.position.x += Math.sin(t * 2.0) * 0.085;
+          r.position.y += step * 0.09;
+          r.rotation.z += Math.sin(t * 2.0) * 0.13;
+          r.rotation.y += Math.sin(t) * 0.28;
+        },
+      };
+      const move = moves[combatClass];
+      g.userData.showcaseReset = () => {
+        showcaseRig.position.copy(basePos);
+        showcaseRig.rotation.copy(baseRot);
+        showcaseRig.scale.copy(baseScale);
+      };
+      if (move) g.userData.showcaseAnim = t => {
+        g.userData.showcaseReset();
+        move(showcaseRig, t);
+      };
+    }
 
     // --- Headgear and flourish ---------------------------------------------
     // Both come from the catalogue in section 05. Nothing is welded to a
@@ -11783,7 +12536,6 @@ class Player {
     // clock of their own. The render loop calls them — see Player.tickCosmetics
     // — so the character in the arena and the one turning in the locker are
     // driven by identical code, and nothing animates while the game is paused.
-    const anims = [];
     g.userData.shoeMat = shoeMat;
     const kitCtx = { mat, def, bodyMat, bellyMat, trimMat, accentMat, seat: def.color,
                      anim: fn => anims.push(fn) };
@@ -11875,7 +12627,7 @@ class Bomb {
     // The shell comes from the owner's equipped design. Its COLOUR does not:
     // World.MAT.bomb is chosen per level so the bomb stays visible against that
     // floor, and no cosmetic is allowed to undo that.
-    const kit = cosmeticItem('bomb', Locker.loadout(owner.seat).bomb);
+    const kit = cosmeticItem('bomb', owner.kit && owner.kit.bomb);
     const shell = kit.build({
       // World.MAT.bomb unless the owner brought its own — the angry snowman's
       // bomb is red, and recolouring the shared material would turn every bomb on
@@ -13474,7 +14226,7 @@ const UI = (function () {
         <div id="count" class="hidden" aria-live="polite"></div>
       </div>
 
-      <div id="banner" class="hidden"><span></span><i id="prize" class="hidden"></i></div>
+      <div id="banner" class="hidden"><span></span></div>
 
       <div id="menu">
         <p class="dim build"></p>
@@ -13495,19 +14247,24 @@ const UI = (function () {
       <div id="select" class="hidden">
         <div class="sbg"></div>
         <div class="shead">
-          <h2>LOADOUT</h2>
+          <div>
+            <span class="seyebrow">LOADOUT</span>
+            <h2>CHARACTER SELECT</h2>
+          </div>
+          <span class="scount">12 FIGHTERS</span>
         </div>
         <div class="sbody">
           <div class="scol">
-            <div id="spreview"><div class="sghost">PREVIEW</div><div class="sname"></div></div>
-            <div class="classrail" role="radiogroup" aria-label="Choose operative">
-              <button class="classpick" data-class="0" role="radio"><i></i><span>Heavy</span><kbd>1</kbd></button>
-              <button class="classpick" data-class="1" role="radio"><i></i><span>Reaper</span><kbd>2</kbd></button>
-              <button class="classpick" data-class="2" role="radio"><i></i><span>Assault</span><kbd>3</kbd></button>
-              <button class="classpick" data-class="3" role="radio"><i></i><span>Stealth</span><kbd>4</kbd></button>
+            <div id="spreview">
+              <span class="spreviewtag">LIVE PREVIEW</span>
+              <div class="sname"></div>
+            </div>
+            <div class="sidentity">
+              <div class="smeta"><span class="srole"></span><span class="smove"></span></div>
+              <p class="sbio"></p>
             </div>
           </div>
-          <div class="slist"></div>
+          <div class="sroster" role="listbox" aria-label="Choose fighter"></div>
         </div>
         <div class="sfoot">
           <div class="opt go" data-srow="fight">
@@ -14007,22 +14764,21 @@ const UI = (function () {
   function showMenu(v) { menu.classList.toggle('hidden', !v); }
 
   /* ---------------------------------------------------- character select -- */
-  // ONE list. The rows are the ten locker items plus FIGHT, so navigation is
-  // identical to the main menu — up and down, ENTER to take it. FIGHT is the
-  // row you land on, which is what makes pressing START twice walk straight
-  // into a match.
-  // The rows are only what you may actually LOOK at — everything won, plus the
-  // next two — so this cannot be a constant any more: it grows as you win.
-  function selectRows() { return Locker.visible(0).map(e => e.key).concat(['fight']); }
+  // Twelve fighters and one action. The old prize ladder no longer appears in
+  // this flow: this screen has one job, choosing who walks into the arena.
+  function selectRows() { return PLAYER_DEFS.map((_, i) => 'class:' + i).concat(['fight']); }
 
   function buildSelectList() {
-    const box = select.querySelector('.slist');
-    box.innerHTML = LOCKER_ITEMS.map(e =>
-      `<button class="sitem" data-key="${e.key}">` +
-        `<span class="sname2">${e.name}</span>` +
-        `<span class="snote"></span>` +
-      `</button>`).join('') +
-      '<div class="smore"></div>';
+    const box = select.querySelector('.sroster');
+    box.innerHTML = PLAYER_DEFS.map((def, i) => {
+      const colour = '#' + def.color.toString(16).padStart(6, '0');
+      return `<button class="charpick" data-class="${i}" role="option" style="--fighter:${colour}">` +
+        `<span class="charface" style="--face-x:${(i % 3) * 50}%;--face-y:${Math.floor(i / 3) * 33.333}%" aria-hidden="true"></span>` +
+        `<span class="charcopy"><b>${def.name}</b><small>${def.role}</small></span>` +
+        `<span class="charindex">${String(i + 1).padStart(2, '0')}</span>` +
+        `<i aria-hidden="true"></i>` +
+      `</button>`;
+    }).join('');
   }
 
   /* ------------------------------------------------ the cosmic wardrobe -- */
@@ -14058,67 +14814,36 @@ const UI = (function () {
       `${x1}px ${y1}px, ${x1}px ${y2}px, ${x2}px ${y2}px, ${x2}px ${y1}px, 0 ${y1}px)`;
   }
 
-  // Hovering highlights, clicking equips (or starts the match on FIGHT)
+  // Hovering and clicking both drive the live character preview.
   function bindSelect(handlers) {
-    select.querySelectorAll('.sitem').forEach(el => {
-      el.addEventListener('mouseenter', () => handlers.onHover(el.dataset.key));
-      el.addEventListener('click', () => handlers.onPick(el.dataset.key));
-    });
-    select.querySelectorAll('.classpick').forEach(el => {
-      el.addEventListener('click', () => handlers.onClass(Number(el.dataset.class)));
+    select.querySelectorAll('.charpick').forEach(el => {
+      const choose = () => handlers.onClass(Number(el.dataset.class));
+      el.addEventListener('mouseenter', choose);
+      el.addEventListener('focus', choose);
+      el.addEventListener('click', choose);
     });
     const fight = select.querySelector('[data-srow="fight"]');
-    fight.addEventListener('mouseenter', () => handlers.onHover('fight'));
+    fight.addEventListener('mouseenter', () => handlers.onFightHover());
     fight.addEventListener('click', () => handlers.onFight());
   }
 
-  // sel = index into the CURRENT rows; the last one is FIGHT
+  // sel = fighter index, or PLAYER_DEFS.length for FIGHT.
   function renderSelect(sel, selectedClass) {
-    const seat = 0;
-    const rows = selectRows();
-    let shown = 0;
-    select.querySelectorAll('.sitem').forEach((el, i) => {
-      const e = LOCKER_ITEMS[i];
-      const has = Locker.ownsKey(seat, e.key);
-      const ahead = has ? -1 : Locker.aheadIndex(seat, e.key);
-      // Won, or one of the next two. Everything past that is not on the screen
-      // at all — the run to the end of the ladder keeps its surprises.
-      const visible = has || (ahead >= 0 && ahead < Locker.PREVIEW_AHEAD);
-      el.classList.toggle('gone', !visible);
-      if (!visible) { el.classList.remove('sel'); return; }
-      const worn = has && Locker.isWorn(seat, e.key);
-      el.classList.toggle('locked', !has);
-      el.classList.toggle('on', worn);
-      el.classList.toggle('next', ahead === 0);
-      el.classList.toggle('soon', ahead === 1);
-      el.querySelector('.snote').textContent =
-        ahead === 0 ? 'next up' : ahead === 1 ? 'then' : worn ? 'worn' : '';
-      const here = shown === sel;
-      el.classList.toggle('sel', here);
-      // A freak window can still make the list scroll; keep the cursor in it
-      if (here && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
-      shown++;
+    const def = PLAYER_DEFS[selectedClass];
+    const colour = '#' + def.color.toString(16).padStart(6, '0');
+    select.style.setProperty('--fighter', colour);
+    select.querySelectorAll('.charpick').forEach((el, i) => {
+      const chosen = i === selectedClass;
+      el.classList.toggle('selected', chosen);
+      el.classList.toggle('sel', i === sel);
+      el.setAttribute('aria-selected', chosen ? 'true' : 'false');
     });
-    // Say how much is still hidden. The count is not a spoiler and the screen
-    // would otherwise look like a list that simply stops.
-    const left = LOCKER_ITEMS.length - shown;
-    const more = select.querySelector('.smore');
-    if (more) more.textContent = left > 0 ? '+ ' + left + ' more to win' : '';
-
-    const onFight = sel === rows.length - 1;
+    const onFight = sel === PLAYER_DEFS.length;
     select.querySelector('[data-srow="fight"]').classList.toggle('sel', onFight);
-    select.querySelectorAll('.classpick').forEach((el, i) => {
-      const on = i === selectedClass;
-      el.classList.toggle('selected', on);
-      el.setAttribute('aria-checked', on ? 'true' : 'false');
-    });
-    // The ONLY line that ever appears under the button now: a browser that will
-    // not keep your progress. The key reminders and the item blurbs that used to
-    // live here are gone — the list names every prize and the preview shows it.
-    const hint = select.querySelector('.shint');
-    const broken = !Locker.storageWorks;
-    hint.classList.toggle('hidden', !broken);
-    hint.textContent = broken ? 'Progress is not being saved on this device' : '';
+    select.querySelector('.srole').textContent = def.role;
+    select.querySelector('.smove').textContent = def.move;
+    select.querySelector('.sbio').textContent = def.bio;
+    select.querySelector('.spreviewtag').textContent = 'ANIMATING  ·  ' + def.move.toUpperCase();
     punchPreviewHole();
   }
 
@@ -14135,12 +14860,6 @@ const UI = (function () {
     const el = select.querySelector('.sname');
     if (el) el.textContent = name;
   }
-  // Flag the panel as showing something you do not own yet
-  function setPreviewGhost(on) {
-    const el = document.getElementById('spreview');
-    if (el) el.classList.toggle('ghost', !!on);
-  }
-
   // Line the option column up with the wordmark above it. Measuring the actual
   // rendered text is the only way to keep them flush as the title scales with
   // the viewport — a hard-coded width drifts out of alignment immediately.
@@ -14525,19 +15244,10 @@ const UI = (function () {
     }
   }
 
-  // `prize` is { slot, name } when this win unlocked something, null otherwise.
-  // It is a separate element sitting ABOVE the victory line, deliberately not
-  // inside the span — fitSmallBanner measures that span, and a second line
-  // inside it would make the measurement meaningless.
-  function showBanner(text, colorHex, seconds, small, prize) {
+  function showBanner(text, colorHex, seconds, small) {
     const span = banner.querySelector('span');
     span.textContent = text;
     span.style.color = colorHex || '#ffffff';
-    const pz = document.getElementById('prize');
-    if (pz) {
-      pz.classList.toggle('hidden', !(small && prize));
-      if (small && prize) pz.textContent = 'NEW ' + prize.slot.toUpperCase() + ' · ' + prize.name;
-    }
     banner.classList.toggle('small', !!small);
     // Drop 'pop' BEFORE un-hiding. Un-hiding an element that still carries an
     // animation class restarts that animation, and the scale transform would
@@ -14599,7 +15309,7 @@ const UI = (function () {
   return { init, bindMenu, bindPause, setControlToggle, isPadded, renderMenu, showMenu, alignOptionsToTitle,
     setSdBand, placeSdBand, setSdCount, placeSdCount, setCountdown, placeClock, placeCards, dropCards, sizeTouch, syncViewport, viewportH,
     hudBlockRects,
-    bindSelect, renderSelect, showSelect, previewRect, setPreviewName, setPreviewGhost,
+    bindSelect, renderSelect, showSelect, previewRect, setPreviewName,
     setPauseTaunt,
     get SELECT_ROWS() { return selectRows(); },
     punchPreviewHole, hudReserveSide, isSolo, showHome, MENU_ROWS, rowVisible, isCompact, isBlockedByOrientation, dismissOrientation, applyCompact, buildCards, updateHUD, showHUD, showTouch, hudReserveTop, bannerBusy, showBanner, tickBanner, showPause, renderMusicRow, showResults };
@@ -14640,9 +15350,8 @@ const Game = (function () {
     // against three easy bots, a random map, first to two.
     opts: { humans: 1, difficulty: 'easy', wins: 2, level: 'random' },
     menuSel: 0,
-    selRow: 0,             // character-select row
-    selectedClass: 0,      // Heavy, Reaper, Assault or Stealth
-    previewGhost: null,    // locked item the cursor is trying on, or null
+    selRow: 0,             // fighter index, or 12 for FIGHT
+    selectedClass: 0,      // one of the twelve PLAYER_DEFS
     preview: null,         // the select screen's own little scene
     level: LEVELS[0],
     menuPreview: 0,        // index of the level currently shown behind the menu
@@ -14675,9 +15384,6 @@ const Game = (function () {
 
   /* --------------------------------------------------------------- boot -- */
   function init(canvas) {
-    // Before anything builds a character: seat 1 reads its saved collection,
-    // the other three start bare for this session.
-    Locker.init();
     World.init(canvas);
     UI.init();
     UI.bindMenu({
@@ -14695,21 +15401,14 @@ const Game = (function () {
       },
     });
     UI.bindSelect({
-      onHover(key) {
-        if (g.state !== STATE.SELECT) return;
-        const i = UI.SELECT_ROWS.indexOf(key);
-        if (i >= 0) g.selRow = i;
-        refreshSelect();
-      },
-      onPick(key) {
-        if (g.state !== STATE.SELECT) return;
-        const i = UI.SELECT_ROWS.indexOf(key);
-        if (i >= 0) g.selRow = i;
-        pickCosmetic(key);
-      },
       onClass(index) {
         if (g.state !== STATE.SELECT) return;
         chooseClass(index);
+      },
+      onFightHover() {
+        if (g.state !== STATE.SELECT) return;
+        g.selRow = PLAYER_DEFS.length;
+        refreshSelect();
       },
       onFight() {
         if (g.state !== STATE.SELECT) return;
@@ -14793,20 +15492,29 @@ const Game = (function () {
     }
 
     if (g.state === STATE.SELECT) {
-      const n = UI.SELECT_ROWS.length;
-      const key = UI.SELECT_ROWS[g.selRow];
-      const classKey = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(code);
-      if (classKey >= 0) { chooseClass(classKey); return; }
-      // One list, so up/down and left/right do the same thing. Nothing to
-      // learn, and no dead key on a screen that is a single column.
-      if (code === 'ArrowUp' || code === 'KeyW' || code === 'ArrowLeft' || code === 'KeyA') {
-        g.selRow = (g.selRow - 1 + n) % n; Audio3.menuMove();
-      } else if (code === 'ArrowDown' || code === 'KeyS' || code === 'ArrowRight' || code === 'KeyD') {
-        g.selRow = (g.selRow + 1) % n; Audio3.menuMove();
+      const count = PLAYER_DEFS.length;
+      const onFight = g.selRow === count;
+      let next = g.selRow;
+      if (code === 'ArrowLeft' || code === 'KeyA') {
+        next = onFight ? count - 1 : (g.selRow - 1 + count) % count;
+      } else if (code === 'ArrowRight' || code === 'KeyD') {
+        next = onFight ? 0 : (g.selRow + 1) % count;
+      } else if (code === 'ArrowUp' || code === 'KeyW') {
+        next = onFight ? count - 2 : (g.selRow - 3 + count) % count;
+      } else if (code === 'ArrowDown' || code === 'KeyS') {
+        next = onFight || g.selRow >= count - 3 ? count : g.selRow + 3;
       } else if (code === 'Enter' || code === 'Space') {
-        if (key === 'fight') { Audio3.menuSelect(); startMatch(); return; }
-        pickCosmetic(key);
+        if (onFight) { Audio3.menuSelect(); startMatch(); return; }
+        next = count;
       } else if (code === 'Escape' || code === 'KeyQ') { toMenu(); return; }
+      if (next !== g.selRow) {
+        g.selRow = next;
+        Audio3.menuMove();
+        if (next < count) {
+          g.selectedClass = next;
+          buildPreview();
+        }
+      }
       refreshSelect();
       return;
     }
@@ -14954,34 +15662,21 @@ const Game = (function () {
 
   /* -------------------------------------------------------- match/round -- */
   /* ------------------------------------------------- character select --- */
-  // START goes here rather than straight into a match. The cursor lands on
-  // FIGHT, so pressing START twice walks through without stopping — nobody who
-  // does not care about cosmetics pays a toll for them existing.
+  // START opens on the current fighter, ready for the player to explore all 12.
   function toSelect() {
     g.state = STATE.SELECT;
     g.stateT = 0;
-    g.selRow = UI.SELECT_ROWS.length - 1;
-    g.previewGhost = null;
+    g.selRow = g.selectedClass;
     buildPreview();
     UI.showMenu(false);
     UI.showSelect(true);
     refreshSelect();
   }
 
-  // Taking an item you own puts it straight on, so the preview always shows a
-  // loadout you could actually walk into the match with. An item you have not
-  // won is simply not equipped — there is nothing to scold anyone about.
-  function pickCosmetic(key) {
-    if (Locker.equipKey(0, key)) {
-      Audio3.menuSelect();
-      buildPreview();
-    }
-    refreshSelect();
-  }
-
   function chooseClass(index) {
     const next = clamp(index | 0, 0, PLAYER_DEFS.length - 1);
-    if (next === g.selectedClass) return;
+    g.selRow = next;
+    if (next === g.selectedClass) { refreshSelect(); return; }
     g.selectedClass = next;
     Audio3.menuMove();
     buildPreview();
@@ -14989,26 +15684,6 @@ const Game = (function () {
   }
 
   function refreshSelect() {
-    // WHATEVER THE CURSOR IS ON, the preview wears it — won or not.
-    //
-    // It used to preview only the prizes you had NOT won, which is exactly
-    // backwards for the ones you have: those are the ones you are choosing
-    // between. You could try on a crown you would not see for another six wins
-    // and not look at the halo already in your locker.
-    //
-    // Driven from the cursor rather than from a mouseenter handler so the
-    // keyboard gets it too — moving down the list with the arrows previews
-    // exactly the same way a hover does.
-    const key = UI.SELECT_ROWS[g.selRow];
-    const e = key && key !== 'fight' ? lockerItem(key) : null;
-    const want = e ? { slot: e.slot, id: e.id, key: e.key,
-                       owned: e.free || Locker.ownsKey(0, e.key) } : null;
-    const changed = (want && want.key) !== (g.previewGhost && g.previewGhost.key);
-    g.previewGhost = want;
-    if (changed) buildPreview();
-    // The "preview only" flag is about OWNERSHIP, not about previewing. Showing
-    // it over something already in your locker would be a lie.
-    UI.setPreviewGhost(!!want && !want.owned);
     UI.renderSelect(g.selRow, g.selectedClass);
     UI.setPreviewName(PLAYER_DEFS[g.selectedClass].name.toUpperCase());
   }
@@ -15021,26 +15696,24 @@ const Game = (function () {
   function buildPreview() {
     if (!g.preview) {
       const scene = new THREE.Scene();
-      // Framed for a PORTRAIT slot: the field of view is vertical, so a narrow
-      // panel crops horizontally, not vertically. Pulled back far enough that a
-      // wide silhouette — viking horns, a cape mid-turn — still fits.
-      const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 40);
-      cam.position.set(0.15, 0.94, 4.15);
-      cam.lookAt(0.15, 0.34, 0);
-      scene.add(new THREE.HemisphereLight(0xfff2db, 0x596277, 3.05));
-      const key = new THREE.DirectionalLight(0xffe7bf, 4.5);
+      // Close, bright hero framing for the large landscape preview panel.
+      const cam = new THREE.PerspectiveCamera(29, 1, 0.1, 40);
+      cam.position.set(0.08, 0.86, 3.55);
+      cam.lookAt(0.08, 0.33, 0);
+      scene.add(new THREE.HemisphereLight(0xfff6e8, 0x62518c, 4.2));
+      const key = new THREE.DirectionalLight(0xffefd6, 5.8);
       key.position.set(2.4, 4, 3.2);
       scene.add(key);
-      const rim = new THREE.DirectionalLight(0xffa24b, 2.4);
+      const rim = new THREE.DirectionalLight(0xff8dff, 3.2);
       rim.position.set(-3, 2, -2.5);
       scene.add(rim);
-      const fill = new THREE.PointLight(0xbfd8ff, 3.1, 8);
+      const fill = new THREE.PointLight(0x9cecff, 4.1, 8);
       fill.position.set(-1.7, 1.1, 2.6);
       scene.add(fill);
       // A hard edge light from behind. Bomb shells are deliberately near-black
       // on some levels, and without this the Classic and Cursed Skull designs
       // were a black shape on a black background.
-      const edge = new THREE.DirectionalLight(0xffffff, 3.9);
+      const edge = new THREE.DirectionalLight(0xffffff, 4.8);
       edge.position.set(2.2, 1.4, -3.4);
       scene.add(edge);
       // A plinth to stand on. Without it a dark bomb design on a dark
@@ -15070,59 +15743,10 @@ const Game = (function () {
         }
       });
     });
-    let kit = Locker.loadout(0);
-    // WHAT YOU WOULD LOOK LIKE WEARING THIS. Not a merge onto what you already
-    // have on: only one prize is ever worn, so a preview that added the crown to
-    // the jetpack you are wearing would show a character the game cannot
-    // produce. Built the way wearOnly builds it — everything back to default,
-    // then the one item, plus whatever that item brings with it.
-    //
-    // Nothing is equipped by any of this: the round still starts with exactly
-    // what you had on before you started browsing.
-    if (g.previewGhost) {
-      kit = {};
-      COSMETIC_SLOTS.forEach(sl => { kit[sl] = COSMETICS[sl].def; });
-      if (g.previewGhost.slot) kit[g.previewGhost.slot] = g.previewGhost.id;
-      const shown = g.previewGhost.slot
-        ? cosmeticItem(g.previewGhost.slot, g.previewGhost.id) : null;
-      if (shown && shown.withFinish) kit.finish = shown.withFinish;
-    }
-    pv.mesh = Player.buildMesh(PLAYER_DEFS[g.selectedClass], kit);
+    pv.mesh = Player.buildMesh(PLAYER_DEFS[g.selectedClass], defaultLoadout());
     pv.mesh.position.set(0, -0.4, 0);
     pv.turn.add(pv.mesh);
-    // The bomb sits beside them, so a bomb design is something you can see
-    // before you commit to it.
-    const bombKit = cosmeticItem('bomb', kit.bomb);
-    pv.bomb = bombKit.build({
-      shellMat: World.MAT.bomb,
-      mat: (c, o) => new THREE.MeshStandardMaterial(
-        Object.assign({ color: c, roughness: 0.45, metalness: 0.1 }, o || {})),
-    });
-    // Beside the character, and OUTSIDE the turntable — a bomb orbiting the
-    // player is a distraction; sitting still next to them it reads as a display
-    // stand, and you can still see the whole design because it spins itself.
-    // A rainbow rim if the Mega Boom is on. BackSide on a slightly larger copy
-    // of the silhouette: the front faces are culled, so all that survives is a
-    // band hugging the outline — a glowing edge rather than a coloured blob over
-    // the design you are trying to look at.
-    const sndItem = cosmeticItem('sound', kit.sound);
-    if (sndItem && sndItem.rainbow) {
-      const rimMat = new THREE.MeshBasicMaterial({
-        color: 0xff0055, side: THREE.BackSide,
-        transparent: true, opacity: 0.85, toneMapped: false, depthWrite: false });
-      const rim = new THREE.Mesh(new THREE.SphereGeometry(0.46, 24, 18), rimMat);
-      rim.position.set(0, 0.02, 0);
-      pv.bomb.add(rim);
-      pv.bomb.userData.cosAnim = [t => {
-        rimMat.color.setHSL((t * 0.4) % 1, 1, 0.6);
-        const p = 1 + Math.sin(t * 3.2) * 0.035;
-        rim.scale.setScalar(p);
-        rimMat.opacity = 0.7 + 0.25 * (0.5 + 0.5 * Math.sin(t * 2.1));
-      }];
-    }
-    pv.bomb.scale.setScalar(0.72);
-    pv.bomb.position.set(0.72, -0.14, 0.6);
-    pv.scene.add(pv.bomb);
+    pv.bomb = null;
   }
 
   // Draw the preview into just that one rectangle of the canvas.
@@ -15149,7 +15773,7 @@ const Game = (function () {
     // against the gradient; a deep violet reads as a lit display case.
     const wasColour = r.getClearColor(new THREE.Color());
     const wasAlpha = r.getClearAlpha();
-    r.setClearColor(0x49365f, 1);
+    r.setClearColor(0x241d46, 1);
     r.setScissorTest(true);
     r.setViewport(x, y, w, hh);
     r.setScissor(x, y, w, hh);
@@ -15165,10 +15789,15 @@ const Game = (function () {
     if (!UI.rowVisible(UI.MENU_ROWS.indexOf('players'))) g.opts.humans = 1;
     g.players.forEach(p => World.scene.remove(p.mesh));
     g.players = [];
-    // Put the chosen operative in the player's seat, then fill the remaining
-    // seats with the other three classes so every fighter stays distinct.
-    const matchDefs = [PLAYER_DEFS[g.selectedClass]].concat(
-      PLAYER_DEFS.filter((_, i) => i !== g.selectedClass));
+    // Put the chosen fighter in seat one, then draw three distinct opponents
+    // from the other eleven so the full roster keeps appearing across matches.
+    const others = PLAYER_DEFS.filter((_, i) => i !== g.selectedClass);
+    const rosterRng = makeRng(g.seed ^ 0xa511e9b3);
+    for (let i = others.length - 1; i > 0; i--) {
+      const j = Math.floor(rosterRng() * (i + 1));
+      const swap = others[i]; others[i] = others[j]; others[j] = swap;
+    }
+    const matchDefs = [PLAYER_DEFS[g.selectedClass]].concat(others.slice(0, CFG.MAX_PLAYERS - 1));
     for (let seat = 0; seat < CFG.MAX_PLAYERS; seat++) {
       const isHuman = seat < g.opts.humans;
       const p = new Player(seat, matchDefs[seat], isHuman);
@@ -15190,6 +15819,7 @@ const Game = (function () {
 
   function startRound() {
     clearRoundEntities();
+    g.roundWinner = null;
     g.seed = (g.seed * 1103515245 + 12345) >>> 0;
     const rng = makeRng(g.seed);
     g.level = pickLevel(rng);
@@ -15198,7 +15828,7 @@ const Game = (function () {
     Audio3.bassForLevel(g.level.id);
     World.buildArena(rng, g.level);
     g.players.forEach(p => {
-      p.applyLoadout();          // wear anything won since the last round
+      Player.resetShowcase(p.mesh);
       p.reset();
       if (p.ai) AI.attach(p, g.opts.difficulty);
     });
@@ -15284,6 +15914,7 @@ const Game = (function () {
   function endRound(winner) {
     g.state = STATE.ROUND_END;
     g.stateT = 0;
+    g.roundWinner = winner || null;
     // The round is over: the sudden-death dressing goes with it. The scrolling
     // band and the skulls are both warnings about a fight still in progress, and
     // leaving them up over the win banner was the "hangs around too long".
@@ -15296,27 +15927,11 @@ const Game = (function () {
     if (winner) {
       winner.wins++;
       Audio3.roundWin();
-      // A win draws a prize the winner does not already own and puts it on for
-      // the next round.
-      //
-      // SOLO IS DIFFERENT: if you are the only human on the board, only YOU can
-      // win anything. Bots collecting hats in front of you is the point in a
-      // two-player match — it is somebody else's prize and you watched them earn
-      // it — but on your own it just means the ladder climbs whether you win or
-      // lose, which empties the whole thing of meaning. Lose the round, get
-      // nothing. wins++ still counts either way; this is only the prize.
-      // EVERY SEAT EARNS, bots included, on its own ladder. Solo used to award a
-      // bot nothing, on the reasoning that the ladder should only move when you
-      // win — but the ladders are per seat, so a bot winning never cost you a
-      // prize, and the visible result was three characters who stayed bare all
-      // session however well they played.
-      const prize = Locker.awardWin(winner.seat);
       // Light the map edge in the winner's colour — that is the headline, so
       // the text can be small and out of the way.
       World.tintWalls(winner.def.color);
       UI.showBanner(nextWinLine(winner.def.name.toUpperCase()),
-                    '#' + winner.def.color.toString(16).padStart(6, '0'), CFG.ROUND_OUTRO, true,
-                    prize ? { slot: COSMETICS[prize.slot].label, name: prize.name } : null);
+                    '#' + winner.def.color.toString(16).padStart(6, '0'), CFG.ROUND_OUTRO, true);
     } else {
       UI.showBanner('DRAW', '#ffd166', CFG.ROUND_OUTRO, true);
     }
@@ -15325,6 +15940,7 @@ const Game = (function () {
 
   function endMatch(winner) {
     g.state = STATE.MATCH_END;
+    g.roundWinner = winner || null;
     Audio3.matchWin();
     UI.showResults(winner ? winner.def.name.toUpperCase() + ' WINS THE MATCH' : 'MATCH OVER', g.players, true);
   }
@@ -16283,8 +16899,15 @@ const Game = (function () {
         const p = g.players[i];
         if (p && p.mesh) Player.tickCosmetics(p.mesh, t);
       }
-      if (g.preview && g.preview.mesh) Player.tickCosmetics(g.preview.mesh, t);
+      if (g.preview && g.preview.mesh) {
+        Player.tickCosmetics(g.preview.mesh, t);
+        Player.tickShowcase(g.preview.mesh, t);
+      }
       if (g.preview && g.preview.bomb) Player.tickCosmetics(g.preview.bomb, t);
+      if ((g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) &&
+          g.roundWinner && g.roundWinner.mesh) {
+        Player.tickShowcase(g.roundWinner.mesh, t);
+      }
       if (g.sdWarned || g.suddenDeath) { UI.placeSdBand(); UI.placeSdCount(); }
     }
     let dt = last ? Math.min(t - last, CFG.MAX_FRAME_DT) : 0;
@@ -16323,9 +16946,9 @@ const Game = (function () {
 
     switch (g.state) {
       case STATE.SELECT:
-        // Slow turn, so you can see the back of a cape or a tail
+        // A very slow turn keeps the unique signature movement as the focus.
         if (g.preview) {
-          g.preview.turn.rotation.y += dt * 0.55;
+          g.preview.turn.rotation.y += dt * 0.18;
           if (g.preview.bomb) g.preview.bomb.rotation.y += dt * 0.8;
         }
         World.group.rotation.y += dt * 0.05;

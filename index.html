@@ -2276,18 +2276,92 @@
   @media (max-width: 719px) {
     #select .seyebrow, #select .scount, #select .sbio { display: none; }
     #select .shead > div { display: block; }
-    #select .shead { min-height: 34px !important; }
-    #select .sbody {
-      grid-template-columns: minmax(180px, 1.15fr) minmax(250px, 1fr) !important;
-      gap: 10px !important;
+    #select {
+      padding: 6px 8px 8px !important;
+      gap: 4px;
     }
-    #select .sroster { grid-template-rows: repeat(4, minmax(42px, 1fr)); padding: 6px; gap: 4px; }
-    #select .charpick { padding: 4px; gap: 4px; }
-    #select .charface { width: 30px; height: 34px; border-radius: 5px; }
+    #select .shead {
+      width: 100%;
+      min-height: 32px !important;
+      padding-bottom: 4px !important;
+    }
+    #select h2 {
+      font-size: clamp(19px, 6.5vw, 27px) !important;
+      letter-spacing: 2px !important;
+    }
+    #select .sbody {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      grid-template-rows: minmax(190px, .92fr) minmax(200px, 1.08fr) !important;
+      align-items: stretch !important;
+      width: 100% !important;
+      margin: 0 auto !important;
+      padding: 7px 7px 15px !important;
+      gap: 7px !important;
+      overflow: hidden;
+    }
+    #select .scol {
+      display: block !important;
+      width: 100% !important;
+      height: 100%;
+      min-height: 0;
+    }
+    #spreview {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      max-height: none !important;
+    }
+    #select .sroster {
+      align-self: stretch;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      max-height: none;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: repeat(4, minmax(0, 1fr));
+      padding: 5px;
+      gap: 4px;
+    }
+    #select .charpick { padding: 3px; gap: 3px; }
+    #select .charface { width: clamp(32px, 10vw, 40px); height: clamp(38px, 11.5vw, 46px); border-radius: 5px; }
+    #select .charcopy b { font-size: clamp(7px, 2.15vw, 9px); letter-spacing: 0; }
     #select .charcopy small { display: none; }
     #select .charindex { font-size: 6px; }
     #select .sidentity { min-height: 38px; padding: 6px 8px; }
     #spreview .spreviewtag { display: none; }
+    #select .sfoot { min-height: 42px; }
+    #select .sfoot .opt.go {
+      min-width: min(78vw, 330px) !important;
+      margin-top: 0;
+      padding: 9px 18px !important;
+    }
+  }
+
+  /* Short touch screens are normally phones in landscape. Keep the preview
+     beside the roster, but remove the desktop minimums that push it off-screen. */
+  @media (max-height: 519px) and (min-width: 720px) and (pointer: coarse) {
+    #select { padding: 5px 8px 6px !important; gap: 3px; }
+    #select .shead { display: none; }
+    #select .sbody {
+      grid-template-columns: minmax(280px, 1.1fr) minmax(350px, 1fr) !important;
+      width: 100% !important;
+      margin: 0 auto !important;
+      padding: 7px 7px 14px !important;
+      gap: 8px !important;
+    }
+    #select .scol { min-height: 0; }
+    #spreview { min-height: 0 !important; height: 100% !important; }
+    #select .sroster {
+      width: 100%; height: 100%; max-width: none; max-height: none;
+      grid-template-rows: repeat(4, minmax(0, 1fr));
+      padding: 4px; gap: 3px;
+    }
+    #select .charpick { padding: 3px; gap: 3px; }
+    #select .charface { width: 30px; height: 34px; }
+    #select .charcopy b { font-size: 8px; letter-spacing: 0; }
+    #select .sfoot { min-height: 34px; }
+    #select .sfoot .opt.go { padding: 6px 20px !important; margin-top: 0; }
   }
 
 </style>

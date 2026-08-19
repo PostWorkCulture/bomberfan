@@ -2573,11 +2573,13 @@
     #menu h1 {
       grid-column: 1;
       font-size: clamp(58px, 18vw, 88px) !important;
+      top: clamp(10px, 1.8vh, 16px);
     }
     #menu .opts {
       grid-column: 1;
       align-self: start;
       width: min(94vw, 470px) !important;
+      top: clamp(10px, 1.8vh, 16px);
     }
   }
   @media (max-height: 520px) and (min-width: 720px) {
@@ -2586,8 +2588,8 @@
       column-gap: 16px !important;
       padding: 8px 18px !important;
     }
-    #menu h1 { font-size: clamp(54px, 15vh, 82px) !important; }
-    #menu .opts { width: min(320px, 42vw) !important; padding: 7px !important; gap: 3px !important; }
+    #menu h1 { top: clamp(4px, 1.5vh, 7px); font-size: clamp(54px, 15vh, 82px) !important; }
+    #menu .opts { top: clamp(4px, 1.5vh, 7px); width: min(320px, 42vw) !important; padding: 7px !important; gap: 3px !important; }
     #menu .opts::before { margin: 0 4px 1px; font-size: 7px; }
     #menu .opt { min-height: 29px !important; padding: 4px 10px !important; border-radius: 8px !important; }
   }

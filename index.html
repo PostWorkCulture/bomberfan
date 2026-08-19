@@ -2424,6 +2424,11 @@
       linear-gradient(112deg, rgba(28,17,10,.96) 0 44%, rgba(10,11,15,.96) 55% 100%),
       #07080b !important;
   }
+  /* State transitions must still be able to remove the menu. Without this
+     higher-specificity override, the forced grid display leaves the menu
+     painted over character select, which looks like a frozen Start button and
+     hides the live fighter preview on touch screens. */
+  #menu.hidden { display: none !important; }
   #menu::before {
     inset: 0 !important;
     z-index: 0 !important;

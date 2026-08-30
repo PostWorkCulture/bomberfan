@@ -7897,7 +7897,7 @@ const COSMETIC_SLOTS = ['finish', 'hat', 'extra', 'bomb', 'sound'];
 function defaultLoadout() {
   const kit = {};
   COSMETIC_SLOTS.forEach(slot => { kit[slot] = COSMETICS[slot].def; });
-  // The prize wardrobe is no longer part of the game. The sixteen fighters use
+  // The prize wardrobe is no longer part of the game. The twenty fighters use
   // their authored silhouettes without the old default horns or an extra.
   kit.hat = null;
   kit.extra = null;
@@ -17610,7 +17610,7 @@ const Game = (function () {
     g.players.forEach(p => World.scene.remove(p.mesh));
     g.players = [];
     // Put the chosen fighter in seat one, then draw three distinct opponents
-    // from the other fifteen so the full roster keeps appearing across matches.
+    // from the other nineteen so the full roster keeps appearing across matches.
     const others = PLAYER_DEFS.filter((_, i) => i !== g.selectedClass);
     const rosterRng = makeRng(g.seed ^ 0xa511e9b3);
     for (let i = others.length - 1; i > 0; i--) {

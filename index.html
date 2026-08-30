@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="2a1a763">
+<meta name="build" content="65d7cd2">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2162,6 +2162,14 @@
     animation: previewPortrait 2.8s ease-in-out infinite;
     pointer-events: none;
   }
+  #spreview .preview-fallback.bombog {
+    width: 100%;
+    max-width: none;
+    background-color: #000;
+    background-image: url('assets/bombog.jpg');
+    background-size: contain;
+    background-position: center;
+  }
   @supports (width: 1cqh) {
     #spreview .preview-fallback {
       width: min(92cqw, 75cqh);
@@ -2292,6 +2300,12 @@
     background-position: var(--face-x) var(--face-y);
     box-shadow: inset 0 0 12px rgba(0,0,0,.34), 0 0 10px color-mix(in srgb, var(--fighter) 16%, transparent);
     overflow: hidden;
+  }
+  #select .charface.bombog-face {
+    background-color: #000;
+    background-image: url('assets/bombog.jpg');
+    background-size: 170% auto;
+    background-position: center 31%;
   }
   #select .charface::after {
     content: '';
@@ -7223,8 +7237,8 @@ const PLAYER_DEFS = [
     role: 'Horned Fiend', move: 'Hell Stomp', bio: 'A crimson idol with sweeping horns and ember eyes.' },
   { name: 'Maw', color: 0xd6ff18, belly: 0xf6ffc8, trim: 0xff4bde, accent: 0x5e7000,
     role: 'Neon Nightmare', move: 'Chomp Bounce', bio: 'Mostly teeth, appetite and toxic green trouble.' },
-  { name: 'Assault', color: 0x20d8ff, belly: 0xdffaff, trim: 0xffe11f, accent: 0x00617c,
-    role: 'Rocket Trooper', move: 'Launcher Recoil', bio: 'A bright field unit carrying its own heavy answer.' },
+  { name: 'BombOG', color: 0xff3366, belly: 0x1737f0, trim: 0xffe792, accent: 0x6e66b5,
+    role: 'Original Bomber', move: 'Bomb Toss', bio: 'The original white-helmet bomber, armed with a purple shell and pink attitude.' },
   { name: 'Plague', color: 0xff4fd8, belly: 0xfff06a, trim: 0x45e8ff, accent: 0x8a42ff,
     role: 'Toxic Horror', move: 'Hazmat Shuffle', bio: 'Sealed tanks, glowing lenses and a very bad atmosphere.' },
   { name: 'Phantom', color: 0x9f46ff, belly: 0xeee0ff, trim: 0x61e8ff, accent: 0x3a0974,
@@ -12673,44 +12687,90 @@ class Player {
         body.scale.y = 0.9 + Math.sin(t * 1.8) * 0.018;
         tongue.rotation.z = 0.25 + Math.sin(t * 2.4) * 0.12;
       });
-    } else if (combatClass === 'assault') {
-      // ASSAULT: bright one-eyed rocket trooper with a shoulder-mounted launcher.
+    } else if (combatClass === 'bombog') {
+      // BOMBOG: a direct low-poly translation of the supplied original design.
+      // White helmet and limbs, warm yellow faceplate, royal-blue suit, black
+      // belt, pink hands/boots/antenna and the purple bomb held by the left hand.
       const rig = new THREE.Group();
       g.add(rig);
-      add(new THREE.CylinderGeometry(0.28, 0.32, 0.48, 8), darkClothMat,
-        [0, 0.36, 0], [1, 1, 0.82], null, rig);
-      add(new THREE.SphereGeometry(0.3, 12, 9), bodyMat,
-        [0, 0.52, 0], [1, 0.92, 0.82], null, rig);
+      const ogWhite = mat(0xf8f8f8, { roughness: 0.5, metalness: 0.04 });
+      const ogPink = mat(0xff3366, {
+        roughness: 0.34, metalness: 0.08, emissive: 0x5d071e, emissiveIntensity: 0.16 });
+      const ogBlue = mat(0x1737f0, { roughness: 0.4, metalness: 0.12 });
+      const ogYellow = mat(0xffe792, { roughness: 0.46, metalness: 0.04 });
+      const ogBlack = mat(0x030305, { roughness: 0.34, metalness: 0.22 });
+      const ogPurple = mat(0x6e66b5, { roughness: 0.4, metalness: 0.12 });
+      const ogFuse = mat(0xb7afa2, { roughness: 0.72, metalness: 0.02 });
+
+      // Royal-blue suit and the black belt with its yellow square buckle.
+      add(new THREE.CylinderGeometry(0.21, 0.25, 0.42, 12), ogBlue,
+        [0, 0.39, 0], [1, 1, 0.82], null, rig);
+      add(new THREE.SphereGeometry(0.245, 12, 9), ogBlue,
+        [0, 0.28, 0], [1, 0.72, 0.82], null, rig);
+      add(new THREE.CylinderGeometry(0.252, 0.252, 0.105, 12), ogBlack,
+        [0, 0.31, 0.005], [1, 1, 0.84], null, rig);
+      add(new THREE.BoxGeometry(0.15, 0.12, 0.045), ogYellow,
+        [0, 0.31, 0.22], null, null, rig);
+      add(new THREE.BoxGeometry(0.09, 0.065, 0.052), ogBlack,
+        [0, 0.31, 0.247], null, null, rig);
+
+      // Wide white helmet, black rim and the yellow faceplate from the artwork.
+      add(new THREE.SphereGeometry(0.31, 16, 12), ogWhite,
+        [0.02, 0.77, 0], [1.16, 0.93, 0.86], null, rig);
+      add(new THREE.BoxGeometry(0.43, 0.31, 0.052), ogBlack,
+        [0.05, 0.78, 0.248], null, null, rig);
+      add(new THREE.BoxGeometry(0.385, 0.265, 0.058), ogYellow,
+        [0.05, 0.78, 0.279], null, null, rig);
       [-1, 1].forEach(side => {
-        capsule(0.07, 0.35, bodyMat,
-          [side * 0.31, 0.35, 0.01], null, [0, 0, side * -0.15], rig);
-        add(new THREE.SphereGeometry(0.105, 9, 7), shoeMat,
-          [side * 0.17, 0.07, 0.08], [0.96, 0.44, 1.3], null, rig);
-        add(new THREE.ConeGeometry(0.055, 0.25, 6), combatGunMat,
-          [side * 0.24, 0.78, -0.02], [0.75, 1, 0.7], [0, 0, side * -0.58], rig);
+        add(new THREE.BoxGeometry(0.047, 0.13, 0.026), ogBlack,
+          [0.05 + side * 0.105, 0.76, 0.316], null, [0, 0, side * -0.11], rig);
+        add(new THREE.BoxGeometry(0.145, 0.025, 0.026), ogBlack,
+          [0.05 + side * 0.105, 0.87, 0.317], null, [0, 0, side * 0.42], rig);
       });
-      const lens = add(new THREE.SphereGeometry(0.15, 12, 9), combatGlowMat,
-        [0, 0.63, 0.245], [1.22, 1, 0.42], null, rig);
-      add(new THREE.TorusGeometry(0.175, 0.035, 7, 20), combatGunMat,
-        [0, 0.63, 0.26], [1.08, 1, 0.55], null, rig);
-      add(new THREE.SphereGeometry(0.15, 11, 8), brightShellMat,
-        [0, 0.92, -0.01], [1.05, 0.9, 0.82], null, rig);
-      [-1, 1].forEach(side => glowOrb(0.055, [side * 0.13, 0.95, 0.025], rig));
-      const launcher = new THREE.Group();
-      launcher.position.set(0.3, 0.48, 0.05);
-      rig.add(launcher);
-      add(new THREE.CylinderGeometry(0.105, 0.12, 0.46, 9), combatGunMat,
-        [0, 0, 0.17], [1, 1, 0.9], [Math.PI / 2, 0, 0], launcher);
-      add(new THREE.TorusGeometry(0.105, 0.025, 7, 18), brightShellMat,
-        [0, 0, 0.41], [1, 1, 0.88], null, launcher);
-      add(new THREE.CylinderGeometry(0.06, 0.085, 0.055, 9), combatHotMat,
-        [0, 0, 0.435], [1, 1, 0.8], [Math.PI / 2, 0, 0], launcher);
-      [-1, 1].forEach(side => add(new THREE.ConeGeometry(0.035, 0.15, 4), brightShellMat,
-        [side * 0.09, -0.07, 0.08], [0.7, 1, 0.55], [0, 0, side * -0.42], launcher));
+
+      // Antenna stem, white base and pink signal ball.
+      add(new THREE.ConeGeometry(0.055, 0.12, 5), ogWhite,
+        [0.02, 1.08, 0], null, null, rig);
+      capsule(0.018, 0.18, ogBlack, [0.02, 1.18, 0], null, null, rig);
+      const antenna = add(new THREE.SphereGeometry(0.085, 12, 9), ogPink,
+        [0.02, 1.31, 0], null, null, rig);
+
+      // White limbs with oversized pink gloves and boots.
+      capsule(0.055, 0.35, ogWhite,
+        [-0.29, 0.53, 0.015], null, [0, 0, -0.52], rig);
+      const bombHand = add(new THREE.SphereGeometry(0.115, 12, 9), ogPink,
+        [-0.37, 0.69, 0.05], [1, 1.08, 0.95], null, rig);
+      capsule(0.055, 0.34, ogWhite,
+        [0.29, 0.43, 0.015], null, [0, 0, 0.18], rig);
+      const freeHand = add(new THREE.SphereGeometry(0.11, 12, 9), ogPink,
+        [0.34, 0.29, 0.07], [1, 1.05, 0.95], null, rig);
+      [-1, 1].forEach(side => {
+        capsule(0.062, 0.42, ogWhite,
+          [side * 0.15, 0.11, 0], null, [0, 0, side * -0.18], rig);
+        add(new THREE.SphereGeometry(0.13, 12, 9), ogPink,
+          [side * 0.19, -0.09, 0.09], [1.34, 0.52, 1.34], null, rig);
+      });
+
+      // Purple bomb over the raised glove, with white highlight, cap and fuse.
+      const bomb = new THREE.Group();
+      bomb.position.set(-0.23, 0.91, -0.01);
+      rig.add(bomb);
+      add(new THREE.SphereGeometry(0.19, 14, 11), ogPurple,
+        [0, 0, 0], [1, 1.03, 0.94], null, bomb);
+      add(new THREE.SphereGeometry(0.085, 10, 8), ogWhite,
+        [-0.07, 0.065, 0.165], [1.25, 0.62, 0.25], null, bomb);
+      add(new THREE.SphereGeometry(0.09, 10, 8), ogPurple,
+        [0.04, 0.19, 0], [1, 0.58, 0.82], null, bomb);
+      capsule(0.018, 0.2, ogFuse,
+        [0.12, 0.28, 0], null, [0, 0, -0.72], bomb);
+
       anims.push(t => {
-        lens.position.x = Math.sin(t * 0.9) * 0.045;
-        lens.scale.set(1.22 + Math.sin(t * 3.2) * 0.05, 1, 0.42);
-        launcher.position.z = 0.05 - Math.pow(Math.max(0, Math.sin(t * 2.6)), 10) * 0.055;
+        const bob = Math.sin(t * 2.2);
+        bomb.position.y = 0.91 + bob * 0.025;
+        bomb.rotation.z = bob * 0.055;
+        antenna.position.y = 1.31 + Math.sin(t * 3.1) * 0.018;
+        bombHand.position.y = 0.69 + bob * 0.012;
+        freeHand.rotation.z = Math.sin(t * 2.2 + Math.PI) * 0.08;
       });
     } else if (combatClass === 'plague') {
       // PLAGUE: sealed containment suit and unmistakable gas-mask face. Each
@@ -13249,12 +13309,11 @@ class Player {
           r.scale.y *= 1 - bounce * 0.055;
           r.rotation.z += Math.sin(t * 3.8) * 0.065;
         },
-        assault: (r, t) => {
-          const recoil = Math.pow(hop(t * 2.7), 9);
-          r.position.z -= recoil * 0.095;
-          r.position.y += hop(t * 5.4) * 0.035;
-          r.rotation.x -= recoil * 0.13;
-          r.rotation.z += Math.sin(t * 1.35) * 0.045;
+        bombog: (r, t) => {
+          const toss = hop(t * 3.0);
+          r.position.y += toss * 0.075;
+          r.rotation.y += Math.sin(t * 1.5) * 0.24;
+          r.rotation.z += Math.sin(t * 3.0) * 0.045;
         },
         plague: (r, t) => {
           r.position.x += Math.sin(t * 2.0) * 0.07;
@@ -15572,8 +15631,9 @@ const UI = (function () {
     const box = select.querySelector('.sroster');
     box.innerHTML = PLAYER_DEFS.map((def, i) => {
       const colour = '#' + def.color.toString(16).padStart(6, '0');
+      const bombog = def.name === 'BombOG';
       return `<button class="charpick" data-class="${i}" role="option" style="--fighter:${colour}">` +
-        `<span class="charface" style="--face-x:${(i % 4) * 33.333}%;--face-y:${Math.floor(i / 4) * 33.333}%" aria-hidden="true"></span>` +
+        `<span class="charface${bombog ? ' bombog-face' : ''}" style="--face-x:${(i % 4) * 33.333}%;--face-y:${Math.floor(i / 4) * 33.333}%" aria-hidden="true"></span>` +
         `<span class="charcopy"><b>${def.name}</b><small>${def.role}</small></span>` +
         `<span class="charindex">${String(i + 1).padStart(2, '0')}</span>` +
         `<i aria-hidden="true"></i>` +
@@ -15646,6 +15706,7 @@ const UI = (function () {
     select.querySelector('.spreviewtag').textContent = 'ANIMATING  ·  ' + def.move.toUpperCase();
     const portrait = select.querySelector('.preview-fallback');
     if (portrait) {
+      portrait.classList.toggle('bombog', def.name === 'BombOG');
       portrait.style.setProperty('--face-x', `${(selectedClass % 4) * 33.333}%`);
       portrait.style.setProperty('--face-y', `${Math.floor(selectedClass / 4) * 33.333}%`);
     }

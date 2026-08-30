@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="85dfe13">
+<meta name="build" content="2a1a763">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2111,6 +2111,8 @@
   #spreview {
     position: relative;
     container-type: size;
+    grid-column: 1;
+    grid-row: 1;
     width: 100% !important;
     min-width: 0 !important;
     max-width: none !important;
@@ -2228,6 +2230,8 @@
     letter-spacing: .25px;
   }
   #select .sroster {
+    grid-column: 2;
+    grid-row: 1;
     pointer-events: auto;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2397,12 +2401,16 @@
       min-height: 0;
     }
     #spreview {
+      grid-column: 1;
+      grid-row: 1;
       width: 100% !important;
       height: 100% !important;
       min-height: 0 !important;
       max-height: none !important;
     }
     #select .sroster {
+      grid-column: 1;
+      grid-row: 2;
       align-self: stretch;
       width: 100%;
       height: 100%;
@@ -15046,16 +15054,14 @@ const UI = (function () {
           <span class="scount">16 FIGHTERS</span>
         </div>
         <div class="sbody">
-          <div class="scol">
-            <div id="spreview">
-              <div class="preview-fallback" aria-hidden="true"></div>
-              <span class="spreviewtag">LIVE PREVIEW</span>
-              <div class="sname"></div>
-            </div>
-            <div class="sidentity">
-              <div class="smeta"><span class="srole"></span><span class="smove"></span></div>
-              <p class="sbio"></p>
-            </div>
+          <div id="spreview">
+            <div class="preview-fallback" aria-hidden="true"></div>
+            <span class="spreviewtag">LIVE PREVIEW</span>
+            <div class="sname"></div>
+          </div>
+          <div class="sidentity">
+            <div class="smeta"><span class="srole"></span><span class="smove"></span></div>
+            <p class="sbio"></p>
           </div>
           <div class="sroster" role="listbox" aria-label="Choose fighter"></div>
         </div>

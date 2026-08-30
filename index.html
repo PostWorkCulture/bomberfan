@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="5405a4d">
+<meta name="build" content="c6da42e">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2152,15 +2152,20 @@
     min-width: 120px;
     max-width: 92%;
     background-color: #100d1b;
-    background-image: url('assets/fighter-faces.png');
+    background-image: url('assets/fighter-faces-aaa.webp');
     background-repeat: no-repeat;
-    background-size: 400% 400%;
+    background-size: 400% 500%;
     background-position: var(--face-x, 0%) var(--face-y, 0%);
     filter: drop-shadow(0 0 18px color-mix(in srgb, var(--fighter) 60%, transparent));
     transform: translateX(-50%);
     transform-origin: 50% 78%;
     animation: previewPortrait 2.8s ease-in-out infinite;
     pointer-events: none;
+    transition: opacity .18s ease, visibility 0s linear .18s;
+  }
+  #spreview.webgl-ready .preview-fallback {
+    opacity: 0;
+    visibility: hidden;
   }
   #spreview .preview-fallback.bombog {
     width: 100%;
@@ -2243,11 +2248,11 @@
     pointer-events: auto;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: repeat(4, minmax(62px, 1fr));
+    grid-template-rows: repeat(5, minmax(52px, 1fr));
     align-self: center;
     gap: clamp(6px, .8vw, 10px);
     width: min(100%, 540px);
-    max-height: min(55vh, 470px);
+    max-height: min(62vh, 560px);
     padding: clamp(9px, 1.1vw, 13px);
     border: 1px solid rgba(255,255,255,.10);
     border-radius: 12px;
@@ -2289,23 +2294,17 @@
   }
   #select .charface {
     position: relative;
-    width: clamp(48px, 4.2vw, 58px);
-    height: clamp(54px, 4.8vw, 66px);
+    width: clamp(46px, 4vw, 56px);
+    height: clamp(46px, 4vw, 56px);
     flex: 0 0 auto;
     border: 1px solid color-mix(in srgb, var(--fighter) 45%, rgba(255,255,255,.14));
     border-radius: 7px;
-    background-image: url('assets/fighter-faces.png');
+    background-image: url('assets/fighter-faces-aaa.webp');
     background-repeat: no-repeat;
-    background-size: 400% 400%;
+    background-size: 400% 500%;
     background-position: var(--face-x) var(--face-y);
     box-shadow: inset 0 0 12px rgba(0,0,0,.34), 0 0 10px color-mix(in srgb, var(--fighter) 16%, transparent);
     overflow: hidden;
-  }
-  #select .charface.bombog-face {
-    background-color: #000;
-    background-image: url('assets/bombog.jpg');
-    background-size: 170% auto;
-    background-position: center 31%;
   }
   #select .charface::after {
     content: '';
@@ -2376,9 +2375,9 @@
     #spreview { min-height: 210px; }
     #select .sidentity { min-height: 52px; padding: 7px 11px; }
     #select .sbio { margin-top: 4px; }
-    #select .sroster { grid-template-rows: repeat(4, minmax(48px, 1fr)); max-height: 50vh; }
+    #select .sroster { grid-template-rows: repeat(5, minmax(40px, 1fr)); max-height: 56vh; }
     #select .charpick { padding: 5px 6px; }
-    #select .charface { width: 34px; height: 39px; }
+    #select .charface { width: 34px; height: 34px; }
     #select .sfoot { min-height: 45px; }
   }
   @media (max-width: 719px) {
@@ -2400,7 +2399,7 @@
     #select .sbody {
       display: grid !important;
       grid-template-columns: minmax(0, 1fr) !important;
-      grid-template-rows: minmax(190px, .92fr) minmax(200px, 1.08fr) !important;
+      grid-template-rows: minmax(178px, .84fr) minmax(220px, 1.16fr) !important;
       align-items: stretch !important;
       width: 100% !important;
       margin: 0 auto !important;
@@ -2431,12 +2430,12 @@
       max-width: none;
       max-height: none;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      grid-template-rows: repeat(4, minmax(0, 1fr));
+      grid-template-rows: repeat(5, minmax(0, 1fr));
       padding: 5px;
       gap: 4px;
     }
     #select .charpick { padding: 3px; gap: 3px; }
-    #select .charface { width: clamp(32px, 10vw, 40px); height: clamp(38px, 11.5vw, 46px); border-radius: 5px; }
+    #select .charface { width: clamp(30px, 8.8vw, 38px); height: clamp(30px, 8.8vw, 38px); border-radius: 8px; }
     #select .charcopy b { font-size: clamp(7px, 2.15vw, 9px); letter-spacing: 0; }
     #select .charcopy small { display: none; }
     #select .charindex { font-size: 6px; }
@@ -2466,11 +2465,11 @@
     #spreview { min-height: 0 !important; height: 100% !important; }
     #select .sroster {
       width: 100%; height: 100%; max-width: none; max-height: none;
-      grid-template-rows: repeat(4, minmax(0, 1fr));
+      grid-template-rows: repeat(5, minmax(0, 1fr));
       padding: 4px; gap: 3px;
     }
     #select .charpick { padding: 3px; gap: 3px; }
-    #select .charface { width: 30px; height: 34px; }
+    #select .charface { width: 28px; height: 28px; }
     #select .charcopy b { font-size: 8px; letter-spacing: 0; }
     #select .sfoot { min-height: 34px; }
     #select .sfoot .opt.go { padding: 6px 20px !important; margin-top: 0; }
@@ -7218,7 +7217,7 @@ const CURSES = [
   { id: 'reverse',  label: 'Reversed' },
 ];
 
-// Sixteen mechanically identical fighters with deliberately different visual
+// Twenty mechanically identical fighters with deliberately different visual
 // architecture. Role, bio and movement copy belong to character select only.
 const PLAYER_DEFS = [
   { name: 'Piglet', color: 0xff9dcc, belly: 0xffc8df, trim: 0xf04ca6, accent: 0x9e246f,
@@ -7253,6 +7252,14 @@ const PLAYER_DEFS = [
     role: 'Tiny Tyrant', move: 'Rex Roar', bio: 'A chunky green dinosaur with tiny arms and a very large opinion.' },
   { name: 'Wario', color: 0xffd51f, belly: 0x8f35d9, trim: 0x44d9ff, accent: 0x5b268c,
     role: 'Greedy Bruiser', move: 'Belly Bump', bio: 'Big cap, bigger moustache and enough swagger to fill the arena.' },
+  { name: 'Buzz', color: 0x83cf3f, belly: 0xf5f7ff, trim: 0x7b3fb2, accent: 0xd92f73,
+    role: 'Space Ranger', move: 'Rocket Roll', bio: 'White armour, green flight gear and a fearless mission-ready stance.' },
+  { name: 'Minion', color: 0xffdf21, belly: 0x2455d7, trim: 0x9da6ad, accent: 0x25272c,
+    role: 'Tiny Troublemaker', move: 'Goggle Bounce', bio: 'One bright eye, blue overalls and more enthusiasm than judgement.' },
+  { name: 'Sonic', color: 0x1269dd, belly: 0xf1bd79, trim: 0xf4f7ff, accent: 0xe52b35,
+    role: 'Blue Speedster', move: 'Spin Dash', bio: 'Quills, red shoes and a blur of blue built for the fastest route.' },
+  { name: 'Tanooki Bowser', color: 0xf4a51c, belly: 0xffdc76, trim: 0x318c33, accent: 0xd62517,
+    role: 'Royal Beast', move: 'Tail Slam', bio: 'A crowned shell tyrant with horns, claws and a striped tanooki tail.' },
 ];
 
 // Fixed spawn corners in grid coordinates
@@ -12270,10 +12277,16 @@ class Player {
     // which is what keeps a Shadow player still recognisably the red one — see
     // the seat-colour rule at the top of section 05.
     const mat = (c, o) => {
-      const opts = Object.assign({ color: c, roughness: 0.45, metalness: 0.06 }, o || {});
+      const opts = Object.assign({
+        color: c,
+        roughness: 0.38,
+        metalness: 0.04,
+        clearcoat: 0.28,
+        clearcoatRoughness: 0.46,
+      }, o || {});
       const d = opts.darken;
       delete opts.darken;
-      const m = new THREE.MeshStandardMaterial(opts);
+      const m = new THREE.MeshPhysicalMaterial(opts);
       if (d) m.color.multiplyScalar(d);
       return m;
     };
@@ -12285,12 +12298,16 @@ class Player {
     };
 
     const bodyMat = mat(def.color, styled('body'));
-    /* BOMBER FAN COMBAT CHARACTER POLISH V1
-       Keep the seat colour, but drag the shell toward blackened gunmetal so
-       the luminous trim does the identification instead of a toy-bright body. */
-    if (bodyMat.color) bodyMat.color.lerp(new THREE.Color(0x080a0f), 0.68);
-    bodyMat.roughness = Math.min(bodyMat.roughness ?? 0.5, 0.46);
-    bodyMat.metalness = Math.max(bodyMat.metalness ?? 0.0, 0.36);
+    /* CHARACTER FINISH V2
+       Keep the full seat colour. The earlier gunmetal wash made every fighter
+       darker and flatter; clean colour separation and a soft clearcoat make
+       the rounded forms readable without drawing construction lines on them. */
+    if (!finish) {
+      bodyMat.roughness = 0.36;
+      bodyMat.metalness = 0.04;
+      bodyMat.clearcoat = 0.34;
+      bodyMat.clearcoatRoughness = 0.42;
+    }
     const combatGunMat = mat(0x11151c, { roughness: 0.34, metalness: 0.72 });
     const combatBlackMat = mat(0x05070a, { roughness: 0.28, metalness: 0.58 });
     const combatGlowMat = mat(def.color, {
@@ -12339,10 +12356,44 @@ class Player {
       (parent || g).add(m);
       return m;
     };
+    const roundedBox = (width, height, depth, radius) => {
+      const curve = Math.min(
+        radius === undefined ? Math.min(width, height) * 0.16 : radius,
+        width * 0.42,
+        height * 0.42
+      );
+      const bevelSize = Math.min(curve * 0.38, width * 0.08, height * 0.08, depth * 0.22);
+      const bevel = Math.min(curve * 0.4, depth * 0.22);
+      const innerWidth = width - bevelSize * 2;
+      const innerHeight = height - bevelSize * 2;
+      const innerCurve = Math.max(0.001, curve - bevelSize);
+      const shape = new THREE.Shape();
+      const x = -innerWidth / 2, y = -innerHeight / 2;
+      shape.moveTo(x + innerCurve, y);
+      shape.lineTo(x + innerWidth - innerCurve, y);
+      shape.quadraticCurveTo(x + innerWidth, y, x + innerWidth, y + innerCurve);
+      shape.lineTo(x + innerWidth, y + innerHeight - innerCurve);
+      shape.quadraticCurveTo(x + innerWidth, y + innerHeight, x + innerWidth - innerCurve, y + innerHeight);
+      shape.lineTo(x + innerCurve, y + innerHeight);
+      shape.quadraticCurveTo(x, y + innerHeight, x, y + innerHeight - innerCurve);
+      shape.lineTo(x, y + innerCurve);
+      shape.quadraticCurveTo(x, y, x + innerCurve, y);
+      const geo = new THREE.ExtrudeGeometry(shape, {
+        depth: Math.max(0.001, depth - bevel * 2),
+        bevelEnabled: true,
+        bevelSegments: 4,
+        bevelSize,
+        bevelThickness: bevel,
+        curveSegments: 5,
+        steps: 1,
+      });
+      geo.center();
+      return geo;
+    };
     const capsule = (radius, length, material, p, s, r, parent) =>
-      add(new THREE.CapsuleGeometry(radius, length, 5, 12), material, p, s, r, parent);
+      add(new THREE.CapsuleGeometry(radius, length, 10, 20), material, p, s, r, parent);
     const glowOrb = (radius, p, parent) =>
-      add(new THREE.SphereGeometry(radius, 10, 8), combatGlowMat, p, null, null, parent);
+      add(new THREE.SphereGeometry(radius, 28, 20), combatGlowMat, p, null, null, parent);
 
     if (combatClass === 'piglet') {
       // PIGLET: oversized round head, very long ears, soft snout and a striped
@@ -12360,10 +12411,10 @@ class Player {
       const pigFace = mat(0x28101e, { roughness: 0.72, metalness: 0.0 });
 
       // Pear-shaped striped body.
-      add(new THREE.CapsuleGeometry(0.225, 0.24, 6, 14), pigMagenta,
+      add(new THREE.CapsuleGeometry(0.225, 0.24, 10, 20), pigMagenta,
         [0, 0.37, 0], [0.96, 1.04, 0.82], null, rig);
       [-0.08, 0.02, 0.12].forEach((dy, i) => add(
-        new THREE.TorusGeometry(0.205 - i * 0.012, 0.025, 7, 18), pigDarkStripe,
+        new THREE.TorusGeometry(0.205 - i * 0.012, 0.025, 16, 32), pigDarkStripe,
         [0, 0.35 + dy, 0], [1, 1, 0.82], [Math.PI / 2, 0, 0], rig));
 
       const arms = [];
@@ -12371,29 +12422,29 @@ class Player {
         const arm = capsule(0.042, 0.3, pigPink,
           [side * 0.265, 0.34, 0.02], [0.9, 1, 0.82], [0, 0, side * -0.22], rig);
         arms.push({ arm, side, rest: arm.rotation.z });
-        add(new THREE.SphereGeometry(0.05, 10, 7), pigLight,
+        add(new THREE.SphereGeometry(0.05, 28, 20), pigLight,
           [side * 0.315, 0.19, 0.07], [1, 0.78, 0.9], null, rig);
         capsule(0.05, 0.22, pigPink,
           [side * 0.13, 0.14, 0], [0.92, 1, 0.82], [0, 0, side * 0.09], rig);
-        add(new THREE.SphereGeometry(0.075, 10, 7), pigFace,
+        add(new THREE.SphereGeometry(0.075, 28, 20), pigFace,
           [side * 0.145, 0.045, 0.08], [1.05, 0.48, 1.28], null, rig);
       });
 
       const headRig = new THREE.Group();
       rig.add(headRig);
-      const head = add(new THREE.SphereGeometry(0.285, 14, 10), pigPink,
+      const head = add(new THREE.SphereGeometry(0.285, 28, 20), pigPink,
         [0, 0.78, 0.015], [0.94, 1.0, 0.86], null, headRig);
       // Cheeks soften the low-poly face and keep the head recognisably pig-like.
-      [-1, 1].forEach(side => add(new THREE.SphereGeometry(0.09, 10, 8), pigLight,
+      [-1, 1].forEach(side => add(new THREE.SphereGeometry(0.09, 28, 20), pigLight,
         [side * 0.15, 0.74, 0.19], [1, 0.82, 0.52], null, headRig));
-      const snout = add(new THREE.CylinderGeometry(0.105, 0.13, 0.14, 12), pigLight,
+      const snout = add(new THREE.CylinderGeometry(0.105, 0.13, 0.14, 24), pigLight,
         [0, 0.72, 0.27], [1, 0.78, 1], [Math.PI / 2, 0, 0], headRig);
-      [-1, 1].forEach(side => add(new THREE.SphereGeometry(0.018, 8, 6), pigFace,
+      [-1, 1].forEach(side => add(new THREE.SphereGeometry(0.018, 28, 20), pigFace,
         [side * 0.043, 0.73, 0.348], [0.8, 1.1, 0.55], null, headRig));
       [-1, 1].forEach(side => {
-        add(new THREE.SphereGeometry(0.027, 9, 7), pigFace,
+        add(new THREE.SphereGeometry(0.027, 28, 20), pigFace,
           [side * 0.095, 0.83, 0.255], [0.8, 1.1, 0.55], null, headRig);
-        add(new THREE.BoxGeometry(0.075, 0.018, 0.014), pigFace,
+        add(roundedBox(0.075, 0.018, 0.014), pigFace,
           [side * 0.095, 0.875, 0.252], null, [0, 0, side * -0.18], headRig);
       });
 
@@ -12445,23 +12496,23 @@ class Player {
         claws.push({ arm, claw, side });
         add(new THREE.ConeGeometry(0.055, 0.25, 5), darkClothMat,
           [side * 0.12, 0.14, -0.02], [1, 1, 0.8], [Math.PI, 0, side * 0.08], rig);
-        add(new THREE.SphereGeometry(0.085, 10, 7), shoeMat,
+        add(new THREE.SphereGeometry(0.085, 28, 20), shoeMat,
           [side * 0.17, 0.075, 0.04], [0.8, 0.48, 1.35], null, rig);
       });
 
       const headRig = new THREE.Group();
       headRig.position.y = 0;
       rig.add(headRig);
-      add(new THREE.DodecahedronGeometry(0.255, 0), darkClothMat,
+      add(new THREE.SphereGeometry(0.255, 28, 20), darkClothMat,
         [0, 0.79, -0.015], [0.92, 1.12, 0.88], [0, 0, 0], headRig);
-      add(new THREE.DodecahedronGeometry(0.19, 0), boneMat,
+      add(new THREE.SphereGeometry(0.19, 28, 20), boneMat,
         [0, 0.765, 0.18], [0.78, 1.02, 0.52], [0.03, 0, 0], headRig);
       add(new THREE.ConeGeometry(0.11, 0.16, 5), boneMat,
         [0, 0.65, 0.22], [1, 0.8, 0.58], [Math.PI, 0, 0], headRig);
       [-1, 1].forEach(side => {
         add(new THREE.OctahedronGeometry(0.052, 0), combatBlackMat,
           [side * 0.07, 0.79, 0.285], [1, 0.72, 0.34], [0, 0, side * -0.18], headRig);
-        add(new THREE.SphereGeometry(0.022, 8, 6), combatHotMat,
+        add(new THREE.SphereGeometry(0.022, 28, 20), combatHotMat,
           [side * 0.07, 0.79, 0.315], null, null, headRig);
       });
       [-1, 0, 1].forEach((side, i) => {
@@ -12483,36 +12534,36 @@ class Player {
       const rig = new THREE.Group();
       g.add(rig);
       capsule(0.265, 0.22, bodyMat, [0, 0.39, 0], [0.96, 1.02, 0.86], null, rig);
-      const chest = add(new THREE.DodecahedronGeometry(0.285, 0), combatGunMat,
+      const chest = add(new THREE.SphereGeometry(0.285, 28, 20), combatGunMat,
         [0, 0.47, 0.055], [0.94, 0.76, 0.82], [0.02, 0, 0], rig);
-      add(new THREE.OctahedronGeometry(0.16, 0), bodyMat,
+      add(new THREE.SphereGeometry(0.16, 28, 20), bodyMat,
         [0, 0.47, 0.22], [1.15, 0.8, 0.46], [0, 0, Math.PI / 4], rig);
       const status = [];
       [-1, 1].forEach(side => {
         const lamp = glowOrb(0.034, [side * 0.09, 0.48, 0.335], rig);
         status.push(lamp);
-        add(new THREE.SphereGeometry(0.13, 10, 8), combatGunMat,
+        add(new THREE.SphereGeometry(0.13, 28, 20), combatGunMat,
           [side * 0.285, 0.49, 0.015], [0.9, 0.68, 0.92], [0, 0, side * -0.1], rig);
         capsule(0.068, 0.23, bodyMat,
           [side * 0.3, 0.31, 0.03], [0.9, 1, 0.9], [0, 0, side * 0.06], rig);
-        add(new THREE.CylinderGeometry(0.07, 0.085, 0.11, 7), trimMat,
+        add(new THREE.CylinderGeometry(0.07, 0.085, 0.11, 24), trimMat,
           [side * 0.305, 0.17, 0.055], null, [0, 0, side * 0.04], rig);
-        add(new THREE.CylinderGeometry(0.095, 0.11, 0.15, 7), shoeMat,
+        add(new THREE.CylinderGeometry(0.095, 0.11, 0.15, 24), shoeMat,
           [side * 0.17, 0.085, 0.09], [1, 1, 1.25], [Math.PI / 2, 0, 0], rig);
       });
 
-      const helmet = add(new THREE.DodecahedronGeometry(0.235, 0), brightShellMat,
+      const helmet = add(new THREE.SphereGeometry(0.235, 28, 20), brightShellMat,
         [0, 0.77, 0.01], [1.0, 0.9, 0.9], [0.02, 0, 0], rig);
       add(new THREE.TorusGeometry(0.215, 0.035, 7, 20, Math.PI * 1.12), combatGunMat,
         [0, 0.79, 0.01], [1, 1, 0.86], [Math.PI / 2, 0, -0.2], rig);
-      add(new THREE.BoxGeometry(0.32, 0.09, 0.052), combatBlackMat,
+      add(roundedBox(0.32, 0.09, 0.052), combatBlackMat,
         [0, 0.78, 0.225], [1, 1, 0.8], [-0.045, 0, 0], rig);
-      add(new THREE.BoxGeometry(0.24, 0.025, 0.016), combatHotMat,
+      add(roundedBox(0.24, 0.025, 0.016), combatHotMat,
         [0, 0.792, 0.258], null, [0, 0, 0], rig);
       // Comms mast and backpack form one asymmetrical tactical silhouette.
-      add(new THREE.CapsuleGeometry(0.09, 0.23, 5, 10), combatBlackMat,
+      add(new THREE.CapsuleGeometry(0.09, 0.23, 10, 20), combatBlackMat,
         [0.16, 0.46, -0.17], [0.9, 1, 0.72], [0.05, 0, -0.05], rig);
-      add(new THREE.CylinderGeometry(0.012, 0.018, 0.29, 6), combatGunMat,
+      add(new THREE.CylinderGeometry(0.012, 0.018, 0.29, 24), combatGunMat,
         [0.2, 0.9, -0.035], null, [0, 0, -0.13], rig);
       const beacon = glowOrb(0.03, [0.218, 1.045, -0.035], rig);
       anims.push(t => {
@@ -12528,17 +12579,17 @@ class Player {
       g.add(rig);
       add(new THREE.ConeGeometry(0.29, 0.54, 7), darkClothMat,
         [0, 0.38, 0], [0.9, 1, 0.72], [0, 0, Math.PI], rig);
-      add(new THREE.OctahedronGeometry(0.25, 0), bodyMat,
+      add(new THREE.SphereGeometry(0.25, 28, 20), bodyMat,
         [0, 0.5, 0.075], [0.92, 1.08, 0.7], [0, 0, Math.PI / 4], rig);
       const bell = glowOrb(0.065, [0, 0.47, 0.29], rig);
       [-1, 1].forEach(side => {
         capsule(0.052, 0.34, side > 0 ? bodyMat : combatGunMat,
           [side * 0.3, 0.35, 0.03], null, [0, 0, side * -0.32], rig);
         glowOrb(0.055, [side * 0.39, 0.17, 0.08], rig);
-        add(new THREE.SphereGeometry(0.085, 9, 7), shoeMat,
+        add(new THREE.SphereGeometry(0.085, 28, 20), shoeMat,
           [side * 0.16, 0.065, 0.1], [0.9, 0.4, 1.5], [0, side * 0.22, 0], rig);
       });
-      const head = add(new THREE.SphereGeometry(0.225, 12, 9), boneMat,
+      const head = add(new THREE.SphereGeometry(0.225, 28, 20), boneMat,
         [0, 0.76, 0.035], [0.92, 1.04, 0.82], null, rig);
       add(new THREE.ConeGeometry(0.12, 0.43, 6), bodyMat,
         [-0.13, 0.98, -0.015], [0.82, 1, 0.72], [0, 0, 0.48], rig);
@@ -12570,11 +12621,11 @@ class Player {
 
       // Inverted-triangle torso and high shoulders establish the mass before
       // any detail is added.
-      const torso = add(new THREE.DodecahedronGeometry(0.34, 0), hulkGreenMat,
+      const torso = add(new THREE.SphereGeometry(0.34, 28, 20), hulkGreenMat,
         [0, 0.48, 0], [1, 0.88, 0.72], null, rig);
-      add(new THREE.SphereGeometry(0.24, 11, 8), hulkLightMat,
+      add(new THREE.SphereGeometry(0.24, 28, 20), hulkLightMat,
         [0, 0.43, 0.21], [1.12, 0.75, 0.3], null, rig);
-      add(new THREE.BoxGeometry(0.44, 0.18, 0.28), shortsMat,
+      add(roundedBox(0.44, 0.18, 0.28), shortsMat,
         [0, 0.25, 0], null, null, rig);
       [-1, 1].forEach(side => add(new THREE.ConeGeometry(0.12, 0.19, 5), shortsMat,
         [side * 0.15, 0.16, 0.01], [1, 1, 0.9], [Math.PI, 0, side * 0.08], rig));
@@ -12586,30 +12637,30 @@ class Player {
         arm.rotation.z = side * -0.14;
         rig.add(arm);
         capsule(0.105, 0.31, hulkGreenMat, [0, -0.15, 0], [1, 1, 0.82], null, arm);
-        const fist = add(new THREE.DodecahedronGeometry(0.115, 0), hulkLightMat,
+        const fist = add(new THREE.SphereGeometry(0.115, 28, 20), hulkLightMat,
           [0, -0.36, 0.08], [1, 0.92, 1.08], null, arm);
-        [-1, 0, 1].forEach(i => add(new THREE.SphereGeometry(0.036, 7, 5), hulkGreenMat,
+        [-1, 0, 1].forEach(i => add(new THREE.SphereGeometry(0.036, 28, 20), hulkGreenMat,
           [i * 0.055, -0.41, 0.14], [1, 0.65, 0.7], null, arm));
         arms.push({ arm, fist, side, rest: arm.rotation.z });
         capsule(0.105, 0.25, hulkGreenMat,
           [side * 0.145, 0.12, 0], [1, 1, 0.86], [0, 0, side * 0.04], rig);
-        add(new THREE.SphereGeometry(0.125, 10, 7), hulkGreenMat,
+        add(new THREE.SphereGeometry(0.125, 28, 20), hulkGreenMat,
           [side * 0.16, 0.045, 0.12], [1, 0.42, 1.32], null, rig);
       });
 
       const headRig = new THREE.Group();
       rig.add(headRig);
-      const head = add(new THREE.BoxGeometry(0.35, 0.3, 0.29), hulkGreenMat,
+      const head = add(roundedBox(0.35, 0.3, 0.29), hulkGreenMat,
         [0, 0.79, 0.035], [1, 1, 0.9], null, headRig);
-      add(new THREE.BoxGeometry(0.29, 0.11, 0.25), hulkLightMat,
+      add(roundedBox(0.29, 0.11, 0.25), hulkLightMat,
         [0, 0.69, 0.12], null, null, headRig);
       [-1, 1].forEach(side => {
-        add(new THREE.BoxGeometry(0.105, 0.03, 0.025), hairMat,
+        add(roundedBox(0.105, 0.03, 0.025), hairMat,
           [side * 0.09, 0.83, 0.19], null, [0, 0, side * -0.16], headRig);
-        add(new THREE.SphereGeometry(0.025, 8, 6), teethMat,
+        add(new THREE.SphereGeometry(0.025, 28, 20), teethMat,
           [side * 0.075, 0.795, 0.207], [1.2, 0.62, 0.35], null, headRig);
       });
-      add(new THREE.BoxGeometry(0.22, 0.055, 0.025), hairMat,
+      add(roundedBox(0.22, 0.055, 0.025), hairMat,
         [0, 0.68, 0.258], null, null, headRig);
       [-1, 0, 1].forEach(i => add(new THREE.ConeGeometry(0.085, 0.22, 6), hairMat,
         [i * 0.1, 0.98 + (i === 0 ? 0.03 : 0), -0.015], [1, 1, 0.85], [0, 0, i * -0.18], headRig));
@@ -12628,9 +12679,9 @@ class Player {
       // DEVIL: broad crimson idol, cloven stance, sweeping horns and ember eyes.
       const rig = new THREE.Group();
       g.add(rig);
-      add(new THREE.DodecahedronGeometry(0.33, 0), bodyMat,
+      add(new THREE.SphereGeometry(0.33, 28, 20), bodyMat,
         [0, 0.43, 0], [1, 0.82, 0.82], null, rig);
-      add(new THREE.OctahedronGeometry(0.18, 0), combatHotMat,
+      add(new THREE.SphereGeometry(0.18, 28, 20), combatHotMat,
         [0, 0.43, 0.24], [1.15, 0.8, 0.32], [0, 0, Math.PI / 4], rig);
       [-1, 1].forEach(side => {
         capsule(0.075, 0.34, combatGunMat,
@@ -12640,13 +12691,13 @@ class Player {
         add(new THREE.ConeGeometry(0.065, 0.17, 4), combatBlackMat,
           [side * 0.19, 0.035, 0.09], [1, 1, 1.2], [Math.PI / 2, 0, 0], rig);
       });
-      const head = add(new THREE.DodecahedronGeometry(0.25, 0), brightShellMat,
+      const head = add(new THREE.SphereGeometry(0.25, 28, 20), brightShellMat,
         [0, 0.75, 0.02], [1.05, 0.86, 0.9], null, rig);
       [-1, 1].forEach(side => {
         glowOrb(0.06, [side * 0.16, 0.91, 0.025], rig);
         add(new THREE.ConeGeometry(0.075, 0.4, 7), boneMat,
           [side * 0.18, 0.98, -0.02], [0.75, 1, 0.7], [0, 0, side * -0.65], rig);
-        add(new THREE.SphereGeometry(0.03, 8, 6), combatHotMat,
+        add(new THREE.SphereGeometry(0.03, 28, 20), combatHotMat,
           [side * 0.075, 0.78, 0.25], null, null, rig);
       });
       add(new THREE.ConeGeometry(0.1, 0.17, 5), combatGunMat,
@@ -12661,9 +12712,9 @@ class Player {
       // MAW: fluorescent squat monster whose mouth is the entire torso.
       const rig = new THREE.Group();
       g.add(rig);
-      const body = add(new THREE.SphereGeometry(0.35, 12, 9), bodyMat,
+      const body = add(new THREE.SphereGeometry(0.35, 28, 20), bodyMat,
         [0, 0.43, 0], [1, 0.9, 0.82], null, rig);
-      add(new THREE.SphereGeometry(0.245, 12, 8), combatBlackMat,
+      add(new THREE.SphereGeometry(0.245, 28, 20), combatBlackMat,
         [0, 0.43, 0.23], [1.15, 0.72, 0.38], null, rig);
       [-2, -1, 0, 1, 2].forEach((tooth, i) => {
         add(new THREE.ConeGeometry(0.035, 0.15, 5), boneMat,
@@ -12671,12 +12722,12 @@ class Player {
         add(new THREE.ConeGeometry(0.032, 0.13, 5), boneMat,
           [tooth * 0.065, 0.33, 0.36], null, null, rig);
       });
-      const tongue = add(new THREE.CapsuleGeometry(0.055, 0.21, 5, 10), combatHotMat,
+      const tongue = add(new THREE.CapsuleGeometry(0.055, 0.21, 10, 20), combatHotMat,
         [0.06, 0.3, 0.37], [1, 1, 0.55], [Math.PI / 2, 0, 0.25], rig);
       [-1, 1].forEach(side => {
-        add(new THREE.CapsuleGeometry(0.075, 0.28, 5, 9), bodyMat,
+        add(new THREE.CapsuleGeometry(0.075, 0.28, 10, 20), bodyMat,
           [side * 0.33, 0.31, 0.02], null, [0, 0, side * -0.35], rig);
-        add(new THREE.SphereGeometry(0.11, 9, 7), shoeMat,
+        add(new THREE.SphereGeometry(0.11, 28, 20), shoeMat,
           [side * 0.17, 0.075, 0.09], [1.05, 0.44, 1.35], null, rig);
         const stalk = capsule(0.025, 0.18, bodyMat,
           [side * 0.16, 0.75, 0], null, [0, 0, side * -0.28], rig);
@@ -12703,28 +12754,28 @@ class Player {
       const ogFuse = mat(0xb7afa2, { roughness: 0.72, metalness: 0.02 });
 
       // Royal-blue suit and the black belt with its yellow square buckle.
-      add(new THREE.CylinderGeometry(0.21, 0.25, 0.42, 12), ogBlue,
+      add(new THREE.CylinderGeometry(0.21, 0.25, 0.42, 24), ogBlue,
         [0, 0.39, 0], [1, 1, 0.82], null, rig);
-      add(new THREE.SphereGeometry(0.245, 12, 9), ogBlue,
+      add(new THREE.SphereGeometry(0.245, 28, 20), ogBlue,
         [0, 0.28, 0], [1, 0.72, 0.82], null, rig);
-      add(new THREE.CylinderGeometry(0.252, 0.252, 0.105, 12), ogBlack,
+      add(new THREE.CylinderGeometry(0.252, 0.252, 0.105, 24), ogBlack,
         [0, 0.31, 0.005], [1, 1, 0.84], null, rig);
-      add(new THREE.BoxGeometry(0.15, 0.12, 0.045), ogYellow,
+      add(roundedBox(0.15, 0.12, 0.045), ogYellow,
         [0, 0.31, 0.22], null, null, rig);
-      add(new THREE.BoxGeometry(0.09, 0.065, 0.052), ogBlack,
+      add(roundedBox(0.09, 0.065, 0.052), ogBlack,
         [0, 0.31, 0.247], null, null, rig);
 
       // Wide white helmet, black rim and the yellow faceplate from the artwork.
-      add(new THREE.SphereGeometry(0.31, 16, 12), ogWhite,
+      add(new THREE.SphereGeometry(0.31, 28, 20), ogWhite,
         [0.02, 0.77, 0], [1.16, 0.93, 0.86], null, rig);
-      add(new THREE.BoxGeometry(0.43, 0.31, 0.052), ogBlack,
+      add(roundedBox(0.43, 0.31, 0.052), ogBlack,
         [0.05, 0.78, 0.248], null, null, rig);
-      add(new THREE.BoxGeometry(0.385, 0.265, 0.058), ogYellow,
+      add(roundedBox(0.385, 0.265, 0.058), ogYellow,
         [0.05, 0.78, 0.279], null, null, rig);
       [-1, 1].forEach(side => {
-        add(new THREE.BoxGeometry(0.047, 0.13, 0.026), ogBlack,
+        add(roundedBox(0.047, 0.13, 0.026), ogBlack,
           [0.05 + side * 0.105, 0.76, 0.316], null, [0, 0, side * -0.11], rig);
-        add(new THREE.BoxGeometry(0.145, 0.025, 0.026), ogBlack,
+        add(roundedBox(0.145, 0.025, 0.026), ogBlack,
           [0.05 + side * 0.105, 0.87, 0.317], null, [0, 0, side * 0.42], rig);
       });
 
@@ -12732,22 +12783,22 @@ class Player {
       add(new THREE.ConeGeometry(0.055, 0.12, 5), ogWhite,
         [0.02, 1.08, 0], null, null, rig);
       capsule(0.018, 0.18, ogBlack, [0.02, 1.18, 0], null, null, rig);
-      const antenna = add(new THREE.SphereGeometry(0.085, 12, 9), ogPink,
+      const antenna = add(new THREE.SphereGeometry(0.085, 28, 20), ogPink,
         [0.02, 1.31, 0], null, null, rig);
 
       // White limbs with oversized pink gloves and boots.
       capsule(0.055, 0.35, ogWhite,
         [-0.29, 0.53, 0.015], null, [0, 0, -0.52], rig);
-      const bombHand = add(new THREE.SphereGeometry(0.115, 12, 9), ogPink,
+      const bombHand = add(new THREE.SphereGeometry(0.115, 28, 20), ogPink,
         [-0.37, 0.69, 0.05], [1, 1.08, 0.95], null, rig);
       capsule(0.055, 0.34, ogWhite,
         [0.29, 0.43, 0.015], null, [0, 0, 0.18], rig);
-      const freeHand = add(new THREE.SphereGeometry(0.11, 12, 9), ogPink,
+      const freeHand = add(new THREE.SphereGeometry(0.11, 28, 20), ogPink,
         [0.34, 0.29, 0.07], [1, 1.05, 0.95], null, rig);
       [-1, 1].forEach(side => {
         capsule(0.062, 0.42, ogWhite,
           [side * 0.15, 0.11, 0], null, [0, 0, side * -0.18], rig);
-        add(new THREE.SphereGeometry(0.13, 12, 9), ogPink,
+        add(new THREE.SphereGeometry(0.13, 28, 20), ogPink,
           [side * 0.19, -0.09, 0.09], [1.34, 0.52, 1.34], null, rig);
       });
 
@@ -12755,11 +12806,11 @@ class Player {
       const bomb = new THREE.Group();
       bomb.position.set(-0.23, 0.91, -0.01);
       rig.add(bomb);
-      add(new THREE.SphereGeometry(0.19, 14, 11), ogPurple,
+      add(new THREE.SphereGeometry(0.19, 28, 20), ogPurple,
         [0, 0, 0], [1, 1.03, 0.94], null, bomb);
-      add(new THREE.SphereGeometry(0.085, 10, 8), ogWhite,
+      add(new THREE.SphereGeometry(0.085, 28, 20), ogWhite,
         [-0.07, 0.065, 0.165], [1.25, 0.62, 0.25], null, bomb);
-      add(new THREE.SphereGeometry(0.09, 10, 8), ogPurple,
+      add(new THREE.SphereGeometry(0.09, 28, 20), ogPurple,
         [0.04, 0.19, 0], [1, 0.58, 0.82], null, bomb);
       capsule(0.018, 0.2, ogFuse,
         [0.12, 0.28, 0], null, [0, 0, -0.72], bomb);
@@ -12792,9 +12843,9 @@ class Player {
         roughness: 0.3, metalness: 0.24, emissive: 0x1732a4, emissiveIntensity: 0.34 });
       const plaguePurple = mat(0xa449ff, {
         roughness: 0.3, metalness: 0.2, emissive: 0x5410aa, emissiveIntensity: 0.34 });
-      add(new THREE.SphereGeometry(0.32, 12, 9), plaguePink,
+      add(new THREE.SphereGeometry(0.32, 28, 20), plaguePink,
         [0, 0.39, 0], [0.94, 0.9, 0.8], null, rig);
-      add(new THREE.CylinderGeometry(0.26, 0.31, 0.36, 10), plagueCyan,
+      add(new THREE.CylinderGeometry(0.26, 0.31, 0.36, 24), plagueCyan,
         [0, 0.36, 0.02], [1, 1, 0.78], null, rig);
       const tanks = [];
       [-1, 1].forEach(side => {
@@ -12803,20 +12854,20 @@ class Player {
           [side * 0.25, 0.45, -0.13], [1, 1, 0.88], null, rig));
         capsule(0.06, 0.25, side < 0 ? plagueGreen : plagueBlue,
           [side * 0.31, 0.28, 0.02], null, [0, 0, side * -0.08], rig);
-        add(new THREE.SphereGeometry(0.1, 9, 7), side < 0 ? plagueYellow : plaguePink,
+        add(new THREE.SphereGeometry(0.1, 28, 20), side < 0 ? plagueYellow : plaguePink,
           [side * 0.15, 0.075, 0.08], [0.92, 0.45, 1.3], null, rig);
       });
-      const hood = add(new THREE.SphereGeometry(0.255, 12, 9), plagueYellow,
+      const hood = add(new THREE.SphereGeometry(0.255, 28, 20), plagueYellow,
         [0, 0.76, 0], [1, 1.05, 0.9], null, rig);
-      add(new THREE.CylinderGeometry(0.13, 0.18, 0.2, 8), combatBlackMat,
+      add(new THREE.CylinderGeometry(0.13, 0.18, 0.2, 24), combatBlackMat,
         [0, 0.7, 0.235], [1, 1, 0.8], [Math.PI / 2, 0, 0], rig);
       [-1, 1].forEach(side => {
-        add(new THREE.CylinderGeometry(0.07, 0.07, 0.035, 10), side < 0 ? plagueGreen : plagueCyan,
+        add(new THREE.CylinderGeometry(0.07, 0.07, 0.035, 24), side < 0 ? plagueGreen : plagueCyan,
           [side * 0.09, 0.79, 0.22], null, [Math.PI / 2, 0, 0], rig);
-        add(new THREE.TorusGeometry(0.055, 0.012, 5, 12), combatGunMat,
+        add(new THREE.TorusGeometry(0.055, 0.012, 16, 32), combatGunMat,
           [side * 0.09, 0.79, 0.243], null, null, rig);
       });
-      add(new THREE.CylinderGeometry(0.065, 0.105, 0.15, 8), plagueOrange,
+      add(new THREE.CylinderGeometry(0.065, 0.105, 0.15, 24), plagueOrange,
         [0, 0.66, 0.32], null, [Math.PI / 2, 0, 0], rig);
       anims.push(t => {
         hood.scale.y = 1.05 + Math.sin(t * 1.7) * 0.012;
@@ -12832,7 +12883,7 @@ class Player {
         [side * 0.17, 0.11, 0.02], [0.9, 1, 0.7], [Math.PI, 0, side * 0.12], rig));
       const halo = add(new THREE.TorusGeometry(0.275, 0.045, 7, 20, Math.PI * 1.5), combatGlowMat,
         [0, 0.78, -0.015], [1, 1, 0.78], [Math.PI / 2, 0, -Math.PI * 0.75], rig);
-      add(new THREE.SphereGeometry(0.205, 12, 9), brightShellMat,
+      add(new THREE.SphereGeometry(0.205, 28, 20), brightShellMat,
         [0, 0.77, 0.035], [0.88, 1.08, 0.72], null, rig);
       add(new THREE.ConeGeometry(0.16, 0.29, 6), brightShellMat,
         [0, 0.92, 0], [1.2, 1, 0.75], null, rig);
@@ -12842,7 +12893,7 @@ class Player {
         add(new THREE.ConeGeometry(0.038, 0.17, 5), combatHotMat,
           [side * 0.37, 0.22, 0.08], [0.7, 1, 0.55], [Math.PI, 0, side * -0.16], rig);
       });
-      add(new THREE.BoxGeometry(0.18, 0.025, 0.018), combatHotMat,
+      add(roundedBox(0.18, 0.025, 0.018), combatHotMat,
         [0, 0.78, 0.205], null, null, rig);
       anims.push(t => {
         rig.position.y = 0.025 + Math.sin(t * 1.45) * 0.026;
@@ -12863,38 +12914,38 @@ class Player {
       const jokerRedMat = mat(0xff244f, {
         roughness: 0.26, metalness: 0.08, emissive: 0xc70b33, emissiveIntensity: 0.42
       });
-      add(new THREE.CapsuleGeometry(0.235, 0.24, 5, 12), jokerPurpleMat,
+      add(new THREE.CapsuleGeometry(0.235, 0.24, 10, 20), jokerPurpleMat,
         [0, 0.42, 0], [1, 1, 0.78], null, rig);
-      add(new THREE.OctahedronGeometry(0.16, 0), jokerGreenMat,
+      add(new THREE.SphereGeometry(0.16, 28, 20), jokerGreenMat,
         [0, 0.46, 0.22], [0.52, 0.9, 0.26], [0, 0, Math.PI / 4], rig);
       [-1, 1].forEach(side => add(new THREE.ConeGeometry(0.11, 0.43, 6), jokerPurpleMat,
         [side * 0.11, 0.2, -0.01], [0.72, 1, 0.62], [Math.PI, 0, side * 0.12], rig));
       [-1, 1].forEach(side => {
         capsule(0.06, 0.33, jokerPurpleMat,
           [side * 0.29, 0.35, 0.02], null, [0, 0, side * -0.2], rig);
-        add(new THREE.SphereGeometry(0.075, 9, 7), jokerGreenMat,
+        add(new THREE.SphereGeometry(0.075, 28, 20), jokerGreenMat,
           [side * 0.34, 0.17, 0.08], null, null, rig);
-        add(new THREE.SphereGeometry(0.09, 9, 7), shoeMat,
+        add(new THREE.SphereGeometry(0.09, 28, 20), shoeMat,
           [side * 0.15, 0.065, 0.09], [0.92, 0.42, 1.45], [0, side * 0.18, 0], rig);
       });
-      const head = add(new THREE.SphereGeometry(0.225, 12, 9), jokerFaceMat,
+      const head = add(new THREE.SphereGeometry(0.225, 28, 20), jokerFaceMat,
         [0, 0.76, 0.035], [0.95, 1.04, 0.84], null, rig);
       const hair = [];
       [[-0.22, 0.9, -0.01], [-0.12, 1.01, -0.03], [0, 1.07, -0.05],
        [0.12, 1.01, -0.03], [0.22, 0.9, -0.01]].forEach((p, i) => {
-        const tuft = add(new THREE.SphereGeometry(i === 2 ? 0.125 : 0.105, 10, 8), jokerGreenMat,
+        const tuft = add(new THREE.SphereGeometry(i === 2 ? 0.125 : 0.105, 28, 20), jokerGreenMat,
           p, [1.08, 1.22, 0.95], null, rig);
         hair.push(tuft);
       });
       [-1, 1].forEach(side => {
         add(new THREE.OctahedronGeometry(0.05, 0), combatBlackMat,
           [side * 0.072, 0.79, 0.23], [1, 0.7, 0.33], [0, 0, side * -0.15], rig);
-        add(new THREE.SphereGeometry(0.018, 8, 6), jokerGreenMat,
+        add(new THREE.SphereGeometry(0.018, 28, 20), jokerGreenMat,
           [side * 0.072, 0.79, 0.258], null, null, rig);
       });
       add(new THREE.TorusGeometry(0.115, 0.022, 6, 16, Math.PI), jokerRedMat,
         [0, 0.69, 0.25], [1, 0.62, 0.52], [Math.PI / 2, 0, Math.PI], rig);
-      add(new THREE.CylinderGeometry(0.018, 0.018, 0.56, 7), jokerGreenMat,
+      add(new THREE.CylinderGeometry(0.018, 0.018, 0.56, 24), jokerGreenMat,
         [0.39, 0.32, -0.01], null, [0, 0, -0.05], rig);
       add(new THREE.TorusGeometry(0.07, 0.018, 6, 12, Math.PI), jokerGreenMat,
         [0.35, 0.61, -0.01], null, [0, 0, -Math.PI / 2], rig);
@@ -12916,20 +12967,20 @@ class Player {
       const steelMat = mat(0xc8d1dd, { roughness: 0.24, metalness: 0.82 });
       const brownMat = mat(0x704125, { roughness: 0.62, metalness: 0.08 });
 
-      add(new THREE.CapsuleGeometry(0.225, 0.29, 6, 14), redMat,
+      add(new THREE.CapsuleGeometry(0.225, 0.29, 10, 20), redMat,
         [0, 0.43, 0], [0.9, 1.06, 0.72], null, rig);
-      add(new THREE.BoxGeometry(0.27, 0.31, 0.08), darkRedMat,
+      add(roundedBox(0.27, 0.31, 0.08), darkRedMat,
         [0, 0.43, 0.18], [0.72, 1, 0.6], null, rig);
-      add(new THREE.BoxGeometry(0.46, 0.065, 0.24), combatBlackMat,
+      add(roundedBox(0.46, 0.065, 0.24), combatBlackMat,
         [0, 0.27, 0], null, null, rig);
-      [-1, 0, 1].forEach(i => add(new THREE.BoxGeometry(0.105, 0.095, 0.085), brownMat,
+      [-1, 0, 1].forEach(i => add(roundedBox(0.105, 0.095, 0.085), brownMat,
         [i * 0.13, 0.25, 0.135], null, null, rig));
 
       // Crossed sword scabbards stay on the animated rig, never floating behind it.
       [-1, 1].forEach(side => {
-        add(new THREE.CylinderGeometry(0.022, 0.022, 0.76, 6), combatBlackMat,
+        add(new THREE.CylinderGeometry(0.022, 0.022, 0.76, 24), combatBlackMat,
           [side * 0.11, 0.59, -0.14], null, [side * 0.1, 0, side * -0.55], rig);
-        add(new THREE.CylinderGeometry(0.036, 0.036, 0.16, 7), brownMat,
+        add(new THREE.CylinderGeometry(0.036, 0.036, 0.16, 24), brownMat,
           [side * 0.31, 0.9, -0.1], null, [side * 0.1, 0, side * -0.55], rig);
       });
 
@@ -12940,22 +12991,22 @@ class Player {
         arm.rotation.z = side * -0.24;
         rig.add(arm);
         capsule(0.058, 0.32, redMat, [0, -0.16, 0], null, null, arm);
-        add(new THREE.SphereGeometry(0.068, 9, 7), combatBlackMat,
+        add(new THREE.SphereGeometry(0.068, 28, 20), combatBlackMat,
           [0, -0.34, 0.055], null, null, arm);
         arms.push({ arm, side, rest: arm.rotation.z });
       });
       [-1, 1].forEach(side => {
         capsule(0.07, 0.25, redMat, [side * 0.14, 0.13, 0], null, null, rig);
-        add(new THREE.SphereGeometry(0.095, 10, 7), combatBlackMat,
+        add(new THREE.SphereGeometry(0.095, 28, 20), combatBlackMat,
           [side * 0.15, 0.045, 0.09], [1, 0.44, 1.32], null, rig);
       });
 
-      const head = add(new THREE.SphereGeometry(0.225, 14, 10), redMat,
+      const head = add(new THREE.SphereGeometry(0.225, 28, 20), redMat,
         [0, 0.82, 0.025], [0.91, 1.08, 0.83], null, rig);
       [-1, 1].forEach(side => {
-        add(new THREE.SphereGeometry(0.105, 10, 8), combatBlackMat,
+        add(new THREE.SphereGeometry(0.105, 28, 20), combatBlackMat,
           [side * 0.082, 0.83, 0.184], [0.8, 1.18, 0.28], [0, 0, side * -0.16], rig);
-        add(new THREE.SphereGeometry(0.054, 9, 7), lensMat,
+        add(new THREE.SphereGeometry(0.054, 28, 20), lensMat,
           [side * 0.077, 0.842, 0.213], [0.58, 1.12, 0.22], [0, 0, side * -0.16], rig);
       });
       anims.push(t => {
@@ -12981,11 +13032,11 @@ class Player {
       const inkMat = mat(0x342018, { roughness: 0.74, metalness: 0 });
       const bandMetalMat = mat(0xc8d1dd, { roughness: 0.24, metalness: 0.82 });
 
-      add(new THREE.CapsuleGeometry(0.215, 0.27, 6, 13), orangeMat,
+      add(new THREE.CapsuleGeometry(0.215, 0.27, 10, 20), orangeMat,
         [0, 0.4, 0], [0.9, 1, 0.72], null, rig);
-      add(new THREE.BoxGeometry(0.31, 0.19, 0.07), blueMat,
+      add(roundedBox(0.31, 0.19, 0.07), blueMat,
         [0, 0.42, 0.19], null, null, rig);
-      add(new THREE.BoxGeometry(0.36, 0.055, 0.2), blueMat,
+      add(roundedBox(0.36, 0.055, 0.2), blueMat,
         [0, 0.28, 0], null, null, rig);
       const arms = [];
       [-1, 1].forEach(side => {
@@ -12994,25 +13045,25 @@ class Player {
         arm.rotation.z = side * -0.18;
         rig.add(arm);
         capsule(0.052, 0.33, orangeMat, [0, -0.16, 0], null, null, arm);
-        add(new THREE.SphereGeometry(0.062, 9, 7), skinMat,
+        add(new THREE.SphereGeometry(0.062, 28, 20), skinMat,
           [0, -0.35, 0.06], null, null, arm);
         arms.push({ arm, side, rest: arm.rotation.z });
         capsule(0.068, 0.26, orangeMat, [side * 0.14, 0.13, 0], null, null, rig);
-        add(new THREE.SphereGeometry(0.092, 9, 7), blueMat,
+        add(new THREE.SphereGeometry(0.092, 28, 20), blueMat,
           [side * 0.15, 0.045, 0.09], [1, 0.44, 1.3], null, rig);
       });
       const headRig = new THREE.Group();
       rig.add(headRig);
-      const head = add(new THREE.SphereGeometry(0.215, 13, 10), skinMat,
+      const head = add(new THREE.SphereGeometry(0.215, 28, 20), skinMat,
         [0, 0.79, 0.025], [0.92, 1.02, 0.82], null, headRig);
-      add(new THREE.BoxGeometry(0.39, 0.075, 0.24), blueMat,
+      add(roundedBox(0.39, 0.075, 0.24), blueMat,
         [0, 0.89, 0.035], null, null, headRig);
-      add(new THREE.BoxGeometry(0.13, 0.08, 0.025), bandMetalMat,
+      add(roundedBox(0.13, 0.08, 0.025), bandMetalMat,
         [0, 0.89, 0.215], null, null, headRig);
       [-1, 1].forEach(side => {
-        add(new THREE.SphereGeometry(0.025, 8, 6), inkMat,
+        add(new THREE.SphereGeometry(0.025, 28, 20), inkMat,
           [side * 0.077, 0.81, 0.205], [1.25, 0.55, 0.35], [0, 0, side * -0.08], headRig);
-        [-1, 0, 1].forEach(i => add(new THREE.BoxGeometry(0.06, 0.012, 0.012), inkMat,
+        [-1, 0, 1].forEach(i => add(roundedBox(0.06, 0.012, 0.012), inkMat,
           [side * 0.145, 0.75 + i * 0.028, 0.2], null, [0, 0, side * 0.12], headRig));
       });
       const spikes = [];
@@ -13044,9 +13095,9 @@ class Player {
       const eyeMat = mat(0xffd447, {
         roughness: 0.24, emissive: 0xff8c00, emissiveIntensity: 0.34 });
 
-      add(new THREE.SphereGeometry(0.275, 12, 9), greenMat,
+      add(new THREE.SphereGeometry(0.275, 28, 20), greenMat,
         [0, 0.45, -0.02], [0.9, 1.12, 0.72], null, rig);
-      add(new THREE.SphereGeometry(0.205, 11, 8), lightGreenMat,
+      add(new THREE.SphereGeometry(0.205, 28, 20), lightGreenMat,
         [0, 0.4, 0.18], [0.8, 1.05, 0.42], null, rig);
       const tail = add(new THREE.ConeGeometry(0.17, 0.82, 8), greenMat,
         [0, 0.34, -0.38], [0.9, 1, 0.7], [-Math.PI / 2, 0, 0], rig);
@@ -13054,7 +13105,7 @@ class Player {
       [-1, 1].forEach(side => {
         const leg = capsule(0.1, 0.28, greenMat,
           [side * 0.16, 0.18, 0], [1, 1, 0.82], [0, 0, side * 0.05], rig);
-        add(new THREE.SphereGeometry(0.12, 10, 7), greenMat,
+        add(new THREE.SphereGeometry(0.12, 28, 20), greenMat,
           [side * 0.17, 0.055, 0.13], [1, 0.42, 1.4], null, rig);
         [-1, 0, 1].forEach(i => add(new THREE.ConeGeometry(0.022, 0.09, 5), toothMat,
           [side * 0.17 + i * 0.045, 0.045, 0.255], [1, 1, 0.75], [Math.PI / 2, 0, 0], rig));
@@ -13062,16 +13113,16 @@ class Player {
       });
       const headRig = new THREE.Group();
       rig.add(headRig);
-      add(new THREE.SphereGeometry(0.265, 13, 9), greenMat,
+      add(new THREE.SphereGeometry(0.265, 28, 20), greenMat,
         [0, 0.78, 0.06], [1.05, 0.84, 1.0], null, headRig);
-      const upper = add(new THREE.BoxGeometry(0.39, 0.16, 0.38), greenMat,
+      const upper = add(roundedBox(0.39, 0.16, 0.38), greenMat,
         [0, 0.74, 0.22], [1, 0.82, 1], null, headRig);
       const jaw = new THREE.Group();
       jaw.position.set(0, 0.68, 0.17);
       headRig.add(jaw);
-      add(new THREE.BoxGeometry(0.37, 0.11, 0.36), lightGreenMat,
+      add(roundedBox(0.37, 0.11, 0.36), lightGreenMat,
         [0, -0.02, 0.06], null, null, jaw);
-      add(new THREE.BoxGeometry(0.3, 0.025, 0.25), mouthMat,
+      add(roundedBox(0.3, 0.025, 0.25), mouthMat,
         [0, 0.035, 0.065], null, null, jaw);
       [-1, -.5, 0, .5, 1].forEach(i => {
         add(new THREE.ConeGeometry(0.021, 0.08, 5), toothMat,
@@ -13080,13 +13131,13 @@ class Player {
           [i * 0.11, -0.03, 0.16], null, null, upper);
       });
       [-1, 1].forEach(side => {
-        add(new THREE.SphereGeometry(0.06, 9, 7), eyeMat,
+        add(new THREE.SphereGeometry(0.06, 28, 20), eyeMat,
           [side * 0.17, 0.84, 0.25], [1, 0.82, 0.65], null, headRig);
-        add(new THREE.SphereGeometry(0.021, 8, 6), combatBlackMat,
+        add(new THREE.SphereGeometry(0.021, 28, 20), combatBlackMat,
           [side * 0.17, 0.84, 0.286], [0.7, 1.25, 0.45], null, headRig);
         const arm = capsule(0.035, 0.18, greenMat,
           [side * 0.24, 0.48, 0.19], null, [Math.PI / 2, 0, side * 0.5], rig);
-        add(new THREE.SphereGeometry(0.04, 8, 6), greenMat,
+        add(new THREE.SphereGeometry(0.04, 28, 20), greenMat,
           [side * 0.285, 0.43, 0.27], [1, 0.55, 1.25], null, rig);
         legs.push({ arm, side });
       });
@@ -13113,11 +13164,11 @@ class Player {
       const cyanMat = mat(0x44d9ff, {
         roughness: 0.25, emissive: 0x087ca2, emissiveIntensity: 0.28 });
 
-      const belly = add(new THREE.SphereGeometry(0.31, 13, 10), purpleMat,
+      const belly = add(new THREE.SphereGeometry(0.31, 28, 20), purpleMat,
         [0, 0.4, 0], [1, 1.08, 0.78], null, rig);
-      add(new THREE.SphereGeometry(0.255, 12, 9), yellowMat,
+      add(new THREE.SphereGeometry(0.255, 28, 20), yellowMat,
         [0, 0.49, 0.07], [1.06, 0.92, 0.78], null, rig);
-      [-1, 1].forEach(side => add(new THREE.BoxGeometry(0.07, 0.31, 0.055), purpleMat,
+      [-1, 1].forEach(side => add(roundedBox(0.07, 0.31, 0.055), purpleMat,
         [side * 0.12, 0.55, 0.22], null, [0, 0, side * -0.12], rig));
       [ -1, 1 ].forEach(side => glowOrb(0.035, [side * 0.12, 0.44, 0.26], rig));
       const arms = [];
@@ -13127,30 +13178,30 @@ class Player {
         arm.rotation.z = side * -0.22;
         rig.add(arm);
         capsule(0.07, 0.29, yellowMat, [0, -0.14, 0], null, null, arm);
-        add(new THREE.SphereGeometry(0.1, 10, 8), gloveMat,
+        add(new THREE.SphereGeometry(0.1, 28, 20), gloveMat,
           [0, -0.33, 0.06], [1, 0.9, 1.05], null, arm);
         arms.push({ arm, side, rest: arm.rotation.z });
         capsule(0.08, 0.22, purpleMat, [side * 0.15, 0.13, 0], null, null, rig);
-        add(new THREE.SphereGeometry(0.12, 10, 8), cyanMat,
+        add(new THREE.SphereGeometry(0.12, 28, 20), cyanMat,
           [side * 0.17, 0.045, 0.1], [1, 0.42, 1.35], null, rig);
       });
       const headRig = new THREE.Group();
       rig.add(headRig);
-      const head = add(new THREE.SphereGeometry(0.225, 13, 10), skinMat,
+      const head = add(new THREE.SphereGeometry(0.225, 28, 20), skinMat,
         [0, 0.78, 0.04], [1.06, 0.94, 0.88], null, headRig);
-      add(new THREE.SphereGeometry(0.12, 11, 8), skinMat,
+      add(new THREE.SphereGeometry(0.12, 28, 20), skinMat,
         [0, 0.74, 0.235], [1.05, 0.9, 0.82], null, headRig);
       [-1, 1].forEach(side => {
-        add(new THREE.SphereGeometry(0.027, 8, 6), combatBlackMat,
+        add(new THREE.SphereGeometry(0.027, 28, 20), combatBlackMat,
           [side * 0.075, 0.82, 0.22], [0.9, 1.1, 0.42], null, headRig);
         add(new THREE.ConeGeometry(0.07, 0.18, 5), moustacheMat,
           [side * 0.075, 0.69, 0.24], [1.1, 1, 0.5], [0, 0, side * 1.15], headRig);
       });
-      add(new THREE.SphereGeometry(0.245, 12, 8), yellowMat,
+      add(new THREE.SphereGeometry(0.245, 28, 20), yellowMat,
         [0, 0.94, 0.015], [1.08, 0.52, 0.9], null, headRig);
-      add(new THREE.BoxGeometry(0.34, 0.045, 0.24), yellowMat,
+      add(roundedBox(0.34, 0.045, 0.24), yellowMat,
         [-0.055, 0.9, 0.19], [1, 1, 1], [0, -0.08, 0], headRig);
-      add(new THREE.BoxGeometry(0.1, 0.1, 0.02), cyanMat,
+      add(roundedBox(0.1, 0.1, 0.02), cyanMat,
         [0, 0.97, 0.205], null, [0, 0, Math.PI / 4], headRig);
       anims.push(t => {
         const swagger = Math.sin(t * 2.2);
@@ -13162,33 +13213,289 @@ class Player {
         });
         belly.scale.x = 1 + Math.max(0, Math.sin(t * 4.4)) * 0.045;
       });
+    } else if (combatClass === 'buzz') {
+      // BUZZ: broad white space armour, lime chest plating, purple hood and
+      // compact wing pack. Rounded armour panels keep the silhouette toy-like
+      // and readable without exposing primitive seams.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const suitMat = mat(0xf2f5ff, { roughness: 0.28, metalness: 0.08, clearcoat: 0.52 });
+      const greenMat = mat(0x83cf3f, { roughness: 0.31, metalness: 0.16, clearcoat: 0.48 });
+      const purpleMat = mat(0x7440a8, { roughness: 0.34, metalness: 0.1, clearcoat: 0.38 });
+      const skinMat = mat(0xf2b28f, { roughness: 0.52, metalness: 0.01, clearcoat: 0.16 });
+      const glassMat = mat(0xbdeaff, { roughness: 0.08, metalness: 0.02, transparent: true, opacity: 0.34 });
+      const redMat = mat(0xe92d67, { roughness: 0.28, emissive: 0x8b0f34, emissiveIntensity: 0.24 });
+      const torso = add(new THREE.SphereGeometry(0.31, 32, 24), suitMat,
+        [0, 0.48, 0], [0.95, 1.03, 0.72], null, rig);
+      add(roundedBox(0.46, 0.25, 0.16, 0.08), greenMat,
+        [0, 0.5, 0.22], null, null, rig);
+      add(roundedBox(0.3, 0.09, 0.04, 0.03), purpleMat,
+        [0, 0.39, 0.315], null, null, rig);
+      [-1, 0, 1].forEach((x, i) => add(new THREE.SphereGeometry(0.026, 20, 14),
+        i === 1 ? greenMat : redMat, [x * 0.07, 0.54, 0.315], null, null, rig));
+      const limbs = [];
+      [-1, 1].forEach(side => {
+        const arm = new THREE.Group();
+        arm.position.set(side * 0.31, 0.53, 0);
+        arm.rotation.z = side * -0.18;
+        rig.add(arm);
+        add(new THREE.SphereGeometry(0.105, 28, 20), greenMat, [0, 0, 0], null, null, arm);
+        capsule(0.065, 0.24, suitMat, [0, -0.16, 0.015], null, null, arm);
+        add(new THREE.SphereGeometry(0.082, 28, 20), suitMat,
+          [0, -0.32, 0.055], [1, 0.82, 1.05], null, arm);
+        limbs.push({ arm, side, rest: arm.rotation.z });
+        capsule(0.092, 0.26, suitMat, [side * 0.16, 0.17, 0], null, null, rig);
+        add(new THREE.SphereGeometry(0.13, 28, 20), greenMat,
+          [side * 0.18, 0.055, 0.12], [1, 0.48, 1.35], null, rig);
+      });
+      const headRig = new THREE.Group();
+      rig.add(headRig);
+      add(new THREE.SphereGeometry(0.225, 32, 24), purpleMat,
+        [0, 0.82, 0], [1.02, 1.02, 0.9], null, headRig);
+      const face = add(new THREE.SphereGeometry(0.19, 32, 24), skinMat,
+        [0, 0.8, 0.105], [0.92, 1.02, 0.68], null, headRig);
+      [-1, 1].forEach(side => {
+        add(new THREE.SphereGeometry(0.027, 20, 14), suitMat,
+          [side * 0.065, 0.84, 0.225], [1, 1.2, 0.5], null, headRig);
+        add(new THREE.SphereGeometry(0.012, 18, 12), combatBlackMat,
+          [side * 0.065, 0.84, 0.242], null, null, headRig);
+      });
+      add(new THREE.TorusGeometry(0.235, 0.012, 14, 40), glassMat,
+        [0, 0.82, 0.055], [1, 1.08, 0.74], [0, 0, 0], headRig);
+      const pack = add(roundedBox(0.34, 0.36, 0.15, 0.07), purpleMat,
+        [0, 0.5, -0.24], null, null, rig);
+      const wings = [];
+      [-1, 1].forEach(side => {
+        const wing = add(roundedBox(0.25, 0.075, 0.055, 0.025), suitMat,
+          [side * 0.25, 0.6, -0.27], null, [0, 0, side * -0.16], rig);
+        wings.push({ wing, side });
+      });
+      anims.push(t => {
+        const lift = Math.max(0, Math.sin(t * 3.1));
+        rig.position.y = lift * 0.06;
+        rig.rotation.z = Math.sin(t * 1.55) * 0.055;
+        face.rotation.y = Math.sin(t * 0.9) * 0.07;
+        limbs.forEach(({ arm, side, rest }) => { arm.rotation.z = rest + side * lift * 0.2; });
+        wings.forEach(({ wing, side }) => { wing.rotation.z = side * (-0.16 - lift * 0.18); });
+        pack.rotation.y = Math.sin(t * 1.55) * 0.03;
+      });
+    } else if (combatClass === 'minion') {
+      // MINION: a single clean goggle eye over a yellow capsule, blue overalls,
+      // thin arms and oversized black gloves and boots.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const yellowMat = mat(0xffdf21, { roughness: 0.34, metalness: 0.03, clearcoat: 0.42 });
+      const denimMat = mat(0x2455d7, { roughness: 0.52, metalness: 0.02 });
+      const goggleMat = mat(0xa8b0b8, { roughness: 0.24, metalness: 0.72 });
+      const irisMat = mat(0x7b4a2a, { roughness: 0.24, clearcoat: 0.5 });
+      const whiteMat = mat(0xf7f8ff, { roughness: 0.35, metalness: 0.02, clearcoat: 0.22 });
+      const body = add(new THREE.CapsuleGeometry(0.25, 0.38, 12, 28), yellowMat,
+        [0, 0.5, 0], [1, 1.08, 0.78], null, rig);
+      add(new THREE.SphereGeometry(0.255, 30, 22), denimMat,
+        [0, 0.33, 0.015], [0.98, 0.72, 0.77], null, rig);
+      add(roundedBox(0.28, 0.24, 0.055, 0.05), denimMat,
+        [0, 0.43, 0.235], null, null, rig);
+      [-1, 1].forEach(side => add(roundedBox(0.05, 0.3, 0.035, 0.018), denimMat,
+        [side * 0.11, 0.54, 0.235], null, [0, 0, side * -0.08], rig));
+      const eyeRig = new THREE.Group();
+      rig.add(eyeRig);
+      add(new THREE.CylinderGeometry(0.19, 0.19, 0.075, 40), goggleMat,
+        [0, 0.72, 0.225], null, [Math.PI / 2, 0, 0], eyeRig);
+      add(new THREE.SphereGeometry(0.142, 32, 24), whiteMat,
+        [0, 0.72, 0.28], [1, 1, 0.35], null, eyeRig);
+      add(new THREE.SphereGeometry(0.066, 28, 20), irisMat,
+        [0, 0.72, 0.324], [1, 1, 0.3], null, eyeRig);
+      add(new THREE.SphereGeometry(0.029, 24, 16), combatBlackMat,
+        [0, 0.72, 0.345], [1, 1, 0.25], null, eyeRig);
+      add(roundedBox(0.54, 0.045, 0.035, 0.02), combatBlackMat,
+        [0, 0.72, 0.08], null, null, rig);
+      add(new THREE.TorusGeometry(0.095, 0.012, 12, 32), combatBlackMat,
+        [0, 0.57, 0.265], [1, 0.55, 0.45], null, rig);
+      const arms = [];
+      [-1, 1].forEach(side => {
+        const arm = capsule(0.035, 0.38, yellowMat,
+          [side * 0.305, 0.38, 0.01], null, [0, 0, side * -0.08], rig);
+        const hand = add(new THREE.SphereGeometry(0.075, 28, 20), combatBlackMat,
+          [side * 0.33, 0.17, 0.06], [1, 0.86, 1], null, rig);
+        arms.push({ arm, hand, side, rest: arm.rotation.z });
+        capsule(0.06, 0.2, denimMat, [side * 0.11, 0.13, 0], null, null, rig);
+        add(new THREE.SphereGeometry(0.1, 28, 20), combatBlackMat,
+          [side * 0.12, 0.045, 0.11], [1, 0.4, 1.28], null, rig);
+      });
+      anims.push(t => {
+        const bounce = Math.max(0, Math.sin(t * 4.4));
+        rig.position.y = bounce * 0.075;
+        rig.scale.y = 1 - bounce * 0.035;
+        rig.rotation.z = Math.sin(t * 2.2) * 0.045;
+        eyeRig.rotation.y = Math.sin(t * 1.2) * 0.12;
+        arms.forEach(({ arm, side, rest }) => { arm.rotation.z = rest + side * Math.sin(t * 4.4) * 0.13; });
+        body.rotation.y = Math.sin(t * 1.1) * 0.035;
+      });
+    } else if (combatClass === 'sonic') {
+      // SONIC: blue quilled head and torso, peach muzzle, white gloves and red
+      // speed shoes. The rear quill fan carries the silhouette from every view.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const blueMat = mat(0x1269dd, { roughness: 0.3, metalness: 0.04, clearcoat: 0.48 });
+      const peachMat = mat(0xf1bd79, { roughness: 0.52, metalness: 0.01 });
+      const whiteMat = mat(0xf5f8ff, { roughness: 0.38, metalness: 0.03, clearcoat: 0.25 });
+      const redMat = mat(0xe52b35, { roughness: 0.3, metalness: 0.08, clearcoat: 0.48 });
+      const greenEye = mat(0x36d363, { roughness: 0.2, emissive: 0x0d681f, emissiveIntensity: 0.18 });
+      const torso = add(new THREE.SphereGeometry(0.235, 32, 24), blueMat,
+        [0, 0.43, 0], [0.82, 1.15, 0.7], null, rig);
+      add(new THREE.SphereGeometry(0.16, 28, 20), peachMat,
+        [0, 0.43, 0.18], [0.75, 1.1, 0.42], null, rig);
+      const limbs = [];
+      [-1, 1].forEach(side => {
+        const arm = capsule(0.045, 0.32, peachMat,
+          [side * 0.27, 0.47, 0.02], null, [0, 0, side * -0.22], rig);
+        add(new THREE.SphereGeometry(0.1, 28, 20), whiteMat,
+          [side * 0.34, 0.29, 0.08], [1, 0.9, 1.04], null, rig);
+        limbs.push({ arm, side, rest: arm.rotation.z });
+        capsule(0.055, 0.32, blueMat,
+          [side * 0.14, 0.17, 0], null, [0, 0, side * 0.08], rig);
+        add(new THREE.TorusGeometry(0.075, 0.03, 14, 32), whiteMat,
+          [side * 0.16, 0.09, 0.09], [1, 1, 0.82], [Math.PI / 2, 0, 0], rig);
+        add(new THREE.SphereGeometry(0.13, 28, 20), redMat,
+          [side * 0.19, 0.045, 0.16], [1.18, 0.42, 1.5], [0, side * 0.08, 0], rig);
+        add(roundedBox(0.18, 0.025, 0.22, 0.01), whiteMat,
+          [side * 0.19, 0.06, 0.175], null, [0, side * 0.08, 0], rig);
+      });
+      const headRig = new THREE.Group();
+      rig.add(headRig);
+      const head = add(new THREE.SphereGeometry(0.27, 34, 26), blueMat,
+        [0, 0.78, 0], [0.94, 1, 0.84], null, headRig);
+      add(new THREE.SphereGeometry(0.185, 30, 22), peachMat,
+        [0, 0.7, 0.205], [1.08, 0.66, 0.62], null, headRig);
+      add(new THREE.SphereGeometry(0.055, 24, 16), combatBlackMat,
+        [0, 0.715, 0.34], [1.1, 0.75, 0.55], null, headRig);
+      [-1, 1].forEach(side => {
+        add(new THREE.SphereGeometry(0.078, 28, 20), whiteMat,
+          [side * 0.075, 0.82, 0.22], [0.72, 1.35, 0.44], null, headRig);
+        add(new THREE.SphereGeometry(0.028, 22, 16), greenEye,
+          [side * 0.075, 0.82, 0.258], [0.65, 1.2, 0.35], null, headRig);
+        add(new THREE.ConeGeometry(0.105, 0.3, 5), blueMat,
+          [side * 0.17, 1.0, -0.02], [0.8, 1, 0.7], [0, 0, side * -0.42], headRig);
+      });
+      const quills = [];
+      [[0, .91, -.19, -.2], [-.18, .82, -.2, -.72], [.18, .82, -.2, .72],
+       [-.15, .66, -.22, -1.02], [.15, .66, -.22, 1.02]].forEach(q => {
+        const quill = add(new THREE.ConeGeometry(0.09, 0.4, 6), blueMat,
+          [q[0], q[1], q[2]], [1, 1, 0.75], [-Math.PI / 2, 0, q[3]], headRig);
+        quills.push({ quill, base: q[3] });
+      });
+      anims.push(t => {
+        const dash = Math.pow(Math.max(0, Math.sin(t * 3.5)), 5);
+        rig.position.x = Math.sin(t * 3.5) * 0.11;
+        rig.position.y = Math.max(0, Math.sin(t * 7)) * 0.045;
+        rig.rotation.z = -dash * 0.17;
+        headRig.rotation.y = Math.sin(t * 1.3) * 0.12;
+        limbs.forEach(({ arm, side, rest }) => { arm.rotation.z = rest + side * Math.sin(t * 7) * 0.24; });
+        quills.forEach(({ quill, base }, i) => {
+          quill.rotation.z = base + Math.sin(t * 5 + i) * 0.012;
+        });
+        head.rotation.z = Math.sin(t * 3.5) * 0.018;
+      });
+    } else if (combatClass === 'tanooki bowser') {
+      // TANOOKI BOWSER: huge orange shell king with cream muzzle and horns,
+      // green spiked shell, red brow crest and a striped raccoon tail.
+      const rig = new THREE.Group();
+      g.add(rig);
+      const orangeMat = mat(0xf4a51c, { roughness: 0.38, metalness: 0.03, clearcoat: 0.34 });
+      const creamMat = mat(0xffdc76, { roughness: 0.5, metalness: 0.01 });
+      const shellMat = mat(0x318c33, { roughness: 0.39, metalness: 0.04, clearcoat: 0.3 });
+      const redMat = mat(0xd62517, { roughness: 0.4, metalness: 0.02 });
+      const hornMat = mat(0xffedbd, { roughness: 0.48, metalness: 0.02 });
+      const cuffMat = mat(0x27222b, { roughness: 0.34, metalness: 0.54 });
+      const eyeWhite = mat(0xf8f9ff, { roughness: 0.36, metalness: 0.01, clearcoat: 0.2 });
+      const body = add(new THREE.SphereGeometry(0.31, 32, 24), orangeMat,
+        [0, 0.44, 0], [1.02, 1.08, 0.78], null, rig);
+      add(new THREE.SphereGeometry(0.235, 30, 22), creamMat,
+        [0, 0.42, 0.19], [0.85, 1.04, 0.42], null, rig);
+      const shell = add(new THREE.SphereGeometry(0.3, 30, 22), shellMat,
+        [0, 0.5, -0.23], [1, 1.08, 0.48], null, rig);
+      [[-.2,.63], [0,.73], [.2,.63], [-.2,.42], [.2,.42]].forEach(p => add(
+        new THREE.ConeGeometry(0.045, 0.16, 8), hornMat,
+        [p[0], p[1], -0.47], null, [-Math.PI / 2, 0, 0], rig));
+      const arms = [];
+      [-1, 1].forEach(side => {
+        const arm = capsule(0.09, 0.32, orangeMat,
+          [side * 0.32, 0.45, 0.03], null, [0, 0, side * -0.26], rig);
+        add(new THREE.TorusGeometry(0.095, 0.035, 14, 32), cuffMat,
+          [side * 0.36, 0.27, 0.06], [1, 1, 0.8], [Math.PI / 2, 0, 0], rig);
+        const hand = add(new THREE.SphereGeometry(0.105, 28, 20), orangeMat,
+          [side * 0.37, 0.18, 0.1], [1, 0.86, 1.05], null, rig);
+        [-1, 0, 1].forEach(i => add(new THREE.ConeGeometry(0.018, 0.07, 6), hornMat,
+          [side * 0.37 + i * 0.04, 0.14, 0.2], null, [Math.PI / 2, 0, 0], rig));
+        arms.push({ arm, hand, side, rest: arm.rotation.z });
+        capsule(0.11, 0.24, orangeMat, [side * 0.17, 0.14, 0], null, null, rig);
+        add(new THREE.SphereGeometry(0.14, 28, 20), orangeMat,
+          [side * 0.19, 0.045, 0.13], [1.08, 0.42, 1.35], null, rig);
+      });
+      const headRig = new THREE.Group();
+      rig.add(headRig);
+      add(new THREE.SphereGeometry(0.27, 34, 26), orangeMat,
+        [0, 0.79, 0.04], [1.05, 0.92, 0.9], null, headRig);
+      add(new THREE.SphereGeometry(0.205, 30, 22), creamMat,
+        [0, 0.72, 0.22], [1.08, 0.72, 0.66], null, headRig);
+      add(new THREE.SphereGeometry(0.08, 26, 18), creamMat,
+        [0, 0.76, 0.34], [1.18, 0.7, 0.5], null, headRig);
+      [-1, 1].forEach(side => {
+        add(new THREE.SphereGeometry(0.05, 24, 18), eyeWhite,
+          [side * 0.11, 0.83, 0.25], [1, 1.2, 0.5], null, headRig);
+        add(new THREE.SphereGeometry(0.019, 20, 14), redMat,
+          [side * 0.11, 0.83, 0.282], null, null, headRig);
+        add(new THREE.ConeGeometry(0.07, 0.23, 8), hornMat,
+          [side * 0.2, 1.0, 0], null, [0, 0, side * -0.3], headRig);
+        add(new THREE.ConeGeometry(0.022, 0.09, 6), hornMat,
+          [side * 0.08, 0.65, 0.37], null, [Math.PI / 2, 0, 0], headRig);
+      });
+      [-1, -.5, 0, .5, 1].forEach(i => add(new THREE.ConeGeometry(0.045, 0.2, 6), redMat,
+        [i * 0.11, 1.01 - Math.abs(i) * 0.035, -0.04], null, [0, 0, i * -0.14], headRig));
+      const tail = new THREE.Group();
+      tail.position.set(0.24, 0.36, -0.35);
+      tail.rotation.z = -0.8;
+      rig.add(tail);
+      const tailTan = mat(0xa85b20, { roughness: 0.52, metalness: 0.01 });
+      [0, 1, 2, 3].forEach(i => capsule(0.075 - i * 0.007, 0.16,
+        i % 2 ? tailTan : orangeMat, [0, i * 0.13, 0], null, null, tail));
+      anims.push(t => {
+        const slam = Math.pow(Math.max(0, Math.sin(t * 2.7)), 7);
+        rig.position.y = Math.max(0, Math.sin(t * 5.4)) * 0.035;
+        rig.rotation.x = slam * 0.12;
+        headRig.rotation.y = Math.sin(t * 0.85) * 0.1;
+        arms.forEach(({ arm, side, rest }) => { arm.rotation.z = rest + side * slam * 0.25; });
+        tail.rotation.z = -0.8 + Math.sin(t * 2.1) * 0.32;
+        shell.rotation.y = Math.sin(t * 0.7) * 0.035;
+        body.scale.x = 1.02 + slam * 0.03;
+      });
     } else if (combatClass === 'inferno') {
       // INFERNO: a living furnace with an arched boiler body and exhaust crown.
       const rig = new THREE.Group();
       g.add(rig);
-      add(new THREE.CylinderGeometry(0.29, 0.32, 0.55, 10), combatGunMat,
+      add(new THREE.CylinderGeometry(0.29, 0.32, 0.55, 24), combatGunMat,
         [0, 0.4, 0], [1, 1, 0.84], null, rig);
-      add(new THREE.SphereGeometry(0.29, 11, 8), bodyMat,
+      add(new THREE.SphereGeometry(0.29, 28, 20), bodyMat,
         [0, 0.48, 0.02], [1, 0.86, 0.78], null, rig);
-      const fire = add(new THREE.SphereGeometry(0.12, 9, 7), combatHotMat,
+      const fire = add(new THREE.SphereGeometry(0.12, 28, 20), combatHotMat,
         [0, 0.4, 0.31], [1, 1, 0.42], null, rig);
-      add(new THREE.TorusGeometry(0.18, 0.035, 7, 18), boneMat,
+      add(new THREE.TorusGeometry(0.18, 0.035, 16, 32), boneMat,
         [0, 0.4, 0.285], [1, 1, 0.6], null, rig);
       [-1, 1].forEach(side => {
         capsule(0.08, 0.3, bodyMat, [side * 0.31, 0.35, 0], null, null, rig);
-        add(new THREE.SphereGeometry(0.11, 9, 7), shoeMat,
+        add(new THREE.SphereGeometry(0.11, 28, 20), shoeMat,
           [side * 0.16, 0.075, 0.07], [1, 0.45, 1.3], null, rig);
-        add(new THREE.CylinderGeometry(0.05, 0.07, 0.3, 7), combatGunMat,
+        add(new THREE.CylinderGeometry(0.05, 0.07, 0.3, 24), combatGunMat,
           [side * 0.14, 0.9, -0.02], null, [0, 0, side * -0.08], rig);
       });
-      const head = add(new THREE.CylinderGeometry(0.2, 0.23, 0.25, 9), brightShellMat,
+      const head = add(new THREE.CylinderGeometry(0.2, 0.23, 0.25, 24), brightShellMat,
         [0, 0.75, 0.02], [1, 1, 0.85], null, rig);
       [-1, 1].forEach(side => glowOrb(0.055, [side * 0.13, 0.9, 0.03], rig));
-      add(new THREE.BoxGeometry(0.28, 0.065, 0.045), combatBlackMat,
+      add(roundedBox(0.28, 0.065, 0.045), combatBlackMat,
         [0, 0.76, 0.225], null, null, rig);
-      add(new THREE.BoxGeometry(0.19, 0.022, 0.016), combatHotMat,
+      add(roundedBox(0.19, 0.022, 0.016), combatHotMat,
         [0, 0.765, 0.255], null, null, rig);
-      add(new THREE.CylinderGeometry(0.065, 0.09, 0.37, 8), combatGunMat,
+      add(new THREE.CylinderGeometry(0.065, 0.09, 0.37, 24), combatGunMat,
         [0, 0.97, -0.03], null, null, rig);
       anims.push(t => {
         const pulse = 1 + Math.sin(t * 3.4) * 0.12;
@@ -13201,9 +13508,9 @@ class Player {
       const rig = new THREE.Group();
       rig.position.y = -0.015;
       g.add(rig);
-      const torso = add(new THREE.OctahedronGeometry(0.32, 0), stealthMat,
+      const torso = add(new THREE.SphereGeometry(0.32, 28, 20), stealthMat,
         [0, 0.4, 0], [0.79, 0.96, 0.72], [0, 0, 0], rig);
-      add(new THREE.OctahedronGeometry(0.235, 0), bodyMat,
+      add(new THREE.SphereGeometry(0.235, 28, 20), bodyMat,
         [0, 0.43, 0.13], [0.78, 0.8, 0.5], [0, 0, 0], rig);
       const core = add(new THREE.OctahedronGeometry(0.082, 0), combatGlowMat,
         [0, 0.45, 0.285], [1.25, 0.5, 0.3], [0, 0, Math.PI / 4], rig);
@@ -13216,7 +13523,7 @@ class Player {
           [side * 0.22, 0.3, 0.12], [0.8, 1, 0.78], [0, 0, side * -0.62], rig);
         add(new THREE.ConeGeometry(0.045, 0.17, 4), trimMat,
           [side * 0.29, 0.23, 0.16], [0.72, 1, 0.65], [0, 0, side * -1.05], rig);
-        add(new THREE.SphereGeometry(0.09, 9, 7), shoeMat,
+        add(new THREE.SphereGeometry(0.09, 28, 20), shoeMat,
           [side * 0.145, 0.07, 0.1], [0.86, 0.42, 1.42], [0, side * 0.2, 0], rig);
         add(new THREE.ConeGeometry(0.05, 0.22, 4), darkClothMat,
           [side * 0.105, 0.16, -0.03], [0.8, 1, 0.7], [Math.PI, 0, side * 0.12], rig);
@@ -13224,13 +13531,13 @@ class Player {
 
       const headRig = new THREE.Group();
       rig.add(headRig);
-      add(new THREE.OctahedronGeometry(0.29, 0), stealthMat,
+      add(new THREE.SphereGeometry(0.29, 28, 20), stealthMat,
         [0, 0.73, 0], [0.83, 0.92, 0.79], [0, 0, 0], headRig);
       add(new THREE.ConeGeometry(0.13, 0.26, 4), combatGunMat,
         [0, 0.925, -0.015], [0.88, 1, 0.8], [0, 0, 0], headRig);
-      add(new THREE.OctahedronGeometry(0.185, 0), combatBlackMat,
+      add(new THREE.SphereGeometry(0.185, 28, 20), combatBlackMat,
         [0, 0.72, 0.205], [0.95, 0.55, 0.35], [0, 0, 0], headRig);
-      const scan = add(new THREE.BoxGeometry(0.245, 0.023, 0.016), combatHotMat,
+      const scan = add(roundedBox(0.245, 0.023, 0.016), combatHotMat,
         [0, 0.755, 0.28], null, [0, 0, 0], headRig);
       add(new THREE.ConeGeometry(0.045, 0.24, 4), stealthMat,
         [-0.2, 0.82, -0.02], null, [0, 0, 0.72], headRig);
@@ -13363,6 +13670,32 @@ class Player {
           r.scale.x *= 1 + bump * 0.07;
           r.scale.y *= 1 - bump * 0.045;
         },
+        buzz: (r, t) => {
+          const lift = hop(t * 3.1);
+          r.position.y += lift * 0.08;
+          r.rotation.z += Math.sin(t * 1.55) * 0.065;
+          r.rotation.y += Math.sin(t * 0.78) * 0.2;
+        },
+        minion: (r, t) => {
+          const bounce = hop(t * 4.4);
+          r.position.y += bounce * 0.1;
+          r.rotation.z += Math.sin(t * 2.2) * 0.07;
+          r.scale.y *= 1 - bounce * 0.04;
+        },
+        sonic: (r, t) => {
+          const dash = Math.pow(hop(t * 3.5), 5);
+          r.position.x += Math.sin(t * 3.5) * 0.13;
+          r.position.y += hop(t * 7) * 0.055;
+          r.rotation.z -= dash * 0.2;
+          r.rotation.y += Math.sin(t * 1.75) * 0.18;
+        },
+        'tanooki bowser': (r, t) => {
+          const slam = Math.pow(hop(t * 2.7), 7);
+          r.position.y += hop(t * 5.4) * 0.045;
+          r.position.z += slam * 0.07;
+          r.rotation.x += slam * 0.12;
+          r.rotation.y += Math.sin(t * 0.85) * 0.22;
+        },
       };
       const move = moves[combatClass];
       g.userData.showcaseReset = () => {
@@ -13438,6 +13771,23 @@ class Player {
     // showcase rig during victory and selection movement.
     attachmentRoot.add(aura);
     g.userData.aura = aura;
+
+    // Smooth every character surface before it reaches the shared renderer.
+    // Boxes retain their authored hard corners because their faces use split
+    // vertices, while spheres, capsules, cylinders and clothing curves lose
+    // the visible low-poly faceting that used to read as a wire grid.
+    g.traverse(object => {
+      if (!object.isMesh) return;
+      if (object.geometry && object.geometry.computeVertexNormals) {
+        object.geometry.computeVertexNormals();
+      }
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach(material => {
+        if (!material || material.isMeshBasicMaterial) return;
+        material.flatShading = false;
+        material.needsUpdate = true;
+      });
+    });
 
     return g;
   }
@@ -15110,7 +15460,7 @@ const UI = (function () {
           <div>
             <h2>LOADOUT</h2>
           </div>
-          <span class="scount">16 FIGHTERS</span>
+          <span class="scount">20 FIGHTERS</span>
         </div>
         <div class="sbody">
           <div id="spreview">
@@ -15623,7 +15973,7 @@ const UI = (function () {
   function showMenu(v) { menu.classList.toggle('hidden', !v); }
 
   /* ---------------------------------------------------- character select -- */
-  // Sixteen fighters and one action. The old prize ladder no longer appears in
+  // Twenty fighters and one action. The old prize ladder no longer appears in
   // this flow: this screen has one job, choosing who walks into the arena.
   function selectRows() { return PLAYER_DEFS.map((_, i) => 'class:' + i).concat(['fight']); }
 
@@ -15631,9 +15981,8 @@ const UI = (function () {
     const box = select.querySelector('.sroster');
     box.innerHTML = PLAYER_DEFS.map((def, i) => {
       const colour = '#' + def.color.toString(16).padStart(6, '0');
-      const bombog = def.name === 'BombOG';
       return `<button class="charpick" data-class="${i}" role="option" style="--fighter:${colour}">` +
-        `<span class="charface${bombog ? ' bombog-face' : ''}" style="--face-x:${(i % 4) * 33.333}%;--face-y:${Math.floor(i / 4) * 33.333}%" aria-hidden="true"></span>` +
+        `<span class="charface" style="--face-x:${(i % 4) * 33.333}%;--face-y:${Math.floor(i / 4) * 25}%" aria-hidden="true"></span>` +
         `<span class="charcopy"><b>${def.name}</b><small>${def.role}</small></span>` +
         `<span class="charindex">${String(i + 1).padStart(2, '0')}</span>` +
         `<i aria-hidden="true"></i>` +
@@ -15708,7 +16057,7 @@ const UI = (function () {
     if (portrait) {
       portrait.classList.toggle('bombog', def.name === 'BombOG');
       portrait.style.setProperty('--face-x', `${(selectedClass % 4) * 33.333}%`);
-      portrait.style.setProperty('--face-y', `${Math.floor(selectedClass / 4) * 33.333}%`);
+      portrait.style.setProperty('--face-y', `${Math.floor(selectedClass / 4) * 25}%`);
     }
     punchPreviewHole();
   }
@@ -16226,8 +16575,8 @@ const Game = (function () {
     // against three easy bots, a random map, first to two.
     opts: { humans: 1, difficulty: 'easy', wins: 2, level: 'random' },
     menuSel: 0,
-    selRow: 0,             // fighter index, or 12 for FIGHT
-    selectedClass: 0,      // one of the sixteen PLAYER_DEFS
+    selRow: 0,             // fighter index, or PLAYER_DEFS.length for FIGHT
+    selectedClass: 0,      // one of the twenty PLAYER_DEFS
     preview: null,         // the select screen's own little scene
     level: LEVELS[0],
     menuPreview: 0,        // index of the level currently shown behind the menu
@@ -16552,7 +16901,7 @@ const Game = (function () {
 
   /* -------------------------------------------------------- match/round -- */
   /* ------------------------------------------------- character select --- */
-  // START opens on the current fighter, ready for the player to explore all 16.
+  // START opens on the current fighter, ready for the player to explore all 20.
   function toSelect() {
     g.state = STATE.SELECT;
     g.stateT = 0;
@@ -16588,6 +16937,11 @@ const Game = (function () {
     if (!canvas || !host) return;
     if (canvas.parentElement !== host) host.insertBefore(canvas, host.firstChild);
     canvas.classList.add('preview-canvas');
+    if (!canvas.dataset.previewRecoveryBound) {
+      canvas.dataset.previewRecoveryBound = '1';
+      canvas.addEventListener('webglcontextlost', () => host.classList.remove('webgl-ready'));
+      canvas.addEventListener('webglcontextrestored', () => host.classList.remove('webgl-ready'));
+    }
   }
 
   function restoreGameCanvas() {
@@ -16596,6 +16950,7 @@ const Game = (function () {
     if (!canvas || !ui) return;
     if (canvas.parentElement !== document.body) document.body.insertBefore(canvas, ui);
     canvas.classList.remove('preview-canvas');
+    document.getElementById('spreview')?.classList.remove('webgl-ready');
     World.resize();
   }
 
@@ -16610,6 +16965,11 @@ const Game = (function () {
       scene.add(new THREE.HemisphereLight(0xfff6e8, 0x62518c, 4.2));
       const key = new THREE.DirectionalLight(0xffefd6, 5.8);
       key.position.set(2.4, 4, 3.2);
+      key.castShadow = true;
+      key.shadow.mapSize.set(1024, 1024);
+      key.shadow.camera.near = 0.1;
+      key.shadow.camera.far = 12;
+      key.shadow.bias = -0.0005;
       scene.add(key);
       const rim = new THREE.DirectionalLight(0xff8dff, 3.2);
       rim.position.set(-3, 2, -2.5);
@@ -16631,6 +16991,7 @@ const Game = (function () {
         new THREE.MeshStandardMaterial({ color: 0x858b95, roughness: 0.62, metalness: 0.24 })
       );
       plinth.position.set(0.2, -0.47, 0);
+      plinth.receiveShadow = true;
       scene.add(plinth);
       const turn = new THREE.Group();
       scene.add(turn);
@@ -16685,6 +17046,7 @@ const Game = (function () {
     r.setScissorTest(false);
     r.setViewport(0, 0, w, hh);
     r.render(pv.scene, pv.cam);
+    document.getElementById('spreview')?.classList.add('webgl-ready');
     r.setClearColor(wasColour, wasAlpha);
   }
 

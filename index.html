@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="473dafb">
+<meta name="build" content="d05d444">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -10439,7 +10439,7 @@ const World = (function () {
       }
       return true;
     },
-    setFraming, arenaScreenWidth, arenaScreenRect, arenaFarEdge, arenaNearEdge, onFit,
+    resize, setFraming, arenaScreenWidth, arenaScreenRect, arenaFarEdge, arenaNearEdge, onFit,
     cellAt, setCell, isSolid, destroySoft,
     get level() { return state.level; },
     get shake() { return state.shake; },
@@ -15014,7 +15014,6 @@ const UI = (function () {
         <div class="sbody">
           <div class="scol">
             <div id="spreview">
-              <canvas class="preview-canvas" aria-hidden="true"></canvas>
               <span class="spreviewtag">LIVE PREVIEW</span>
               <div class="sname"></div>
             </div>
@@ -16458,33 +16457,31 @@ const Game = (function () {
     UI.setPreviewName(PLAYER_DEFS[g.selectedClass].name.toUpperCase());
   }
 
-  /* The live preview is a second scene built with the same character code as
-     the arena. Its panel renderer keeps DOM backdrops from covering the model;
-     the original arena-renderer path remains as a low-context fallback. */
+  /* Loadout temporarily mounts the game's existing canvas inside the preview
+     panel. Mobile browsers can refuse a second WebGL context even while the
+     gameplay context is healthy, so preview and match deliberately use the
+     exact same proven renderer and canvas. */
+  function mountPreviewCanvas() {
+    const canvas = World.renderer && World.renderer.domElement;
+    const host = document.getElementById('spreview');
+    if (!canvas || !host) return;
+    if (canvas.parentElement !== host) host.insertBefore(canvas, host.firstChild);
+    canvas.classList.add('preview-canvas');
+  }
+
+  function restoreGameCanvas() {
+    const canvas = World.renderer && World.renderer.domElement;
+    const ui = document.getElementById('ui');
+    if (!canvas || !ui) return;
+    if (canvas.parentElement !== document.body) document.body.insertBefore(canvas, ui);
+    canvas.classList.remove('preview-canvas');
+    World.resize();
+  }
+
   function buildPreview() {
+    mountPreviewCanvas();
     if (!g.preview) {
       const scene = new THREE.Scene();
-      // The preview owns a small canvas inside its panel. Rendering into the
-      // full-screen arena canvas relied on several DOM layers all having a
-      // perfectly aligned transparent hole, so one later backdrop could hide a
-      // correctly rendered fighter. The panel canvas always paints above them.
-      let renderer = null;
-      try {
-        const canvas = document.querySelector('#spreview .preview-canvas');
-        renderer = new THREE.WebGLRenderer({
-          canvas, antialias: true, alpha: false, powerPreference: 'high-performance',
-        });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.15;
-        renderer.setClearColor(0x241d46, 1);
-      } catch (err) {
-        // Very old or heavily restricted devices can refuse a second WebGL
-        // context. The original scissored renderer below remains the fallback.
-        console.warn('Preview canvas unavailable; using arena renderer.', err);
-      }
       // Close, bright hero framing for the large landscape preview panel.
       const cam = new THREE.PerspectiveCamera(29, 1, 0.1, 40);
       cam.position.set(0.08, 0.86, 3.55);
@@ -16516,7 +16513,7 @@ const Game = (function () {
       scene.add(plinth);
       const turn = new THREE.Group();
       scene.add(turn);
-      g.preview = { scene, cam, turn, renderer, mesh: null, bomb: null, width: 0, height: 0 };
+      g.preview = { scene, cam, turn, mesh: null, bomb: null, width: 0, height: 0 };
     }
     const pv = g.preview;
     [pv.mesh, pv.bomb].forEach(m => {
@@ -16543,50 +16540,31 @@ const Game = (function () {
     pv.bomb = null;
   }
 
-  // Draw the preview into just that one rectangle of the canvas.
+  // Draw the preview through the game's existing WebGL context. The canvas is
+  // physically inside #spreview, so no full-screen DOM layer can cover it.
   function renderPreview() {
     const pv = g.preview;
     const rect = UI.previewRect();
     if (!pv || !rect || rect.width < 8 || rect.height < 8) return;
+    mountPreviewCanvas();
+    const r = World.renderer;
     const w = Math.round(rect.width);
     const hh = Math.round(rect.height);
-    if (pv.renderer) {
-      g.previewViewport = { x: 0, y: 0, w, h: hh };
-      if (w !== pv.width || hh !== pv.height) {
-        pv.width = w;
-        pv.height = hh;
-        pv.renderer.setSize(w, hh, false);
-      }
-      pv.cam.aspect = rect.width / rect.height;
-      pv.cam.updateProjectionMatrix();
-      pv.renderer.render(pv.scene, pv.cam);
-      return;
+    g.previewViewport = { x: 0, y: 0, w, h: hh };
+    if (w !== pv.width || hh !== pv.height) {
+      pv.width = w;
+      pv.height = hh;
+      r.setSize(w, hh, false);
     }
-    const r = World.renderer;
-    const h = r.domElement.clientHeight;
-    // CSS pixels, NOT device pixels: three multiplies by the pixel ratio itself
-    // inside setViewport/setScissor. Scaling by the ratio here as well meant the
-    // preview came out twice the size and in the wrong corner on any phone —
-    // and never on a desktop, where the ratio is 1 and the bug is invisible.
-    // WebGL's origin is bottom-left; the DOM's is top-left.
-    const x = Math.round(rect.left);
-    const y = Math.round(h - rect.bottom);
-    g.previewViewport = { x, y, w, h: hh };
     pv.cam.aspect = rect.width / rect.height;
     pv.cam.updateProjectionMatrix();
-    // The panel is a hole cut in the locker backdrop, so whatever the renderer
-    // clears it to IS the panel's background. Black read as a missing tile
-    // against the gradient; a deep violet reads as a lit display case.
     const wasColour = r.getClearColor(new THREE.Color());
     const wasAlpha = r.getClearAlpha();
     r.setClearColor(0x241d46, 1);
-    r.setScissorTest(true);
-    r.setViewport(x, y, w, hh);
-    r.setScissor(x, y, w, hh);
-    r.render(pv.scene, pv.cam);
     r.setScissorTest(false);
+    r.setViewport(0, 0, w, hh);
+    r.render(pv.scene, pv.cam);
     r.setClearColor(wasColour, wasAlpha);
-    r.setViewport(0, 0, r.domElement.clientWidth, h);
   }
 
   function clearVictory() {
@@ -16737,6 +16715,7 @@ const Game = (function () {
   }
 
   function startMatch() {
+    restoreGameCanvas();
     // The Players row is hidden with touch controls up, so make the value match
     // what the player can actually see and choose.
     if (!UI.rowVisible(UI.MENU_ROWS.indexOf('players'))) g.opts.humans = 1;
@@ -16911,6 +16890,7 @@ const Game = (function () {
   }
 
   function toMenu() {
+    restoreGameCanvas();
     clearVictory();
     UI.showVictory('', '#ffffff', '', false, false);
     clearRoundEntities();

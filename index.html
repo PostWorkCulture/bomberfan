@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="d05d444">
+<meta name="build" content="32735ce">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2137,6 +2137,31 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
+  }
+  #spreview .preview-fallback {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    aspect-ratio: 3 / 4;
+    max-width: 92%;
+    background-image: url('assets/fighter-faces.png');
+    background-repeat: no-repeat;
+    background-size: 400% 400%;
+    background-position: var(--face-x, 0%) var(--face-y, 0%);
+    filter: drop-shadow(0 0 18px color-mix(in srgb, var(--fighter) 60%, transparent));
+    transform: translateX(-50%);
+    transform-origin: 50% 78%;
+    animation: previewPortrait 2.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes previewPortrait {
+    0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+    50% { transform: translateX(-50%) translateY(-3px) scale(1.015); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #spreview .preview-fallback { animation: none; }
   }
   #spreview::before { display: none !important; }
   #spreview::after {
@@ -15014,6 +15039,7 @@ const UI = (function () {
         <div class="sbody">
           <div class="scol">
             <div id="spreview">
+              <div class="preview-fallback" aria-hidden="true"></div>
               <span class="spreviewtag">LIVE PREVIEW</span>
               <div class="sname"></div>
             </div>
@@ -15603,6 +15629,11 @@ const UI = (function () {
     select.querySelector('.smove').textContent = def.move;
     select.querySelector('.sbio').textContent = def.bio;
     select.querySelector('.spreviewtag').textContent = 'ANIMATING  ·  ' + def.move.toUpperCase();
+    const portrait = select.querySelector('.preview-fallback');
+    if (portrait) {
+      portrait.style.setProperty('--face-x', `${(selectedClass % 4) * 33.333}%`);
+      portrait.style.setProperty('--face-y', `${Math.floor(selectedClass / 4) * 33.333}%`);
+    }
     punchPreviewHole();
   }
 

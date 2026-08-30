@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="d765d39">
+<meta name="build" content="8416cf1">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2192,20 +2192,38 @@
     background-position: center;
   }
   #spreview .preview-fallback[data-fighter="hulk"],
+  #spreview .preview-fallback[data-fighter="piglet"],
+  #spreview .preview-fallback[data-fighter="reaper"],
+  #spreview .preview-fallback[data-fighter="cyclops"],
+  #spreview .preview-fallback[data-fighter="jester"],
+  #spreview .preview-fallback[data-fighter="inferno"],
   #spreview .preview-fallback[data-fighter="plague"],
+  #spreview .preview-fallback[data-fighter="devil"],
+  #spreview .preview-fallback[data-fighter="maw"],
+  #spreview .preview-fallback[data-fighter="phantom"],
   #spreview .preview-fallback[data-fighter="joker"],
   #spreview .preview-fallback[data-fighter="blondie"],
-  #spreview .preview-fallback[data-fighter="dino"] {
+  #spreview .preview-fallback[data-fighter="dino"],
+  #spreview .preview-fallback[data-fighter="wario"] {
     width: 100%;
     max-width: none;
     background-size: cover;
     background-position: center;
   }
+  #spreview .preview-fallback[data-fighter="piglet"] { background-image: url('assets/piglet-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="reaper"] { background-image: url('assets/reaper-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="cyclops"] { background-image: url('assets/cyclops-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="jester"] { background-image: url('assets/jester-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="inferno"] { background-image: url('assets/inferno-portrait.webp'); }
   #spreview .preview-fallback[data-fighter="hulk"] { background-image: url('assets/hulk-portrait.svg'); }
-  #spreview .preview-fallback[data-fighter="plague"] { background-image: url('assets/plague-portrait.svg'); }
+  #spreview .preview-fallback[data-fighter="devil"] { background-image: url('assets/devil-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="maw"] { background-image: url('assets/maw-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="plague"] { background-image: url('assets/plague-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="phantom"] { background-image: url('assets/phantom-portrait.webp'); }
   #spreview .preview-fallback[data-fighter="joker"] { background-image: url('assets/joker-portrait.svg'); }
-  #spreview .preview-fallback[data-fighter="blondie"] { background-image: url('assets/blondie-portrait.svg'); }
-  #spreview .preview-fallback[data-fighter="dino"] { background-image: url('assets/dino-portrait.svg'); }
+  #spreview .preview-fallback[data-fighter="blondie"] { background-image: url('assets/blondie-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="dino"] { background-image: url('assets/dino-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="wario"] { background-image: url('assets/wario-portrait.svg'); }
   @supports (width: 1cqh) {
     #spreview .preview-fallback {
       width: min(92cqw, 75cqh);
@@ -2343,18 +2361,35 @@
     background: linear-gradient(145deg, rgba(255,255,255,.13), transparent 35% 75%, rgba(0,0,0,.18));
   }
   #select .charpick[data-class="5"] .charface,
+  #select .charpick[data-class="0"] .charface,
+  #select .charpick[data-class="1"] .charface,
+  #select .charpick[data-class="2"] .charface,
+  #select .charpick[data-class="3"] .charface,
+  #select .charpick[data-class="4"] .charface,
+  #select .charpick[data-class="6"] .charface,
+  #select .charpick[data-class="7"] .charface,
   #select .charpick[data-class="9"] .charface,
+  #select .charpick[data-class="10"] .charface,
   #select .charpick[data-class="11"] .charface,
   #select .charpick[data-class="13"] .charface,
   #select .charpick[data-class="14"] .charface {
     background-size: cover;
     background-position: center;
   }
+  #select .charpick[data-class="0"] .charface { background-image: url('assets/piglet-portrait.webp'); }
+  #select .charpick[data-class="1"] .charface { background-image: url('assets/reaper-portrait.webp'); }
+  #select .charpick[data-class="2"] .charface { background-image: url('assets/cyclops-portrait.webp'); }
+  #select .charpick[data-class="3"] .charface { background-image: url('assets/jester-portrait.webp'); }
+  #select .charpick[data-class="4"] .charface { background-image: url('assets/inferno-portrait.webp'); }
   #select .charpick[data-class="5"] .charface { background-image: url('assets/hulk-portrait.svg'); }
-  #select .charpick[data-class="9"] .charface { background-image: url('assets/plague-portrait.svg'); }
+  #select .charpick[data-class="6"] .charface { background-image: url('assets/devil-portrait.webp'); }
+  #select .charpick[data-class="7"] .charface { background-image: url('assets/maw-portrait.webp'); }
+  #select .charpick[data-class="9"] .charface { background-image: url('assets/plague-portrait.webp'); }
+  #select .charpick[data-class="10"] .charface { background-image: url('assets/phantom-portrait.webp'); }
   #select .charpick[data-class="11"] .charface { background-image: url('assets/joker-portrait.svg'); }
-  #select .charpick[data-class="13"] .charface { background-image: url('assets/blondie-portrait.svg'); }
-  #select .charpick[data-class="14"] .charface { background-image: url('assets/dino-portrait.svg'); }
+  #select .charpick[data-class="13"] .charface { background-image: url('assets/blondie-portrait.webp'); }
+  #select .charpick[data-class="14"] .charface { background-image: url('assets/dino-portrait.webp'); }
+  #select .charpick[data-class="15"] .charface { background-image: url('assets/wario-portrait.svg'); background-size: cover; background-position: center; }
   #select .charindex {
     position: absolute;
     right: 6px;
@@ -12440,80 +12475,95 @@ class Player {
       add(new THREE.SphereGeometry(radius, 28, 20), combatGlowMat, p, null, null, parent);
 
     if (combatClass === 'piglet') {
-      // PIGLET: oversized round head, very long ears, soft snout and a striped
-      // magenta jumper. The silhouette is small and anxious rather than a tank
-      // with pig parts attached to it.
+      // PIGLET: a clean storybook pig silhouette with short ears, an offset
+      // profile snout, bright red dress, stick-like limbs and black shoes.
+      // The earlier long ears and striped jumper made this read as a rabbit.
       const rig = new THREE.Group();
-      rig.position.y = -0.01;
+      rig.position.y = -0.015;
       g.add(rig);
-      const pigPink = mat(0xffa6cf, {
-        roughness: 0.58, metalness: 0.02, emissive: 0x6d173f, emissiveIntensity: 0.08 });
-      const pigLight = mat(0xffd1e3, { roughness: 0.62, metalness: 0.01 });
-      const pigMagenta = mat(0xd83492, {
-        roughness: 0.54, metalness: 0.04, emissive: 0x5e083c, emissiveIntensity: 0.12 });
-      const pigDarkStripe = mat(0x7c205f, { roughness: 0.66, metalness: 0.02 });
-      const pigFace = mat(0x28101e, { roughness: 0.72, metalness: 0.0 });
+      const pigPink = mat(0xff91b2, {
+        roughness: 0.38, metalness: 0.01, clearcoat: 0.42,
+        emissive: 0x64142f, emissiveIntensity: 0.07 });
+      const pigLight = mat(0xffc4d6, {
+        roughness: 0.4, metalness: 0.01, clearcoat: 0.35 });
+      const pigRed = mat(0xe92d49, {
+        roughness: 0.34, metalness: 0.03, clearcoat: 0.46,
+        emissive: 0x6f071c, emissiveIntensity: 0.1 });
+      const pigCheek = mat(0xff5f8c, {
+        roughness: 0.42, metalness: 0.01, clearcoat: 0.25 });
+      const pigFace = mat(0x1d1119, { roughness: 0.62, metalness: 0 });
+      const eyeWhite = mat(0xfffbff, { roughness: 0.35, metalness: 0.01, clearcoat: 0.3 });
 
-      // Pear-shaped striped body.
-      add(new THREE.CapsuleGeometry(0.225, 0.24, 10, 20), pigMagenta,
-        [0, 0.37, 0], [0.96, 1.04, 0.82], null, rig);
-      [-0.08, 0.02, 0.12].forEach((dy, i) => add(
-        new THREE.TorusGeometry(0.205 - i * 0.012, 0.025, 16, 32), pigDarkStripe,
-        [0, 0.35 + dy, 0], [1, 1, 0.82], [Math.PI / 2, 0, 0], rig));
-
+      // Flared dress, small legs and broad rounded shoes establish the familiar
+      // proportions before any facial detail is visible.
+      const dress = add(new THREE.CylinderGeometry(0.19, 0.305, 0.42, 32), pigRed,
+        [0, 0.39, 0], [1, 1, 0.78], null, rig);
       const arms = [];
       [-1, 1].forEach(side => {
-        const arm = capsule(0.042, 0.3, pigPink,
-          [side * 0.265, 0.34, 0.02], [0.9, 1, 0.82], [0, 0, side * -0.22], rig);
+        const arm = capsule(0.032, 0.31, pigPink,
+          [side * 0.27, 0.43, 0.015], [0.9, 1, 0.8], [0, 0, side * -0.38], rig);
+        add(new THREE.SphereGeometry(0.045, 24, 18), pigPink,
+          [side * 0.335, 0.265, 0.06], [1, 0.82, 0.9], null, rig);
         arms.push({ arm, side, rest: arm.rotation.z });
-        add(new THREE.SphereGeometry(0.05, 28, 20), pigLight,
-          [side * 0.315, 0.19, 0.07], [1, 0.78, 0.9], null, rig);
-        capsule(0.05, 0.22, pigPink,
-          [side * 0.13, 0.14, 0], [0.92, 1, 0.82], [0, 0, side * 0.09], rig);
-        add(new THREE.SphereGeometry(0.075, 28, 20), pigFace,
-          [side * 0.145, 0.045, 0.08], [1.05, 0.48, 1.28], null, rig);
+        capsule(0.035, 0.19, pigPink,
+          [side * 0.11, 0.13, 0], [0.9, 1, 0.8], [0, 0, side * 0.05], rig);
+        add(new THREE.SphereGeometry(0.095, 28, 20), pigFace,
+          [side * 0.14, 0.045, 0.13], [1.22, 0.42, 1.46], [0, side * 0.08, 0], rig);
       });
 
       const headRig = new THREE.Group();
+      headRig.rotation.y = -0.16;
       rig.add(headRig);
-      const head = add(new THREE.SphereGeometry(0.285, 28, 20), pigPink,
-        [0, 0.78, 0.015], [0.94, 1.0, 0.86], null, headRig);
-      // Cheeks soften the low-poly face and keep the head recognisably pig-like.
-      [-1, 1].forEach(side => add(new THREE.SphereGeometry(0.09, 28, 20), pigLight,
-        [side * 0.15, 0.74, 0.19], [1, 0.82, 0.52], null, headRig));
-      const snout = add(new THREE.CylinderGeometry(0.105, 0.13, 0.14, 24), pigLight,
-        [0, 0.72, 0.27], [1, 0.78, 1], [Math.PI / 2, 0, 0], headRig);
-      [-1, 1].forEach(side => add(new THREE.SphereGeometry(0.018, 28, 20), pigFace,
-        [side * 0.043, 0.73, 0.348], [0.8, 1.1, 0.55], null, headRig));
-      [-1, 1].forEach(side => {
-        add(new THREE.SphereGeometry(0.027, 28, 20), pigFace,
-          [side * 0.095, 0.83, 0.255], [0.8, 1.1, 0.55], null, headRig);
-        add(roundedBox(0.075, 0.018, 0.014), pigFace,
-          [side * 0.095, 0.875, 0.252], null, [0, 0, side * -0.18], headRig);
+      const head = add(new THREE.SphereGeometry(0.29, 34, 26), pigPink,
+        [-0.005, 0.79, 0.015], [1.08, 0.88, 0.82], null, headRig);
+      // The snout sits to one side and forward, creating a three-quarter profile
+      // rather than the old symmetrical pig mask.
+      const snout = add(new THREE.SphereGeometry(0.16, 32, 24), pigLight,
+        [-0.205, 0.73, 0.205], [1.32, 0.72, 0.72], null, headRig);
+      [-1, 1].forEach(side => add(new THREE.SphereGeometry(0.019, 22, 16), pigFace,
+        [-0.255 + side * 0.052, 0.745, 0.307], [0.8, 1.05, 0.46], null, headRig));
+
+      // Short rounded ears, not rabbit ears.
+      const ears = [];
+      [[-0.105, 0.99, -0.06], [0.09, 1.015, -0.045]].forEach((p, i) => {
+        const ear = capsule(0.057, 0.12, pigPink, p, [0.9, 1, 0.72],
+          [0, 0, i ? -0.08 : 0.12], headRig);
+        capsule(0.025, 0.07, pigCheek, [p[0], p[1], p[2] + 0.04], [0.72, 1, 0.48],
+          [0, 0, i ? -0.08 : 0.12], headRig);
+        ears.push({ ear, rest: ear.rotation.z, side: i ? 1 : -1 });
       });
 
-      const ears = [];
-      [-1, 1].forEach(side => {
-        const ear = new THREE.Group();
-        ear.position.set(side * 0.14, 0.99, -0.01);
-        ear.rotation.z = side * -0.13;
-        headRig.add(ear);
-        capsule(0.065, 0.2, pigPink, [0, 0.1, 0], [0.86, 1, 0.72], null, ear);
-        capsule(0.03, 0.14, pigMagenta, [0, 0.1, 0.045], [0.72, 1, 0.42], null, ear);
-        ears.push({ ear, side, rest: ear.rotation.z });
+      // Two eyes remain visible in the three-quarter view. The far eye is
+      // smaller, while the cheek and smile keep the expression warm.
+      [[-0.085, 0.845, 0.24, 0.043], [0.095, 0.86, 0.205, 0.052]].forEach(e => {
+        add(new THREE.SphereGeometry(e[3], 26, 18), eyeWhite,
+          [e[0], e[1], e[2]], [0.88, 1.12, 0.46], null, headRig);
+        add(new THREE.SphereGeometry(e[3] * 0.44, 22, 16), pigFace,
+          [e[0] - 0.006, e[1] - 0.005, e[2] + 0.033], [0.8, 1.05, 0.45], null, headRig);
       });
+      add(new THREE.SphereGeometry(0.075, 28, 20), pigCheek,
+        [0.105, 0.72, 0.238], [1, 0.88, 0.42], null, headRig);
+      add(new THREE.TorusGeometry(0.072, 0.01, 10, 28, Math.PI * 0.82), pigFace,
+        [0.04, 0.655, 0.267], [1, 0.64, 0.46], [Math.PI / 2, 0, 2.65], headRig);
+
+      // A small curled tail peeks from behind the dress in profile.
+      const tail = add(new THREE.TorusGeometry(0.073, 0.018, 12, 32, Math.PI * 1.65), pigPink,
+        [0.245, 0.41, -0.105], [1, 1, 0.72], [0, 0, -0.45], rig);
 
       anims.push(t => {
-        const tremble = Math.sin(t * 5.2);
-        headRig.rotation.y = Math.sin(t * 0.72) * 0.09;
-        head.rotation.z = tremble * 0.012;
-        snout.scale.z = 1 + Math.max(0, Math.sin(t * 2.8)) * 0.045;
-        ears.forEach(({ ear, side, rest }, i) => {
-          ear.rotation.z = rest + side * Math.sin(t * 2.1 + i * 0.6) * 0.07;
+        const bounce = Math.max(0, Math.sin(t * 3.2));
+        rig.position.y = -0.015 + bounce * 0.045;
+        headRig.rotation.y = -0.16 + Math.sin(t * 0.9) * 0.08;
+        head.rotation.z = Math.sin(t * 1.8) * 0.014;
+        snout.scale.z = 0.72 + Math.max(0, Math.sin(t * 2.4)) * 0.025;
+        ears.forEach(({ ear, rest, side }, i) => {
+          ear.rotation.z = rest + side * Math.sin(t * 2.1 + i * 0.5) * 0.045;
         });
         arms.forEach(({ arm, side, rest }, i) => {
-          arm.rotation.z = rest + side * Math.sin(t * 2.6 + i) * 0.035;
+          arm.rotation.z = rest + side * Math.sin(t * 3.2 + i) * 0.08;
         });
+        dress.scale.x = 1 + bounce * 0.025;
+        tail.rotation.z = -0.45 + Math.sin(t * 2.4) * 0.08;
       });
     } else if (combatClass === 'reaper') {
       // REAPER: tall inverted wedge, floating skull, long arms and torn lower points.

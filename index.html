@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="c6da42e">
+<meta name="build" content="77afbae">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -18555,6 +18555,43 @@ window.BlastArena = {
   cosmeticItem, kitSpecial, prizePool, PRIZE_COUNT,
   Player, Bomb, Blast, PowerUp, STATE,
 };
+
+// Query-only release audit. This builds every fighter without creating a
+// renderer, which lets CI and WebGL-disabled browsers prove that all dedicated
+// branches construct valid finite geometry. Normal players never pay for it.
+if (new URLSearchParams(location.search).get('audit') === 'characters') {
+  const rows = PLAYER_DEFS.map(def => {
+    try {
+      const root = Player.buildMesh(def, {});
+      let meshes = 0, vertices = 0, badValues = 0;
+      root.traverse(object => {
+        if (!object.isMesh) return;
+        meshes++;
+        const position = object.geometry && object.geometry.attributes && object.geometry.attributes.position;
+        if (position) {
+          vertices += position.count;
+          for (let i = 0; i < position.array.length; i++) {
+            if (!Number.isFinite(position.array[i])) badValues++;
+          }
+        }
+      });
+      root.traverse(object => {
+        if (object.geometry) object.geometry.dispose();
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach(material => material && material.dispose && material.dispose());
+      });
+      return { name: def.name, ok: meshes > 0 && vertices > 0 && badValues === 0,
+               meshes, vertices, badValues };
+    } catch (error) {
+      return { name: def.name, ok: false, error: String(error && (error.stack || error)) };
+    }
+  });
+  document.documentElement.dataset.characterAudit = JSON.stringify({
+    count: rows.length,
+    failures: rows.filter(row => !row.ok),
+    rows,
+  });
+}
 
 window.addEventListener('load', () => {
   Game.init(document.getElementById('scene'));

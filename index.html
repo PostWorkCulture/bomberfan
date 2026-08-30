@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="9fffdcf">
+<meta name="build" content="46c9a82">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2166,6 +2166,22 @@
   #spreview.webgl-ready .preview-fallback {
     opacity: 0;
     visibility: hidden;
+  }
+  /* A browser that cannot create WebGL still gets a complete, selectable
+     Loadout instead of the blank page that previously hid every preview. */
+  body.webgl-fallback #spreview .preview-fallback {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  body.webgl-fallback #tbtns { display: none !important; }
+  body.webgl-fallback #select .sfoot .go {
+    opacity: .42;
+    pointer-events: none;
+    filter: grayscale(.55);
+  }
+  body.webgl-fallback #select .shint.hidden {
+    display: block !important;
+    color: rgba(255,245,230,.62);
   }
   #spreview .preview-fallback.bombog {
     width: 100%;
@@ -18683,8 +18699,46 @@ if (new URLSearchParams(location.search).get('audit') === 'characters') {
   });
 }
 
+// WebGL is required for a match, but it is not required to browse the roster.
+// If a device refuses the graphics context, build the same Loadout DOM and
+// keep its polished portrait fallback interactive. This is also a recovery
+// path for in-app browsers that temporarily exhaust their WebGL context quota.
+function initStaticLoadout(error) {
+  console.warn('Bomber Fan is using portrait-only Loadout mode.', error);
+  document.body.classList.add('webgl-fallback');
+  UI.init();
+  UI.showMenu(false);
+  UI.showSelect(true);
+  const requested = new URLSearchParams(location.search).get('preview') || '';
+  let selected = Math.max(0, PLAYER_DEFS.findIndex(
+    def => def.name.toLowerCase() === requested.toLowerCase()
+  ));
+  const render = () => {
+    UI.renderSelect(selected, selected);
+    UI.setPreviewName(PLAYER_DEFS[selected].name.toUpperCase());
+  };
+  UI.bindSelect({
+    onClass(index) { selected = index; render(); },
+    onFightHover() {},
+    onFight() {},
+  });
+  const fight = document.querySelector('#select [data-srow="fight"]');
+  if (fight) {
+    fight.setAttribute('aria-disabled', 'true');
+    const label = fight.querySelector('.start');
+    if (label) label.textContent = '3D UNAVAILABLE';
+  }
+  const hint = document.querySelector('#select .shint');
+  if (hint) hint.textContent = 'Portrait preview mode. 3D gameplay needs WebGL.';
+  render();
+}
+
 window.addEventListener('load', () => {
-  Game.init(document.getElementById('scene'));
+  try {
+    Game.init(document.getElementById('scene'));
+  } catch (error) {
+    initStaticLoadout(error);
+  }
 });
 
 })();

@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="8416cf1">
+<meta name="build" content="17227e4">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2034,7 +2034,7 @@
   }
 
   /* BOMBER FAN CHARACTER SELECT V6 */
-  /* One large live model, one compact sixteen-fighter roster, no prize ladder. */
+  /* One large live model, one compact twenty-fighter roster, no prize ladder. */
   #select {
     --fighter: #ff5148;
     padding: clamp(10px, 1.6vh, 18px) clamp(16px, 3vw, 44px) clamp(10px, 1.4vh, 16px) !important;
@@ -2187,8 +2187,8 @@
     width: 100%;
     max-width: none;
     background-color: #000;
-    background-image: url('assets/bombog.jpg');
-    background-size: contain;
+    background-image: url('assets/bombog-portrait.webp');
+    background-size: cover;
     background-position: center;
   }
   #spreview .preview-fallback[data-fighter="hulk"],
@@ -2204,7 +2204,12 @@
   #spreview .preview-fallback[data-fighter="joker"],
   #spreview .preview-fallback[data-fighter="blondie"],
   #spreview .preview-fallback[data-fighter="dino"],
-  #spreview .preview-fallback[data-fighter="wario"] {
+  #spreview .preview-fallback[data-fighter="wario"],
+  #spreview .preview-fallback[data-fighter="deadpool"],
+  #spreview .preview-fallback[data-fighter="buzz"],
+  #spreview .preview-fallback[data-fighter="minion"],
+  #spreview .preview-fallback[data-fighter="sonic"],
+  #spreview .preview-fallback[data-fighter="tanooki-bowser"] {
     width: 100%;
     max-width: none;
     background-size: cover;
@@ -2224,6 +2229,11 @@
   #spreview .preview-fallback[data-fighter="blondie"] { background-image: url('assets/blondie-portrait.webp'); }
   #spreview .preview-fallback[data-fighter="dino"] { background-image: url('assets/dino-portrait.webp'); }
   #spreview .preview-fallback[data-fighter="wario"] { background-image: url('assets/wario-portrait.svg'); }
+  #spreview .preview-fallback[data-fighter="deadpool"] { background-image: url('assets/deadpool-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="buzz"] { background-image: url('assets/buzz-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="minion"] { background-image: url('assets/minion-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="sonic"] { background-image: url('assets/sonic-portrait.webp'); }
+  #spreview .preview-fallback[data-fighter="tanooki-bowser"] { background-image: url('assets/tanooki-bowser-portrait.webp'); }
   @supports (width: 1cqh) {
     #spreview .preview-fallback {
       width: min(92cqw, 75cqh);
@@ -2368,11 +2378,17 @@
   #select .charpick[data-class="4"] .charface,
   #select .charpick[data-class="6"] .charface,
   #select .charpick[data-class="7"] .charface,
+  #select .charpick[data-class="8"] .charface,
   #select .charpick[data-class="9"] .charface,
   #select .charpick[data-class="10"] .charface,
   #select .charpick[data-class="11"] .charface,
+  #select .charpick[data-class="12"] .charface,
   #select .charpick[data-class="13"] .charface,
-  #select .charpick[data-class="14"] .charface {
+  #select .charpick[data-class="14"] .charface,
+  #select .charpick[data-class="16"] .charface,
+  #select .charpick[data-class="17"] .charface,
+  #select .charpick[data-class="18"] .charface,
+  #select .charpick[data-class="19"] .charface {
     background-size: cover;
     background-position: center;
   }
@@ -2384,12 +2400,18 @@
   #select .charpick[data-class="5"] .charface { background-image: url('assets/hulk-portrait.svg'); }
   #select .charpick[data-class="6"] .charface { background-image: url('assets/devil-portrait.webp'); }
   #select .charpick[data-class="7"] .charface { background-image: url('assets/maw-portrait.webp'); }
+  #select .charpick[data-class="8"] .charface { background-image: url('assets/bombog-portrait.webp'); }
   #select .charpick[data-class="9"] .charface { background-image: url('assets/plague-portrait.webp'); }
   #select .charpick[data-class="10"] .charface { background-image: url('assets/phantom-portrait.webp'); }
   #select .charpick[data-class="11"] .charface { background-image: url('assets/joker-portrait.svg'); }
+  #select .charpick[data-class="12"] .charface { background-image: url('assets/deadpool-portrait.webp'); }
   #select .charpick[data-class="13"] .charface { background-image: url('assets/blondie-portrait.webp'); }
   #select .charpick[data-class="14"] .charface { background-image: url('assets/dino-portrait.webp'); }
   #select .charpick[data-class="15"] .charface { background-image: url('assets/wario-portrait.svg'); background-size: cover; background-position: center; }
+  #select .charpick[data-class="16"] .charface { background-image: url('assets/buzz-portrait.webp'); }
+  #select .charpick[data-class="17"] .charface { background-image: url('assets/minion-portrait.webp'); }
+  #select .charpick[data-class="18"] .charface { background-image: url('assets/sonic-portrait.webp'); }
+  #select .charpick[data-class="19"] .charface { background-image: url('assets/tanooki-bowser-portrait.webp'); }
   #select .charindex {
     position: absolute;
     right: 6px;

@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="a2fc62b">
+<meta name="build" content="a5ee8a8">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2087,7 +2087,10 @@
     margin: 0 auto !important;
     padding: clamp(11px, 1.6vh, 17px) clamp(11px, 1.5vw, 20px) clamp(18px, 2.3vh, 25px) !important;
     border-radius: 16px;
-    background: linear-gradient(145deg, rgba(16,17,22,.54), rgba(5,6,9,.72)) !important;
+    /* Leave the preview column as a real window onto the WebGL canvas.
+       The full-screen .sbg already supplies the armoury backdrop everywhere
+       except the punched-out #spreview rectangle. */
+    background: transparent !important;
     border: 1px solid color-mix(in srgb, var(--fighter) 20%, rgba(255,255,255,.08)) !important;
     box-shadow: inset 0 1px rgba(255,255,255,.035), 0 24px 70px rgba(0,0,0,.42) !important;
   }
@@ -14997,8 +15000,7 @@ const UI = (function () {
         <div class="sbg"></div>
         <div class="shead">
           <div>
-            <span class="seyebrow">LOADOUT</span>
-            <h2>CHARACTER SELECT</h2>
+            <h2>LOADOUT</h2>
           </div>
           <span class="scount">16 FIGHTERS</span>
         </div>

@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="17227e4">
+<meta name="build" content="8074300">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2147,15 +2147,14 @@
     top: 0;
     bottom: 0;
     left: 50%;
-    width: 75%;
+    width: 100%;
     height: 100%;
     min-width: 120px;
-    max-width: 92%;
+    max-width: none;
     background-color: #100d1b;
-    background-image: url('assets/fighter-faces-aaa.webp');
     background-repeat: no-repeat;
-    background-size: 400% 500%;
-    background-position: var(--face-x, 0%) var(--face-y, 0%);
+    background-size: contain;
+    background-position: center;
     filter: drop-shadow(0 0 18px color-mix(in srgb, var(--fighter) 60%, transparent));
     transform: translateX(-50%);
     transform-origin: 50% 78%;
@@ -2358,10 +2357,9 @@
     flex: 0 0 auto;
     border: 1px solid color-mix(in srgb, var(--fighter) 45%, rgba(255,255,255,.14));
     border-radius: 7px;
-    background-image: url('assets/fighter-faces-aaa.webp');
     background-repeat: no-repeat;
-    background-size: 400% 500%;
-    background-position: var(--face-x) var(--face-y);
+    background-size: cover;
+    background-position: center;
     box-shadow: inset 0 0 12px rgba(0,0,0,.34), 0 0 10px color-mix(in srgb, var(--fighter) 16%, transparent);
     overflow: hidden;
   }
@@ -6926,6 +6924,7 @@ three/build/three.module.min.js:
    *)
 */
 </script>
+<script type="module" src="assets/vendor/character-bootstrap.js"></script>
 <script>
 (function () {
 'use strict';
@@ -7318,49 +7317,70 @@ const CURSES = [
   { id: 'reverse',  label: 'Reversed' },
 ];
 
-// Twenty mechanically identical fighters with deliberately different visual
-// architecture. Role, bio and movement copy belong to character select only.
+// Twenty mechanically identical fighters built from Quaternius' CC0 Ultimate
+// Monsters. Every entry owns its model, brightened portrait and showcase move;
+// gameplay stats stay equal, so the choice is visual rather than competitive.
 const PLAYER_DEFS = [
-  { name: 'Piglet', color: 0xff9dcc, belly: 0xffc8df, trim: 0xf04ca6, accent: 0x9e246f,
-    role: 'Brave Little Pig', move: 'Nervous Bounce', bio: 'Small, pink and much braver than the trembling suggests.' },
-  { name: 'Reaper', color: 0x2f7bff, belly: 0xe6f3ff, trim: 0xbfe6ff, accent: 0x123f7d,
-    role: 'Skeletal Wraith', move: 'Grave Float', bio: 'A hovering bone spectre with long ember claws.' },
-  { name: 'Cyclops', color: 0xf2f5ff, belly: 0xffffff, trim: 0x9edcff, accent: 0x66738b,
-    role: 'Visor Cyclops', move: 'Target March', bio: 'One glowing sightline. Nothing escapes its scan.' },
-  { name: 'Jester', color: 0xff2fd1, belly: 0xffe8fb, trim: 0x8d2cff, accent: 0x630054,
-    role: 'Manic Trickster', move: 'Bell Hop', bio: 'A diamond-bodied menace with a weaponised grin.' },
-  { name: 'Inferno', color: 0xff5a16, belly: 0xffe1a6, trim: 0xffc21a, accent: 0x7f1c00,
-    role: 'Living Furnace', move: 'Boiler Rattle', bio: 'A walking firebox driven by a molten core.' },
-  { name: 'Hulk', color: 0x54e63f, belly: 0x9b45df, trim: 0xd8ff8a, accent: 0x287f27,
-    role: 'Gamma Powerhouse', move: 'Ground Smash', bio: 'Huge green fists, purple shorts and a temper that shakes the floor.' },
-  { name: 'Devil', color: 0xff2349, belly: 0xffdfdf, trim: 0xff9b22, accent: 0x790018,
-    role: 'Horned Fiend', move: 'Hell Stomp', bio: 'A crimson idol with sweeping horns and ember eyes.' },
-  { name: 'Maw', color: 0xd6ff18, belly: 0xf6ffc8, trim: 0xff4bde, accent: 0x5e7000,
-    role: 'Neon Nightmare', move: 'Chomp Bounce', bio: 'Mostly teeth, appetite and toxic green trouble.' },
-  { name: 'BombOG', color: 0xff3366, belly: 0x1737f0, trim: 0xffe792, accent: 0x6e66b5,
-    role: 'Original Bomber', move: 'Bomb Toss', bio: 'The original white-helmet bomber, armed with a purple shell and pink attitude.' },
-  { name: 'Plague', color: 0xff4fd8, belly: 0xfff06a, trim: 0x45e8ff, accent: 0x8a42ff,
-    role: 'Toxic Horror', move: 'Hazmat Shuffle', bio: 'Sealed tanks, glowing lenses and a very bad atmosphere.' },
-  { name: 'Phantom', color: 0x9f46ff, belly: 0xeee0ff, trim: 0x61e8ff, accent: 0x3a0974,
-    role: 'Void Apparition', move: 'Spectral Glide', bio: 'A vivid purple spirit with no feet and no patience.' },
-  { name: 'Joker', color: 0x7b2cff, belly: 0xf3eee2, trim: 0x35ff59, accent: 0xff244f,
-    role: 'Chaotic Villain', move: 'Cane Dance', bio: 'Purple suit, acid hair and one deeply unhelpful smile.' },
-  { name: 'Deadpool', color: 0xf12b36, belly: 0x191b22, trim: 0xffffff, accent: 0x781017,
-    role: 'Masked Mercenary', move: 'Sword Flourish', bio: 'A loud red fighter with twin blades and absolutely no indoor voice.' },
-  { name: 'Blondie', color: 0xff8a19, belly: 0x1857d8, trim: 0xffe347, accent: 0x2145a2,
-    role: 'Storm Ninja', move: 'Ninja Dash', bio: 'Spiked golden hair, impossible speed and a bright orange battle suit.' },
-  { name: 'Dino', color: 0x63d83f, belly: 0xb8f16d, trim: 0xffd447, accent: 0x257327,
-    role: 'Tiny Tyrant', move: 'Rex Roar', bio: 'A chunky green dinosaur with tiny arms and a very large opinion.' },
-  { name: 'Wario', color: 0xffd51f, belly: 0x8f35d9, trim: 0x44d9ff, accent: 0x5b268c,
-    role: 'Greedy Bruiser', move: 'Belly Bump', bio: 'Big cap, bigger moustache and enough swagger to fill the arena.' },
-  { name: 'Buzz', color: 0x83cf3f, belly: 0xf5f7ff, trim: 0x7b3fb2, accent: 0xd92f73,
-    role: 'Space Ranger', move: 'Rocket Roll', bio: 'White armour, green flight gear and a fearless mission-ready stance.' },
-  { name: 'Minion', color: 0xffdf21, belly: 0x2455d7, trim: 0x9da6ad, accent: 0x25272c,
-    role: 'Tiny Troublemaker', move: 'Goggle Bounce', bio: 'One bright eye, blue overalls and more enthusiasm than judgement.' },
-  { name: 'Sonic', color: 0x1269dd, belly: 0xf1bd79, trim: 0xf4f7ff, accent: 0xe52b35,
-    role: 'Blue Speedster', move: 'Spin Dash', bio: 'Quills, red shoes and a blur of blue built for the fastest route.' },
-  { name: 'Tanooki Bowser', color: 0xf4a51c, belly: 0xffdc76, trim: 0x318c33, accent: 0xd62517,
-    role: 'Royal Beast', move: 'Tail Slam', bio: 'A crowned shell tyrant with horns, claws and a striped tanooki tail.' },
+  { name: 'Bunny', color: 0xff49d2, belly: 0xfff2fb, trim: 0x55ddff, accent: 0x6d1cae,
+    model: 'assets/characters/bunny.gltf', portrait: 'assets/portraits/bunny.webp', expression: 'Wave',
+    role: 'Moonlit Trickster', move: 'Cheeky Wave', bio: 'A bright violet bruiser with sleepy eyes, long ears and one sharp claw.' },
+  { name: 'Alien', color: 0x43ddff, belly: 0xe9fbff, trim: 0xb45cff, accent: 0x116a96,
+    model: 'assets/characters/alien.gltf', portrait: 'assets/portraits/alien.webp', expression: 'Yes',
+    role: 'Cosmic Menace', move: 'Knowing Nod', bio: 'Curled horns, luminous armour and the calm confidence of an invader.' },
+  { name: 'Evolved Dragon', color: 0x18e0d2, belly: 0x82fff4, trim: 0xff477e, accent: 0x07667c,
+    model: 'assets/characters/evolved-dragon.gltf', portrait: 'assets/portraits/evolved-dragon.webp', expression: 'Headbutt', flying: true,
+    role: 'Sky Tyrant', move: 'Horn Rush', bio: 'A turquoise winged heavyweight that attacks with its whole silhouette.' },
+  { name: 'Skull Orc', color: 0xa45cff, belly: 0xf4efff, trim: 0xffb52e, accent: 0x482070,
+    model: 'assets/characters/skull-orc.gltf', portrait: 'assets/portraits/skull-orc.webp', expression: 'Punch',
+    role: 'Bone Breaker', move: 'Spiked Smash', bio: 'Skull helm, plated fists and a purple frame built for close-range chaos.' },
+  { name: 'Orc', color: 0x8655ff, belly: 0xf4f0ff, trim: 0xffc12f, accent: 0x371668,
+    model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Yes',
+    role: 'Grinning Brute', move: 'Victory Flex', bio: 'A broad-shouldered orc whose huge grin is every bit as dangerous as the mace.' },
+  { name: 'Fish Monster', color: 0xff8a25, belly: 0x7b326f, trim: 0xffffff, accent: 0x8f2f09,
+    model: 'assets/characters/fish-monster.gltf', portrait: 'assets/portraits/fish-monster.webp', expression: 'Punch',
+    role: 'Deep-Sea Brawler', move: 'Fin Flurry', bio: 'A blazing orange predator with a needle grin and fins made for trouble.' },
+  { name: 'Demon', color: 0x7555ff, belly: 0xb998ff, trim: 0xd7d0ff, accent: 0x25134f,
+    model: 'assets/characters/demon.gltf', portrait: 'assets/portraits/demon.webp', expression: 'No',
+    role: 'Night Stalker', move: 'Defiant Snarl', bio: 'Halo, horns, wings and fangs combine in one darkly comic nightmare.' },
+  { name: 'Tribal', color: 0xffc52f, belly: 0xffffff, trim: 0xff8f25, accent: 0x633800,
+    model: 'assets/characters/tribal.gltf', portrait: 'assets/portraits/tribal.webp', expression: 'Yes',
+    role: 'Totem Warrior', move: 'Mask Salute', bio: 'A graphic gold-and-white fighter with a huge mask and fearless stare.' },
+  { name: 'Cactoro', color: 0x9aed37, belly: 0xd8ff91, trim: 0xd84b9d, accent: 0x3e6f12,
+    model: 'assets/characters/cactoro.gltf', portrait: 'assets/portraits/cactoro.webp', expression: 'Wave',
+    role: 'Desert Rogue', move: 'Prickly Hello', bio: 'Sombrero, cactus fists and a deadpan expression hide a very lively fighter.' },
+  { name: 'Yeti', color: 0xff5e47, belly: 0xffd4ca, trim: 0xffffff, accent: 0x841d14,
+    model: 'assets/characters/yeti.gltf', portrait: 'assets/portraits/yeti.webp', expression: 'Yes',
+    role: 'Crimson Snowbeast', move: 'Toothy Cheer', bio: 'A bright red-and-ice bruiser whose enormous smile never switches off.' },
+  { name: 'Mushroom King', color: 0x8c4dff, belly: 0xd8ff57, trim: 0x76d83c, accent: 0x291052,
+    model: 'assets/characters/mushroom-king.gltf', portrait: 'assets/portraits/mushroom-king.webp', expression: 'Wave',
+    role: 'Spore Sovereign', move: 'Royal Wave', bio: 'A towering cap, glowing greens and tiny royal eyes rule this strange court.' },
+  { name: 'Ninja', color: 0xff3d91, belly: 0xffc4e0, trim: 0xffffff, accent: 0x71173e,
+    model: 'assets/characters/ninja.gltf', portrait: 'assets/portraits/ninja.webp', expression: 'Weapon',
+    role: 'Candy Assassin', move: 'Blade Flourish', bio: 'Hot-pink armour, crossed blades and a suspiciously relaxed expression.' },
+  { name: 'Evolved Goleling', color: 0x6eea36, belly: 0xff9237, trim: 0xb5ff7c, accent: 0x255c14,
+    model: 'assets/characters/evolved-goleling.gltf', portrait: 'assets/portraits/evolved-goleling.webp', expression: 'Yes', flying: true,
+    role: 'Winged Glutton', move: 'Happy Howl', bio: 'All mouth, horns and green wings, with the happiest battle cry in the arena.' },
+  { name: 'Monkroose', color: 0xffd234, belly: 0xffed8b, trim: 0x8f845d, accent: 0x795a0a,
+    model: 'assets/characters/monkroose.gltf', portrait: 'assets/portraits/monkroose.webp', expression: 'Wave',
+    role: 'Golden Scout', move: 'Friendly Feint', bio: 'Wide ears, warm gold armour and a patient face that misses nothing.' },
+  { name: 'Blue Demon', color: 0xff4aaf, belly: 0x55ddff, trim: 0xffa1d2, accent: 0x6e164d,
+    model: 'assets/characters/blue-demon.gltf', portrait: 'assets/portraits/blue-demon.webp', expression: 'Punch',
+    role: 'Neon Imp', move: 'Tail Swipe', bio: 'A candy-pink demon with blue battle shorts, huge ears and zero restraint.' },
+  { name: 'Birb', color: 0x4acbff, belly: 0xf2fbff, trim: 0xffdf49, accent: 0x155b8d,
+    model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/birb.webp', expression: 'Yes',
+    role: 'Ice-Plumed Rogue', move: 'Proud Strut', bio: 'A frosty blue bird-beast with bright eyes and a razor-clean silhouette.' },
+  { name: 'Dino', color: 0x8d49ff, belly: 0xe2c8ff, trim: 0xffe15c, accent: 0x34155f,
+    model: 'assets/characters/dino.gltf', portrait: 'assets/portraits/dino.webp', expression: 'No',
+    role: 'Tiny Tyrant', move: 'Fang Protest', bio: 'A compact violet dinosaur with oversized tusks and permanent side-eye.' },
+  { name: 'Flying Tribal', color: 0xff5b45, belly: 0xffc3ba, trim: 0xffd236, accent: 0x872114,
+    model: 'assets/characters/flying-tribal.gltf', portrait: 'assets/portraits/flying-tribal.webp', expression: 'Headbutt', flying: true,
+    role: 'Masked Divebomber', move: 'Totem Charge', bio: 'A vivid red mask, stone fists and a nose-first approach to every problem.' },
+  { name: 'Frog', color: 0x3fcfff, belly: 0xffc52f, trim: 0x263047, accent: 0x0b536c,
+    model: 'assets/characters/frog.gltf', portrait: 'assets/portraits/frog.webp', expression: 'Wave',
+    role: 'Midnight Hopper', move: 'Cool Wave', bio: 'A midnight frog with electric eyes, gold armour and an unreadable poker face.' },
+  { name: 'Squidle', color: 0x19bfff, belly: 0xffc63f, trim: 0x75e8ff, accent: 0x075079,
+    model: 'assets/characters/squidle.gltf', portrait: 'assets/portraits/squidle.webp', expression: 'Yes', flying: true,
+    role: 'Jetstream Oddball', move: 'Aerial Cheer', bio: 'A blue-and-gold flying squid that turns every entrance into a performance.' },
 ];
 
 // Fixed spawn corners in grid coordinates
@@ -11859,6 +11879,192 @@ const Props = (function () {
    SECTION 40 — ENTITIES: players, bombs, blasts, power-ups
    ========================================================================== */
 
+/* ------------------------------------------------------ CHARACTER MODELS -- */
+const CharacterModels = (() => {
+  const cache = new Map();
+  let runtimePromise = null;
+
+  function runtime() {
+    if (window.BFCharacter3D) return Promise.resolve(window.BFCharacter3D);
+    if (runtimePromise) return runtimePromise;
+    runtimePromise = new Promise((resolve, reject) => {
+      const started = performance.now();
+      const check = () => {
+        if (window.BFCharacter3D) { resolve(window.BFCharacter3D); return; }
+        if (performance.now() - started > 12000) {
+          reject(new Error('Character model runtime did not initialise'));
+          return;
+        }
+        setTimeout(check, 30);
+      };
+      check();
+    });
+    return runtimePromise;
+  }
+
+  function source(def) {
+    if (!cache.has(def.model)) {
+      cache.set(def.model, runtime().then(RT => {
+        const loader = new RT.GLTFLoader();
+        return loader.loadAsync(def.model).then(gltf => ({ RT, gltf }));
+      }));
+    }
+    return cache.get(def.model);
+  }
+
+  function animationController(RT, model, clips, def) {
+    if (!clips || !clips.length) return null;
+    const mixer = new RT.THREE.AnimationMixer(model);
+    const named = new Map(clips.map(clip => [clip.name.toLowerCase(), clip]));
+    const find = (...names) => {
+      for (const name of names) {
+        const clip = named.get(String(name || '').toLowerCase());
+        if (clip) return clip;
+      }
+      return null;
+    };
+    const idle = find('Idle', 'Flying_Idle') || clips[0];
+    const expression = find(def.expression, 'Yes', 'Wave', 'Punch', 'Headbutt') || idle;
+    let current = null;
+    let currentClip = null;
+    let lastT = null;
+    let showcaseBeat = null;
+
+    const play = (clip, once) => {
+      if (!clip || currentClip === clip) return;
+      const next = mixer.clipAction(clip);
+      next.reset();
+      next.enabled = true;
+      next.clampWhenFinished = !!once;
+      next.setLoop(once ? RT.THREE.LoopOnce : RT.THREE.LoopRepeat, once ? 1 : Infinity);
+      next.fadeIn(0.16).play();
+      if (current) current.fadeOut(0.16);
+      current = next;
+      currentClip = clip;
+    };
+
+    play(idle, false);
+    return {
+      update(t) {
+        const dt = lastT === null ? 0 : Math.min(0.05, Math.max(0, t - lastT));
+        lastT = t;
+        mixer.update(dt);
+      },
+      showcase(t) {
+        const phase = (t + def.name.length * 0.23) % 5.2;
+        const expressive = phase < 1.75;
+        if (expressive === showcaseBeat) return;
+        showcaseBeat = expressive;
+        play(expressive ? expression : idle, expressive && expression !== idle);
+      },
+      reset() {
+        showcaseBeat = null;
+        play(idle, false);
+      },
+    };
+  }
+
+  function prepareMaterial(RT, material, def) {
+    const copy = material.clone();
+    if (copy.map) {
+      copy.map.colorSpace = RT.THREE.SRGBColorSpace;
+      copy.map.needsUpdate = true;
+    }
+    if (copy.isMeshStandardMaterial || copy.isMeshPhysicalMaterial) {
+      copy.roughness = 0.4;
+      copy.metalness = Math.min(copy.metalness || 0, 0.08);
+      if (copy.emissive) {
+        copy.emissive.setHex(def.color).multiplyScalar(0.12);
+        copy.emissiveIntensity = 0.18;
+      }
+    }
+    copy.flatShading = false;
+    copy.needsUpdate = true;
+    return copy;
+  }
+
+  function create(def) {
+    const group = new THREE.Group();
+    group.userData.combatClass = def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    group.userData.modelReady = false;
+
+    // The seat ring is below the model, never across a face or body feature.
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.2, 0.3, 30),
+      new THREE.MeshBasicMaterial({
+        color: def.color, transparent: true, opacity: 0.62,
+        side: THREE.DoubleSide, depthWrite: false, toneMapped: false,
+      })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.014;
+    ring.renderOrder = 2;
+    group.add(ring);
+
+    const aura = new THREE.Mesh(
+      new THREE.SphereGeometry(0.52, 18, 14),
+      new THREE.MeshBasicMaterial({
+        color: 0x7bd83a, transparent: true, opacity: 0.2,
+        blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+      })
+    );
+    aura.position.y = 0.55;
+    aura.visible = false;
+    group.add(aura);
+    group.userData.aura = aura;
+
+    group.userData.modelPromise = source(def).then(({ RT, gltf }) => {
+      if (group.userData.cancelled) return false;
+      const model = RT.clone(gltf.scene);
+      model.traverse(object => {
+        if (!object.isMesh) return;
+        object.castShadow = true;
+        object.receiveShadow = true;
+        if (Array.isArray(object.material)) {
+          object.material = object.material.map(material => prepareMaterial(RT, material, def));
+        } else if (object.material) {
+          object.material = prepareMaterial(RT, object.material, def);
+        }
+      });
+
+      model.updateMatrixWorld(true);
+      let box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const fit = Math.min(
+        0.72 / Math.max(size.x, 0.001),
+        0.95 / Math.max(size.y, 0.001),
+        0.72 / Math.max(size.z, 0.001)
+      );
+      model.scale.setScalar(fit);
+      model.updateMatrixWorld(true);
+      box = new THREE.Box3().setFromObject(model);
+      const centre = box.getCenter(new THREE.Vector3());
+      model.position.set(-centre.x, -box.min.y + (def.flying ? 0.11 : 0), -centre.z);
+      model.updateMatrixWorld(true);
+      group.add(model);
+      group.userData.modelRoot = model;
+
+      const controller = animationController(RT, model, gltf.animations, def);
+      if (controller) {
+        group.userData.cosAnim = [t => controller.update(t)];
+        group.userData.showcaseAnim = t => controller.showcase(t);
+        group.userData.showcaseReset = () => controller.reset();
+      }
+      group.userData.animationCount = gltf.animations.length;
+      group.userData.modelReady = true;
+      return true;
+    }).catch(error => {
+      group.userData.modelError = String(error && (error.message || error));
+      console.error('Could not load fighter model:', def.name, error);
+      return false;
+    });
+
+    return group;
+  }
+
+  return { create };
+})();
+
 /* ---------------------------------------------------------------- PLAYER -- */
 class Player {
   constructor(seat, def, isHuman) {
@@ -11881,6 +12087,7 @@ class Player {
     this.kit = next;
     const old = this.mesh;
     World.scene.remove(old);
+    old.userData.cancelled = true;
     old.traverse(o => {
       if (o.geometry) o.geometry.dispose();
       if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
@@ -12370,6 +12577,7 @@ class Player {
   }
 
   static buildMesh(def, loadout) {
+    if (def.model) return CharacterModels.create(def, loadout);
     const g = new THREE.Group();
     const kit = loadout || {};
     const finish = cosmeticItem('finish', kit.finish);
@@ -16177,7 +16385,7 @@ const UI = (function () {
     box.innerHTML = PLAYER_DEFS.map((def, i) => {
       const colour = '#' + def.color.toString(16).padStart(6, '0');
       return `<button class="charpick" data-class="${i}" role="option" style="--fighter:${colour}">` +
-        `<span class="charface" style="--face-x:${(i % 4) * 33.333}%;--face-y:${Math.floor(i / 4) * 25}%" aria-hidden="true"></span>` +
+        `<span class="charface" style="background-image:url('${def.portrait}')" aria-hidden="true"></span>` +
         `<span class="charcopy"><b>${def.name}</b><small>${def.role}</small></span>` +
         `<span class="charindex">${String(i + 1).padStart(2, '0')}</span>` +
         `<i aria-hidden="true"></i>` +
@@ -16250,10 +16458,8 @@ const UI = (function () {
     select.querySelector('.spreviewtag').textContent = 'ANIMATING  ·  ' + def.move.toUpperCase();
     const portrait = select.querySelector('.preview-fallback');
     if (portrait) {
-      portrait.classList.toggle('bombog', def.name === 'BombOG');
       portrait.dataset.fighter = def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      portrait.style.setProperty('--face-x', `${(selectedClass % 4) * 33.333}%`);
-      portrait.style.setProperty('--face-y', `${Math.floor(selectedClass / 4) * 25}%`);
+      portrait.style.backgroundImage = `url('${def.portrait}')`;
     }
     punchPreviewHole();
   }
@@ -17196,6 +17402,7 @@ const Game = (function () {
     const pv = g.preview;
     [pv.mesh, pv.bomb].forEach(m => {
       if (!m) return;
+      m.userData.cancelled = true;
       pv.turn.remove(m);
       pv.scene.remove(m);
       m.traverse(o => {
@@ -17211,8 +17418,9 @@ const Game = (function () {
     // pose. The old turntable kept its accumulated angle between selections,
     // which could make the entire roster appear back-first.
     pv.turn.rotation.y = -0.28;
-    pv.mesh = Player.buildMesh(PLAYER_DEFS[g.selectedClass], defaultLoadout());
-    Player.applyViewScale(pv.mesh, 1.08);
+    const previewDef = PLAYER_DEFS[g.selectedClass];
+    pv.mesh = Player.buildMesh(previewDef, defaultLoadout());
+    Player.applyViewScale(pv.mesh, previewDef.flying ? 1.34 : 1.08);
     pv.mesh.position.set(0, -0.4, 0);
     pv.turn.add(pv.mesh);
     pv.bomb = null;
@@ -17242,7 +17450,8 @@ const Game = (function () {
     r.setScissorTest(false);
     r.setViewport(0, 0, w, hh);
     r.render(pv.scene, pv.cam);
-    document.getElementById('spreview')?.classList.add('webgl-ready');
+    const previewHost = document.getElementById('spreview');
+    previewHost?.classList.toggle('webgl-ready', !!(pv.mesh && pv.mesh.userData.modelReady));
     r.setClearColor(wasColour, wasAlpha);
   }
 
@@ -17365,7 +17574,7 @@ const Game = (function () {
     turn.rotation.y = -0.28;
     scene.add(turn);
     const mesh = Player.buildMesh(winner.def, winner.kit || defaultLoadout());
-    Player.applyViewScale(mesh, 1.18);
+    Player.applyViewScale(mesh, winner.def.flying ? 1.42 : 1.18);
     mesh.position.y = -0.42;
     turn.add(mesh);
 
@@ -18752,52 +18961,58 @@ window.BlastArena = {
   Player, Bomb, Blast, PowerUp, STATE,
 };
 
-// Query-only release audit. This builds every fighter without creating a
-// renderer, which lets CI and WebGL-disabled browsers prove that all dedicated
-// branches construct valid finite geometry. Normal players never pay for it.
+// Query-only release audit. It waits for all twenty external rigs, then proves
+// each has finite skinned geometry, an animation set and a gameplay-safe size.
 if (new URLSearchParams(location.search).get('audit') === 'characters') {
-  const rows = PLAYER_DEFS.map(def => {
-    try {
-      const root = Player.buildMesh(def, {});
-      let meshes = 0, vertices = 0, badValues = 0;
-      let physicalMaterials = 0, flatShadedMaterials = 0;
-      const auditedMaterials = new Set();
-      root.traverse(object => {
-        if (!object.isMesh) return;
-        meshes++;
-        const position = object.geometry && object.geometry.attributes && object.geometry.attributes.position;
-        if (position) {
-          vertices += position.count;
-          for (let i = 0; i < position.array.length; i++) {
-            if (!Number.isFinite(position.array[i])) badValues++;
+  document.documentElement.dataset.characterAudit = 'running';
+  (async () => {
+    const rows = await Promise.all(PLAYER_DEFS.map(async def => {
+      try {
+        const root = Player.buildMesh(def, {});
+        const loaded = await root.userData.modelPromise;
+        let meshes = 0, skinnedMeshes = 0, vertices = 0, badValues = 0;
+        let standardMaterials = 0, flatShadedMaterials = 0;
+        const auditedMaterials = new Set();
+        root.traverse(object => {
+          if (!object.isMesh) return;
+          meshes++;
+          if (object.isSkinnedMesh) skinnedMeshes++;
+          const position = object.geometry && object.geometry.attributes && object.geometry.attributes.position;
+          if (position) {
+            vertices += position.count;
+            for (let i = 0; i < position.array.length; i++) {
+              if (!Number.isFinite(position.array[i])) badValues++;
+            }
           }
-        }
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.forEach(material => {
-          if (!material || auditedMaterials.has(material)) return;
-          auditedMaterials.add(material);
-          if (material.isMeshPhysicalMaterial) physicalMaterials++;
-          if (material.flatShading) flatShadedMaterials++;
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          materials.forEach(material => {
+            if (!material || auditedMaterials.has(material)) return;
+            auditedMaterials.add(material);
+            if (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial) standardMaterials++;
+            if (material.flatShading) flatShadedMaterials++;
+          });
         });
-      });
-      root.traverse(object => {
-        if (object.geometry) object.geometry.dispose();
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.forEach(material => material && material.dispose && material.dispose());
-      });
-      return { name: def.name,
-               ok: meshes > 0 && vertices > 0 && badValues === 0 &&
-                   physicalMaterials > 0 && flatShadedMaterials === 0,
-               meshes, vertices, badValues, physicalMaterials, flatShadedMaterials };
-    } catch (error) {
-      return { name: def.name, ok: false, error: String(error && (error.stack || error)) };
-    }
-  });
-  document.documentElement.dataset.characterAudit = JSON.stringify({
-    count: rows.length,
-    failures: rows.filter(row => !row.ok),
-    rows,
-  });
+        const box = root.userData.modelRoot
+          ? new THREE.Box3().setFromObject(root.userData.modelRoot) : new THREE.Box3();
+        const size = box.getSize(new THREE.Vector3());
+        const animations = root.userData.animationCount || 0;
+        const ok = !!loaded && root.userData.modelReady && meshes > 2 &&
+          skinnedMeshes > 0 && vertices > 0 && badValues === 0 &&
+          standardMaterials > 0 && flatShadedMaterials === 0 && animations >= 8 &&
+          Number.isFinite(size.x + size.y + size.z) && size.x <= 0.725 && size.z <= 0.725;
+        return { name: def.name, ok, meshes, skinnedMeshes, vertices, badValues,
+                 standardMaterials, flatShadedMaterials, animations,
+                 size: [size.x, size.y, size.z].map(value => Number(value.toFixed(4))) };
+      } catch (error) {
+        return { name: def.name, ok: false, error: String(error && (error.stack || error)) };
+      }
+    }));
+    document.documentElement.dataset.characterAudit = JSON.stringify({
+      count: rows.length,
+      failures: rows.filter(row => !row.ok),
+      rows,
+    });
+  })();
 }
 
 // WebGL is required for a match, but it is not required to browse the roster.

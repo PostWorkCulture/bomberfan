@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="a5ee8a8">
+<meta name="build" content="473dafb">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2128,6 +2128,15 @@
       0 0 72px color-mix(in srgb, var(--fighter) 42%, transparent),
       inset 0 0 54px rgba(255,255,255,.10),
       0 28px 64px rgba(0,0,0,.58) !important;
+  }
+  #spreview .preview-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
   }
   #spreview::before { display: none !important; }
   #spreview::after {
@@ -14992,10 +15001,8 @@ const UI = (function () {
         </div>
       </div>
 
-      <!-- Character select. The 3D preview is NOT in here: the game renderer
-           draws it straight into the slot below, so there is one WebGL context
-           and the character you see is built by the same code that builds the
-           one you play. -->
+      <!-- Loadout. The live fighter is built by the same code as the playable
+           character and rendered into the panel canvas below. -->
       <div id="select" class="hidden">
         <div class="sbg"></div>
         <div class="shead">
@@ -15007,6 +15014,7 @@ const UI = (function () {
         <div class="sbody">
           <div class="scol">
             <div id="spreview">
+              <canvas class="preview-canvas" aria-hidden="true"></canvas>
               <span class="spreviewtag">LIVE PREVIEW</span>
               <div class="sname"></div>
             </div>
@@ -16450,14 +16458,33 @@ const Game = (function () {
     UI.setPreviewName(PLAYER_DEFS[g.selectedClass].name.toUpperCase());
   }
 
-  /* The live preview is a SECOND scene rendered by the SAME renderer into the
-     rectangle of the #spreview element (scissor + viewport). One WebGL context,
-     and the character on show is built by the very code that builds the one you
-     play — a preview that can drift out of step with the game is worse than no
-     preview at all. */
+  /* The live preview is a second scene built with the same character code as
+     the arena. Its panel renderer keeps DOM backdrops from covering the model;
+     the original arena-renderer path remains as a low-context fallback. */
   function buildPreview() {
     if (!g.preview) {
       const scene = new THREE.Scene();
+      // The preview owns a small canvas inside its panel. Rendering into the
+      // full-screen arena canvas relied on several DOM layers all having a
+      // perfectly aligned transparent hole, so one later backdrop could hide a
+      // correctly rendered fighter. The panel canvas always paints above them.
+      let renderer = null;
+      try {
+        const canvas = document.querySelector('#spreview .preview-canvas');
+        renderer = new THREE.WebGLRenderer({
+          canvas, antialias: true, alpha: false, powerPreference: 'high-performance',
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.15;
+        renderer.setClearColor(0x241d46, 1);
+      } catch (err) {
+        // Very old or heavily restricted devices can refuse a second WebGL
+        // context. The original scissored renderer below remains the fallback.
+        console.warn('Preview canvas unavailable; using arena renderer.', err);
+      }
       // Close, bright hero framing for the large landscape preview panel.
       const cam = new THREE.PerspectiveCamera(29, 1, 0.1, 40);
       cam.position.set(0.08, 0.86, 3.55);
@@ -16489,7 +16516,7 @@ const Game = (function () {
       scene.add(plinth);
       const turn = new THREE.Group();
       scene.add(turn);
-      g.preview = { scene, cam, turn, mesh: null, bomb: null };
+      g.preview = { scene, cam, turn, renderer, mesh: null, bomb: null, width: 0, height: 0 };
     }
     const pv = g.preview;
     [pv.mesh, pv.bomb].forEach(m => {
@@ -16510,6 +16537,7 @@ const Game = (function () {
     // which could make the entire roster appear back-first.
     pv.turn.rotation.y = -0.28;
     pv.mesh = Player.buildMesh(PLAYER_DEFS[g.selectedClass], defaultLoadout());
+    Player.applyViewScale(pv.mesh, 1.08);
     pv.mesh.position.set(0, -0.4, 0);
     pv.turn.add(pv.mesh);
     pv.bomb = null;
@@ -16520,6 +16548,20 @@ const Game = (function () {
     const pv = g.preview;
     const rect = UI.previewRect();
     if (!pv || !rect || rect.width < 8 || rect.height < 8) return;
+    const w = Math.round(rect.width);
+    const hh = Math.round(rect.height);
+    if (pv.renderer) {
+      g.previewViewport = { x: 0, y: 0, w, h: hh };
+      if (w !== pv.width || hh !== pv.height) {
+        pv.width = w;
+        pv.height = hh;
+        pv.renderer.setSize(w, hh, false);
+      }
+      pv.cam.aspect = rect.width / rect.height;
+      pv.cam.updateProjectionMatrix();
+      pv.renderer.render(pv.scene, pv.cam);
+      return;
+    }
     const r = World.renderer;
     const h = r.domElement.clientHeight;
     // CSS pixels, NOT device pixels: three multiplies by the pixel ratio itself
@@ -16529,8 +16571,6 @@ const Game = (function () {
     // WebGL's origin is bottom-left; the DOM's is top-left.
     const x = Math.round(rect.left);
     const y = Math.round(h - rect.bottom);
-    const w = Math.round(rect.width);
-    const hh = Math.round(rect.height);
     g.previewViewport = { x, y, w, h: hh };
     pv.cam.aspect = rect.width / rect.height;
     pv.cam.updateProjectionMatrix();
@@ -17883,8 +17923,8 @@ const Game = (function () {
 
     World.updateCamera();
     World.render();
-    // The winner owns the whole canvas. Character select uses one scissored
-    // rectangle; both are drawn after the arena using the same renderer.
+    // The winner owns the whole arena canvas. Loadout renders its fighter into
+    // the dedicated canvas inside the preview panel.
     if ((g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) && g.victory) renderVictory();
     else if (g.state === STATE.SELECT) renderPreview();
   }

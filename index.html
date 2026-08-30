@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="46c9a82">
+<meta name="build" content="d765d39">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2191,6 +2191,21 @@
     background-size: contain;
     background-position: center;
   }
+  #spreview .preview-fallback[data-fighter="hulk"],
+  #spreview .preview-fallback[data-fighter="plague"],
+  #spreview .preview-fallback[data-fighter="joker"],
+  #spreview .preview-fallback[data-fighter="blondie"],
+  #spreview .preview-fallback[data-fighter="dino"] {
+    width: 100%;
+    max-width: none;
+    background-size: cover;
+    background-position: center;
+  }
+  #spreview .preview-fallback[data-fighter="hulk"] { background-image: url('assets/hulk-portrait.svg'); }
+  #spreview .preview-fallback[data-fighter="plague"] { background-image: url('assets/plague-portrait.svg'); }
+  #spreview .preview-fallback[data-fighter="joker"] { background-image: url('assets/joker-portrait.svg'); }
+  #spreview .preview-fallback[data-fighter="blondie"] { background-image: url('assets/blondie-portrait.svg'); }
+  #spreview .preview-fallback[data-fighter="dino"] { background-image: url('assets/dino-portrait.svg'); }
   @supports (width: 1cqh) {
     #spreview .preview-fallback {
       width: min(92cqw, 75cqh);
@@ -2327,6 +2342,19 @@
     position: absolute; inset: 0;
     background: linear-gradient(145deg, rgba(255,255,255,.13), transparent 35% 75%, rgba(0,0,0,.18));
   }
+  #select .charpick[data-class="5"] .charface,
+  #select .charpick[data-class="9"] .charface,
+  #select .charpick[data-class="11"] .charface,
+  #select .charpick[data-class="13"] .charface,
+  #select .charpick[data-class="14"] .charface {
+    background-size: cover;
+    background-position: center;
+  }
+  #select .charpick[data-class="5"] .charface { background-image: url('assets/hulk-portrait.svg'); }
+  #select .charpick[data-class="9"] .charface { background-image: url('assets/plague-portrait.svg'); }
+  #select .charpick[data-class="11"] .charface { background-image: url('assets/joker-portrait.svg'); }
+  #select .charpick[data-class="13"] .charface { background-image: url('assets/blondie-portrait.svg'); }
+  #select .charpick[data-class="14"] .charface { background-image: url('assets/dino-portrait.svg'); }
   #select .charindex {
     position: absolute;
     right: 6px;
@@ -16151,6 +16179,7 @@ const UI = (function () {
     const portrait = select.querySelector('.preview-fallback');
     if (portrait) {
       portrait.classList.toggle('bombog', def.name === 'BombOG');
+      portrait.dataset.fighter = def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       portrait.style.setProperty('--face-x', `${(selectedClass % 4) * 33.333}%`);
       portrait.style.setProperty('--face-y', `${Math.floor(selectedClass / 4) * 25}%`);
     }

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="72%"><stop stop-color="#234c2b"/><stop offset="1" stop-color="#080d0a"/></radialGradient>
+    <linearGradient id="green" x2="1" y2="1"><stop stop-color="#a5f66a"/><stop offset=".5" stop-color="#58c844"/><stop offset="1" stop-color="#1f7133"/></linearGradient>
+    <linearGradient id="muzzle" x2="0" y2="1"><stop stop-color="#d8f69b"/><stop offset="1" stop-color="#8fc860"/></linearGradient>
+    <linearGradient id="belly" x2="0" y2="1"><stop stop-color="#d9f7a2"/><stop offset="1" stop-color="#82bd55"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/><ellipse cx="300" cy="557" rx="190" ry="27" fill="#000" opacity=".58"/>
+  <g filter="url(#glow)" opacity=".18"><ellipse cx="300" cy="305" rx="188" ry="238" fill="#6bdd4d"/></g>
+  <path d="M118 560c13-133 70-219 182-219s169 86 182 219z" fill="url(#green)"/>
+  <ellipse cx="300" cy="492" rx="90" ry="121" fill="url(#belly)"/>
+  <path d="M130 470c-40-33-54-74-34-100 20-25 61-12 95 21l44 43-38 58z" fill="#48b941"/>
+  <path d="M470 470c40-33 54-74 34-100-20-25-61-12-95 21l-44 43 38 58z" fill="#48b941"/>
+  <path d="M206 490l-48 54 83 5zM394 490l48 54-83 5z" fill="#3eaa3b"/>
+  <ellipse cx="300" cy="245" rx="181" ry="163" fill="url(#green)"/>
+  <path d="M167 173c41-91 225-91 266 0l-63-19-70 25-70-25z" fill="#70dc4c"/>
+  <ellipse cx="225" cy="214" rx="61" ry="65" fill="#ffdd50"/><ellipse cx="375" cy="214" rx="61" ry="65" fill="#ffdd50"/>
+  <ellipse cx="235" cy="219" rx="20" ry="28" fill="#18251b"/><ellipse cx="365" cy="219" rx="20" ry="28" fill="#18251b"/>
+  <circle cx="228" cy="208" r="7" fill="#fff"/><circle cx="358" cy="208" r="7" fill="#fff"/>
+  <path d="M156 277c0-58 54-98 144-98s144 40 144 98v70c0 70-55 118-144 118s-144-48-144-118z" fill="url(#muzzle)"/>
+  <ellipse cx="235" cy="290" rx="25" ry="16" fill="#245d2c"/><ellipse cx="365" cy="290" rx="25" ry="16" fill="#245d2c"/>
+  <path d="M174 344c72 33 180 33 252 0-17 77-63 112-126 112s-109-35-126-112z" fill="#67293c"/>
+  <path d="M191 351c64 22 154 22 218 0-11 23-25 41-42 54-44 12-90 12-134 0-17-13-31-31-42-54z" fill="#e7787f"/>
+  <g fill="#fff2cf"><path d="M211 355l27 7-17 33zM258 365l26 3-18 32zM389 355l-27 7 17 33zM342 365l-26 3 18 32z"/></g>
+  <path d="M156 246c14-78 58-130 123-151M444 246c-14-78-58-130-123-151" fill="none" stroke="#2b8e39" stroke-width="20" stroke-linecap="round" opacity=".7"/>
+</svg>

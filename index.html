@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="8074300">
+<meta name="build" content="2ea5223">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2078,6 +2078,7 @@
   #select .sbody {
     display: grid !important;
     grid-template-columns: minmax(430px, 1.18fr) minmax(460px, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
     align-items: stretch !important;
     flex: 1 1 auto;
     gap: clamp(18px, 2.5vw, 38px) !important;
@@ -2182,57 +2183,6 @@
     display: block !important;
     color: rgba(255,245,230,.62);
   }
-  #spreview .preview-fallback.bombog {
-    width: 100%;
-    max-width: none;
-    background-color: #000;
-    background-image: url('assets/bombog-portrait.webp');
-    background-size: cover;
-    background-position: center;
-  }
-  #spreview .preview-fallback[data-fighter="hulk"],
-  #spreview .preview-fallback[data-fighter="piglet"],
-  #spreview .preview-fallback[data-fighter="reaper"],
-  #spreview .preview-fallback[data-fighter="cyclops"],
-  #spreview .preview-fallback[data-fighter="jester"],
-  #spreview .preview-fallback[data-fighter="inferno"],
-  #spreview .preview-fallback[data-fighter="plague"],
-  #spreview .preview-fallback[data-fighter="devil"],
-  #spreview .preview-fallback[data-fighter="maw"],
-  #spreview .preview-fallback[data-fighter="phantom"],
-  #spreview .preview-fallback[data-fighter="joker"],
-  #spreview .preview-fallback[data-fighter="blondie"],
-  #spreview .preview-fallback[data-fighter="dino"],
-  #spreview .preview-fallback[data-fighter="wario"],
-  #spreview .preview-fallback[data-fighter="deadpool"],
-  #spreview .preview-fallback[data-fighter="buzz"],
-  #spreview .preview-fallback[data-fighter="minion"],
-  #spreview .preview-fallback[data-fighter="sonic"],
-  #spreview .preview-fallback[data-fighter="tanooki-bowser"] {
-    width: 100%;
-    max-width: none;
-    background-size: cover;
-    background-position: center;
-  }
-  #spreview .preview-fallback[data-fighter="piglet"] { background-image: url('assets/piglet-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="reaper"] { background-image: url('assets/reaper-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="cyclops"] { background-image: url('assets/cyclops-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="jester"] { background-image: url('assets/jester-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="inferno"] { background-image: url('assets/inferno-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="hulk"] { background-image: url('assets/hulk-portrait.svg'); }
-  #spreview .preview-fallback[data-fighter="devil"] { background-image: url('assets/devil-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="maw"] { background-image: url('assets/maw-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="plague"] { background-image: url('assets/plague-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="phantom"] { background-image: url('assets/phantom-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="joker"] { background-image: url('assets/joker-portrait.svg'); }
-  #spreview .preview-fallback[data-fighter="blondie"] { background-image: url('assets/blondie-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="dino"] { background-image: url('assets/dino-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="wario"] { background-image: url('assets/wario-portrait.svg'); }
-  #spreview .preview-fallback[data-fighter="deadpool"] { background-image: url('assets/deadpool-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="buzz"] { background-image: url('assets/buzz-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="minion"] { background-image: url('assets/minion-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="sonic"] { background-image: url('assets/sonic-portrait.webp'); }
-  #spreview .preview-fallback[data-fighter="tanooki-bowser"] { background-image: url('assets/tanooki-bowser-portrait.webp'); }
   @supports (width: 1cqh) {
     #spreview .preview-fallback {
       width: min(92cqw, 75cqh);
@@ -2260,7 +2210,7 @@
     font: 900 8px/1 system-ui, sans-serif;
     letter-spacing: 2px;
     text-shadow: 0 0 10px var(--fighter);
-    display: none;
+    display: block;
   }
   #spreview .sname {
     z-index: 3;
@@ -2271,13 +2221,15 @@
     text-shadow: 0 4px 0 #050506, 0 0 22px var(--fighter), 0 0 45px rgba(0,0,0,.85) !important;
   }
   #select .sidentity {
+    grid-column: 1;
+    grid-row: 2;
     min-height: 72px;
     padding: 10px 14px 11px;
     border-left: 4px solid var(--fighter);
     border-radius: 7px;
     background: linear-gradient(90deg, color-mix(in srgb, var(--fighter) 15%, rgba(12,13,18,.96)), rgba(9,10,14,.92));
     box-shadow: inset 0 1px rgba(255,255,255,.04), 0 8px 20px rgba(0,0,0,.34);
-    display: none;
+    display: block;
   }
   #select .smeta { display: flex; align-items: center; gap: 10px; }
   #select .srole {
@@ -2302,15 +2254,15 @@
   }
   #select .sroster {
     grid-column: 2;
-    grid-row: 1;
+    grid-row: 1 / span 2;
     pointer-events: auto;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-rows: repeat(5, minmax(52px, 1fr));
-    align-self: center;
+    align-self: stretch;
     gap: clamp(6px, .8vw, 10px);
     width: min(100%, 540px);
-    max-height: min(62vh, 560px);
+    max-height: none;
     padding: clamp(9px, 1.1vw, 13px);
     border: 1px solid rgba(255,255,255,.10);
     border-radius: 12px;
@@ -2368,48 +2320,6 @@
     position: absolute; inset: 0;
     background: linear-gradient(145deg, rgba(255,255,255,.13), transparent 35% 75%, rgba(0,0,0,.18));
   }
-  #select .charpick[data-class="5"] .charface,
-  #select .charpick[data-class="0"] .charface,
-  #select .charpick[data-class="1"] .charface,
-  #select .charpick[data-class="2"] .charface,
-  #select .charpick[data-class="3"] .charface,
-  #select .charpick[data-class="4"] .charface,
-  #select .charpick[data-class="6"] .charface,
-  #select .charpick[data-class="7"] .charface,
-  #select .charpick[data-class="8"] .charface,
-  #select .charpick[data-class="9"] .charface,
-  #select .charpick[data-class="10"] .charface,
-  #select .charpick[data-class="11"] .charface,
-  #select .charpick[data-class="12"] .charface,
-  #select .charpick[data-class="13"] .charface,
-  #select .charpick[data-class="14"] .charface,
-  #select .charpick[data-class="16"] .charface,
-  #select .charpick[data-class="17"] .charface,
-  #select .charpick[data-class="18"] .charface,
-  #select .charpick[data-class="19"] .charface {
-    background-size: cover;
-    background-position: center;
-  }
-  #select .charpick[data-class="0"] .charface { background-image: url('assets/piglet-portrait.webp'); }
-  #select .charpick[data-class="1"] .charface { background-image: url('assets/reaper-portrait.webp'); }
-  #select .charpick[data-class="2"] .charface { background-image: url('assets/cyclops-portrait.webp'); }
-  #select .charpick[data-class="3"] .charface { background-image: url('assets/jester-portrait.webp'); }
-  #select .charpick[data-class="4"] .charface { background-image: url('assets/inferno-portrait.webp'); }
-  #select .charpick[data-class="5"] .charface { background-image: url('assets/hulk-portrait.svg'); }
-  #select .charpick[data-class="6"] .charface { background-image: url('assets/devil-portrait.webp'); }
-  #select .charpick[data-class="7"] .charface { background-image: url('assets/maw-portrait.webp'); }
-  #select .charpick[data-class="8"] .charface { background-image: url('assets/bombog-portrait.webp'); }
-  #select .charpick[data-class="9"] .charface { background-image: url('assets/plague-portrait.webp'); }
-  #select .charpick[data-class="10"] .charface { background-image: url('assets/phantom-portrait.webp'); }
-  #select .charpick[data-class="11"] .charface { background-image: url('assets/joker-portrait.svg'); }
-  #select .charpick[data-class="12"] .charface { background-image: url('assets/deadpool-portrait.webp'); }
-  #select .charpick[data-class="13"] .charface { background-image: url('assets/blondie-portrait.webp'); }
-  #select .charpick[data-class="14"] .charface { background-image: url('assets/dino-portrait.webp'); }
-  #select .charpick[data-class="15"] .charface { background-image: url('assets/wario-portrait.svg'); background-size: cover; background-position: center; }
-  #select .charpick[data-class="16"] .charface { background-image: url('assets/buzz-portrait.webp'); }
-  #select .charpick[data-class="17"] .charface { background-image: url('assets/minion-portrait.webp'); }
-  #select .charpick[data-class="18"] .charface { background-image: url('assets/sonic-portrait.webp'); }
-  #select .charpick[data-class="19"] .charface { background-image: url('assets/tanooki-bowser-portrait.webp'); }
   #select .charindex {
     position: absolute;
     right: 6px;
@@ -2434,7 +2344,7 @@
     font: 800 clamp(6px, .54vw, 8px)/1 system-ui, sans-serif;
     letter-spacing: .5px;
     text-transform: uppercase;
-    display: none;
+    display: block;
   }
   #select .charpick:hover,
   #select .charpick.sel,
@@ -2538,7 +2448,7 @@
     #select .charcopy b { font-size: clamp(7px, 2.15vw, 9px); letter-spacing: 0; }
     #select .charcopy small { display: none; }
     #select .charindex { font-size: 6px; }
-    #select .sidentity { min-height: 38px; padding: 6px 8px; }
+    #select .sidentity { display: none; }
     #spreview .spreviewtag { display: none; }
     #select .sfoot { min-height: 42px; }
     #select .sfoot .opt.go {
@@ -2555,6 +2465,7 @@
     #select .shead { display: none; }
     #select .sbody {
       grid-template-columns: minmax(280px, 1.1fr) minmax(350px, 1fr) !important;
+      grid-template-rows: minmax(0, 1fr) !important;
       width: 100% !important;
       margin: 0 auto !important;
       padding: 7px 7px 14px !important;
@@ -2562,6 +2473,7 @@
     }
     #select .scol { min-height: 0; }
     #spreview { min-height: 0 !important; height: 100% !important; }
+    #select .sidentity { display: none; }
     #select .sroster {
       width: 100%; height: 100%; max-width: none; max-height: none;
       grid-template-rows: repeat(5, minmax(0, 1fr));
@@ -11929,6 +11841,7 @@ const CharacterModels = (() => {
     let currentClip = null;
     let lastT = null;
     let showcaseBeat = null;
+    let showcaseEpoch = null;
 
     const play = (clip, once) => {
       if (!clip || currentClip === clip) return;
@@ -11951,14 +11864,19 @@ const CharacterModels = (() => {
         mixer.update(dt);
       },
       showcase(t) {
-        const phase = (t + def.name.length * 0.23) % 5.2;
-        const expressive = phase < 1.75;
+        if (showcaseEpoch === null) showcaseEpoch = t;
+        // Lead with the signature move whenever a fighter is selected, then
+        // breathe briefly before replaying it. This reads as deliberate
+        // personality instead of a model idling for several seconds.
+        const phase = (t - showcaseEpoch) % 4.4;
+        const expressive = phase < 1.85;
         if (expressive === showcaseBeat) return;
         showcaseBeat = expressive;
         play(expressive ? expression : idle, expressive && expression !== idle);
       },
       reset() {
         showcaseBeat = null;
+        showcaseEpoch = null;
         play(idle, false);
       },
     };
@@ -11968,14 +11886,15 @@ const CharacterModels = (() => {
     const copy = material.clone();
     if (copy.map) {
       copy.map.colorSpace = RT.THREE.SRGBColorSpace;
+      copy.map.anisotropy = Math.max(copy.map.anisotropy || 1, 4);
       copy.map.needsUpdate = true;
     }
     if (copy.isMeshStandardMaterial || copy.isMeshPhysicalMaterial) {
-      copy.roughness = 0.4;
+      copy.roughness = 0.34;
       copy.metalness = Math.min(copy.metalness || 0, 0.08);
       if (copy.emissive) {
-        copy.emissive.setHex(def.color).multiplyScalar(0.12);
-        copy.emissiveIntensity = 0.18;
+        copy.emissive.setHex(def.color).multiplyScalar(0.08);
+        copy.emissiveIntensity = 0.55;
       }
     }
     copy.flatShading = false;
@@ -17364,8 +17283,8 @@ const Game = (function () {
       const cam = new THREE.PerspectiveCamera(29, 1, 0.1, 40);
       cam.position.set(0.08, 0.86, 3.55);
       cam.lookAt(0.08, 0.33, 0);
-      scene.add(new THREE.HemisphereLight(0xfff6e8, 0x62518c, 4.2));
-      const key = new THREE.DirectionalLight(0xffefd6, 5.8);
+      scene.add(new THREE.HemisphereLight(0xfff6e8, 0x31284d, 2.35));
+      const key = new THREE.DirectionalLight(0xffefd6, 3.35);
       key.position.set(2.4, 4, 3.2);
       key.castShadow = true;
       key.shadow.mapSize.set(1024, 1024);
@@ -17373,16 +17292,16 @@ const Game = (function () {
       key.shadow.camera.far = 12;
       key.shadow.bias = -0.0005;
       scene.add(key);
-      const rim = new THREE.DirectionalLight(0xff8dff, 3.2);
+      const rim = new THREE.DirectionalLight(0xff8dff, 2.15);
       rim.position.set(-3, 2, -2.5);
       scene.add(rim);
-      const fill = new THREE.PointLight(0x9cecff, 4.1, 8);
+      const fill = new THREE.PointLight(0x9cecff, 2.2, 8);
       fill.position.set(-1.7, 1.1, 2.6);
       scene.add(fill);
       // A hard edge light from behind. Bomb shells are deliberately near-black
       // on some levels, and without this the Classic and Cursed Skull designs
       // were a black shape on a black background.
-      const edge = new THREE.DirectionalLight(0xffffff, 4.8);
+      const edge = new THREE.DirectionalLight(0xffffff, 2.45);
       edge.position.set(2.2, 1.4, -3.4);
       scene.add(edge);
       // A plinth to stand on. Without it a dark bomb design on a dark
@@ -17397,7 +17316,7 @@ const Game = (function () {
       scene.add(plinth);
       const turn = new THREE.Group();
       scene.add(turn);
-      g.preview = { scene, cam, turn, mesh: null, bomb: null, width: 0, height: 0 };
+      g.preview = { scene, cam, turn, rim, fill, mesh: null, bomb: null, width: 0, height: 0 };
     }
     const pv = g.preview;
     [pv.mesh, pv.bomb].forEach(m => {
@@ -17419,6 +17338,8 @@ const Game = (function () {
     // which could make the entire roster appear back-first.
     pv.turn.rotation.y = -0.28;
     const previewDef = PLAYER_DEFS[g.selectedClass];
+    pv.rim.color.setHex(previewDef.color);
+    pv.fill.color.setHex(previewDef.trim || previewDef.color).lerp(new THREE.Color(0xffffff), 0.18);
     pv.mesh = Player.buildMesh(previewDef, defaultLoadout());
     Player.applyViewScale(pv.mesh, previewDef.flying ? 1.34 : 1.08);
     pv.mesh.position.set(0, -0.4, 0);
@@ -17446,7 +17367,8 @@ const Game = (function () {
     pv.cam.updateProjectionMatrix();
     const wasColour = r.getClearColor(new THREE.Color());
     const wasAlpha = r.getClearAlpha();
-    r.setClearColor(0x241d46, 1);
+    const stage = new THREE.Color(0x080b14).lerp(new THREE.Color(PLAYER_DEFS[g.selectedClass].color), 0.14);
+    r.setClearColor(stage, 1);
     r.setScissorTest(false);
     r.setViewport(0, 0, w, hh);
     r.render(pv.scene, pv.cam);

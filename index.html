@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="2ea5223">
+<meta name="build" content="b993bd9">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2074,6 +2074,7 @@
     font: 900 clamp(8px, .8vw, 11px)/1 system-ui, sans-serif;
     letter-spacing: 2px;
     padding-bottom: 3px;
+    margin-right: 56px;
   }
   #select .sbody {
     display: grid !important;
@@ -2277,9 +2278,9 @@
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-rows: 1fr;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     min-width: 0;
-    padding: 8px;
+    padding: 6px;
     overflow: hidden;
     border: 1px solid rgba(255,255,255,.09);
     border-radius: 8px;
@@ -2304,8 +2305,8 @@
   }
   #select .charface {
     position: relative;
-    width: clamp(46px, 4vw, 56px);
-    height: clamp(46px, 4vw, 56px);
+    width: clamp(38px, 3.3vw, 48px);
+    height: clamp(38px, 3.3vw, 48px);
     flex: 0 0 auto;
     border: 1px solid color-mix(in srgb, var(--fighter) 45%, rgba(255,255,255,.14));
     border-radius: 7px;
@@ -2333,9 +2334,13 @@
   #select .charcopy b,
   #select .charcopy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #select .charcopy b {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
     color: inherit;
-    font: 1000 clamp(9px, .85vw, 12px)/1.05 system-ui, sans-serif;
-    letter-spacing: .5px;
+    font: 1000 clamp(8px, .62vw, 9px)/1.02 system-ui, sans-serif;
+    letter-spacing: .1px;
     text-transform: uppercase;
   }
   #select .charcopy small {
@@ -2344,7 +2349,7 @@
     font: 800 clamp(6px, .54vw, 8px)/1 system-ui, sans-serif;
     letter-spacing: .5px;
     text-transform: uppercase;
-    display: block;
+    display: none;
   }
   #select .charpick:hover,
   #select .charpick.sel,
@@ -7234,65 +7239,65 @@ const CURSES = [
 // gameplay stats stay equal, so the choice is visual rather than competitive.
 const PLAYER_DEFS = [
   { name: 'Bunny', color: 0xff49d2, belly: 0xfff2fb, trim: 0x55ddff, accent: 0x6d1cae,
-    model: 'assets/characters/bunny.gltf', portrait: 'assets/portraits/bunny.webp', expression: 'Wave',
+    model: 'assets/characters/bunny.gltf', portrait: 'assets/portraits/bunny.webp', expression: 'Wave', altExpression: 'Weapon',
     role: 'Moonlit Trickster', move: 'Cheeky Wave', bio: 'A bright violet bruiser with sleepy eyes, long ears and one sharp claw.' },
   { name: 'Alien', color: 0x43ddff, belly: 0xe9fbff, trim: 0xb45cff, accent: 0x116a96,
-    model: 'assets/characters/alien.gltf', portrait: 'assets/portraits/alien.webp', expression: 'Yes',
+    model: 'assets/characters/alien.gltf', portrait: 'assets/portraits/alien.webp', expression: 'Yes', altExpression: 'Wave',
     role: 'Cosmic Menace', move: 'Knowing Nod', bio: 'Curled horns, luminous armour and the calm confidence of an invader.' },
   { name: 'Evolved Dragon', color: 0x18e0d2, belly: 0x82fff4, trim: 0xff477e, accent: 0x07667c,
-    model: 'assets/characters/evolved-dragon.gltf', portrait: 'assets/portraits/evolved-dragon.webp', expression: 'Headbutt', flying: true,
-    role: 'Sky Tyrant', move: 'Horn Rush', bio: 'A turquoise winged heavyweight that attacks with its whole silhouette.' },
-  { name: 'Skull Orc', color: 0xa45cff, belly: 0xf4efff, trim: 0xffb52e, accent: 0x482070,
-    model: 'assets/characters/skull-orc.gltf', portrait: 'assets/portraits/skull-orc.webp', expression: 'Punch',
-    role: 'Bone Breaker', move: 'Spiked Smash', bio: 'Skull helm, plated fists and a purple frame built for close-range chaos.' },
-  { name: 'Orc', color: 0x8655ff, belly: 0xf4f0ff, trim: 0xffc12f, accent: 0x371668,
-    model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Yes',
+    model: 'assets/characters/evolved-dragon.gltf', portrait: 'assets/portraits/evolved-dragon.webp', expression: 'Headbutt', altExpression: 'Yes', flying: true,
+    role: 'Sky Tyrant', move: 'Horn Rush', bio: 'A blazing orange dragon with icy horns, huge hands and a turquoise battle glow.' },
+  { name: 'Skull Orc', color: 0xa8f044, belly: 0xf3dfb9, trim: 0xff4aa8, accent: 0x4f7520,
+    model: 'assets/characters/skull-orc.gltf', portrait: 'assets/portraits/skull-orc.webp', expression: 'Punch', altExpression: 'Weapon',
+    role: 'Bone Breaker', move: 'Spiked Smash', bio: 'Bone helm, acid-green armour and a spiked club built for close-range chaos.' },
+  { name: 'Orc', color: 0x77dc4b, belly: 0xdfffb8, trim: 0x45cfff, accent: 0x315f24,
+    model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Yes', altExpression: 'Weapon',
     role: 'Grinning Brute', move: 'Victory Flex', bio: 'A broad-shouldered orc whose huge grin is every bit as dangerous as the mace.' },
-  { name: 'Fish Monster', color: 0xff8a25, belly: 0x7b326f, trim: 0xffffff, accent: 0x8f2f09,
-    model: 'assets/characters/fish-monster.gltf', portrait: 'assets/portraits/fish-monster.webp', expression: 'Punch',
-    role: 'Deep-Sea Brawler', move: 'Fin Flurry', bio: 'A blazing orange predator with a needle grin and fins made for trouble.' },
-  { name: 'Demon', color: 0x7555ff, belly: 0xb998ff, trim: 0xd7d0ff, accent: 0x25134f,
-    model: 'assets/characters/demon.gltf', portrait: 'assets/portraits/demon.webp', expression: 'No',
+  { name: 'Fish Monster', color: 0x39c9ff, belly: 0x8df5e5, trim: 0xff9a32, accent: 0x15658d,
+    model: 'assets/characters/fish-monster.gltf', portrait: 'assets/portraits/fish-monster.webp', expression: 'Punch', altExpression: 'No',
+    role: 'Deep-Sea Brawler', move: 'Fin Flurry', bio: 'An electric-blue predator with orange fins, a needle grin and no patience.' },
+  { name: 'Demon', color: 0xff465f, belly: 0x6ecfff, trim: 0xc4b7ff, accent: 0x4e1738,
+    model: 'assets/characters/demon.gltf', portrait: 'assets/portraits/demon.webp', expression: 'No', altExpression: 'Punch',
     role: 'Night Stalker', move: 'Defiant Snarl', bio: 'Halo, horns, wings and fangs combine in one darkly comic nightmare.' },
   { name: 'Tribal', color: 0xffc52f, belly: 0xffffff, trim: 0xff8f25, accent: 0x633800,
-    model: 'assets/characters/tribal.gltf', portrait: 'assets/portraits/tribal.webp', expression: 'Yes',
-    role: 'Totem Warrior', move: 'Mask Salute', bio: 'A graphic gold-and-white fighter with a huge mask and fearless stare.' },
+    model: 'assets/characters/tribal.gltf', portrait: 'assets/portraits/tribal.webp', expression: 'Yes', altExpression: 'Punch',
+    role: 'Totem Warrior', move: 'Mask Salute', bio: 'A graphic red, green and gold fighter with a huge mask and fearless stare.' },
   { name: 'Cactoro', color: 0x9aed37, belly: 0xd8ff91, trim: 0xd84b9d, accent: 0x3e6f12,
-    model: 'assets/characters/cactoro.gltf', portrait: 'assets/portraits/cactoro.webp', expression: 'Wave',
+    model: 'assets/characters/cactoro.gltf', portrait: 'assets/portraits/cactoro.webp', expression: 'Wave', altExpression: 'Punch',
     role: 'Desert Rogue', move: 'Prickly Hello', bio: 'Sombrero, cactus fists and a deadpan expression hide a very lively fighter.' },
-  { name: 'Yeti', color: 0xff5e47, belly: 0xffd4ca, trim: 0xffffff, accent: 0x841d14,
-    model: 'assets/characters/yeti.gltf', portrait: 'assets/portraits/yeti.webp', expression: 'Yes',
-    role: 'Crimson Snowbeast', move: 'Toothy Cheer', bio: 'A bright red-and-ice bruiser whose enormous smile never switches off.' },
-  { name: 'Mushroom King', color: 0x8c4dff, belly: 0xd8ff57, trim: 0x76d83c, accent: 0x291052,
-    model: 'assets/characters/mushroom-king.gltf', portrait: 'assets/portraits/mushroom-king.webp', expression: 'Wave',
-    role: 'Spore Sovereign', move: 'Royal Wave', bio: 'A towering cap, glowing greens and tiny royal eyes rule this strange court.' },
+  { name: 'Yeti', color: 0xff7695, belly: 0xffe3df, trim: 0x54d9ff, accent: 0x8b3152,
+    model: 'assets/characters/yeti.gltf', portrait: 'assets/portraits/yeti.webp', expression: 'Yes', altExpression: 'Punch',
+    role: 'Coral Snowbeast', move: 'Toothy Cheer', bio: 'A coral-and-ice bruiser whose enormous turquoise grin never switches off.' },
+  { name: 'Mushroom King', color: 0x62dfbe, belly: 0xf4ddb4, trim: 0x43cfff, accent: 0x276d61,
+    model: 'assets/characters/mushroom-king.gltf', portrait: 'assets/portraits/mushroom-king.webp', expression: 'Wave', altExpression: 'Yes',
+    role: 'Spore Sovereign', move: 'Royal Wave', bio: 'A towering blue cap, glowing spores and tiny royal eyes rule this strange court.' },
   { name: 'Ninja', color: 0xff3d91, belly: 0xffc4e0, trim: 0xffffff, accent: 0x71173e,
-    model: 'assets/characters/ninja.gltf', portrait: 'assets/portraits/ninja.webp', expression: 'Weapon',
+    model: 'assets/characters/ninja.gltf', portrait: 'assets/portraits/ninja.webp', expression: 'Weapon', altExpression: 'Punch',
     role: 'Candy Assassin', move: 'Blade Flourish', bio: 'Hot-pink armour, crossed blades and a suspiciously relaxed expression.' },
   { name: 'Evolved Goleling', color: 0x6eea36, belly: 0xff9237, trim: 0xb5ff7c, accent: 0x255c14,
-    model: 'assets/characters/evolved-goleling.gltf', portrait: 'assets/portraits/evolved-goleling.webp', expression: 'Yes', flying: true,
+    model: 'assets/characters/evolved-goleling.gltf', portrait: 'assets/portraits/evolved-goleling.webp', expression: 'Yes', altExpression: 'Headbutt', flying: true,
     role: 'Winged Glutton', move: 'Happy Howl', bio: 'All mouth, horns and green wings, with the happiest battle cry in the arena.' },
   { name: 'Monkroose', color: 0xffd234, belly: 0xffed8b, trim: 0x8f845d, accent: 0x795a0a,
-    model: 'assets/characters/monkroose.gltf', portrait: 'assets/portraits/monkroose.webp', expression: 'Wave',
-    role: 'Golden Scout', move: 'Friendly Feint', bio: 'Wide ears, warm gold armour and a patient face that misses nothing.' },
+    model: 'assets/characters/monkroose.gltf', portrait: 'assets/portraits/monkroose.webp', expression: 'Wave', altExpression: 'Punch',
+    role: 'Golden Scout', move: 'Friendly Feint', bio: 'Wide ears, lime armour, orange gloves and a patient face that misses nothing.' },
   { name: 'Blue Demon', color: 0xff4aaf, belly: 0x55ddff, trim: 0xffa1d2, accent: 0x6e164d,
-    model: 'assets/characters/blue-demon.gltf', portrait: 'assets/portraits/blue-demon.webp', expression: 'Punch',
-    role: 'Neon Imp', move: 'Tail Swipe', bio: 'A candy-pink demon with blue battle shorts, huge ears and zero restraint.' },
+    model: 'assets/characters/blue-demon.gltf', portrait: 'assets/portraits/blue-demon.webp', expression: 'Punch', altExpression: 'No',
+    role: 'Neon Imp', move: 'Tail Swipe', bio: 'A midnight-blue demon with candy-pink eyes, huge ears and zero restraint.' },
   { name: 'Birb', color: 0x4acbff, belly: 0xf2fbff, trim: 0xffdf49, accent: 0x155b8d,
-    model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/birb.webp', expression: 'Yes',
+    model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/birb.webp', expression: 'Yes', altExpression: 'Wave',
     role: 'Ice-Plumed Rogue', move: 'Proud Strut', bio: 'A frosty blue bird-beast with bright eyes and a razor-clean silhouette.' },
   { name: 'Dino', color: 0x8d49ff, belly: 0xe2c8ff, trim: 0xffe15c, accent: 0x34155f,
-    model: 'assets/characters/dino.gltf', portrait: 'assets/portraits/dino.webp', expression: 'No',
+    model: 'assets/characters/dino.gltf', portrait: 'assets/portraits/dino.webp', expression: 'No', altExpression: 'Punch',
     role: 'Tiny Tyrant', move: 'Fang Protest', bio: 'A compact violet dinosaur with oversized tusks and permanent side-eye.' },
   { name: 'Flying Tribal', color: 0xff5b45, belly: 0xffc3ba, trim: 0xffd236, accent: 0x872114,
-    model: 'assets/characters/flying-tribal.gltf', portrait: 'assets/portraits/flying-tribal.webp', expression: 'Headbutt', flying: true,
+    model: 'assets/characters/flying-tribal.gltf', portrait: 'assets/portraits/flying-tribal.webp', expression: 'Headbutt', altExpression: 'Yes', flying: true,
     role: 'Masked Divebomber', move: 'Totem Charge', bio: 'A vivid red mask, stone fists and a nose-first approach to every problem.' },
-  { name: 'Frog', color: 0x3fcfff, belly: 0xffc52f, trim: 0x263047, accent: 0x0b536c,
-    model: 'assets/characters/frog.gltf', portrait: 'assets/portraits/frog.webp', expression: 'Wave',
-    role: 'Midnight Hopper', move: 'Cool Wave', bio: 'A midnight frog with electric eyes, gold armour and an unreadable poker face.' },
-  { name: 'Squidle', color: 0x19bfff, belly: 0xffc63f, trim: 0x75e8ff, accent: 0x075079,
-    model: 'assets/characters/squidle.gltf', portrait: 'assets/portraits/squidle.webp', expression: 'Yes', flying: true,
-    role: 'Jetstream Oddball', move: 'Aerial Cheer', bio: 'A blue-and-gold flying squid that turns every entrance into a performance.' },
+  { name: 'Frog', color: 0xffc83e, belly: 0xffdf79, trim: 0x3fcfff, accent: 0x59430a,
+    model: 'assets/characters/frog.gltf', portrait: 'assets/portraits/frog.webp', expression: 'Wave', altExpression: 'Punch',
+    role: 'Midnight Hopper', move: 'Cool Wave', bio: 'A gold-and-black frog with electric eyes and an unreadable poker face.' },
+  { name: 'Squidle', color: 0xff58aa, belly: 0xffb4da, trim: 0x75e8ff, accent: 0x7a1d55,
+    model: 'assets/characters/squidle.gltf', portrait: 'assets/portraits/squidle.webp', expression: 'Yes', altExpression: 'Headbutt', flying: true,
+    role: 'Jetstream Oddball', move: 'Aerial Cheer', bio: 'A hot-pink flying squid with icy eyes and an entrance made for the spotlight.' },
 ];
 
 // Fixed spawn corners in grid coordinates
@@ -11837,6 +11842,7 @@ const CharacterModels = (() => {
     };
     const idle = find('Idle', 'Flying_Idle') || clips[0];
     const expression = find(def.expression, 'Yes', 'Wave', 'Punch', 'Headbutt') || idle;
+    const altExpression = find(def.altExpression, 'Weapon', 'Punch', 'Wave', 'Yes', 'Headbutt') || expression;
     let current = null;
     let currentClip = null;
     let lastT = null;
@@ -11868,11 +11874,12 @@ const CharacterModels = (() => {
         // Lead with the signature move whenever a fighter is selected, then
         // breathe briefly before replaying it. This reads as deliberate
         // personality instead of a model idling for several seconds.
-        const phase = (t - showcaseEpoch) % 4.4;
-        const expressive = phase < 1.85;
-        if (expressive === showcaseBeat) return;
-        showcaseBeat = expressive;
-        play(expressive ? expression : idle, expressive && expression !== idle);
+        const phase = (t - showcaseEpoch) % 5.6;
+        const beat = phase < 1.65 ? 0 : phase < 2.2 ? 1 : phase < 3.95 ? 2 : 3;
+        if (beat === showcaseBeat) return;
+        showcaseBeat = beat;
+        const clip = beat === 0 ? expression : beat === 2 ? altExpression : idle;
+        play(clip, clip !== idle);
       },
       reset() {
         showcaseBeat = null;
@@ -11886,18 +11893,25 @@ const CharacterModels = (() => {
     const copy = material.clone();
     if (copy.map) {
       copy.map.colorSpace = RT.THREE.SRGBColorSpace;
-      copy.map.anisotropy = Math.max(copy.map.anisotropy || 1, 4);
+      copy.map.anisotropy = Math.max(copy.map.anisotropy || 1, 8);
       copy.map.needsUpdate = true;
     }
     if (copy.isMeshStandardMaterial || copy.isMeshPhysicalMaterial) {
-      copy.roughness = 0.34;
+      copy.roughness = 0.3;
       copy.metalness = Math.min(copy.metalness || 0, 0.08);
       if (copy.emissive) {
-        copy.emissive.setHex(def.color).multiplyScalar(0.08);
-        copy.emissiveIntensity = 0.55;
+        if (copy.map) {
+          copy.emissiveMap = copy.map;
+          copy.emissive.setHex(0xffffff);
+          copy.emissiveIntensity = 0.11;
+        } else {
+          copy.emissive.setHex(def.color).multiplyScalar(0.06);
+          copy.emissiveIntensity = 0.38;
+        }
       }
     }
     copy.flatShading = false;
+    copy.dithering = true;
     copy.needsUpdate = true;
     return copy;
   }
@@ -17314,9 +17328,25 @@ const Game = (function () {
       plinth.position.set(0.2, -0.47, 0);
       plinth.receiveShadow = true;
       scene.add(plinth);
+      const haloMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff49d2, transparent: true, opacity: 0.2,
+        side: THREE.DoubleSide, depthWrite: false, toneMapped: false,
+      });
+      const halo = new THREE.Mesh(new THREE.RingGeometry(0.69, 0.73, 72), haloMaterial);
+      halo.position.set(0.12, 0.38, -0.62);
+      scene.add(halo);
+      const orbitMaterial = new THREE.MeshBasicMaterial({
+        color: 0x55ddff, transparent: true, opacity: 0.1,
+        side: THREE.DoubleSide, depthWrite: false, toneMapped: false,
+      });
+      const orbit = new THREE.Mesh(new THREE.RingGeometry(0.9, 0.91, 84), orbitMaterial);
+      orbit.position.set(0.12, 0.38, -0.64);
+      orbit.scale.y = 0.72;
+      orbit.rotation.z = -0.35;
+      scene.add(orbit);
       const turn = new THREE.Group();
       scene.add(turn);
-      g.preview = { scene, cam, turn, rim, fill, mesh: null, bomb: null, width: 0, height: 0 };
+      g.preview = { scene, cam, turn, rim, fill, halo, orbit, mesh: null, bomb: null, width: 0, height: 0 };
     }
     const pv = g.preview;
     [pv.mesh, pv.bomb].forEach(m => {
@@ -17340,8 +17370,10 @@ const Game = (function () {
     const previewDef = PLAYER_DEFS[g.selectedClass];
     pv.rim.color.setHex(previewDef.color);
     pv.fill.color.setHex(previewDef.trim || previewDef.color).lerp(new THREE.Color(0xffffff), 0.18);
+    pv.halo.material.color.setHex(previewDef.color);
+    pv.orbit.material.color.setHex(previewDef.trim || previewDef.color);
     pv.mesh = Player.buildMesh(previewDef, defaultLoadout());
-    Player.applyViewScale(pv.mesh, previewDef.flying ? 1.34 : 1.08);
+    Player.applyViewScale(pv.mesh, previewDef.flying ? 1.34 : 1.17);
     pv.mesh.position.set(0, -0.4, 0);
     pv.turn.add(pv.mesh);
     pv.bomb = null;
@@ -17367,7 +17399,10 @@ const Game = (function () {
     pv.cam.updateProjectionMatrix();
     const wasColour = r.getClearColor(new THREE.Color());
     const wasAlpha = r.getClearAlpha();
-    const stage = new THREE.Color(0x080b14).lerp(new THREE.Color(PLAYER_DEFS[g.selectedClass].color), 0.14);
+    const stageTime = performance.now() * 0.001;
+    pv.halo.material.opacity = 0.17 + Math.sin(stageTime * 1.8) * 0.025;
+    pv.orbit.rotation.z = -0.35 + stageTime * 0.035;
+    const stage = new THREE.Color(0x080b14).lerp(new THREE.Color(PLAYER_DEFS[g.selectedClass].color), 0.18);
     r.setClearColor(stage, 1);
     r.setScissorTest(false);
     r.setViewport(0, 0, w, hh);

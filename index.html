@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="e42b6c9">
+<meta name="build" content="f7c9a31">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2293,6 +2293,9 @@
     box-shadow: inset 0 1px rgba(255,255,255,.035), 0 6px 12px rgba(0,0,0,.28);
     transition: transform .13s ease, border-color .13s ease, box-shadow .13s ease, color .13s ease;
   }
+  /* Treat the entire card as one hit target. Portraits and labels must never
+     become separate touch targets or steal the event from their button. */
+  #select .charpick > * { pointer-events: none; }
   #select .charpick::before {
     content: '';
     position: absolute; inset: 0;
@@ -12264,15 +12267,21 @@ const UI = (function () {
       `${x1}px ${y1}px, ${x1}px ${y2}px, ${x2}px ${y2}px, ${x2}px ${y1}px, 0 ${y1}px)`;
   }
 
-  // Hovering and clicking both drive the live character preview.
+  // One delegated handler owns the entire roster. Touch browsers can emit a
+  // synthetic hover/focus after a tap; the old four-listener setup let those
+  // follow-up events overwrite the fighter the player actually chose.
   function bindSelect(handlers) {
-    select.querySelectorAll('.charpick').forEach(el => {
-      const choose = () => handlers.onClass(Number(el.dataset.class));
-      el.addEventListener('pointerdown', choose, { passive: true });
-      el.addEventListener('mouseenter', choose);
-      el.addEventListener('focus', choose);
-      el.addEventListener('click', choose);
-    });
+    const roster = select.querySelector('.sroster');
+    const choose = event => {
+      const target = event.target && event.target.closest
+        ? event.target.closest('.charpick') : null;
+      if (!target || !roster.contains(target)) return;
+      handlers.onClass(Number(target.dataset.class));
+    };
+    // Capture pointerdown for an immediate response on touch, then keep click
+    // as the keyboard/mouse fallback. Repeating the same choice is harmless.
+    roster.addEventListener('pointerdown', choose, { passive: true, capture: true });
+    roster.addEventListener('click', choose, true);
     const fight = select.querySelector('[data-srow="fight"]');
     fight.addEventListener('mouseenter', () => handlers.onFightHover());
     fight.addEventListener('click', () => handlers.onFight());

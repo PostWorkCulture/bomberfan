@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="a6e204b">
+<meta name="build" content="c2b781d">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -4149,14 +4149,11 @@ const Audio3 = (function () {
 
     // --- Pick-ups and states ---------------------------------------------
     pickup(c, o, t) {
-      // A warm two-note bell. Sine plus its own octave at a fifth of the level
-      // is a bell; a square is a beep.
-      [[0, 659.25, 0.13], [0.085, 987.77, 0.14]].forEach(([d, f, v]) => {
-        voice(c, o, t + d, { type: 'sine', freq: f, dur: 0.34, vol: v,
-                             cut: 3000, cutTo: 1100, attack: 0.008, hold: 0.02, room: 1.3 });
-        voice(c, o, t + d, { type: 'sine', freq: f * 2, dur: 0.16, vol: v * 0.22,
-                             cut: 4000, cutTo: 1600, attack: 0.008, hold: 0.01, room: 0.8 });
-      });
+      // A single muted low pop. Pick-ups happen constantly, so this confirms
+      // the action without turning every item into a bright four-voice jingle.
+      voice(c, o, t, { type: 'sine', freq: 360, to: 285, glide: 0.09,
+                       dur: 0.14, vol: 0.06, cut: 750, cutTo: 350,
+                       attack: 0.012, hold: 0.012, room: 0.25 });
     },
     death(c, o, t) {
       voice(c, o, t, { type: 'triangle', freq: 330, to: 70, glide: 0.5, dur: 0.62,

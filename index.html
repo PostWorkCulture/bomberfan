@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="f7c9a31">
+<meta name="build" content="a6e204b">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -3002,6 +3002,7 @@ const LEVELS = [
   },
   {
     id: 'glacier', name: 'Glacier',
+    layout: 'twin-islands',
     sky: 0x0d1b2e,
     ground: [122, 172, 208],          // deeper glacial blue, so white blocks pop
     groundLine: 'rgba(15,45,85,0.26)',
@@ -3009,6 +3010,19 @@ const LEVELS = [
     hard: 0x1d3a63, hardTop: 0x36609e, border: 0x122642,            // deep blue ice
     softDensity: 0.68,
     props: ['snowman', 'icespike'],
+    // Two fighters start on each island. The short clear lists preserve room
+    // for crates on the compact 5x5 floors without boxing anyone in.
+    spawns: [
+      { x: 1,  y: 4, clear: [[0, 0], [1, 0], [0, 1]] },
+      { x: 5,  y: 8, clear: [[0, 0], [-1, 0], [0, -1]] },
+      { x: 9,  y: 4, clear: [[0, 0], [1, 0], [0, 1]] },
+      { x: 13, y: 8, clear: [[0, 0], [-1, 0], [0, -1]] },
+    ],
+    // Glacier has no outer wall. Its dressing stands on four island pillars.
+    propSpots: [
+      [2, 5, Math.PI / 2], [4, 7, -Math.PI / 2],
+      [10, 5, Math.PI / 2], [12, 7, -Math.PI / 2],
+    ],
     hazard: 'snowman',
   },
   {
@@ -5443,6 +5457,7 @@ const World = (function () {
   const state = {
     scene: null, camera: null, renderer: null,
     grid: null,              // Int8Array COLS*ROWS of CELL values
+    voids: null,             // 1 where a solid grid cell is open chasm, not a wall
     softMeshes: null,        // Map "x,y" -> mesh, for destructible crates
     hidden: null,            // Map "x,y" -> power-up id concealed under a crate
     group: null,             // everything that gets rebuilt each round
@@ -5608,6 +5623,8 @@ const World = (function () {
     MAT.wallTop = new THREE.MeshStandardMaterial({ color: L0.hardTop, roughness: 0.7 });
     MAT.soft = new THREE.MeshStandardMaterial({ map: crateTexture(L0), roughness: 0.8 });
     MAT.border = new THREE.MeshStandardMaterial({ color: L0.border, roughness: 0.85 });
+    MAT.bridge = new THREE.MeshStandardMaterial({ color: 0x82502c, roughness: 0.88, metalness: 0.02 });
+    MAT.rope = new THREE.MeshStandardMaterial({ color: 0xc69a57, roughness: 0.92, metalness: 0.01 });
     state.level = L0;
     MAT.bomb = new THREE.MeshStandardMaterial({ color: bombColourFor(L0), roughness: 0.35, metalness: 0.35 });
     // Unlit + additive + toneMapped:false keeps the fire vivid orange instead
@@ -6068,6 +6085,36 @@ const World = (function () {
   };
   const hasRule = () => !!(state.level && state.level.rule);
 
+  // Glacier is the first non-rectangular arena. Chasm cells stay HARD in the
+  // logical grid so movement, bots, bombs and blasts all agree that they cannot
+  // cross them; `voids` only tells the renderer not to draw a wall there.
+  const TWIN_ISLANDS = {
+    floors: [[1, 4, 5, 8], [9, 4, 13, 8]],
+    bridge: [[5, 6], [6, 6], [7, 6], [8, 6], [9, 6]],
+    pillars: [
+      [2, 5], [4, 5], [2, 7], [4, 7],
+      [10, 5], [12, 5], [10, 7], [12, 7],
+    ],
+  };
+
+  function seedTwinIslands(grid, voids) {
+    grid.fill(CELL.HARD);
+    voids.fill(1);
+    const open = (x, y) => {
+      grid[idx(x, y)] = CELL.EMPTY;
+      voids[idx(x, y)] = 0;
+    };
+    TWIN_ISLANDS.floors.forEach(([x0, y0, x1, y1]) => {
+      for (let y = y0; y <= y1; y++)
+        for (let x = x0; x <= x1; x++) open(x, y);
+    });
+    TWIN_ISLANDS.bridge.forEach(([x, y]) => open(x, y));
+    TWIN_ISLANDS.pillars.forEach(([x, y]) => {
+      grid[idx(x, y)] = CELL.HARD;
+      voids[idx(x, y)] = 0;
+    });
+  }
+
   function buildArena(rng, level) {
     if (level && level !== state.level) applyLevel(level);
     tintWalls(null);              // every new arena starts on its own palette
@@ -6076,18 +6123,24 @@ const World = (function () {
     state.hidden = new Map();
     const grid = new Int8Array(CFG.COLS * CFG.ROWS);
     state.grid = grid;
+    state.voids = new Uint8Array(CFG.COLS * CFG.ROWS);
     // The rule overlay is rebuilt with the arena and is empty unless the level
     // asks for something. A level with no `rule` is byte-for-byte the game it
     // was before this existed.
     state.rules = new Int8Array(CFG.COLS * CFG.ROWS);
     state.padPairs = new Map();
 
-    // 1. Hard layout: outer wall plus the classic pillar lattice
-    for (let y = 0; y < CFG.ROWS; y++) {
-      for (let x = 0; x < CFG.COLS; x++) {
-        const border = x === 0 || y === 0 || x === CFG.COLS - 1 || y === CFG.ROWS - 1;
-        const pillar = x % 2 === 0 && y % 2 === 0;
-        grid[idx(x, y)] = (border || pillar) ? CELL.HARD : CELL.EMPTY;
+    // 1. Hard layout: either Glacier's two islands or the classic rectangle.
+    const twinIslands = state.level.layout === 'twin-islands';
+    if (twinIslands) {
+      seedTwinIslands(grid, state.voids);
+    } else {
+      for (let y = 0; y < CFG.ROWS; y++) {
+        for (let x = 0; x < CFG.COLS; x++) {
+          const border = x === 0 || y === 0 || x === CFG.COLS - 1 || y === CFG.ROWS - 1;
+          const pillar = x % 2 === 0 && y % 2 === 0;
+          grid[idx(x, y)] = (border || pillar) ? CELL.HARD : CELL.EMPTY;
+        }
       }
     }
 
@@ -6100,12 +6153,17 @@ const World = (function () {
 
     // 2. Keep every spawn pocket clear so nobody is boxed in at the start
     const safe = new Set();
-    SPAWNS.forEach(s => {
-      [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [2, 0], [0, 2], [-2, 0], [0, -2]].forEach(([dx, dy]) => {
+    const spawns = state.level.spawns || SPAWNS;
+    const defaultClear = [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [2, 0], [0, 2], [-2, 0], [0, -2]];
+    spawns.forEach(s => {
+      (s.clear || defaultClear).forEach(([dx, dy]) => {
         const x = s.x + dx, y = s.y + dy;
         if (x > 0 && y > 0 && x < CFG.COLS - 1 && y < CFG.ROWS - 1) safe.add(key(x, y));
       });
     });
+    // The bridge is a route, never a crate lottery. Include both landing planks
+    // so each island always has a clean approach to it.
+    if (twinIslands) TWIN_ISLANDS.bridge.forEach(([x, y]) => safe.add(key(x, y)));
 
     // 3. Scatter crates
     const puBag = weightedBag(rng);
@@ -6215,18 +6273,85 @@ const World = (function () {
     }
   }
 
+  function buildTwinIslandFloor(g) {
+    // Two thick ice rafts make the missing floor read as a real drop rather than
+    // a texture failure. Their top planes reuse the active Glacier material.
+    [[3, 6], [11, 6]].forEach(([x, y]) => {
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(5.12, 0.32, 5.12), MAT.border);
+      slab.position.set(wx(x), -0.17, wz(y));
+      slab.castShadow = slab.receiveShadow = true;
+      slab.userData.ownGeometry = true;
+      const top = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), MAT.ground);
+      top.rotation.x = -Math.PI / 2;
+      top.position.set(wx(x), 0.002, wz(y));
+      top.receiveShadow = true;
+      top.userData.ownGeometry = true;
+      g.add(slab, top);
+    });
+
+    // Rope bridge: five wooden planks span the gap, with sagging hand ropes and
+    // vertical lashings. Gameplay remains tile-flat even though the silhouette
+    // reads as a suspended bridge.
+    const plankGeo = new THREE.BoxGeometry(0.84, 0.12, 0.8);
+    for (let x = 5; x <= 9; x++) {
+      const plank = new THREE.Mesh(plankGeo, MAT.bridge);
+      plank.position.set(wx(x), -0.038, wz(6));
+      plank.rotation.y = (x - 7) * 0.012;
+      plank.castShadow = plank.receiveShadow = true;
+      plank.userData.ownGeometry = true;
+      g.add(plank);
+    }
+
+    const postGeo = new THREE.CylinderGeometry(0.055, 0.07, 0.76, 8);
+    [5, 9].forEach(x => [-1, 1].forEach(side => {
+      const post = new THREE.Mesh(postGeo, MAT.rope);
+      post.position.set(wx(x), 0.35, wz(6) + side * 0.48);
+      post.castShadow = true;
+      post.userData.ownGeometry = true;
+      g.add(post);
+    }));
+
+    [-1, 1].forEach(side => {
+      const points = [
+        new THREE.Vector3(wx(5), 0.72, wz(6) + side * 0.48),
+        new THREE.Vector3(wx(6), 0.52, wz(6) + side * 0.48),
+        new THREE.Vector3(wx(7), 0.38, wz(6) + side * 0.48),
+        new THREE.Vector3(wx(8), 0.52, wz(6) + side * 0.48),
+        new THREE.Vector3(wx(9), 0.72, wz(6) + side * 0.48),
+      ];
+      const rope = new THREE.Mesh(
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 28, 0.024, 6, false),
+        MAT.rope
+      );
+      rope.castShadow = true;
+      rope.userData.ownGeometry = true;
+      g.add(rope);
+      [[6, 0.52], [7, 0.38], [8, 0.52]].forEach(([x, top]) => {
+        const h = top - 0.02;
+        const lashing = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, h, 6), MAT.rope);
+        lashing.position.set(wx(x), 0.02 + h / 2, wz(6) + side * 0.48);
+        lashing.userData.ownGeometry = true;
+        g.add(lashing);
+      });
+    });
+  }
+
   function buildMeshes() {
     const g = state.group;
 
     // Floor
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE),
-      MAT.ground
-    );
-    floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
-    floor.userData.ownGeometry = true;
-    g.add(floor);
+    if (state.level.layout === 'twin-islands') {
+      buildTwinIslandFloor(g);
+    } else {
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE),
+        MAT.ground
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      floor.userData.ownGeometry = true;
+      g.add(floor);
+    }
 
     // The level's rule, drawn ON the floor. Decoration is the one thing a rule
     // must never be: a conveyor you cannot see is a floor that cheats, so this
@@ -6241,6 +6366,7 @@ const World = (function () {
     for (let y = 0; y < CFG.ROWS; y++) {
       for (let x = 0; x < CFG.COLS; x++) {
         if (state.grid[idx(x, y)] !== CELL.HARD) continue;
+        if (state.voids && state.voids[idx(x, y)]) continue;
         const edge = x === 0 || y === 0 || x === CFG.COLS - 1 || y === CFG.ROWS - 1;
         (edge ? ringCells : pillarCells).push([x, y]);
       }
@@ -6464,6 +6590,10 @@ const World = (function () {
     },
     resize, setFraming, arenaScreenWidth, arenaScreenRect, arenaFarEdge, arenaNearEdge, onFit,
     cellAt, setCell, isSolid, destroySoft,
+    spawnFor(seat) {
+      const spawns = (state.level && state.level.spawns) || SPAWNS;
+      return spawns[seat] || SPAWNS[seat];
+    },
     get level() { return state.level; },
     get shake() { return state.shake; },
     // Counts the GRID, not the mesh map. The grid is the source of truth for
@@ -6814,6 +6944,27 @@ const Icons = (function () {
     return heartDecalTex;
   }
 
+  // A golden boot on transparent for the persistent Kick marker above its
+  // owner. It deliberately reuses the pickup glyph, so the thing collected and
+  // the status it grants can never drift into two different symbols.
+  let kickDecalTex = null;
+  function kickDecal() {
+    if (kickDecalTex) return kickDecalTex;
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d');
+    g.save();
+    g.translate(S / 2, S / 2); g.scale(0.86, 0.86); g.translate(-S / 2, -S / 2);
+    g.fillStyle = 'rgba(24, 14, 3, .65)';
+    g.save(); g.translate(0, S * 0.035); GLYPH[PU.KICK](g); g.restore();
+    g.fillStyle = '#ffc43d';
+    GLYPH[PU.KICK](g);
+    g.restore();
+    kickDecalTex = new THREE.CanvasTexture(c);
+    kickDecalTex.colorSpace = THREE.SRGBColorSpace;
+    return kickDecalTex;
+  }
+
   // WHERE THE RED BOMB IS GOING TO LAND. An outline, not a filled square: the
   // tile underneath has to stay readable, because the whole point of the marker
   // is that you look at that tile and decide whether you are standing on it.
@@ -6925,7 +7076,7 @@ const Icons = (function () {
     return url;
   }
 
-  return { texture, dataURL, heartMask, heartDecal, beltDecal, padDecal, targetDecal, hex };
+  return { texture, dataURL, heartMask, heartDecal, kickDecal, beltDecal, padDecal, targetDecal, hex };
 })();
 
 
@@ -7502,8 +7653,9 @@ const Props = (function () {
     let angryDone = false;
     const kinds = level.props || [];
     if (!kinds.length) return group;
+    const spots = level.propSpots || SPOTS;
 
-    SPOTS.forEach((spot, i) => {
+    spots.forEach((spot, i) => {
       const kind = kinds[i % kinds.length];
       const builder = BUILD[kind];
       if (!builder) return;
@@ -7713,6 +7865,28 @@ const Props = (function () {
 })();
 
 
+// Persistent ability markers live on the player root, outside any imported or
+// procedural body rig. They therefore stay centred above every silhouette and
+// do not inherit a character's individual idle animation.
+function addPlayerStatusSprites(group) {
+  const root = new THREE.Group();
+  group.add(root);
+  group.userData.statusRoot = root;
+  const make = map => {
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map, transparent: true, depthWrite: false, depthTest: false,
+      toneMapped: false, fog: false,
+    }));
+    sprite.visible = false;
+    sprite.renderOrder = 60;
+    root.add(sprite);
+    return sprite;
+  };
+  group.userData.heartStatus = make(Icons.heartDecal());
+  group.userData.kickStatus = make(Icons.kickDecal());
+}
+
+
 /* ==== 40-entities.js ============================================== */
 /* ============================================================================
    SECTION 40 — ENTITIES: players, bombs, blasts, power-ups
@@ -7843,19 +8017,6 @@ const CharacterModels = (() => {
     group.userData.combatClass = def.id || def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     group.userData.modelReady = false;
 
-    // The seat ring is below the model, never across a face or body feature.
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.2, 0.3, 30),
-      new THREE.MeshBasicMaterial({
-        color: def.color, transparent: true, opacity: 0.62,
-        side: THREE.DoubleSide, depthWrite: false, toneMapped: false,
-      })
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.014;
-    ring.renderOrder = 2;
-    group.add(ring);
-
     const aura = new THREE.Mesh(
       new THREE.SphereGeometry(0.52, 18, 14),
       new THREE.MeshBasicMaterial({
@@ -7867,6 +8028,7 @@ const CharacterModels = (() => {
     aura.visible = false;
     group.add(aura);
     group.userData.aura = aura;
+    addPlayerStatusSprites(group);
 
     group.userData.modelPromise = source(def).then(({ RT, gltf }) => {
       if (group.userData.cancelled) return false;
@@ -7957,7 +8119,7 @@ class Player {
   }
 
   reset() {
-    const s = SPAWNS[this.seat];
+    const s = World.spawnFor(this.seat);
     this.gx = s.x; this.gy = s.y;
     this.alive = true;
     this.speed = CFG.BASE_SPEED;
@@ -7971,6 +8133,7 @@ class Player {
     this.ignoreBombs = new Set();
     this.bob = 0;
     this.kickT = 0;                             // phase for the gold boot pulse
+    this.statusT = 0;                           // shared float/pulse clock
     this.deathT = 0;
     // Cleared with the round, or last round's stamp decides this round's winner
     this.deathOrder = null;
@@ -8252,6 +8415,7 @@ class Player {
     // The boot pulse runs whether you are moving or standing still — Kick is a
     // thing you HAVE, not a thing you are doing.
     this.kickT = this.kick ? this.kickT + dt : 0;
+    this.statusT += dt;
 
     // Speed Ups kick up a visible trail — the more you hold, the more smoke
     const lvl = this.speedLevel + (this.curse && this.curse.id === 'hyper' ? 3 : 0);
@@ -8269,6 +8433,24 @@ class Player {
   }
 
   syncMesh() {
+    const heartStatus = this.mesh.userData.heartStatus;
+    const kickStatus = this.mesh.userData.kickStatus;
+    const statusRoot = this.mesh.userData.statusRoot;
+    const hasHeart = !!(this.alive && this.shield);
+    const hasKick = !!(this.alive && this.kick);
+    if (heartStatus && kickStatus) {
+      heartStatus.visible = hasHeart;
+      kickStatus.visible = hasKick;
+      const both = hasHeart && hasKick;
+      const bob = Math.sin(this.statusT * 3.4) * 0.035;
+      const pulse = 0.265 + Math.sin(this.statusT * 4.2) * 0.012;
+      heartStatus.position.set(both ? -0.17 : 0, 1.30 + bob, 0);
+      kickStatus.position.set(both ? 0.17 : 0, 1.30 - bob, 0);
+      heartStatus.scale.set(pulse, pulse, 1);
+      kickStatus.scale.set(pulse, pulse, 1);
+      // Keep the pair left-to-right in world space while the fighter turns.
+      if (statusRoot) statusRoot.rotation.y = -this.mesh.rotation.y;
+    }
     // Gold shoes mean Kick. Compared before writing so an unchanged pair costs a
     // boolean per frame rather than a material update.
     const sm = this.mesh.userData.shoeMat;
@@ -9992,30 +10174,7 @@ class Player {
     if (anims.length) g.userData.cosAnim = anims;
 
 
-    // --- Seat marker and curse aura ----------------------------------------
-    // depthWrite MUST stay off. A transparent material that writes depth lands in
-    // the transparent pass with the character's own body already in the depth
-    // buffer, and the result was a soft body-shaped wash of seat colour hanging
-    // over the character — worst at the front row, where the ring is nearly
-    // edge-on to the camera. That smear is what read as the characters glitching.
-    // AND IT HAS TO BE SMALLER THAN THE CHARACTER, not wider than it. At 0.42 the
-    // ring's near arc reached a third of a tile in front of the feet, and from a
-    // camera this shallow that arc is genuinely NEARER than the belly — so it won
-    // the depth test and painted a coloured halo across the lower body. Not a
-    // sorting bug: real geometry in front of the character. Tucked inside the
-    // silhouette at 0.3 it stays where a floor marker belongs.
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.2, 0.3, 26),
-      new THREE.MeshBasicMaterial({
-        color: def.color, transparent: true, opacity: 0.55,
-        side: THREE.DoubleSide, depthWrite: false,
-      })
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.015;
-    ring.renderOrder = 2;              // after the floor, before anything above it
-    g.add(ring);
-
+    // --- Curse aura and persistent ability markers -------------------------
     const aura = new THREE.Mesh(
       new THREE.SphereGeometry(0.6, 16, 12),
       new THREE.MeshBasicMaterial({
@@ -10029,6 +10188,7 @@ class Player {
     // showcase rig during victory and selection movement.
     attachmentRoot.add(aura);
     g.userData.aura = aura;
+    addPlayerStatusSprites(g);
 
     // Smooth every character surface before it reaches the shared renderer.
     // Boxes retain their authored hard corners because their faces use split
@@ -14329,10 +14489,15 @@ const Game = (function () {
   // walls closing in rather than a whole ring appearing at once.
   function closeNextRing() {
     if (g.sdRing >= CFG.SD_MAX_RINGS) return;
-    g.sdRing++;
-    g.sdQueue = ringTiles(g.sdRing).filter(t => World.cellAt(t.x, t.y) !== CELL.HARD);
+    // Non-rectangular maps can have several empty geometric rings around their
+    // playable floor. Skip those immediately so Sudden Death still starts with
+    // an actual event instead of spending multiple intervals closing chasm.
+    do {
+      g.sdRing++;
+      g.sdQueue = ringTiles(g.sdRing).filter(t => World.cellAt(t.x, t.y) !== CELL.HARD);
+    } while (!g.sdQueue.length && g.sdRing < CFG.SD_MAX_RINGS);
     g.sdStagger = 0;
-    World.addShake(0.12);
+    if (g.sdQueue.length) World.addShake(0.12);
   }
 
   // tile is for the test suite: normally the next one comes off the queue.

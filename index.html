@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="d91c4a7">
+<meta name="build" content="e42b6c9">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2782,7 +2782,7 @@ const CFG = {
   ROWS: 13,              // total rows including the outer wall
   TILE: 1,               // world units per tile
   SOFT_DENSITY: 0.70,    // proportion of free interior tiles that get a crate
-  POWERUP_CHANCE: 0.2364, // proportion of crates hiding a power-up
+  POWERUP_CHANCE: 0.26004, // proportion of crates hiding a power-up
 
   // ---- Players -----------------------------------------------------------
   MAX_PLAYERS: 4,
@@ -3100,11 +3100,10 @@ const PU_TABLE = [
   // they are told apart by HUE ALONE at arena size, before you have read the
   // glyph. The old blue/orange/cyan set needed a second look to separate the
   // orange flame from the cyan bolt in the corner of your eye.
-  // The bomb goes BLACK WITH A RED EDGE. `outline` is only set here: an icon
-  // whose tile is near-black has no lighter top edge to read as 3D, so it needs
-  // a real border instead, and that border is also what the 3D pick-up glows
-  // with — emissive on a black tile emits nothing at all.
-  { id: PU.BOMB,      weight: 26, label: 'Bomb Up',    color: 0x14161c, outline: 0xe01f1f },
+  // The bomb is pure black with a neutral gunmetal edge so it cannot be confused
+  // with the red Fire Up. `outline` also keeps the black 3D tile readable on the
+  // arena floor, because emissive black produces no light at all.
+  { id: PU.BOMB,      weight: 26, label: 'Bomb Up',    color: 0x000000, outline: 0x424750 },
   { id: PU.FIRE,      weight: 26, label: 'Fire Up',    color: 0xe01f1f },
   { id: PU.SPEED,     weight: 18, label: 'Speed Up',   color: 0x22b356 },
   { id: PU.KICK,      weight: 10, label: 'Kick',       color: 0x9b5de5 },
@@ -3127,18 +3126,14 @@ const PU_TABLE = [
 // WEIGHTS ARE RELATIVE. Changing one alone silently re-rates the other three,
 // so every change here moves POWERUP_CHANCE by the matching amount:
 //   per-crate rate = POWERUP_CHANCE * weight / (sum of weights)
-// With chance 0.2364 and weights summing to 100 that gives, per crate:
-//   Bomb .1182   Fire .0567   Speed .0378   Kick .0236
-// Bomb, Speed and Kick are at exactly the frequency they have always had;
-// only Fire has moved. Fire was halved once and is now back where it started,
-// because one-square starting bombs made a scarce Fire Up feel punishing.
-// The tests assert all four rates numerically — move one number without the
-// other and the suite fails.
+// With chance 0.26004 and weights summing to 110 that gives, per crate:
+//   Bomb .1182   Fire .0567   Speed .0378   Kick .0473
+// Kick is doubled without making Bomb, Fire or Speed any scarcer.
 const PU_DROPS = [
   { id: PU.BOMB,  weight: 50 },   // one more bomb at a time — the common find
   { id: PU.FIRE,  weight: 24 },   // bigger blast — the way out of a slow round
   { id: PU.SPEED, weight: 16 },   // faster on foot
-  { id: PU.KICK,  weight: 10 },   // shove a laid bomb across the floor
+  { id: PU.KICK,  weight: 20 },   // doubled: shove a laid bomb across the floor
 ];
 
 // Short codes shown on the HUD when a player holds an ability
@@ -10385,7 +10380,7 @@ class PowerUp {
     const glow = new THREE.Mesh(
       new THREE.RingGeometry(0.3, 0.46, 24),
       new THREE.MeshBasicMaterial({
-        color: this.def.color, transparent: true, opacity: 0.5,
+        color: this.def.outline || this.def.color, transparent: true, opacity: 0.5,
         side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
         depthWrite: false, toneMapped: false,
       })

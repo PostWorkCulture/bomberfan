@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="e61a0f2">
+<meta name="build" content="d91c4a7">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2288,6 +2288,8 @@
     color: rgba(255,244,230,.66);
     text-align: left;
     cursor: pointer;
+    touch-action: manipulation;
+    isolation: isolate;
     box-shadow: inset 0 1px rgba(255,255,255,.035), 0 6px 12px rgba(0,0,0,.28);
     transition: transform .13s ease, border-color .13s ease, box-shadow .13s ease, color .13s ease;
   }
@@ -2296,12 +2298,14 @@
     position: absolute; inset: 0;
     background: radial-gradient(circle at 110% -10%, color-mix(in srgb, var(--fighter) 35%, transparent), transparent 58%);
     opacity: .45;
+    pointer-events: none;
   }
   #select .charpick i {
     position: absolute; left: 0; top: 17%; bottom: 17%; width: 3px;
     border-radius: 0 3px 3px 0;
     background: var(--fighter);
     box-shadow: 0 0 13px var(--fighter);
+    pointer-events: none;
   }
   #select .charface {
     position: relative;
@@ -2320,6 +2324,7 @@
     content: '';
     position: absolute; inset: 0;
     background: linear-gradient(145deg, rgba(255,255,255,.13), transparent 35% 75%, rgba(0,0,0,.18));
+    pointer-events: none;
   }
   #select .charindex {
     position: absolute;
@@ -2368,6 +2373,8 @@
     box-shadow: 0 0 14px color-mix(in srgb, var(--fighter) 55%, transparent), inset 0 0 10px rgba(0,0,0,.22);
   }
   #select .charpick.selected .charcopy small { color: color-mix(in srgb, var(--fighter) 70%, white); }
+  #select .sidentity,
+  #spreview .spreviewtag { display: none !important; }
   #select .sfoot {
     flex: 0 0 auto;
     min-height: 58px;
@@ -2489,6 +2496,37 @@
     #select .charcopy b { font-size: 8px; letter-spacing: 0; }
     #select .sfoot { min-height: 34px; }
     #select .sfoot .opt.go { padding: 6px 20px !important; margin-top: 0; }
+  }
+
+  /* Internal renderer-capture route used to make roster portraits from the
+     exact same textured models players see in the preview. */
+  html[data-portrait-capture] #select {
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+  html[data-portrait-capture] #select .shead,
+  html[data-portrait-capture] #select .sroster,
+  html[data-portrait-capture] #select .sfoot,
+  html[data-portrait-capture] #thome,
+  html[data-portrait-capture] #spreview .sname { display: none !important; }
+  html[data-portrait-capture] #select .sbody {
+    display: block !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  html[data-portrait-capture] #spreview {
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
 
   /* BOMBER FAN FRONT SCREEN V4
@@ -2727,6 +2765,10 @@
 import * as THREE from './assets/vendor/three.module.min.js';
 (function () {
 'use strict';
+
+const PORTRAIT_CAPTURE_MODE = new URLSearchParams(location.search).has('portraitCapture');
+if (PORTRAIT_CAPTURE_MODE) document.documentElement.dataset.portraitCapture = '1';
+const BUILD_ID = document.querySelector('meta[name="build"]')?.content || 'dev';
 
 /* ==== 00-config.js ================================================ */
 /* ============================================================================
@@ -3120,66 +3162,66 @@ const CURSES = [
 // Monsters. Every entry owns its model, brightened portrait and showcase move;
 // gameplay stats stay equal, so the choice is visual rather than competitive.
 const PLAYER_DEFS = [
-  { name: 'Bunny', color: 0xff49d2, belly: 0xfff2fb, trim: 0x55ddff, accent: 0x6d1cae,
+  { id: 'bunny', name: 'Gravehare', color: 0xcf6a92, belly: 0xfff2fb, trim: 0x835977, accent: 0x6d1cae,
     model: 'assets/characters/bunny.gltf', portrait: 'assets/portraits/bunny.webp', expression: 'Wave', altExpression: 'Weapon',
-    role: 'Moonlit Trickster', move: 'Cheeky Wave', bio: 'A bright violet bruiser with sleepy eyes, long ears and one sharp claw.' },
-  { name: 'Alien', color: 0x43ddff, belly: 0xe9fbff, trim: 0xb45cff, accent: 0x116a96,
+  },
+  { id: 'alien', name: 'Voidmaw', color: 0x60047b, belly: 0xe9fbff, trim: 0x156309, accent: 0x116a96,
     model: 'assets/characters/alien.gltf', portrait: 'assets/portraits/alien.webp', expression: 'Yes', altExpression: 'Wave',
-    role: 'Cosmic Menace', move: 'Knowing Nod', bio: 'Curled horns, luminous armour and the calm confidence of an invader.' },
-  { name: 'Evolved Dragon', color: 0x18e0d2, belly: 0x82fff4, trim: 0xff477e, accent: 0x07667c,
+  },
+  { id: 'evolved-dragon', name: 'Dreadwing', color: 0xe85e26, belly: 0x82fff4, trim: 0xc6320f, accent: 0x07667c,
     model: 'assets/characters/evolved-dragon.gltf', portrait: 'assets/portraits/evolved-dragon.webp', expression: 'Headbutt', altExpression: 'Yes', flying: true,
-    role: 'Sky Tyrant', move: 'Horn Rush', bio: 'A blazing orange dragon with icy horns, huge hands and a turquoise battle glow.' },
-  { name: 'Skull Orc', color: 0xa8f044, belly: 0xf3dfb9, trim: 0xff4aa8, accent: 0x4f7520,
+  },
+  { id: 'skull-orc', name: 'Skullrend', color: 0x76952c, belly: 0xf3dfb9, trim: 0xc0a383, accent: 0x4f7520,
     model: 'assets/characters/skull-orc.gltf', portrait: 'assets/portraits/skull-orc.webp', expression: 'Punch', altExpression: 'Weapon',
-    role: 'Bone Breaker', move: 'Spiked Smash', bio: 'Bone helm, acid-green armour and a spiked club built for close-range chaos.' },
-  { name: 'Orc', color: 0x77dc4b, belly: 0xdfffb8, trim: 0x45cfff, accent: 0x315f24,
+  },
+  { id: 'orc', name: 'Goregrin', color: 0x7b9620, belly: 0xdfffb8, trim: 0xa7c057, accent: 0x315f24,
     model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Yes', altExpression: 'Weapon',
-    role: 'Grinning Brute', move: 'Victory Flex', bio: 'A broad-shouldered orc whose huge grin is every bit as dangerous as the mace.' },
-  { name: 'Fish Monster', color: 0x39c9ff, belly: 0x8df5e5, trim: 0xff9a32, accent: 0x15658d,
+  },
+  { id: 'fish-monster', name: 'Riftgill', color: 0x48adc8, belly: 0x8df5e5, trim: 0x016c99, accent: 0x15658d,
     model: 'assets/characters/fish-monster.gltf', portrait: 'assets/portraits/fish-monster.webp', expression: 'Punch', altExpression: 'No',
-    role: 'Deep-Sea Brawler', move: 'Fin Flurry', bio: 'An electric-blue predator with orange fins, a needle grin and no patience.' },
-  { name: 'Demon', color: 0xff465f, belly: 0x6ecfff, trim: 0xc4b7ff, accent: 0x4e1738,
+  },
+  { id: 'demon', name: 'Hellshade', color: 0xbc040f, belly: 0x6ecfff, trim: 0xc37c88, accent: 0x4e1738,
     model: 'assets/characters/demon.gltf', portrait: 'assets/portraits/demon.webp', expression: 'No', altExpression: 'Punch',
-    role: 'Night Stalker', move: 'Defiant Snarl', bio: 'Halo, horns, wings and fangs combine in one darkly comic nightmare.' },
-  { name: 'Tribal', color: 0xffc52f, belly: 0xffffff, trim: 0xff8f25, accent: 0x633800,
+  },
+  { id: 'tribal', name: 'Bloodmask', color: 0xc35426, belly: 0xffffff, trim: 0xdaa858, accent: 0x633800,
     model: 'assets/characters/tribal.gltf', portrait: 'assets/portraits/tribal.webp', expression: 'Yes', altExpression: 'Punch',
-    role: 'Totem Warrior', move: 'Mask Salute', bio: 'A graphic red, green and gold fighter with a huge mask and fearless stare.' },
-  { name: 'Cactoro', color: 0x9aed37, belly: 0xd8ff91, trim: 0xd84b9d, accent: 0x3e6f12,
+  },
+  { id: 'cactoro', name: 'Thornrage', color: 0x6b991f, belly: 0xd8ff91, trim: 0xa6691f, accent: 0x3e6f12,
     model: 'assets/characters/cactoro.gltf', portrait: 'assets/portraits/cactoro.webp', expression: 'Wave', altExpression: 'Punch',
-    role: 'Desert Rogue', move: 'Prickly Hello', bio: 'Sombrero, cactus fists and a deadpan expression hide a very lively fighter.' },
-  { name: 'Yeti', color: 0xff7695, belly: 0xffe3df, trim: 0x54d9ff, accent: 0x8b3152,
+  },
+  { id: 'yeti', name: 'Frostmaul', color: 0xd39793, belly: 0xffe3df, trim: 0x3d98a6, accent: 0x8b3152,
     model: 'assets/characters/yeti.gltf', portrait: 'assets/portraits/yeti.webp', expression: 'Yes', altExpression: 'Punch',
-    role: 'Coral Snowbeast', move: 'Toothy Cheer', bio: 'A coral-and-ice bruiser whose enormous turquoise grin never switches off.' },
-  { name: 'Mushroom King', color: 0x62dfbe, belly: 0xf4ddb4, trim: 0x43cfff, accent: 0x276d61,
+  },
+  { id: 'mushroom-king', name: 'Rotcrown', color: 0x3c9b9c, belly: 0xf4ddb4, trim: 0xc79e6c, accent: 0x276d61,
     model: 'assets/characters/mushroom-king.gltf', portrait: 'assets/portraits/mushroom-king.webp', expression: 'Wave', altExpression: 'Yes',
-    role: 'Spore Sovereign', move: 'Royal Wave', bio: 'A towering blue cap, glowing spores and tiny royal eyes rule this strange court.' },
-  { name: 'Ninja', color: 0xff3d91, belly: 0xffc4e0, trim: 0xffffff, accent: 0x71173e,
+  },
+  { id: 'ninja', name: 'Nightblade', color: 0xa16261, belly: 0xffc4e0, trim: 0xbf8d6d, accent: 0x71173e,
     model: 'assets/characters/ninja.gltf', portrait: 'assets/portraits/ninja.webp', expression: 'Weapon', altExpression: 'Punch',
-    role: 'Candy Assassin', move: 'Blade Flourish', bio: 'Hot-pink armour, crossed blades and a suspiciously relaxed expression.' },
-  { name: 'Evolved Goleling', color: 0x6eea36, belly: 0xff9237, trim: 0xb5ff7c, accent: 0x255c14,
+  },
+  { id: 'evolved-goleling', name: 'Winged Maw', color: 0x96b240, belly: 0xff9237, trim: 0x638012, accent: 0x255c14,
     model: 'assets/characters/evolved-goleling.gltf', portrait: 'assets/portraits/evolved-goleling.webp', expression: 'Yes', altExpression: 'Headbutt', flying: true,
-    role: 'Winged Glutton', move: 'Happy Howl', bio: 'All mouth, horns and green wings, with the happiest battle cry in the arena.' },
-  { name: 'Monkroose', color: 0xffd234, belly: 0xffed8b, trim: 0x8f845d, accent: 0x795a0a,
+  },
+  { id: 'monkroose', name: 'Ironclaw', color: 0x94ba57, belly: 0xffed8b, trim: 0xda6d27, accent: 0x795a0a,
     model: 'assets/characters/monkroose.gltf', portrait: 'assets/portraits/monkroose.webp', expression: 'Wave', altExpression: 'Punch',
-    role: 'Golden Scout', move: 'Friendly Feint', bio: 'Wide ears, lime armour, orange gloves and a patient face that misses nothing.' },
-  { name: 'Blue Demon', color: 0xff4aaf, belly: 0x55ddff, trim: 0xffa1d2, accent: 0x6e164d,
+  },
+  { id: 'blue-demon', name: 'Abyss Fiend', color: 0x398cac, belly: 0x55ddff, trim: 0xac6567, accent: 0x1f4f6e,
     model: 'assets/characters/blue-demon.gltf', portrait: 'assets/portraits/blue-demon.webp', expression: 'Punch', altExpression: 'No',
-    role: 'Neon Imp', move: 'Tail Swipe', bio: 'A midnight-blue demon with candy-pink eyes, huge ears and zero restraint.' },
-  { name: 'Birb', color: 0x4acbff, belly: 0xf2fbff, trim: 0xffdf49, accent: 0x155b8d,
+  },
+  { id: 'birb', name: 'Razorbeak', color: 0x2167c3, belly: 0xf2fbff, trim: 0x6692c0, accent: 0x155b8d,
     model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/birb.webp', expression: 'Yes', altExpression: 'Wave',
-    role: 'Ice-Plumed Rogue', move: 'Proud Strut', bio: 'A frosty blue bird-beast with bright eyes and a razor-clean silhouette.' },
-  { name: 'Dino', color: 0x8d49ff, belly: 0xe2c8ff, trim: 0xffe15c, accent: 0x34155f,
+  },
+  { id: 'dino', name: 'Doomfang', color: 0xc10449, belly: 0xe2c8ff, trim: 0xbf7755, accent: 0x5f1131,
     model: 'assets/characters/dino.gltf', portrait: 'assets/portraits/dino.webp', expression: 'No', altExpression: 'Punch',
-    role: 'Tiny Tyrant', move: 'Fang Protest', bio: 'A compact violet dinosaur with oversized tusks and permanent side-eye.' },
-  { name: 'Flying Tribal', color: 0xff5b45, belly: 0xffc3ba, trim: 0xffd236, accent: 0x872114,
+  },
+  { id: 'flying-tribal', name: 'Death Totem', color: 0xd34632, belly: 0xffc3ba, trim: 0x9b0708, accent: 0x872114,
     model: 'assets/characters/flying-tribal.gltf', portrait: 'assets/portraits/flying-tribal.webp', expression: 'Headbutt', altExpression: 'Yes', flying: true,
-    role: 'Masked Divebomber', move: 'Totem Charge', bio: 'A vivid red mask, stone fists and a nose-first approach to every problem.' },
-  { name: 'Frog', color: 0xffc83e, belly: 0xffdf79, trim: 0x3fcfff, accent: 0x59430a,
+  },
+  { id: 'frog', name: 'Hexjaw', color: 0xdb9d26, belly: 0xffdf79, trim: 0xb6873a, accent: 0x59430a,
     model: 'assets/characters/frog.gltf', portrait: 'assets/portraits/frog.webp', expression: 'Wave', altExpression: 'Punch',
-    role: 'Midnight Hopper', move: 'Cool Wave', bio: 'A gold-and-black frog with electric eyes and an unreadable poker face.' },
-  { name: 'Squidle', color: 0xff58aa, belly: 0xffb4da, trim: 0x75e8ff, accent: 0x7a1d55,
+  },
+  { id: 'squidle', name: 'Voidspawn', color: 0xce5b88, belly: 0xffb4da, trim: 0x142e4c, accent: 0x7a1d55,
     model: 'assets/characters/squidle.gltf', portrait: 'assets/portraits/squidle.webp', expression: 'Yes', altExpression: 'Headbutt', flying: true,
-    role: 'Jetstream Oddball', move: 'Aerial Cheer', bio: 'A hot-pink flying squid with icy eyes and an entrance made for the spotlight.' },
+  },
 ];
 
 // Fixed spawn corners in grid coordinates
@@ -7800,7 +7842,7 @@ const CharacterModels = (() => {
 
   function create(def) {
     const group = new THREE.Group();
-    group.userData.combatClass = def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    group.userData.combatClass = def.id || def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     group.userData.modelReady = false;
 
     // The seat ring is below the model, never across a face or body feature.
@@ -8264,7 +8306,7 @@ class Player {
     if (this.carrying) {
       this.carrying.mesh.position.set(
         this.mesh.position.x,
-        this.mesh.position.y + 1.25,
+        this.mesh.position.y + 2.2,
         this.mesh.position.z
       );
     }
@@ -8465,7 +8507,7 @@ class Player {
     /* Each class owns its proportions and primary geometry. Nothing below is a
        shared mascot with class parts stuck on afterwards. The widest solid point
        stays inside x +/-0.41 so VIEW_SCALE preserves the gameplay footprint. */
-    const combatClass = def.name.toLowerCase();
+    const combatClass = def.id || def.name.toLowerCase();
     g.userData.combatClass = combatClass;
     const anims = [];
     const boneMat = mat(0xb7b2a8, { roughness: 0.58, metalness: 0.28 });
@@ -10013,22 +10055,12 @@ class Player {
 
 // HOW BIG A CHARACTER IS DRAWN, and why it is two numbers.
 //
-// WIDTH IS AT ITS CEILING, and it was worth re-checking when the seat ring shrank
-// from 0.42 to 0.3 — the ring used to be the widest thing about a character, so
-// shrinking it looked like it had bought room to make them wider.
-//
-// It had not. MEASURED, the widest SOLID part is 0.41 — the feet and hands, not
-// the body capsule (0.3) and not the ring. A tile is 1.0 across, so the ceiling is
-// 0.5 / 0.41 = 1.22 and 1.19 was already sitting on it. Pushed to 1.34 the
-// footprint came out at 0.55 and the characters lapped over their neighbours'
-// tiles; the test caught it. Left where it was.
-//
-// HEIGHT HAS NO SUCH LIMIT: nothing collides vertically. So the characters are
-// made bigger by being made TALLER — 13% up on the old figure — which is what
-// actually buys screen presence from a camera 52 degrees above them. On these
-// egg-shaped bodies it reads as chunkier rather than stretched.
-Player.VIEW_SCALE = 1.19;
-Player.VIEW_SCALE_Y = 1.34;
+// The imported rigs were technically tile-sized but read as tiny from the full
+// arena camera. This is the largest shared visual scale that keeps every spawn
+// inside the board frame. Collision stays on PLAYER_RADIUS, so the larger models
+// improve recognition without changing movement or bomb timing.
+Player.VIEW_SCALE = 2.35;
+Player.VIEW_SCALE_Y = 2.65;
 
 /* ------------------------------------------------------------------ BOMB -- */
 class Bomb {
@@ -11683,12 +11715,7 @@ const UI = (function () {
         <div class="sbody">
           <div id="spreview">
             <div class="preview-fallback" aria-hidden="true"></div>
-            <span class="spreviewtag">LIVE PREVIEW</span>
             <div class="sname"></div>
-          </div>
-          <div class="sidentity">
-            <div class="smeta"><span class="srole"></span><span class="smove"></span></div>
-            <p class="sbio"></p>
           </div>
           <div class="sroster" role="listbox" aria-label="Choose fighter"></div>
         </div>
@@ -12199,9 +12226,10 @@ const UI = (function () {
     const box = select.querySelector('.sroster');
     box.innerHTML = PLAYER_DEFS.map((def, i) => {
       const colour = '#' + def.color.toString(16).padStart(6, '0');
-      return `<button class="charpick" data-class="${i}" role="option" style="--fighter:${colour}">` +
-        `<span class="charface" style="background-image:url('${def.portrait}')" aria-hidden="true"></span>` +
-        `<span class="charcopy"><b>${def.name}</b><small>${def.role}</small></span>` +
+      const portrait = `${def.portrait}?v=${BUILD_ID}`;
+      return `<button type="button" class="charpick" data-class="${i}" data-fighter-id="${def.id}" role="option" style="--fighter:${colour}">` +
+        `<span class="charface" style="background-image:url('${portrait}')" aria-hidden="true"></span>` +
+        `<span class="charcopy"><b>${def.name}</b></span>` +
         `<span class="charindex">${String(i + 1).padStart(2, '0')}</span>` +
         `<i aria-hidden="true"></i>` +
       `</button>`;
@@ -12245,6 +12273,7 @@ const UI = (function () {
   function bindSelect(handlers) {
     select.querySelectorAll('.charpick').forEach(el => {
       const choose = () => handlers.onClass(Number(el.dataset.class));
+      el.addEventListener('pointerdown', choose, { passive: true });
       el.addEventListener('mouseenter', choose);
       el.addEventListener('focus', choose);
       el.addEventListener('click', choose);
@@ -12267,14 +12296,10 @@ const UI = (function () {
     });
     const onFight = sel === PLAYER_DEFS.length;
     select.querySelector('[data-srow="fight"]').classList.toggle('sel', onFight);
-    select.querySelector('.srole').textContent = def.role;
-    select.querySelector('.smove').textContent = def.move;
-    select.querySelector('.sbio').textContent = def.bio;
-    select.querySelector('.spreviewtag').textContent = 'ANIMATING  ·  ' + def.move.toUpperCase();
     const portrait = select.querySelector('.preview-fallback');
     if (portrait) {
-      portrait.dataset.fighter = def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      portrait.style.backgroundImage = `url('${def.portrait}')`;
+      portrait.dataset.fighter = def.id;
+      portrait.style.backgroundImage = `url('${def.portrait}?v=${BUILD_ID}')`;
     }
     punchPreviewHole();
   }
@@ -12894,8 +12919,9 @@ const Game = (function () {
     // Normal visits still start on the front screen.
     const previewFighter = new URLSearchParams(window.location.search).get('preview');
     if (previewFighter) {
+      const key = previewFighter.toLowerCase();
       const previewIndex = PLAYER_DEFS.findIndex(
-        def => def.name.toLowerCase() === previewFighter.toLowerCase()
+        def => def.id === key || def.name.toLowerCase() === key
       );
       if (previewIndex >= 0) {
         g.selectedClass = previewIndex;
@@ -13250,12 +13276,14 @@ const Game = (function () {
     // which could make the entire roster appear back-first.
     pv.turn.rotation.y = -0.28;
     const previewDef = PLAYER_DEFS[g.selectedClass];
-    pv.rim.color.setHex(previewDef.color);
-    pv.fill.color.setHex(previewDef.trim || previewDef.color).lerp(new THREE.Color(0xffffff), 0.18);
+    pv.rim.color.setHex(PORTRAIT_CAPTURE_MODE ? 0xffffff : previewDef.color);
+    pv.fill.color.setHex(PORTRAIT_CAPTURE_MODE ? 0xffffff : (previewDef.trim || previewDef.color)).lerp(new THREE.Color(0xffffff), 0.18);
     pv.halo.material.color.setHex(previewDef.color);
     pv.orbit.material.color.setHex(previewDef.trim || previewDef.color);
+    pv.halo.visible = !PORTRAIT_CAPTURE_MODE;
+    pv.orbit.visible = !PORTRAIT_CAPTURE_MODE;
     pv.mesh = Player.buildMesh(previewDef, defaultLoadout());
-    Player.applyViewScale(pv.mesh, previewDef.flying ? 1.34 : 1.17);
+    Player.applyViewScale(pv.mesh, previewDef.flying ? 0.68 : 0.60);
     pv.mesh.position.set(0, -0.4, 0);
     pv.turn.add(pv.mesh);
     pv.bomb = null;
@@ -13284,7 +13312,9 @@ const Game = (function () {
     const stageTime = performance.now() * 0.001;
     pv.halo.material.opacity = 0.17 + Math.sin(stageTime * 1.8) * 0.025;
     pv.orbit.rotation.z = -0.35 + stageTime * 0.035;
-    const stage = new THREE.Color(0x080b14).lerp(new THREE.Color(PLAYER_DEFS[g.selectedClass].color), 0.18);
+    const stage = PORTRAIT_CAPTURE_MODE
+      ? new THREE.Color(0x0c1119)
+      : new THREE.Color(0x080b14).lerp(new THREE.Color(PLAYER_DEFS[g.selectedClass].color), 0.18);
     r.setClearColor(stage, 1);
     r.setScissorTest(false);
     r.setViewport(0, 0, w, hh);
@@ -13413,7 +13443,7 @@ const Game = (function () {
     turn.rotation.y = -0.28;
     scene.add(turn);
     const mesh = Player.buildMesh(winner.def, winner.kit || defaultLoadout());
-    Player.applyViewScale(mesh, winner.def.flying ? 1.42 : 1.18);
+    Player.applyViewScale(mesh, winner.def.flying ? 0.72 : 0.60);
     mesh.position.y = -0.42;
     turn.add(mesh);
 
@@ -14866,7 +14896,7 @@ function initStaticLoadout(error) {
   UI.showSelect(true);
   const requested = new URLSearchParams(location.search).get('preview') || '';
   let selected = Math.max(0, PLAYER_DEFS.findIndex(
-    def => def.name.toLowerCase() === requested.toLowerCase()
+    def => def.id === requested.toLowerCase() || def.name.toLowerCase() === requested.toLowerCase()
   ));
   const render = () => {
     UI.renderSelect(selected, selected);

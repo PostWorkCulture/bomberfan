@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="c2b781d">
+<meta name="build" content="d7f42ac">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -3010,6 +3010,7 @@ const LEVELS = [
     hard: 0x1d3a63, hardTop: 0x36609e, border: 0x122642,            // deep blue ice
     softDensity: 0.68,
     props: ['snowman', 'icespike'],
+    hazardCount: 2,
     // Two fighters start on each island. The short clear lists preserve room
     // for crates on the compact 5x5 floors without boxing anyone in.
     spawns: [
@@ -4112,6 +4113,21 @@ const Audio3 = (function () {
                        cut: 2600, cutTo: 1200, attack: 0.006, hold: 0.005, room: 0.6 });
       thump(c, o, t, { from: f * 0.5, to: f * 0.34, dur: 0.16, vol: 0.10, glide: 0.06 });
     },
+    go(c, o, t) {
+      // A low tritone growl replaces the bright final countdown note. The two
+      // detuned bodies pitch down together while a muffled breath opens behind
+      // them: heavy and demonic, without becoming a sharp jump-scare.
+      thump(c, o, t, { from: 115, to: 28, glide: 0.22, dur: 0.72, vol: 0.46, room: 0.8 });
+      voice(c, o, t, { type: 'sawtooth', freq: 82.41, to: 46.25, glide: 0.55,
+                       dur: 0.78, vol: 0.22, cut: 820, cutTo: 130, q: 0.65,
+                       detune: -19, attack: 0.018, hold: 0.2, room: 1.15 });
+      voice(c, o, t + 0.025, { type: 'triangle', freq: 116.54, to: 55,
+                               glide: 0.46, dur: 0.64, vol: 0.15,
+                               cut: 980, cutTo: 180, detune: 13,
+                               attack: 0.02, hold: 0.16, room: 0.9 });
+      hiss(c, o, t + 0.015, { dur: 0.46, vol: 0.10, cut: 360, cutTo: 150,
+                              band: true, q: 0.75, attack: 0.025, room: 0.75 });
+    },
 
     // --- Bombs and blasts ------------------------------------------------
     placeBomb(c, o, t) {
@@ -4740,6 +4756,7 @@ const Audio3 = (function () {
     menuMove()   { play('menuMove'); },
     menuSelect() { play('menuSelect'); },
     countdown(hi){ play('countdown', hi); },
+    go()         { play('go'); },
     roundWin()   { play('roundWin'); },
     matchWin()   { play('matchWin'); },
     pause()      { play('pause'); },
@@ -7166,6 +7183,7 @@ const Props = (function () {
     // bombs onto the board (see Game.updateHazard) — the arena itself joins in
     // rather than being scenery you stop noticing after two rounds.
     snowman(g, angry) {
+      g.userData.scale = 1.35;
       const body = angry ? 0xe03024 : 0xf2f8ff;
       [[0.3, 0.3], [0.22, 0.72], [0.16, 1.02]].forEach(([r, y]) => {
         const ball = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), mat(body, { roughness: 0.5 }));
@@ -7565,25 +7583,40 @@ const Props = (function () {
   // `k` runs 0 -> 1 across the wind-up. The bomb appears, the arm draws back and
   // the fuse sparks harder as the throw approaches, so the last half second reads
   // as "now" rather than as more of the same.
-  function windUp(k) {
-    if (!heldBomb) return;
-    if (k === null) { heldBomb.visible = false; if (angryGroup) angryGroup.rotation.z = 0; return; }
-    heldBomb.visible = true;
+  function windActor(actor, k) {
+    if (!actor || !actor.bomb) return;
+    if (k === null) {
+      actor.bomb.visible = false;
+      if (actor.group) actor.group.rotation.z = 0;
+      return;
+    }
+    actor.bomb.visible = true;
     const e = Math.min(1, Math.max(0, k));
-    heldBomb.scale.setScalar(0.6 + 0.4 * Math.min(1, e * 4));
+    actor.bomb.scale.setScalar(0.6 + 0.4 * Math.min(1, e * 4));
     // draw back and up
-    heldBomb.position.set(0.34 + e * 0.16, 0.62 + e * 0.5, 0.1 - e * 0.24);
-    if (angryGroup) angryGroup.rotation.z = -e * 0.22;
-    const sp = heldBomb.userData.spark;
+    actor.bomb.position.set(0.34 + e * 0.16, 0.62 + e * 0.5, 0.1 - e * 0.24);
+    if (actor.group) actor.group.rotation.z = -e * 0.22;
+    const sp = actor.bomb.userData.spark;
     if (sp) sp.scale.setScalar(0.7 + e * 1.6 + Math.random() * 0.4);
   }
 
+  // With two throwers only the active one winds up. Omitting an index clears
+  // every hand, which is what round teardown needs.
+  function windUp(k, index) {
+    if (index === undefined || index === null) {
+      hazards.forEach(actor => windActor(actor, k));
+      return;
+    }
+    windActor(hazards[index % hazards.length], k);
+  }
+
   // Where the thrown bomb leaves from, in world units — the hand, not the tile.
-  function throwOrigin() {
-    if (!heldBomb || !angryGroup) return null;
-    heldBomb.updateMatrixWorld(true);
+  function throwOrigin(index) {
+    const actor = hazards.length ? hazards[(index || 0) % hazards.length] : null;
+    if (!actor || !actor.bomb || !actor.group) return null;
+    actor.bomb.updateMatrixWorld(true);
     const v = new THREE.Vector3();
-    heldBomb.getWorldPosition(v);
+    actor.bomb.getWorldPosition(v);
     return v;
   }
 
@@ -7626,9 +7659,7 @@ const Props = (function () {
   ];
 
   // Build every prop for a level and return one group to add to the scene
-  let angryPos = null;          // grid tile the angry snowman stands on, or null
-  let angryGroup = null;        // ...and the group itself, so it can hold things
-  let heldBomb = null;          // the red bomb it winds up with before throwing
+  let hazards = [];             // active red throwers: { pos, group, bomb }
   // HOW HIGH THE BACK ROW REACHES, in world units, drift included.
   //
   // The card strip is placed just above the arena, and "the arena" used to mean
@@ -7643,14 +7674,13 @@ const Props = (function () {
   function build(level, wx, wz) {
     const group = new THREE.Group();
     clear();                    // the old props are about to be disposed
-    angryPos = null;
-    angryGroup = null;
-    heldBomb = null;
+    hazards = [];
     backTop = 0;
-    let angryDone = false;
+    let angryBuilt = 0;
     const kinds = level.props || [];
     if (!kinds.length) return group;
     const spots = level.propSpots || SPOTS;
+    const hazardLimit = Math.max(1, level.hazardCount || 1);
 
     spots.forEach((spot, i) => {
       const kind = kinds[i % kinds.length];
@@ -7665,15 +7695,14 @@ const Props = (function () {
       // written in here, which was fine while Glacier was the only map with a
       // hazard and would have quietly made the witch harmless the moment a
       // second one existed.
-      const angry = !!level.hazard && kind === level.hazard && !angryDone;
+      const angry = !!level.hazard && kind === level.hazard && angryBuilt < hazardLimit;
       builder(g, angry);
       if (angry) {
         addScowl(g, kind);
-        angryDone = true;
-        angryPos = [spot[0], spot[1]];
-        angryGroup = g;
-        heldBomb = buildHeldBomb();
-        g.add(heldBomb);
+        angryBuilt++;
+        const bomb = buildHeldBomb();
+        g.add(bomb);
+        hazards.push({ pos: [spot[0], spot[1]], group: g, bomb });
       }
       g.position.set(wx(spot[0]), 1.02, wz(spot[1]));
       g.rotation.y = spot[2] + (i % 2 ? 0.25 : -0.2);
@@ -7856,9 +7885,14 @@ const Props = (function () {
            // World y the back row reaches, drift included. 0 on a bare level.
            get backTop() { return backTop; },
            windUp, throwOrigin,
-           get holding() { return !!heldBomb && heldBomb.visible; },
-           // Null on every map without one, which is what switches the hazard off
-           get angryAt() { return angryPos; } };
+           get holding() { return hazards.some(h => h.bomb && h.bomb.visible); },
+           get hazardCount() { return hazards.length; },
+           hazardAt(index) {
+             const actor = hazards.length ? hazards[(index || 0) % hazards.length] : null;
+             return actor ? actor.pos : null;
+           },
+           // Kept for diagnostics that only need to know whether a map has one.
+           get angryAt() { return hazards.length ? hazards[0].pos : null; } };
 })();
 
 
@@ -13697,6 +13731,9 @@ const Game = (function () {
     g.sdStagger = 0;
     g.cratesClearedAt = -1;
     g.hazardT = 0;
+    g.hazardTarget = null;
+    g.hazardSource = null;
+    g.hazardNext = 0;
     g.sdWarned = false;
     g.heartHinted = false;
     g.roundElapsed = 0;
@@ -13727,7 +13764,7 @@ const Game = (function () {
     g.fallingBlocks = [];
     // A bomb still in the witch's hand when the round ends would sit there
     // through the winner banner and the whole of the next round's build.
-    g.hazardT = 0; g.hazardTarget = null;
+    g.hazardT = 0; g.hazardTarget = null; g.hazardSource = null; g.hazardNext = 0;
     if (typeof Props !== 'undefined' && Props.windUp) Props.windUp(null);
     World.clearHeartFlash();
   }
@@ -14045,36 +14082,57 @@ const Game = (function () {
   }
 
   function hazardStep(dt) {
-    const at = Props.angryAt;
-    if (!at) { g.hazardT = 0; g.hazardTarget = null; Props.windUp(null); return; }
+    const count = Props.hazardCount || 0;
+    if (!count) {
+      g.hazardT = 0; g.hazardTarget = null; g.hazardSource = null;
+      Props.windUp(null);
+      return;
+    }
     g.hazardT = (g.hazardT || 0) + dt;
 
-    const windStart = CFG.HAZARD_EVERY - CFG.HAZARD_WINDUP;
+    // Two throwers alternate at half the old interval. Each individual snowman
+    // still throws once every HAZARD_EVERY seconds, but Glacier now receives a
+    // warning and a bomb from one side or the other twice as often.
+    const cadence = CFG.HAZARD_EVERY / count;
+    const windStart = cadence - CFG.HAZARD_WINDUP;
     if (g.hazardT < windStart) return;
 
     // Pick the tile at the START of the wind-up, not at the throw: the arc has to
     // be aimed at something, and re-picking it at the last moment would make the
     // wind-up a lie.
     if (!g.hazardTarget) {
+      g.hazardSource = (g.hazardNext || 0) % count;
       g.hazardTarget = freeHazardTile();
-      if (!g.hazardTarget) { g.hazardT = 0; return; }   // nowhere to put it; wait
+      if (!g.hazardTarget) {
+        g.hazardT = 0; g.hazardSource = null;
+        return;                                          // nowhere to put it; wait
+      }
       Audio3.hazardWind();
     }
-    if (g.hazardT < CFG.HAZARD_EVERY) {
-      Props.windUp((g.hazardT - windStart) / CFG.HAZARD_WINDUP);
+    const source = (g.hazardSource || 0) % count;
+    const at = Props.hazardAt(source);
+    if (!at) {
+      g.hazardT = 0; g.hazardTarget = null; g.hazardSource = null;
+      Props.windUp(null);
+      return;
+    }
+    if (g.hazardT < cadence) {
+      Props.windUp((g.hazardT - windStart) / CFG.HAZARD_WINDUP, source);
       return;
     }
 
     const t = g.hazardTarget;
     g.hazardTarget = null;
     g.hazardT = 0;
-    Props.windUp(null);
+    const hand = Props.throwOrigin(source);
+    Props.windUp(null, source);
+    g.hazardNext = (source + 1) % count;
+    g.hazardSource = null;
 
     const bomb = new Bomb(at[0], at[1], HAZARD);
     // Straight into the air, from the hand. It is NOT registered on a tile until
     // it lands — registerBomb runs at the end of the flight — so nothing collides
     // with a bomb that is still overhead.
-    const hand = Props.throwOrigin();
     const dist = Math.hypot(t.x - at[0], t.y - at[1]);
     bomb.fx = at[0]; bomb.fy = at[1];
     bomb.flight = {
@@ -14890,7 +14948,7 @@ const Game = (function () {
           // have to move; g.goT clears it and hands the clock back.
           UI.setCountdown('GO!');
           g.goT = CFG.GO_HOLD;
-          Audio3.countdown(true);
+          Audio3.go();
         }
         break;
       }

@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="d7f42ac">
+<meta name="build" content="6a2a7a6">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -3034,6 +3034,7 @@ const LEVELS = [
     // Props: a second level with a hazard is exactly when a hardcoded 'snowman'
     // stops being a shortcut and starts being a bug.
     id: 'haunted', name: 'Haunted House',
+    layout: 'clockwork-maze',
     sky: 0x0a0512,
     ground: [21, 14, 28],             // rotten floorboards in the dark
     groundLine: 'rgba(168,120,255,0.13)',
@@ -3047,6 +3048,31 @@ const LEVELS = [
     // the camera and bigger, and the back row gets the two short ones.
     props: ['gravestone', 'pumpkin', 'ghost', 'witch', 'ghost', 'ghost'],
     hazard: 'witch',
+  },
+  {
+    // A spectral express split into three playable carriages. Electric cyan,
+    // toxic green and hot magenta keep it deliberately separate from Haunted
+    // House's burnt orange stone and restrained purple gloom.
+    id: 'haunted-train', name: 'Haunted Train',
+    layout: 'haunted-train',
+    sky: 0x120525,
+    ground: [64, 24, 104],
+    groundLine: 'rgba(70,255,230,0.32)',
+    crate: '#16e0d0', crateBand: '#ff3cac', crateEdge: '#5a1499',
+    hard: 0x159d8c, hardTop: 0x75ffcf, border: 0x5b176f,
+    softDensity: 0.66,
+    spawns: [
+      { x: 1,  y: 2, clear: [[0, 0], [1, 0], [0, 1]] },
+      { x: 4,  y: 10, clear: [[0, 0], [-1, 0], [0, -1]] },
+      { x: 10, y: 2, clear: [[0, 0], [1, 0], [0, 1]] },
+      { x: 13, y: 10, clear: [[0, 0], [-1, 0], [0, -1]] },
+    ],
+    props: ['conductor'],
+    propSpots: [
+      [2, 4, 0, 'conductor', 1.12], [3, 8, 0, 'luggage', 1.0],
+      [7, 4, 0, 'spectralengine', 1.08], [8, 8, 0, 'lantern', 1.2],
+      [12, 4, 0, 'conductor', 1.08], [11, 8, 0, 'luggage', 1.0],
+    ],
   },
   {
     // THE FACTORY. Two conveyor loops, and they carry bombs as well as people —
@@ -3080,17 +3106,37 @@ const LEVELS = [
     props: ['pylon', 'server'],
   },
   {
-    // CARTOON SUBURBIA, replacing Temple. Original artwork throughout — a donut
-    // and a cooling tower are ordinary objects, and nothing here copies a
-    // copyrighted character design or uses a trademarked name.
-    id: 'donut', name: 'Donut Town',
-    sky: 0x0b1430,
-    ground: [126, 196, 80],           // mown suburban lawn
-    groundLine: 'rgba(20,70,20,0.22)',
-    crate: '#ff7ac2', crateBand: '#ef4fa6', crateEdge: '#b9247a',   // frosted pink
-    hard: 0xffd21f, hardTop: 0xffe97a, border: 0xc79a00,            // cartoon yellow
-    softDensity: 0.72,
-    props: ['donut', 'coolingtower'],
+    // Two full ships with three gangplanks between them. Four red cannons take
+    // turns firing while the remaining guns, crews, masts and treasure make the
+    // arena read as a fleet rather than a wooden recolour of the standard grid.
+    id: 'pirate', name: 'Pirate Fleet',
+    layout: 'pirate-fleet',
+    sky: 0x031b35,
+    ground: [126, 74, 35],
+    groundLine: 'rgba(255,214,126,0.24)',
+    crate: '#d99a42', crateBand: '#7d401c', crateEdge: '#3d1d10',
+    hard: 0x254860, hardTop: 0x4c8aa7, border: 0x522713,
+    softDensity: 0.67,
+    spawns: [
+      { x: 1,  y: 1, clear: [[0, 0], [1, 0], [0, 1]] },
+      { x: 6,  y: 11, clear: [[0, 0], [-1, 0], [0, -1]] },
+      { x: 8,  y: 1, clear: [[0, 0], [1, 0], [0, 1]] },
+      { x: 13, y: 11, clear: [[0, 0], [-1, 0], [0, -1]] },
+    ],
+    props: ['cannon'],
+    hazard: 'cannon',
+    hazardCount: 4,
+    propSpots: [
+      [1, 4, -Math.PI / 2, 'cannon', 1.15], [13, 4, Math.PI / 2, 'cannon', 1.15],
+      [6, 8, Math.PI / 2, 'cannon', 1.1], [8, 8, -Math.PI / 2, 'cannon', 1.1],
+      [1, 8, -Math.PI / 2, 'cannon', 1.0], [13, 8, Math.PI / 2, 'cannon', 1.0],
+      [6, 4, Math.PI / 2, 'cannon', 1.0], [8, 4, -Math.PI / 2, 'cannon', 1.0],
+      [3, 4, 0, 'mast', 1.18], [4, 8, 0, 'mast', 1.08],
+      [10, 4, 0, 'mast', 1.18], [11, 8, 0, 'mast', 1.08],
+      [2, 6, 0, 'pirate', 1.0], [5, 6, Math.PI, 'pirate', 1.0],
+      [9, 6, 0, 'pirate', 1.0], [12, 6, Math.PI, 'pirate', 1.0],
+      [3, 10, 0, 'barrels', 1.0], [11, 2, 0, 'treasure', 1.08],
+    ],
   },
 ];
 
@@ -4490,7 +4536,8 @@ const Audio3 = (function () {
     haunted: { root: 36.71, pattern: [1, 0, 0, 0, 0, 0.45, 0, 0], beat: 0.55, cut: 180, type: 'triangle', wob: 0.35 },
     factory: { root: 41.20, pattern: [1, 0, 0.7, 0, 1, 0, 0.7, 0], beat: 0.32, cut: 340, type: 'triangle', wob: 0.0 },
     circuit: { root: 46.25, pattern: [1, 0, 0.6, 0, 0.8, 0, 0.6, 0.4], beat: 0.30, cut: 380, type: 'triangle', wob: 0.0 },
-    donut:   { root: 58.27, pattern: [1, 0, 0, 0.5, 0, 0.5, 0, 0], beat: 0.38, cut: 320, type: 'sine',     wob: 0.0 },
+    'haunted-train': { root: 46.25, pattern: [1, 0, 0.7, 0.35, 0, 0.9, 0, 0.5], beat: 0.31, cut: 430, type: 'triangle', wob: 0.5 },
+    pirate:  { root: 55.00, pattern: [1, 0, 0.55, 0, 0.8, 0.35, 0, 0.55], beat: 0.36, cut: 330, type: 'sine', wob: 0.08 },
   };
   const BASS_DEFAULT = BASS.forest;
   const BASS_LEVEL = 0.5;            // against MUSIC.LEVEL, on the same bus
@@ -5475,6 +5522,7 @@ const World = (function () {
     softMeshes: null,        // Map "x,y" -> mesh, for destructible crates
     hidden: null,            // Map "x,y" -> power-up id concealed under a crate
     group: null,             // everything that gets rebuilt each round
+    clockwork: null,         // Haunted House's live rotating maze sections
     shake: 0,
   };
 
@@ -5639,6 +5687,40 @@ const World = (function () {
     MAT.border = new THREE.MeshStandardMaterial({ color: L0.border, roughness: 0.85 });
     MAT.bridge = new THREE.MeshStandardMaterial({ color: 0x82502c, roughness: 0.88, metalness: 0.02 });
     MAT.rope = new THREE.MeshStandardMaterial({ color: 0xc69a57, roughness: 0.92, metalness: 0.01 });
+    MAT.sea = new THREE.MeshStandardMaterial({
+      color: 0x075b88, roughness: 0.26, metalness: 0.12,
+      emissive: 0x01293d, emissiveIntensity: 0.6,
+    });
+    MAT.shipHull = new THREE.MeshStandardMaterial({ color: 0x3b170d, roughness: 0.78 });
+    MAT.shipRail = new THREE.MeshStandardMaterial({ color: 0x723916, roughness: 0.66 });
+    MAT.shipGold = new THREE.MeshStandardMaterial({
+      color: 0xffc84a, roughness: 0.26, metalness: 0.76,
+      emissive: 0x4f2600, emissiveIntensity: 0.35,
+    });
+    MAT.trainVoid = new THREE.MeshStandardMaterial({
+      color: 0x10031f, roughness: 0.58, emissive: 0x27044d, emissiveIntensity: 0.8,
+    });
+    MAT.trainHull = new THREE.MeshStandardMaterial({
+      color: 0x351162, roughness: 0.44, metalness: 0.35,
+      emissive: 0x190432, emissiveIntensity: 0.65,
+    });
+    MAT.trainRail = new THREE.MeshStandardMaterial({ color: 0xb7c5d8, roughness: 0.26, metalness: 0.86 });
+    MAT.trainSleeper = new THREE.MeshStandardMaterial({ color: 0x461f62, roughness: 0.72 });
+    MAT.trainWheel = new THREE.MeshStandardMaterial({ color: 0x16203a, roughness: 0.4, metalness: 0.74 });
+    MAT.trainGlow = new THREE.MeshBasicMaterial({ color: 0x58ffe4, toneMapped: false });
+    MAT.trainPink = new THREE.MeshBasicMaterial({ color: 0xff3cac, toneMapped: false });
+    MAT.clockwork = new THREE.MeshStandardMaterial({
+      color: 0x7b351c, roughness: 0.36, metalness: 0.72,
+      emissive: 0x321006, emissiveIntensity: 0.45,
+    });
+    MAT.clockworkTrim = new THREE.MeshStandardMaterial({
+      color: 0xe0a33c, roughness: 0.28, metalness: 0.84,
+      emissive: 0x513000, emissiveIntensity: 0.4,
+    });
+    MAT.clockworkGear = new THREE.MeshStandardMaterial({
+      color: 0xffcf5a, roughness: 0.22, metalness: 0.9,
+    });
+    MAT.clockworkGlow = new THREE.MeshBasicMaterial({ color: 0xff5b25, toneMapped: false });
     state.level = L0;
     MAT.bomb = new THREE.MeshStandardMaterial({ color: bombColourFor(L0), roughness: 0.35, metalness: 0.35 });
     // Unlit + additive + toneMapped:false keeps the fire vivid orange instead
@@ -6012,6 +6094,10 @@ const World = (function () {
   function disposeGroup() {
     state.group.traverse(o => {
       if (o.isMesh && o.geometry && o.userData.ownGeometry) o.geometry.dispose();
+      if (o.isMesh && o.material && o.userData.ownMaterial) {
+        const materials = Array.isArray(o.material) ? o.material : [o.material];
+        materials.forEach(m => m.dispose());
+      }
     });
     state.group.clear();
   }
@@ -6111,22 +6197,80 @@ const World = (function () {
     ],
   };
 
-  function seedTwinIslands(grid, voids) {
+  const PIRATE_FLEET = {
+    floors: [[1, 1, 6, 11], [8, 1, 13, 11]],
+    paths: [
+      [6, 2], [7, 2], [8, 2],
+      [6, 6], [7, 6], [8, 6],
+      [6, 10], [7, 10], [8, 10],
+    ],
+    pillars: [
+      [1, 4], [13, 4], [6, 8], [8, 8],
+      [1, 8], [13, 8], [6, 4], [8, 4],
+      [3, 4], [4, 8], [10, 4], [11, 8],
+      [2, 6], [5, 6], [9, 6], [12, 6],
+      [3, 10], [11, 2],
+    ],
+  };
+
+  const HAUNTED_TRAIN = {
+    floors: [[1, 2, 4, 10], [6, 2, 8, 10], [10, 2, 13, 10]],
+    paths: [
+      [5, 5], [5, 6], [5, 7],
+      [9, 5], [9, 6], [9, 7],
+    ],
+    pillars: [[2, 4], [3, 8], [7, 4], [8, 8], [12, 4], [11, 8]],
+  };
+
+  // Four three-tile copper walls. Each section reserves both its horizontal
+  // and vertical footprint before crates are dealt, so a turn can never reveal
+  // a crate inside a wall or silently delete a hidden pickup.
+  const CLOCKWORK_SECTIONS = [
+    { x: 3, y: 3 }, { x: 11, y: 3 },
+    { x: 3, y: 9 }, { x: 11, y: 9 },
+  ];
+  const clockworkCells = (section, vertical) => vertical
+    ? [[section.x, section.y - 1], [section.x, section.y], [section.x, section.y + 1]]
+    : [[section.x - 1, section.y], [section.x, section.y], [section.x + 1, section.y]];
+
+  function seedShapedLayout(grid, voids, shape) {
     grid.fill(CELL.HARD);
     voids.fill(1);
     const open = (x, y) => {
       grid[idx(x, y)] = CELL.EMPTY;
       voids[idx(x, y)] = 0;
     };
-    TWIN_ISLANDS.floors.forEach(([x0, y0, x1, y1]) => {
+    shape.floors.forEach(([x0, y0, x1, y1]) => {
       for (let y = y0; y <= y1; y++)
         for (let x = x0; x <= x1; x++) open(x, y);
     });
-    TWIN_ISLANDS.bridge.forEach(([x, y]) => open(x, y));
-    TWIN_ISLANDS.pillars.forEach(([x, y]) => {
+    (shape.bridge || shape.paths || []).forEach(([x, y]) => open(x, y));
+    shape.pillars.forEach(([x, y]) => {
       grid[idx(x, y)] = CELL.HARD;
       voids[idx(x, y)] = 0;
     });
+  }
+
+  function initClockwork(grid) {
+    const all = new Set();
+    CLOCKWORK_SECTIONS.forEach(section => {
+      clockworkCells(section, false).forEach(([x, y]) => {
+        grid[idx(x, y)] = CELL.HARD;
+        all.add(key(x, y));
+      });
+      clockworkCells(section, true).forEach(([x, y]) => all.add(key(x, y)));
+    });
+    state.clockwork = {
+      vertical: false,
+      timer: 7.5,
+      turning: false,
+      progress: 0,
+      switched: false,
+      angle: 0,
+      pulse: 0,
+      cells: all,
+      groups: [],
+    };
   }
 
   function buildArena(rng, level) {
@@ -6144,10 +6288,15 @@ const World = (function () {
     state.rules = new Int8Array(CFG.COLS * CFG.ROWS);
     state.padPairs = new Map();
 
-    // 1. Hard layout: either Glacier's two islands or the classic rectangle.
-    const twinIslands = state.level.layout === 'twin-islands';
-    if (twinIslands) {
-      seedTwinIslands(grid, state.voids);
+    // 1. Hard layout: shaped maps use their own playable decks; everything
+    // else begins with the classic rectangle and may layer a live mechanic on it.
+    const layout = state.level.layout;
+    const shape = layout === 'twin-islands' ? TWIN_ISLANDS
+                : layout === 'pirate-fleet' ? PIRATE_FLEET
+                : layout === 'haunted-train' ? HAUNTED_TRAIN : null;
+    state.clockwork = null;
+    if (shape) {
+      seedShapedLayout(grid, state.voids, shape);
     } else {
       for (let y = 0; y < CFG.ROWS; y++) {
         for (let x = 0; x < CFG.COLS; x++) {
@@ -6156,6 +6305,7 @@ const World = (function () {
           grid[idx(x, y)] = (border || pillar) ? CELL.HARD : CELL.EMPTY;
         }
       }
+      if (layout === 'clockwork-maze') initClockwork(grid);
     }
 
     // THE LATTICE IS COMPLETE — all 30 pillars, corners included.
@@ -6177,7 +6327,10 @@ const World = (function () {
     });
     // The bridge is a route, never a crate lottery. Include both landing planks
     // so each island always has a clean approach to it.
-    if (twinIslands) TWIN_ISLANDS.bridge.forEach(([x, y]) => safe.add(key(x, y)));
+    if (shape) (shape.bridge || shape.paths || []).forEach(([x, y]) => safe.add(key(x, y)));
+    // A rotating wall's destination must remain genuinely empty for the whole
+    // round. Occupants delay a turn; crates must never be dealt there at all.
+    if (state.clockwork) state.clockwork.cells.forEach(k => safe.add(k));
 
     // 3. Scatter crates
     const puBag = weightedBag(rng);
@@ -6263,6 +6416,7 @@ const World = (function () {
           m.position.set(wx(x), MARK_Y - 0.004, wz(y));
           m.renderOrder = 3;
           m.userData.ownGeometry = true;
+          m.userData.ownMaterial = true;
           g.add(m);
           continue;
         }
@@ -6281,10 +6435,24 @@ const World = (function () {
           m.position.set(wx(x), MARK_Y - 0.004, wz(y));
           m.renderOrder = 3;
           m.userData.ownGeometry = true;
+          m.userData.ownMaterial = true;
           g.add(m);
         }
       }
     }
+  }
+
+  // MAT.ground repeats 15×13 for the full board. Shaped panels use only a
+  // fraction of that UV range so the visible grid remains exactly one square
+  // per gameplay tile, regardless of a deck/carriage's size.
+  function tiledFloorGeometry(width, depth) {
+    const geometry = new THREE.PlaneGeometry(width * CFG.TILE, depth * CFG.TILE);
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+      uv.setXY(i, uv.getX(i) * width / CFG.COLS, uv.getY(i) * depth / CFG.ROWS);
+    }
+    uv.needsUpdate = true;
+    return geometry;
   }
 
   function buildTwinIslandFloor(g) {
@@ -6295,7 +6463,7 @@ const World = (function () {
       slab.position.set(wx(x), -0.17, wz(y));
       slab.castShadow = slab.receiveShadow = true;
       slab.userData.ownGeometry = true;
-      const top = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), MAT.ground);
+      const top = new THREE.Mesh(tiledFloorGeometry(5, 5), MAT.ground);
       top.rotation.x = -Math.PI / 2;
       top.position.set(wx(x), 0.002, wz(y));
       top.receiveShadow = true;
@@ -6350,12 +6518,239 @@ const World = (function () {
     });
   }
 
+  function buildPirateFleetFloor(g) {
+    // The arena is two complete ships floating over visible ocean, not a brown
+    // rectangle with a gap painted into it. The logical decks above match these
+    // slabs exactly; the hull and rails sit outside the playable footprint.
+    const ocean = new THREE.Mesh(
+      new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE), MAT.sea);
+    ocean.rotation.x = -Math.PI / 2;
+    ocean.position.y = -0.54;
+    ocean.receiveShadow = true;
+    ocean.userData.ownGeometry = true;
+    g.add(ocean);
+
+    [[3.5, 6], [10.5, 6]].forEach(([cx, cy], shipIndex) => {
+      const hull = new THREE.Mesh(new THREE.BoxGeometry(6.18, 0.48, 11.22), MAT.shipHull);
+      hull.position.set(wx(cx), -0.27, wz(cy));
+      hull.castShadow = hull.receiveShadow = true;
+      hull.userData.ownGeometry = true;
+      const deck = new THREE.Mesh(tiledFloorGeometry(6, 11), MAT.ground);
+      deck.rotation.x = -Math.PI / 2;
+      deck.position.set(wx(cx), 0.004, wz(cy));
+      deck.receiveShadow = true;
+      deck.userData.ownGeometry = true;
+      g.add(hull, deck);
+
+      // Gunwales and gold trim outline each ship without occupying a gameplay
+      // tile. Broken runs leave the three gangplank landings visually open.
+      const outerX = shipIndex ? 13.58 : 0.42;
+      const innerX = shipIndex ? 7.42 : 6.58;
+      const outerRail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.34, 11.08), MAT.shipRail);
+      outerRail.position.set(wx(outerX), 0.15, wz(cy));
+      outerRail.castShadow = true;
+      outerRail.userData.ownGeometry = true;
+      g.add(outerRail);
+      // The inner gunwales stop at every gangplank. These are real openings in
+      // the silhouette, matching the three logical crossing routes exactly.
+      [[1, 1], [4, 3], [8, 3], [11, 1]].forEach(([segmentY, length]) => {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.34, length), MAT.shipRail);
+        rail.position.set(wx(innerX), 0.15, wz(segmentY));
+        rail.castShadow = true;
+        rail.userData.ownGeometry = true;
+        g.add(rail);
+      });
+      [0.46, 11.54].forEach(edgeY => {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(6.15, 0.34, 0.12), MAT.shipRail);
+        rail.position.set(wx(cx), 0.15, wz(edgeY));
+        rail.castShadow = true;
+        rail.userData.ownGeometry = true;
+        g.add(rail);
+      });
+      [-1, 1].forEach(side => {
+        const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.12, 10.6), MAT.shipGold);
+        stripe.position.set(wx(cx) + side * 3.1, -0.12, wz(cy));
+        stripe.userData.ownGeometry = true;
+        g.add(stripe);
+      });
+    });
+
+    // Three broad gangplanks make several tactical routes between the ships.
+    // Rope lashings and staggered boards make them read as hand-built bridges.
+    [2, 6, 10].forEach((y, bridgeIndex) => {
+      for (let x = 6; x <= 8; x++) {
+        const plank = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.13, 0.82), MAT.bridge);
+        plank.position.set(wx(x), -0.01, wz(y));
+        plank.rotation.y = ((x + bridgeIndex) % 2 ? 1 : -1) * 0.018;
+        plank.castShadow = plank.receiveShadow = true;
+        plank.userData.ownGeometry = true;
+        g.add(plank);
+      }
+      [-0.48, 0.48].forEach(side => {
+        const rope = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.035, 0.035), MAT.rope);
+        rope.position.set(wx(7), 0.1, wz(y) + side);
+        rope.userData.ownGeometry = true;
+        g.add(rope);
+      });
+    });
+
+    // A gold anchor on each outer hull makes the silhouettes unmistakably ships.
+    [[0.3, 6, -Math.PI / 2], [13.7, 6, Math.PI / 2]].forEach(([x, y, rot]) => {
+      const anchor = new THREE.Group();
+      const stem = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.72, 0.08), MAT.shipGold);
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.08), MAT.shipGold);
+      bar.position.y = 0.24;
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.035, 7, 16), MAT.shipGold);
+      ring.position.y = 0.42;
+      ring.rotation.x = Math.PI / 2;
+      const arms = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.04, 7, 18, Math.PI), MAT.shipGold);
+      arms.position.y = -0.25;
+      [stem, bar, ring, arms].forEach(m => { m.userData.ownGeometry = true; anchor.add(m); });
+      anchor.position.set(wx(x), -0.06, wz(y));
+      anchor.rotation.z = rot;
+      g.add(anchor);
+    });
+  }
+
+  function buildHauntedTrainFloor(g) {
+    const bed = new THREE.Mesh(
+      new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE), MAT.trainVoid);
+    bed.rotation.x = -Math.PI / 2;
+    bed.position.y = -0.62;
+    bed.userData.ownGeometry = true;
+    g.add(bed);
+
+    // Rails, sleepers and a spectral centre line run under the whole train.
+    [-4.66, 4.66].forEach(z => {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(15, 0.11, 0.1), MAT.trainRail);
+      rail.position.set(0, -0.42, z);
+      rail.userData.ownGeometry = true;
+      g.add(rail);
+    });
+    for (let x = 0; x < CFG.COLS; x++) {
+      const sleeper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 9.8), MAT.trainSleeper);
+      sleeper.position.set(wx(x), -0.48, 0);
+      sleeper.userData.ownGeometry = true;
+      g.add(sleeper);
+    }
+    const spectralRail = new THREE.Mesh(new THREE.BoxGeometry(15, 0.04, 0.12), MAT.trainGlow);
+    spectralRail.position.set(0, -0.38, 0);
+    spectralRail.userData.ownGeometry = true;
+    g.add(spectralRail);
+
+    const cars = [[2.5, 4], [7, 3], [11.5, 4]];
+    cars.forEach(([cx, width], carIndex) => {
+      const hull = new THREE.Mesh(new THREE.BoxGeometry(width + 0.18, 0.5, 9.2), MAT.trainHull);
+      hull.position.set(wx(cx), -0.28, wz(6));
+      hull.castShadow = hull.receiveShadow = true;
+      hull.userData.ownGeometry = true;
+      const deck = new THREE.Mesh(tiledFloorGeometry(width, 9), MAT.ground);
+      deck.rotation.x = -Math.PI / 2;
+      deck.position.set(wx(cx), 0.004, wz(6));
+      deck.receiveShadow = true;
+      deck.userData.ownGeometry = true;
+      g.add(hull, deck);
+
+      // Hot-magenta roof lines and cyan windows make each carriage glow as an
+      // object even from the high gameplay camera.
+      [-4.6, 4.6].forEach(z => {
+        const trim = new THREE.Mesh(new THREE.BoxGeometry(width + 0.08, 0.12, 0.08), MAT.trainPink);
+        trim.position.set(wx(cx), 0.12, z);
+        trim.userData.ownGeometry = true;
+        g.add(trim);
+        for (let n = 0; n < width; n++) {
+          const window = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.2, 0.035), MAT.trainGlow);
+          window.position.set(wx(cx) + (n - (width - 1) / 2) * 0.83, 0.27, z + (z < 0 ? -0.03 : 0.03));
+          window.userData.ownGeometry = true;
+          g.add(window);
+        }
+      });
+
+      [-1, 1].forEach(side => {
+        const z = side * 4.66;
+        const wheelCount = Math.max(2, Math.ceil(width / 2));
+        for (let n = 0; n < wheelCount; n++) {
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.13, 14), MAT.trainWheel);
+          wheel.rotation.x = Math.PI / 2;
+          wheel.position.set(wx(cx) + (n - (wheelCount - 1) / 2) * 1.35, -0.34, z);
+          wheel.userData.ownGeometry = true;
+          g.add(wheel);
+        }
+      });
+    });
+
+    // Flexible vestibules are the only ways between carriages. Their alternating
+    // cyan/magenta ribs make the route obvious while keeping the floor clear.
+    [5, 9].forEach((x, connectorIndex) => {
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(1, 0.18, 3), MAT.trainHull);
+      deck.position.set(wx(x), -0.08, wz(6));
+      deck.userData.ownGeometry = true;
+      g.add(deck);
+      [-1.42, 1.42].forEach(z => {
+        for (let i = 0; i < 4; i++) {
+          const rib = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.07),
+            (i + connectorIndex) % 2 ? MAT.trainPink : MAT.trainGlow);
+          rib.position.set(wx(x) - 0.36 + i * 0.24, 0.12, wz(6) + z);
+          rib.userData.ownGeometry = true;
+          g.add(rib);
+        }
+      });
+    });
+  }
+
+  function buildClockworkWalls(g) {
+    if (!state.clockwork) return;
+    CLOCKWORK_SECTIONS.forEach((section, index) => {
+      const pivot = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(2.86, 0.82, 0.58), MAT.clockwork);
+      body.position.y = 0.42;
+      body.castShadow = body.receiveShadow = true;
+      const trim = new THREE.Mesh(new THREE.BoxGeometry(2.98, 0.12, 0.68), MAT.clockworkTrim);
+      trim.position.y = 0.87;
+      trim.castShadow = true;
+      body.userData.ownGeometry = trim.userData.ownGeometry = true;
+      pivot.add(body, trim);
+
+      const gears = [];
+      [-0.78, 0, 0.78].forEach((x, gearIndex) => {
+        const gear = new THREE.Group();
+        const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.055, 7, 12), MAT.clockworkGear);
+        hoop.rotation.x = Math.PI / 2;
+        hoop.userData.ownGeometry = true;
+        gear.add(hoop);
+        for (let spokeIndex = 0; spokeIndex < 4; spokeIndex++) {
+          const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.045, 0.055), MAT.clockworkGear);
+          spoke.rotation.y = spokeIndex * Math.PI / 4;
+          spoke.userData.ownGeometry = true;
+          gear.add(spoke);
+        }
+        gear.position.set(x, 0.97, 0);
+        gear.userData.direction = (gearIndex + index) % 2 ? -1 : 1;
+        pivot.add(gear);
+        gears.push(gear);
+      });
+      const warning = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.035, 0.13), MAT.clockworkGlow);
+      warning.position.set(0, 1.02, 0);
+      warning.userData.ownGeometry = true;
+      pivot.add(warning);
+      pivot.position.set(wx(section.x), 0, wz(section.y));
+      pivot.userData.gears = gears;
+      pivot.userData.warning = warning;
+      state.clockwork.groups.push(pivot);
+      g.add(pivot);
+    });
+  }
+
   function buildMeshes() {
     const g = state.group;
 
     // Floor
     if (state.level.layout === 'twin-islands') {
       buildTwinIslandFloor(g);
+    } else if (state.level.layout === 'pirate-fleet') {
+      buildPirateFleetFloor(g);
+    } else if (state.level.layout === 'haunted-train') {
+      buildHauntedTrainFloor(g);
     } else {
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE),
@@ -6381,6 +6776,7 @@ const World = (function () {
       for (let x = 0; x < CFG.COLS; x++) {
         if (state.grid[idx(x, y)] !== CELL.HARD) continue;
         if (state.voids && state.voids[idx(x, y)]) continue;
+        if (state.clockwork && state.clockwork.cells.has(key(x, y))) continue;
         const edge = x === 0 || y === 0 || x === CFG.COLS - 1 || y === CFG.ROWS - 1;
         (edge ? ringCells : pillarCells).push([x, y]);
       }
@@ -6419,6 +6815,7 @@ const World = (function () {
     };
     addLattice(ringCells, MAT.wall, MAT.wallTop);
     addLattice(pillarCells, MAT.hard, MAT.hardTop);
+    buildClockworkWalls(g);
 
     // Soft crates — individual meshes so they can be destroyed one at a time
     const crateGeo = new THREE.BoxGeometry(0.92, 0.92, 0.92);
@@ -6541,6 +6938,96 @@ const World = (function () {
     state.hazardMark.position.set(wx(x), MARK_Y, wz(y));
   }
 
+  // Haunted House's maze changes shape on a slow, strongly telegraphed clock.
+  // The visual wall and collision grid cross together at the halfway point. If
+  // anything is using the destination footprint, the mechanism strains at 49%
+  // until it is clear rather than crushing or trapping it without warning.
+  function updateClockwork(dt, isBlocked) {
+    const clock = state.clockwork;
+    if (!clock) return;
+    const blocked = typeof isBlocked === 'function' ? isBlocked : () => false;
+    clock.pulse += dt;
+
+    if (!clock.turning) {
+      clock.timer -= dt;
+      if (clock.timer <= 0) {
+        clock.turning = true;
+        clock.progress = 0;
+        clock.switched = false;
+        clock.targetVertical = !clock.vertical;
+        clock.startAngle = clock.angle;
+      }
+    }
+
+    if (clock.turning) {
+      let next = Math.min(1, clock.progress + dt / 1.15);
+      if (!clock.switched && next >= 0.5) {
+        const destinations = [];
+        CLOCKWORK_SECTIONS.forEach(section => {
+          clockworkCells(section, clock.targetVertical).forEach(cell => destinations.push(cell));
+        });
+        if (destinations.some(([x, y]) => blocked(x, y))) {
+          next = 0.49;
+        } else {
+          CLOCKWORK_SECTIONS.forEach(section => {
+            clockworkCells(section, clock.vertical).forEach(([x, y]) => {
+              state.grid[idx(x, y)] = CELL.EMPTY;
+            });
+          });
+          CLOCKWORK_SECTIONS.forEach(section => {
+            clockworkCells(section, clock.targetVertical).forEach(([x, y]) => {
+              state.grid[idx(x, y)] = CELL.HARD;
+            });
+          });
+          clock.vertical = clock.targetVertical;
+          clock.switched = true;
+        }
+      }
+      clock.progress = next;
+      const eased = next * next * (3 - 2 * next);
+      const angle = clock.startAngle + eased * Math.PI / 2;
+      clock.groups.forEach(group => { group.rotation.y = angle; });
+      if (next >= 1) {
+        clock.angle = clock.startAngle + Math.PI / 2;
+        clock.turning = false;
+        clock.progress = 0;
+        clock.switched = false;
+        clock.timer = 7.5;
+      }
+    }
+
+    const warning = clock.turning ? 1 : Math.max(0, 1 - clock.timer / 1.65);
+    const pulse = 0.18 + warning * (0.82 + 0.16 * Math.sin(clock.pulse * 18));
+    clock.groups.forEach((group, groupIndex) => {
+      group.userData.warning.scale.x = Math.max(0.08, pulse);
+      group.userData.warning.scale.z = 0.7 + warning * 0.8;
+      group.userData.gears.forEach((gear, gearIndex) => {
+        gear.rotation.y += dt * (0.7 + warning * 5.8) * gear.userData.direction;
+        gear.rotation.z = Math.sin((clock.timer + groupIndex + gearIndex) * 0.9) * warning * 0.04;
+      });
+    });
+  }
+
+  // Sudden Death owns the grid from the instant it starts. Finish the visual
+  // state of any half-turn without changing its current logical orientation,
+  // then leave it parked so closing-ring blocks can never be cleared later.
+  function settleClockwork() {
+    const clock = state.clockwork;
+    if (!clock) return;
+    const angle = clock.turning
+      ? (clock.switched ? clock.startAngle + Math.PI / 2 : clock.startAngle)
+      : clock.angle;
+    clock.groups.forEach(group => {
+      group.rotation.y = angle;
+      if (group.userData.warning) group.userData.warning.scale.x = 0.08;
+    });
+    clock.angle = angle;
+    clock.turning = false;
+    clock.progress = 0;
+    clock.switched = false;
+    clock.timer = Infinity;
+  }
+
   function decayShake(dt) {
     state.shake = Math.max(0, state.shake - dt * 1.8);
     // The props on the outer wall rock on the same step, for the same reason:
@@ -6569,6 +7056,7 @@ const World = (function () {
 
   return {
     init, buildArena, applyLevel, render, updateCamera, addShake, decayShake,
+    updateClockwork, settleClockwork,
     fit: fitCamera,
     tintWalls,
     flashHearts, updateHeartFlash, clearHeartFlash,
@@ -7097,8 +7585,8 @@ const Icons = (function () {
 /* ==== 37-props.js ================================================= */
 /* ============================================================================
    SECTION 37 — THEME PROPS
-   A couple of decorative objects per level, sat on top of the outer wall so
-   they dress the arena without ever touching gameplay. Pure geometry, built
+   Decorative objects sit on hard tiles, usually the outer wall and sometimes
+   purpose-built scenery plinths inside a custom layout. Pure geometry, built
    fresh each round with the rest of the arena group.
    ========================================================================== */
 
@@ -7209,6 +7697,197 @@ const Props = (function () {
         spike.castShadow = true;
         g.add(spike);
       });
+    },
+
+    // ---- Pirate Fleet ----------------------------------------------------
+    cannon(g, angry) {
+      const iron = mat(angry ? 0xd51f18 : 0x263746, {
+        roughness: 0.26, metalness: 0.72,
+        emissive: angry ? 0x5a0502 : 0x000000,
+        emissiveIntensity: angry ? 0.9 : 0,
+      });
+      const wood = mat(0x6f3d1f, { roughness: 0.78, metalness: 0.03 });
+      const gold = mat(0xe3ad3a, { roughness: 0.3, metalness: 0.72 });
+      const carriage = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.18, 0.46), wood);
+      carriage.position.y = 0.2;
+      carriage.castShadow = true;
+      g.add(carriage);
+      [-1, 1].forEach(side => {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.07, 12), wood);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(side * 0.28, 0.16, 0.03);
+        wheel.castShadow = true;
+        g.add(wheel);
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.075, 10), gold);
+        hub.rotation.z = Math.PI / 2;
+        hub.position.copy(wheel.position);
+        g.add(hub);
+      });
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.16, 0.72, 18), iron);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.43, 0.13);
+      barrel.castShadow = true;
+      g.add(barrel);
+      const muzzle = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.035, 8, 18), gold);
+      muzzle.position.set(0, 0.43, 0.5);
+      g.add(muzzle);
+      if (angry) {
+        const glow = new THREE.PointLight(0xff2b18, 1.9, 2.4);
+        glow.position.set(0, 0.43, 0.55);
+        g.add(glow);
+      }
+      // The red hazard bomb appears at the muzzle rather than hovering beside
+      // the carriage like a snowman's hand-held bomb.
+      g.userData.bombPose = {
+        x: 0, y: 0.43, z: 0.54,
+        pullX: 0, pullY: 0.1, pullZ: -0.08, rock: 0.045,
+      };
+    },
+    pirate(g) {
+      const coat = mat(0xb51f38, { roughness: 0.5, metalness: 0.06 });
+      const shirt = mat(0x1ec7b6, { roughness: 0.55 });
+      const skin = mat(0xd99a65, { roughness: 0.62 });
+      const dark = mat(0x141827, { roughness: 0.48, metalness: 0.12 });
+      const gold = mat(0xf2bd45, { roughness: 0.28, metalness: 0.7 });
+      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.23, 0.46, 12), coat);
+      torso.position.y = 0.48; torso.castShadow = true; g.add(torso);
+      const bib = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.28, 0.04), shirt);
+      bib.position.set(0, 0.5, 0.2); g.add(bib);
+      [-1, 1].forEach(side => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 0.32, 9), dark);
+        leg.position.set(side * 0.1, 0.18, 0); g.add(leg);
+        const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.25, 5, 8), coat);
+        arm.position.set(side * 0.23, 0.48, 0.02);
+        arm.rotation.z = side * -0.24; g.add(arm);
+      });
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), skin);
+      head.position.y = 0.82; head.castShadow = true; g.add(head);
+      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.055, 3), dark);
+      brim.position.y = 0.97; brim.rotation.y = Math.PI / 6; g.add(brim);
+      const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 0.17, 3), dark);
+      crown.position.y = 1.06; crown.rotation.y = Math.PI / 6; g.add(crown);
+      const patch = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 7), dark);
+      patch.scale.set(1.1, 0.75, 0.35); patch.position.set(-0.06, 0.84, 0.15); g.add(patch);
+      const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.075, 0.035), gold);
+      buckle.position.set(0, 0.34, 0.23); g.add(buckle);
+    },
+    mast(g) {
+      const wood = mat(0x5a2c16, { roughness: 0.78 });
+      const cream = mat(0xffe6b0, { roughness: 0.72, side: THREE.DoubleSide });
+      const red = mat(0xb91f38, { roughness: 0.58, side: THREE.DoubleSide });
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.075, 1.75, 10), wood);
+      pole.position.y = 0.88; pole.castShadow = true; g.add(pole);
+      const yard = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.92, 8), wood);
+      yard.rotation.z = Math.PI / 2; yard.position.y = 1.28; g.add(yard);
+      [-1, 0, 1].forEach((stripe, i) => {
+        const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.29, 0.72), i === 1 ? red : cream);
+        sail.position.set(stripe * 0.29, 0.91, 0.035);
+        sail.rotation.z = stripe * -0.07;
+        sail.castShadow = true; g.add(sail);
+      });
+      const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.18), red);
+      flag.position.set(0.2, 1.72, 0.02); g.add(flag);
+    },
+    barrels(g) {
+      const wood = mat(0x8a4c24, { roughness: 0.82 });
+      const band = mat(0x26323a, { roughness: 0.4, metalness: 0.62 });
+      [[-0.18, 0, 0], [0.18, 0.03, 0.05], [0, 0.3, -0.03]].forEach(([x, y, z]) => {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.38, 12), wood);
+        b.position.set(x, y + 0.19, z); b.castShadow = true; g.add(b);
+        [-0.11, 0.11].forEach(dy => {
+          const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.162, 0.018, 6, 14), band);
+          hoop.rotation.x = Math.PI / 2; hoop.position.set(x, y + 0.19 + dy, z); g.add(hoop);
+        });
+      });
+    },
+    treasure(g) {
+      const chest = mat(0x6d3217, { roughness: 0.7 });
+      const gold = mat(0xffcf45, { roughness: 0.22, metalness: 0.82, emissive: 0x5a3100, emissiveIntensity: 0.35 });
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.34, 0.42), chest);
+      base.position.y = 0.2; base.castShadow = true; g.add(base);
+      const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.58, 12, 1, false, 0, Math.PI), chest);
+      lid.rotation.z = Math.PI / 2; lid.rotation.y = Math.PI / 2;
+      lid.position.set(0, 0.39, 0); g.add(lid);
+      [-0.2, 0, 0.2].forEach(x => {
+        const strap = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.54, 0.46), gold);
+        strap.position.set(x, 0.28, 0); g.add(strap);
+      });
+      for (let i = 0; i < 8; i++) {
+        const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.018, 10), gold);
+        coin.position.set(-0.2 + (i % 4) * 0.13, 0.53 + (i % 2) * 0.025, 0.05 - (i % 3) * 0.06);
+        coin.rotation.z = Math.PI / 2; g.add(coin);
+      }
+    },
+
+    // ---- Haunted Train ---------------------------------------------------
+    conductor(g) {
+      const ghost = mat(0x59ffe2, {
+        roughness: 0.28, metalness: 0.08, transparent: true, opacity: 0.78,
+        emissive: 0x00bfa8, emissiveIntensity: 1.15,
+      });
+      const uniform = mat(0x5c22a9, { roughness: 0.42, emissive: 0x2a0866, emissiveIntensity: 0.6 });
+      const gold = mat(0xffd34d, { roughness: 0.25, metalness: 0.72, emissive: 0x7a4d00, emissiveIntensity: 0.45 });
+      const body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.7, 14, 1, true), ghost);
+      body.position.y = 0.42; g.add(body);
+      const coat = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 0.42, 12), uniform);
+      coat.position.y = 0.48; g.add(coat);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), ghost);
+      head.position.y = 0.84; g.add(head);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.16, 0.1, 12), uniform);
+      cap.position.y = 1.0; g.add(cap);
+      const badge = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.07, 0.03), gold);
+      badge.position.set(0, 1.01, 0.16); g.add(badge);
+      [-1, 1].forEach(side => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), gold);
+        eye.position.set(side * 0.06, 0.86, 0.15); g.add(eye);
+      });
+      g.userData.hover = true;
+    },
+    luggage(g) {
+      const colours = [0xff3cac, 0x40e0d0, 0xffd447];
+      [[0, 0.17, 0, 0.48, 0.32], [-0.08, 0.46, 0.02, 0.42, 0.25], [0.12, 0.69, -0.02, 0.32, 0.2]]
+        .forEach(([x, y, z, w, h], i) => {
+          const m = mat(colours[i], { roughness: 0.48, emissive: colours[i], emissiveIntensity: 0.18 });
+          const bag = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.34), m);
+          bag.position.set(x, y, z); bag.rotation.y = (i - 1) * 0.09; bag.castShadow = true; g.add(bag);
+          const handle = new THREE.Mesh(new THREE.TorusGeometry(w * 0.19, 0.018, 6, 12, Math.PI), m);
+          handle.position.set(x, y + h * 0.58, z); handle.rotation.z = Math.PI; g.add(handle);
+        });
+    },
+    lantern(g) {
+      const cage = mat(0x142138, { roughness: 0.34, metalness: 0.76 });
+      const glow = mat(0x78ffe7, { roughness: 0.12, emissive: 0x19ffd8, emissiveIntensity: 2.4 });
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 12), glow);
+      orb.position.y = 0.48; g.add(orb);
+      [0.28, 0.68].forEach(y => {
+        const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.025, 7, 18), cage);
+        hoop.rotation.x = Math.PI / 2; hoop.position.y = y; g.add(hoop);
+      });
+      [-1, 1].forEach(side => {
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.5, 7), cage);
+        bar.position.set(side * 0.2, 0.48, 0); g.add(bar);
+      });
+      const light = new THREE.PointLight(0x35ffe0, 2.2, 3.4);
+      light.position.y = 0.5; g.add(light);
+      g.userData.hover = true;
+    },
+    spectralengine(g) {
+      const shell = mat(0x7e35e8, { roughness: 0.3, metalness: 0.62, emissive: 0x300078, emissiveIntensity: 0.9 });
+      const trim = mat(0x3fffe0, { roughness: 0.18, metalness: 0.58, emissive: 0x00c8ad, emissiveIntensity: 1.6 });
+      const boiler = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.68, 16), shell);
+      boiler.rotation.z = Math.PI / 2; boiler.position.y = 0.38; boiler.castShadow = true; g.add(boiler);
+      [-0.24, 0, 0.24].forEach(x => {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.255, 0.025, 7, 18), trim);
+        ring.rotation.y = Math.PI / 2; ring.position.set(x, 0.38, 0); g.add(ring);
+      });
+      const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 0.48, 10), shell);
+      stack.position.set(0.18, 0.82, 0); g.add(stack);
+      for (let i = 0; i < 3; i++) {
+        const smoke = new THREE.Mesh(new THREE.SphereGeometry(0.1 + i * 0.035, 12, 9), trim);
+        smoke.material = trim.clone(); smoke.material.transparent = true; smoke.material.opacity = 0.5 - i * 0.1;
+        smoke.position.set(0.18 + i * 0.08, 1.12 + i * 0.16, 0); g.add(smoke);
+      }
+      g.userData.hover = true;
     },
 
     // ---- Dunes -----------------------------------------------------------
@@ -7472,79 +8151,6 @@ const Props = (function () {
       g.add(crown);
     },
 
-    // ---- Donut Town ------------------------------------------------------
-    // ORIGINAL ARTWORK. A frosted donut and a cooling tower are ordinary objects.
-    // Nothing here reproduces a copyrighted character design or uses a
-    // trademarked name: the level is the LOOK — cartoon yellow, lawn green and
-    // frosting pink — not somebody else's cast.
-    donut(g) {
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.42, 8), mat(0x8d6a3f));
-      post.position.y = 0.21;
-      g.add(post);
-      // Dough first, then a slightly fatter ring of frosting sat ON it, so the
-      // frosting reads as a separate layer rather than as paint.
-      const dough = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.135, 12, 24), mat(0xe8b06a));
-      dough.position.y = 0.66;
-      dough.rotation.x = Math.PI / 2;
-      dough.castShadow = true;
-      g.add(dough);
-      const icing = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.145, 12, 24),
-        mat(0xff5aa8, { roughness: 0.3 }));
-      icing.position.y = 0.71;
-      icing.rotation.x = Math.PI / 2;
-      icing.scale.y = 0.62;
-      g.add(icing);
-      // Sprinkles: little capsules laid flat around the ring, alternating colour
-      const SPR = [0xffffff, 0x35d0ff, 0xffe14d, 0x6bff8f, 0xff8a3d];
-      for (let i = 0; i < 10; i++) {
-        const a = (i / 10) * Math.PI * 2 + 0.3;
-        const s2 = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.055, 3, 6),
-          mat(SPR[i % SPR.length], { roughness: 0.35 }));
-        s2.position.set(Math.cos(a) * 0.3, 0.79, Math.sin(a) * 0.3);
-        s2.rotation.set(Math.PI / 2, 0, a * 1.7);
-        g.add(s2);
-      }
-    },
-    coolingtower(g) {
-      // A hyperboloid is two stacked truncated cones — cheap and unmistakable.
-      // DoubleSide: the shell is open-ended at both ends so the tower reads as a
-      // funnel rather than a solid lump, and without the back faces you see
-      // straight through it to the sky.
-      const shell = mat(0xd9d4c8, { roughness: 0.75, side: THREE.DoubleSide });
-      const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.42, 0.6, 16, 1, true), shell);
-      lower.position.y = 0.3;
-      lower.castShadow = true;
-      g.add(lower);
-      const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.26, 0.42, 16, 1, true), shell);
-      upper.position.y = 0.81;
-      upper.castShadow = true;
-      g.add(upper);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.022, 6, 18), mat(0xb4ada0));
-      rim.position.y = 1.02;
-      rim.rotation.x = Math.PI / 2;
-      g.add(rim);
-      // Two red hazard bands, because a plain grey funnel disappears at this size
-      // Radii taken FROM the taper, not guessed: the lower cone runs 0.42 -> 0.26
-      // over y 0..0.6, so at y 0.42 it is 0.308. A band that misses its shell
-      // floats in the air beside it.
-      [[0.42, 0.308], [0.72, 0.289]].forEach(([y, r]) => {
-        const band = new THREE.Mesh(new THREE.TorusGeometry(r, 0.026, 6, 18),
-          mat(0xe03a2f, { roughness: 0.4 }));
-        band.position.y = y;
-        band.rotation.x = Math.PI / 2;
-        g.add(band);
-      });
-      // Steam: three soft blobs drifting off the top, and they ANIMATE with the
-      // rest of the props when a big blast shakes the edge (see Props.tick).
-      const puffMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff, transparent: true, opacity: 0.5, roughness: 1, depthWrite: false });
-      [[0.02, 1.16, 0.16], [-0.09, 1.3, 0.12], [0.08, 1.42, 0.09]].forEach(([x, y, r]) => {
-        const puff = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), puffMat);
-        puff.position.set(x, y, 0);
-        puff.renderOrder = 3;
-        g.add(puff);
-      });
-    },
   };
 
   // THE BOMB IN ITS HANDS. Built once with the prop and simply hidden, rather
@@ -7592,10 +8198,18 @@ const Props = (function () {
     }
     actor.bomb.visible = true;
     const e = Math.min(1, Math.max(0, k));
+    const pose = (actor.group && actor.group.userData.bombPose) || {
+      x: 0.34, y: 0.62, z: 0.1,
+      pullX: 0.16, pullY: 0.5, pullZ: -0.24, rock: 0.22,
+    };
     actor.bomb.scale.setScalar(0.6 + 0.4 * Math.min(1, e * 4));
     // draw back and up
-    actor.bomb.position.set(0.34 + e * 0.16, 0.62 + e * 0.5, 0.1 - e * 0.24);
-    if (actor.group) actor.group.rotation.z = -e * 0.22;
+    actor.bomb.position.set(
+      pose.x + e * pose.pullX,
+      pose.y + e * pose.pullY,
+      pose.z + e * pose.pullZ
+    );
+    if (actor.group) actor.group.rotation.z = -e * pose.rock;
     const sp = actor.bomb.userData.spark;
     if (sp) sp.scale.setScalar(0.7 + e * 1.6 + Math.random() * 0.4);
   }
@@ -7642,7 +8256,7 @@ const Props = (function () {
   //
   // NOTHING ON THE BACK WALL. A prop stands on the wall and reaches a tile or
   // more above it, and the back wall is the exact band the card strip occupies —
-  // measured, a cooling tower came 29px past the cards and a witch's hat 44px.
+  // measured, a tall prop came 29px past the cards and a witch's hat 44px.
   // The alternatives were making the camera keep the props clear as well as the
   // board (which costs arena on every level, to stop a prop tip being drawn
   // behind a panel) or shrinking the props until they fitted a gap the camera is
@@ -7683,7 +8297,7 @@ const Props = (function () {
     const hazardLimit = Math.max(1, level.hazardCount || 1);
 
     spots.forEach((spot, i) => {
-      const kind = kinds[i % kinds.length];
+      const kind = spot[3] || kinds[i % kinds.length];
       const builder = BUILD[kind];
       if (!builder) return;
       const g = new THREE.Group();
@@ -7698,7 +8312,9 @@ const Props = (function () {
       const angry = !!level.hazard && kind === level.hazard && angryBuilt < hazardLimit;
       builder(g, angry);
       if (angry) {
-        addScowl(g, kind);
+        // Living throwers scowl. Cannons telegraph danger with red-hot iron and
+        // a lit muzzle; eyebrows floating above artillery would undercut it.
+        if (kind !== 'cannon') addScowl(g, kind);
         angryBuilt++;
         const bomb = buildHeldBomb();
         g.add(bomb);
@@ -7709,9 +8325,13 @@ const Props = (function () {
       // Per-spot variation, times whatever the builder asked for. A ghost and a
       // toadstool are not the same size of thing and one shared number said they
       // were.
-      const s = (0.82 + (i % 3) * 0.07) * (g.userData.scale || 1);
+      const s = (0.82 + (i % 3) * 0.07) * (g.userData.scale || 1) * (spot[4] || 1);
       g.scale.setScalar(s);
-      g.traverse(o => { if (o.isMesh) o.userData.ownGeometry = true; });
+      g.traverse(o => {
+        if (!o.isMesh) return;
+        o.userData.ownGeometry = true;
+        o.userData.ownMaterial = true;
+      });
       register(g, i);
       // ...and if this kind of thing moves under its own steam, sign it up.
       const idle = g.userData.float ? FLOAT
@@ -7738,7 +8358,7 @@ const Props = (function () {
       // Anything in the back HALF of the board still counts towards the roofline
       // the card strip is placed against — nothing stands on the back wall any
       // more, but a prop two tiles down the side is still up in that band.
-      if (spot[1] <= 2) {
+      if (spot[1] <= 4) {
         g.updateMatrixWorld(true);
         const bb = new THREE.Box3().setFromObject(g);
         // How far this kind of thing can rise off its rest position. Named
@@ -14134,9 +14754,13 @@ const Game = (function () {
     // it lands — registerBomb runs at the end of the flight — so nothing collides
     // with a bomb that is still overhead.
     const dist = Math.hypot(t.x - at[0], t.y - at[1]);
-    bomb.fx = at[0]; bomb.fy = at[1];
+    const from = hand ? {
+      x: hand.x / CFG.TILE + (CFG.COLS - 1) / 2,
+      y: hand.z / CFG.TILE + (CFG.ROWS - 1) / 2,
+    } : { x: at[0], y: at[1] };
+    bomb.fx = from.x; bomb.fy = from.y;
     bomb.flight = {
-      from: { x: at[0], y: at[1] }, to: { x: t.x, y: t.y },
+      from, to: { x: t.x, y: t.y },
       t: 0, dur: CFG.HAZARD_FLIGHT,
       // A high, slow lob: you are meant to have time to look at it and move.
       // CAPPED, because the camera frames the board and not the sky — measured,
@@ -14525,6 +15149,7 @@ const Game = (function () {
     g.sdDone = 0;
     g.sdQueue = [];
     g.sdCountdown = 0;
+    World.settleClockwork();
     // No centred slab: the words run along the edge of the board instead, where
     // they cover nothing you have to see to stay alive.
     UI.setSdBand('SUDDEN DEATH');
@@ -14965,6 +15590,23 @@ const Game = (function () {
         updateHazard(dt);
         updateEndgame(dt);
         if (g.state !== STATE.PLAY) break;      // updateEndgame may have ended it
+        if (!g.suddenDeath) {
+          World.updateClockwork(dt, (x, y) => {
+            const k = World.key(x, y);
+            if (g.bombMap.has(k) || g.powerUps.has(k) ||
+                g.blasts.some(blast => blast.tiles && blast.tiles.has(k))) return true;
+            if (g.hazardTarget && g.hazardTarget.x === x && g.hazardTarget.y === y) return true;
+            if (g.bombs.some(b => {
+              if (b.dead) return false;
+              if (b.flight) return b.flight.to.x === x && b.flight.to.y === y;
+              if (b.held) return false; // its carrier is checked immediately below
+              if (Math.abs(b.fx - x) < 0.72 && Math.abs(b.fy - y) < 0.72) return true;
+              return !!b.vel && b.x + b.vel.x === x && b.y + b.vel.y === y;
+            })) return true;
+            return g.players.some(p => p.alive &&
+              Math.abs(p.gx - x) < 0.72 && Math.abs(p.gy - y) < 0.72);
+          });
+        }
         stepSim(dt);
         checkRoundOver();
         UI.updateHUD(g);

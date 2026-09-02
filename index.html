@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="5e4586e">
+<meta name="build" content="1550c09">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2351,6 +2351,14 @@
     letter-spacing: .1px;
     text-transform: uppercase;
   }
+  #select .charpick[data-fighter-id="skull-orc"] .charcopy b {
+    display: block;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+    font-size: clamp(6px, .5vw, 7.5px);
+    letter-spacing: -.12px;
+  }
   #select .charcopy small {
     margin-top: 4px;
     color: rgba(255,244,230,.37);
@@ -3235,19 +3243,19 @@ const PLAYER_DEFS = [
   { id: 'bunny', name: 'Gravehare', color: 0xcf6a92, belly: 0xfff2fb, trim: 0x835977, accent: 0x6d1cae,
     model: 'assets/characters/bunny.gltf', portrait: 'assets/portraits/bunny.webp', expression: 'Wave', altExpression: 'Yes', personality: 'playful',
   },
-  { id: 'alien', name: 'Voidmaw', color: 0x60047b, belly: 0xe9fbff, trim: 0x156309, accent: 0x116a96,
+  { id: 'alien', name: 'Void', color: 0x60047b, belly: 0xe9fbff, trim: 0x156309, accent: 0x116a96,
     model: 'assets/characters/alien.gltf', portrait: 'assets/portraits/alien.webp', expression: 'Yes', altExpression: 'Wave', personality: 'eerie',
   },
-  { id: 'evolved-dragon', name: 'Dreadwing', color: 0xe85e26, belly: 0x82fff4, trim: 0xc6320f, accent: 0x07667c,
+  { id: 'evolved-dragon', name: 'Deadwing', color: 0xe85e26, belly: 0x82fff4, trim: 0xc6320f, accent: 0x07667c,
     model: 'assets/characters/evolved-dragon.gltf', portrait: 'assets/portraits/evolved-dragon.webp', expression: 'Headbutt', altExpression: 'Yes', personality: 'fierce', flying: true,
   },
-  { id: 'skull-orc', name: 'Skullrend', color: 0x76952c, belly: 0xf3dfb9, trim: 0xc0a383, accent: 0x4f7520,
+  { id: 'skull-orc', name: 'Skullcrusher', color: 0x76952c, belly: 0xf3dfb9, trim: 0xc0a383, accent: 0x4f7520,
     model: 'assets/characters/skull-orc.gltf', portrait: 'assets/portraits/skull-orc.webp', expression: 'Punch', altExpression: 'Weapon', personality: 'fierce',
   },
   { id: 'orc', name: 'Goregrin', color: 0x7b9620, belly: 0xdfffb8, trim: 0xa7c057, accent: 0x315f24,
     model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Yes', altExpression: 'Weapon', personality: 'sly',
   },
-  { id: 'fish-monster', name: 'Riftgill', color: 0x48adc8, belly: 0x8df5e5, trim: 0x016c99, accent: 0x15658d,
+  { id: 'fish-monster', name: 'Gill', color: 0x48adc8, belly: 0x8df5e5, trim: 0x016c99, accent: 0x15658d,
     model: 'assets/characters/fish-monster.gltf', portrait: 'assets/portraits/fish-monster.webp', expression: 'Punch', altExpression: 'No', personality: 'fierce',
   },
   { id: 'demon', name: 'Hellshade', color: 0xbc040f, belly: 0x6ecfff, trim: 0xc37c88, accent: 0x4e1738,
@@ -3256,16 +3264,16 @@ const PLAYER_DEFS = [
   { id: 'tribal', name: 'Bloodmask', color: 0xc35426, belly: 0xffffff, trim: 0xdaa858, accent: 0x633800,
     model: 'assets/characters/tribal.gltf', portrait: 'assets/portraits/tribal.webp', expression: 'Yes', altExpression: 'Punch', personality: 'manic',
   },
-  { id: 'cactoro', name: 'Thornrage', color: 0x6b991f, belly: 0xd8ff91, trim: 0xa6691f, accent: 0x3e6f12,
+  { id: 'cactoro', name: 'Thornz', color: 0x6b991f, belly: 0xd8ff91, trim: 0xa6691f, accent: 0x3e6f12,
     model: 'assets/characters/cactoro.gltf', portrait: 'assets/portraits/cactoro.webp', expression: 'Wave', altExpression: 'Yes', personality: 'playful',
   },
-  { id: 'yeti', name: 'Frostmaul', color: 0xd39793, belly: 0xffe3df, trim: 0x3d98a6, accent: 0x8b3152,
+  { id: 'yeti', name: 'Ice Maul', color: 0xd39793, belly: 0xffe3df, trim: 0x3d98a6, accent: 0x8b3152,
     model: 'assets/characters/yeti.gltf', portrait: 'assets/portraits/yeti.webp', expression: 'Yes', altExpression: 'Wave', personality: 'playful',
   },
   { id: 'mushroom-king', name: 'Rotcrown', color: 0x3c9b9c, belly: 0xf4ddb4, trim: 0xc79e6c, accent: 0x276d61,
     model: 'assets/characters/mushroom-king.gltf', portrait: 'assets/portraits/mushroom-king.webp', expression: 'Wave', altExpression: 'Yes', personality: 'eerie',
   },
-  { id: 'ninja', name: 'Nightblade', color: 0xa16261, belly: 0xffc4e0, trim: 0xbf8d6d, accent: 0x71173e,
+  { id: 'ninja', name: 'Razor', color: 0xa16261, belly: 0xffc4e0, trim: 0xbf8d6d, accent: 0x71173e,
     model: 'assets/characters/ninja.gltf', portrait: 'assets/portraits/ninja.webp', expression: 'Weapon', altExpression: 'Punch', personality: 'sly',
   },
   { id: 'evolved-goleling', name: 'Winged Maw', color: 0x96b240, belly: 0xff9237, trim: 0x638012, accent: 0x255c14,
@@ -3274,13 +3282,13 @@ const PLAYER_DEFS = [
   { id: 'monkroose', name: 'Ironclaw', color: 0x94ba57, belly: 0xffed8b, trim: 0xda6d27, accent: 0x795a0a,
     model: 'assets/characters/monkroose.gltf', portrait: 'assets/portraits/monkroose.webp', expression: 'Wave', altExpression: 'Yes', personality: 'playful',
   },
-  { id: 'blue-demon', name: 'Abyss Fiend', color: 0x398cac, belly: 0x55ddff, trim: 0xac6567, accent: 0x1f4f6e,
+  { id: 'blue-demon', name: 'Abyss', color: 0x398cac, belly: 0x55ddff, trim: 0xac6567, accent: 0x1f4f6e,
     model: 'assets/characters/blue-demon.gltf', portrait: 'assets/portraits/blue-demon.webp', expression: 'No', altExpression: 'Yes', personality: 'eerie',
   },
   { id: 'birb', name: 'Razorbeak', color: 0x2167c3, belly: 0xf2fbff, trim: 0x6692c0, accent: 0x155b8d,
     model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/birb.webp', expression: 'Yes', altExpression: 'Wave', personality: 'sly',
   },
-  { id: 'dino', name: 'Doomfang', color: 0xc10449, belly: 0xe2c8ff, trim: 0xbf7755, accent: 0x5f1131,
+  { id: 'dino', name: 'Fiend', color: 0xc10449, belly: 0xe2c8ff, trim: 0xbf7755, accent: 0x5f1131,
     model: 'assets/characters/dino.gltf', portrait: 'assets/portraits/dino.webp', expression: 'No', altExpression: 'Punch', personality: 'fierce',
   },
   { id: 'flying-tribal', name: 'Death Totem', color: 0xd34632, belly: 0xffc3ba, trim: 0x9b0708, accent: 0x872114,
@@ -8742,6 +8750,41 @@ const CharacterModels = (() => {
     return copy;
   }
 
+  function addFighterDetails(RT, model, def) {
+    if (def.id !== 'mushroom-king') return;
+    const head = model.getObjectByName('Head');
+    if (!head) return;
+
+    // Rotcrown's cap is part of the skinned body, so destructive mesh edits
+    // would jeopardise every supplied animation. These low-profile growths sit
+    // on the cap in head-local space and inherit every nod, wave and eerie tilt.
+    const decay = new RT.THREE.Group();
+    decay.name = 'RotcrownDecay';
+    const darkRot = new RT.THREE.MeshStandardMaterial({
+      color: 0x302219, roughness: 0.94, metalness: 0,
+    });
+    const sickMoss = new RT.THREE.MeshStandardMaterial({
+      color: 0x7c8923, roughness: 0.9, metalness: 0,
+    });
+    const spotGeometry = new RT.THREE.SphereGeometry(1, 12, 8);
+    [
+      [-0.54, 1.06, 0.67, 0.20, 0.12, 0.055, darkRot],
+      [ 0.13, 1.31, 0.48, 0.15, 0.10, 0.045, sickMoss],
+      [ 0.55, 0.90, 0.65, 0.18, 0.11, 0.050, darkRot],
+      [-0.16, 0.70, 0.81, 0.12, 0.08, 0.040, sickMoss],
+      [ 0.78, 0.58, 0.43, 0.11, 0.075, 0.040, darkRot],
+    ].forEach(([x, y, z, sx, sy, sz, material], index) => {
+      const spot = new RT.THREE.Mesh(spotGeometry, material);
+      spot.name = `RotPatch${index + 1}`;
+      spot.position.set(x, y, z);
+      spot.scale.set(sx, sy, sz);
+      spot.rotation.z = index % 2 ? -0.28 : 0.22;
+      spot.castShadow = true;
+      decay.add(spot);
+    });
+    head.add(decay);
+  }
+
   function create(def) {
     const group = new THREE.Group();
     group.userData.combatClass = def.id || def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -8787,6 +8830,7 @@ const CharacterModels = (() => {
       box = new THREE.Box3().setFromObject(model);
       const centre = box.getCenter(new THREE.Vector3());
       model.position.set(-centre.x, -box.min.y + (def.flying ? 0.11 : 0), -centre.z);
+      addFighterDetails(RT, model, def);
       model.updateMatrixWorld(true);
       group.add(model);
       group.userData.modelRoot = model;

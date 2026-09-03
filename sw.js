@@ -20,7 +20,7 @@ const ASSETS = [
     'bunny', 'alien', 'evolved-dragon', 'skull-orc', 'orc',
     'fish-monster', 'demon', 'tribal', 'cactoro', 'yeti',
     'mushroom-king', 'ninja', 'evolved-goleling', 'monkroose',
-    'blue-demon', 'birb', 'dino', 'flying-tribal', 'frog', 'squidle'
+    'blue-demon', 'bomber-og', 'dino', 'flying-tribal', 'frog', 'squidle'
   ].map(name => new URL(`./assets/portraits/${name}.webp`, self.registration.scope).href)
 ];
 

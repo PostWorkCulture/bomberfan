@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="1550c09">
+<meta name="build" content="b06e8f4">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -3285,8 +3285,8 @@ const PLAYER_DEFS = [
   { id: 'blue-demon', name: 'Abyss', color: 0x398cac, belly: 0x55ddff, trim: 0xac6567, accent: 0x1f4f6e,
     model: 'assets/characters/blue-demon.gltf', portrait: 'assets/portraits/blue-demon.webp', expression: 'No', altExpression: 'Yes', personality: 'eerie',
   },
-  { id: 'birb', name: 'Razorbeak', color: 0x2167c3, belly: 0xf2fbff, trim: 0x6692c0, accent: 0x155b8d,
-    model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/birb.webp', expression: 'Yes', altExpression: 'Wave', personality: 'sly',
+  { id: 'bomber-og', name: 'BomberOG', color: 0xff376f, belly: 0xffe58d, trim: 0xffffff, accent: 0x2446f5,
+    model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/bomber-og.webp', expression: 'Punch', altExpression: 'Yes', personality: 'fierce',
   },
   { id: 'dino', name: 'Fiend', color: 0xc10449, belly: 0xe2c8ff, trim: 0xbf7755, accent: 0x5f1131,
     model: 'assets/characters/dino.gltf', portrait: 'assets/portraits/dino.webp', expression: 'No', altExpression: 'Punch', personality: 'fierce',
@@ -8750,7 +8750,138 @@ const CharacterModels = (() => {
     return copy;
   }
 
+  function addBomberOGDetails(RT, model) {
+    const T = RT.THREE;
+
+    // Keep the proven animated skeleton but replace every visible bird surface.
+    // BomberOG's rounded shell is deliberately built from lightweight primitives
+    // so it stays crisp at arena scale and cannot disturb the imported rig.
+    model.traverse(object => {
+      if (object.isMesh) object.visible = false;
+    });
+
+    const shell = new T.Group();
+    shell.name = 'BomberOGShell';
+    // His bomb-and-glove victory pose is wider than the source bird rig. A
+    // restrained horizontal fit keeps that pose inside one Bomber Fan tile.
+    shell.scale.x = 0.88;
+    const material = (color, roughness = 0.25, metalness = 0.02) =>
+      new T.MeshPhysicalMaterial({
+        color, roughness, metalness, clearcoat: 0.62,
+        clearcoatRoughness: 0.22, flatShading: false,
+      });
+    const ink = material(0x090a10, 0.34, 0.04);
+    const white = material(0xfffbff, 0.2);
+    const blue = material(0x2446f5, 0.21);
+    const pink = material(0xff376f, 0.18);
+    const yellow = material(0xffdf78, 0.3);
+    const purple = material(0x40307e, 0.26);
+    const fuse = material(0xc69a67, 0.7);
+    const sphere = new T.SphereGeometry(1, 24, 18);
+    const cylinder = new T.CylinderGeometry(1, 1, 1, 18);
+    const box = new T.BoxGeometry(1, 1, 1);
+    const torus = new T.TorusGeometry(1, 0.1, 10, 28);
+    const part = (name, geometry, mat, position, scale, parent = shell, rotation) => {
+      const mesh = new T.Mesh(geometry, mat);
+      mesh.name = name;
+      mesh.position.set(...position);
+      mesh.scale.set(...scale);
+      if (rotation) mesh.rotation.set(...rotation);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    };
+
+    // Blue torso, belt and the bright buckle from the supplied character.
+    part('BomberOGBody', sphere, blue, [0, 1.92, 0], [0.7, 0.86, 0.52]);
+    part('BomberOGBelt', torus, ink, [0, 1.88, 0], [0.59, 0.59, 0.75], shell, [Math.PI / 2, 0, 0]);
+    part('BomberOGBuckleOutline', box, ink, [0, 1.88, 0.51], [0.34, 0.28, 0.12]);
+    part('BomberOGBuckle', box, yellow, [0, 1.88, 0.585], [0.25, 0.19, 0.08]);
+    part('BomberOGBuckleInset', box, ink, [0, 1.88, 0.635], [0.13, 0.09, 0.035]);
+
+    // White helmet with a black rim, warm face window and determined eyes.
+    part('BomberOGHelmet', sphere, white, [0, 3.35, 0], [1.03, 0.91, 0.81]);
+    part('BomberOGFaceRim', sphere, ink, [0, 3.31, 0.7], [0.72, 0.5, 0.09]);
+    part('BomberOGFace', sphere, yellow, [0, 3.31, 0.765], [0.65, 0.43, 0.075]);
+    part('BomberOGEyeL', box, ink, [-0.235, 3.29, 0.84], [0.11, 0.34, 0.055], shell, [0, 0, 0.08]);
+    part('BomberOGEyeR', box, ink, [0.235, 3.29, 0.84], [0.11, 0.34, 0.055], shell, [0, 0, -0.08]);
+    part('BomberOGBrowL', box, ink, [-0.255, 3.54, 0.855], [0.34, 0.065, 0.045], shell, [0, 0, -0.42]);
+    part('BomberOGBrowR', box, ink, [0.255, 3.54, 0.855], [0.34, 0.065, 0.045], shell, [0, 0, 0.42]);
+
+    // Antenna and hot-pink signal ball.
+    part('BomberOGAntenna', cylinder, ink, [0.15, 4.08, 0], [0.075, 0.35, 0.075], shell, [0, 0, -0.27]);
+    const antennaBall = part('BomberOGAntennaBall', sphere, pink, [0.24, 4.28, 0], [0.29, 0.29, 0.29]);
+
+    const makeArm = (side) => {
+      const arm = new T.Group();
+      arm.name = `BomberOGArm${side < 0 ? 'L' : 'R'}`;
+      arm.position.set(side * 0.54, 2.43, 0);
+      arm.rotation.z = side * 0.82;
+      shell.add(arm);
+      part('ArmWhite', cylinder, white, [0, -0.36, 0], [0.18, 0.74, 0.18], arm);
+      part('GlovePink', sphere, pink, [0, -0.78, 0.02], [0.43, 0.43, 0.43], arm);
+      return arm;
+    };
+    const leftArm = makeArm(-1);
+    const rightArm = makeArm(1);
+
+    const makeLeg = (side) => {
+      const leg = new T.Group();
+      leg.name = `BomberOGLeg${side < 0 ? 'L' : 'R'}`;
+      leg.position.set(side * 0.29, 1.4, 0);
+      leg.rotation.z = side * 0.16;
+      shell.add(leg);
+      part('LegWhite', cylinder, white, [0, -0.47, 0], [0.22, 0.98, 0.22], leg);
+      part('BootPink', sphere, pink, [side * 0.06, -1.02, 0.2], [0.48, 0.3, 0.6], leg);
+      return leg;
+    };
+    const leftLeg = makeLeg(-1);
+    const rightLeg = makeLeg(1);
+
+    // The bomb sits behind the glove so the silhouette reads clearly from both
+    // the menu camera and the high arena camera.
+    const bomb = new T.Group();
+    bomb.name = 'BomberOGBomb';
+    bomb.position.set(-1.17, 2.9, -0.08);
+    shell.add(bomb);
+    part('BombShell', sphere, purple, [0, 0, 0], [0.68, 0.68, 0.68], bomb);
+    part('BombCapOutline', cylinder, ink, [0.02, 0.64, 0], [0.23, 0.23, 0.23], bomb);
+    part('BombCap', cylinder, purple, [0.02, 0.67, 0.015], [0.17, 0.2, 0.17], bomb);
+    [-0.06, 0.12, 0.3].forEach((y, index) => {
+      part(`BombFuse${index + 1}`, cylinder, index === 1 ? ink : fuse,
+        [0.06 + index * 0.06, 0.83 + y, 0], [0.065, 0.22, 0.065], bomb,
+        [0, 0, -0.18 - index * 0.08]);
+    });
+
+    model.add(shell);
+    model.userData.bomberOGRig = {
+      shell, leftArm, rightArm, leftLeg, rightLeg, bomb, antennaBall,
+    };
+  }
+
+  function animateFighterDetails(model, def, t, showcase) {
+    if (def.id !== 'bomber-og') return;
+    const rig = model.userData.bomberOGRig;
+    if (!rig) return;
+    const step = Math.sin(t * 6.2);
+    const hero = showcase ? 0.5 + 0.5 * Math.sin(t * 2.7) : 0;
+    rig.shell.position.y = Math.abs(step) * 0.035;
+    rig.shell.rotation.y = showcase ? Math.sin(t * 1.4) * 0.06 : 0;
+    rig.leftArm.rotation.z = -0.82 - step * 0.08 - hero * 0.1;
+    rig.rightArm.rotation.z = 0.82 - step * 0.08 + hero * 1.05;
+    rig.leftLeg.rotation.z = -0.16 + step * 0.09;
+    rig.rightLeg.rotation.z = 0.16 - step * 0.09;
+    rig.bomb.rotation.z = Math.sin(t * 2.1) * 0.055;
+    const pulse = 1 + Math.sin(t * 4.2) * 0.035;
+    rig.antennaBall.scale.setScalar(0.29 * pulse);
+  }
+
   function addFighterDetails(RT, model, def) {
+    if (def.id === 'bomber-og') {
+      addBomberOGDetails(RT, model);
+      return;
+    }
     if (def.id !== 'mushroom-king') return;
     const head = model.getObjectByName('Head');
     if (!head) return;
@@ -8837,9 +8968,18 @@ const CharacterModels = (() => {
 
       const controller = animationController(RT, model, gltf.animations, def);
       if (controller) {
-        group.userData.cosAnim = [t => controller.update(t)];
-        group.userData.showcaseAnim = t => controller.showcase(t);
-        group.userData.showcaseReset = () => controller.reset();
+        group.userData.cosAnim = [t => {
+          controller.update(t);
+          animateFighterDetails(model, def, t, false);
+        }];
+        group.userData.showcaseAnim = t => {
+          controller.showcase(t);
+          animateFighterDetails(model, def, t, true);
+        };
+        group.userData.showcaseReset = () => {
+          controller.reset();
+          animateFighterDetails(model, def, 0, false);
+        };
       }
       group.userData.personality = def.personality || 'playful';
       group.userData.personalityRig = !!(controller && controller.hasExpressiveHead);

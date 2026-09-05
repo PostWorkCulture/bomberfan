@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="smooth-r2-20260905">
+<meta name="build" content="abyss-r1-20260905">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -3282,7 +3282,7 @@ const PLAYER_DEFS = [
   { id: 'monkroose', name: 'Ironclaw', color: 0x94ba57, belly: 0xffed8b, trim: 0xda6d27, accent: 0x795a0a,
     model: 'assets/characters/monkroose.gltf', portrait: 'assets/portraits/monkroose.webp', expression: 'Wave', altExpression: 'Yes', personality: 'playful',
   },
-  { id: 'blue-demon', name: 'Abyss', color: 0x398cac, belly: 0x55ddff, trim: 0xac6567, accent: 0x1f4f6e,
+  { id: 'blue-demon', name: 'Abyss', color: 0x237f9f, belly: 0x91f5ff, trim: 0x8061a5, accent: 0x182449,
     model: 'assets/characters/blue-demon.gltf', portrait: 'assets/portraits/blue-demon.webp', expression: 'No', altExpression: 'Yes', personality: 'eerie',
   },
   { id: 'bomber-og', name: 'BomberOG', color: 0xff376f, belly: 0xffe58d, trim: 0xffffff, accent: 0x2446f5,
@@ -8967,7 +8967,168 @@ const CharacterModels = (() => {
     rig.antennaBall.scale.setScalar(0.29 * pulse);
   }
 
+  function addAbyssDetails(RT, model) {
+    const T = RT.THREE;
+    const head = model.getObjectByName('Head');
+    if (!head) return;
+    model.updateMatrixWorld(true);
+    const shadow = new T.Color(0x182449);
+    const teal = new T.Color(0x237f9f);
+    const highlight = new T.Color(0x43b8be);
+    const violet = new T.Color(0x8061a5);
+    const ink = new T.Color(0x10152d);
+    const color = new T.Color();
+    const point = new T.Vector3();
+
+    model.traverse(mesh => {
+      if (!mesh.isSkinnedMesh) return;
+      const headIndex = mesh.skeleton.bones.indexOf(head);
+      if (headIndex < 0) return;
+      // Each fighter owns this small colour/shape variant. The loader's cached
+      // geometry and original rig remain reusable by every other clone.
+      const geometry = mesh.geometry.clone();
+      mesh.geometry = geometry;
+      mesh.userData.sharedModelGeometry = false;
+      const position = geometry.getAttribute('position');
+      const uv = geometry.getAttribute('uv');
+      const colors = new Float32Array(position.count * 3);
+      // glTF's default node pose differs from the skin's bind pose. Use the
+      // inverse bind matrix when editing vertices, not the posed Head matrix.
+      const toHead = mesh.skeleton.boneInverses[headIndex].clone().multiply(mesh.bindMatrix);
+      const fromHead = toHead.clone().invert();
+      for (let i = 0; i < position.count; i++) {
+        const u = uv.getX(i);
+        point.fromBufferAttribute(position, i).applyMatrix4(toHead);
+        if (Math.abs(u - 0.04742) < 0.002) {
+          const side = point.x < 0 ? -1 : 1;
+          const dx = point.x - side * 0.340;
+          point.y = 0.350 + (point.y - 0.328) * 0.43 + side * dx * 0.40;
+          color.copy(ink);
+          point.applyMatrix4(fromHead);
+          position.setXYZ(i, point.x, point.y, point.z);
+        } else if (Math.abs(u - 0.01505) < 0.002) {
+          // The old horizontal pupils are separate islands. Fold them inside
+          // the sockets so the new upright slits have a clean silhouette.
+          point.set(point.x < 0 ? -0.340 : 0.340, 0.350, 0.247).applyMatrix4(fromHead);
+          position.setXYZ(i, point.x, point.y, point.z);
+          color.copy(ink);
+        } else if (Math.abs(u - 0.07839) < 0.002) {
+          const front = T.MathUtils.smoothstep(point.z, -0.28, 0.42);
+          color.copy(shadow).lerp(teal, 0.28 + front * 0.72);
+          const cheek = T.MathUtils.smoothstep(point.y, -0.7, 0.35) * front;
+          color.lerp(highlight, cheek * 0.36);
+          const horn = T.MathUtils.smoothstep(Math.abs(point.x), 0.43, 0.94)
+            * T.MathUtils.smoothstep(point.y, 0.25, 0.66);
+          color.lerp(violet, horn * 0.88);
+        } else if (Math.abs(u - 0.10949) < 0.002) {
+          color.setHex(0xb69253);
+        } else if (Math.abs(u - 0.14151) < 0.002) {
+          color.setHex(0x705052);
+        } else {
+          color.copy(violet);
+        }
+        color.toArray(colors, i * 3);
+      }
+      geometry.setAttribute('color', new T.BufferAttribute(colors, 3));
+      geometry.computeVertexNormals();
+      geometry.computeBoundingBox();
+      geometry.computeBoundingSphere();
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const material of materials) {
+        material.map = null;
+        material.emissiveMap = null;
+        material.color.setHex(0xffffff);
+        material.vertexColors = true;
+        material.roughness = 0.58;
+        material.emissive.setHex(0x14273b);
+        material.emissiveIntensity = 0.08;
+        material.needsUpdate = true;
+      }
+    });
+
+    const face = new T.Group();
+    face.name = 'AbyssFace';
+    head.add(face);
+    // Batch the face by material: four draw calls, no lights, no animation-loop
+    // allocations. All details follow the existing Head bone automatically.
+    const batches = [
+      { name: 'AbyssBrowMouthPupils', material: new T.MeshStandardMaterial({ color: 0x10152d, roughness: 0.75 }) },
+      { name: 'AbyssEyes', material: new T.MeshStandardMaterial({ color: 0x91f5ff, emissive: 0x49cde7, emissiveIntensity: 0.7, roughness: 0.28 }) },
+      { name: 'AbyssTempleAccents', material: new T.MeshStandardMaterial({ color: 0x8061a5, roughness: 0.65 }) },
+      { name: 'AbyssFangs', material: new T.MeshStandardMaterial({ color: 0xd9e8e0, roughness: 0.42 }) },
+    ].map(batch => ({ ...batch, positions: [], normals: [], indices: [] }));
+    const sphere = new T.SphereGeometry(1, 12, 6);
+    const matrix = new T.Matrix4();
+    const normalMatrix = new T.Matrix3();
+    const quaternion = new T.Quaternion();
+    const normal = new T.Vector3();
+    const part = (batchIndex, geometry, location, scale, rotation = [0, 0, 0]) => {
+      const batch = batches[batchIndex];
+      quaternion.setFromEuler(new T.Euler(...rotation));
+      matrix.compose(new T.Vector3(...location), quaternion, new T.Vector3(...scale));
+      normalMatrix.getNormalMatrix(matrix);
+      const p = geometry.getAttribute('position');
+      const n = geometry.getAttribute('normal');
+      const offset = batch.positions.length / 3;
+      for (let i = 0; i < p.count; i++) {
+        point.fromBufferAttribute(p, i).applyMatrix4(matrix);
+        normal.fromBufferAttribute(n, i).applyNormalMatrix(normalMatrix);
+        batch.positions.push(point.x, point.y, point.z);
+        batch.normals.push(normal.x, normal.y, normal.z);
+      }
+      for (const index of geometry.index.array) batch.indices.push(index + offset);
+    };
+    for (const side of [-1, 1]) {
+      part(1, sphere, [side * 0.363, 0.356, 0.398], [0.135, 0.041, 0.036], [-0.20, side * 0.35, side * 0.39]);
+      part(0, sphere, [side * 0.370, 0.358, 0.432], [0.012, 0.035, 0.008], [-0.20, side * 0.35, side * 0.08]);
+      part(0, sphere, [side * 0.341, 0.417, 0.379], [0.180, 0.041, 0.044], [-0.25, side * 0.30, side * 0.36]);
+      part(2, sphere, [side * 0.417, 0.475, 0.328], [0.135, 0.020, 0.024], [-0.25, side * 0.30, side * 0.44]);
+    }
+    // Follow the tapered muzzle with a continuous lip instead of a straight
+    // bar. The slightly raised right corner gives the closed snarl asymmetry.
+    const lip = [
+      [-0.21, -0.006, 0.551], [-0.16, 0.001, 0.579],
+      [-0.10, 0.010, 0.600], [0, 0.015, 0.621],
+      [0.10, 0.017, 0.602], [0.16, 0.025, 0.583], [0.21, 0.047, 0.555],
+    ];
+    const mouth = batches[0];
+    const mouthOffset = mouth.positions.length / 3;
+    lip.forEach(([x, y, z], i) => {
+      const thickness = i === 0 || i === lip.length - 1 ? 0.004 : 0.011;
+      mouth.positions.push(x, y - thickness, z, x, y + thickness, z);
+      mouth.normals.push(x * 2, 0, 1, x * 2, 0, 1);
+      if (i > 0) {
+        const a = mouthOffset + (i - 1) * 2;
+        mouth.indices.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
+      }
+    });
+    for (const side of [-1, 1]) {
+      const teeth = batches[3];
+      const offset = teeth.positions.length / 3;
+      const x = side * 0.100;
+      const top = side < 0 ? 0.015 : 0.021;
+      teeth.positions.push(x - 0.022, top, 0.607, x + 0.022, top, 0.607,
+        x - side * 0.004, top - (side < 0 ? 0.059 : 0.049), 0.622);
+      teeth.normals.push(0, 0, 1, 0, 0, 1, 0, 0, 1);
+      teeth.indices.push(offset, offset + 2, offset + 1);
+    }
+    for (const batch of batches) {
+      const geometry = new T.BufferGeometry();
+      geometry.setAttribute('position', new T.Float32BufferAttribute(batch.positions, 3));
+      geometry.setAttribute('normal', new T.Float32BufferAttribute(batch.normals, 3));
+      geometry.setIndex(batch.indices);
+      const mesh = new T.Mesh(geometry, batch.material);
+      mesh.name = batch.name;
+      face.add(mesh);
+    }
+    sphere.dispose();
+  }
+
   function addFighterDetails(RT, model, def) {
+    if (def.id === 'blue-demon') {
+      addAbyssDetails(RT, model);
+      return;
+    }
     if (def.id === 'bomber-og') {
       addBomberOGDetails(RT, model);
       return;

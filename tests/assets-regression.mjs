@@ -35,6 +35,8 @@ for (const fighter of fighters) {
 
 for (const file of [
   'assets/vendor/character-bootstrap.js',
+  'assets/vendor/roster-eyes.js',
+  'assets/characters/roster-eye-atlas.png',
   'assets/vendor/three.module.min.js',
   'assets/vendor/three.core.min.js',
   'assets/vendor/GLTFLoader.js',

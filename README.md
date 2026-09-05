@@ -16,6 +16,10 @@ The 20 animated fighters use the [Ultimate Monsters](https://quaternius.com/pack
 
 Abyss has narrowed luminous cyan eyes, heavy angled brows, a small fanged snarl, and teal/indigo shading with violet horn tips. His face follows the existing Head bone. The custom geometry is owned by each instance; all 43 joints and 14 source animations remain intact. Four batched facial meshes add 974 triangles, with no extra lights or animation-loop code.
 
+The other 18 monster fighters now have individual eye designs: glossy beads, coloured irises, oversized pupils, asymmetric lids, reptile slits and recessed embers. BomberOG and Abyss are excluded from this pass. Eye surfaces use one baked atlas and cached sphere geometry, with two extra meshes per fighter and no added lights or animation-loop work. Seventeen fighters add 144 triangles; Skullcrusher adds 880 because his source skull had empty sockets. The source models, textures and animation clips are unchanged. Rotcrown's misplaced forehead growth has been moved onto his cap.
+
+The [roster review sheet](docs/roster-eyes-review.png) shows the actual posed geometry under offline studio lighting. Updated portraits accompany all 18 designs. The CPU renderer is a visual inspection tool, not a WebGL screenshot or device-performance benchmark.
+
 ## Performance update (5 September 2026)
 
 - One instance batch for destructible crates, with unchanged collision and drops.
@@ -32,3 +36,5 @@ Abyss has narrowed luminous cyan eyes, heavy angled brows, a small fanged snarl,
 `tests/platform-harness.html` is the browser viewport harness for visual passes. Automated Node checks do not measure real WebGL FPS, browser-specific layout or physical-device input latency.
 
 `node tests/abyss-regression.mjs` loads Abyss through the bundled glTF runtime, exercises all 14 animations, and verifies source preservation, clone isolation, geometry budgets and disposal. An optional second positional argument exports posed geometry for offline visual review; `--clip No --time 0.5` selects a pose. Offline model renders use studio lighting and do not substitute for a WebGL device check.
+
+`node tests/roster-eyes-regression.mjs` checks all 18 eye designs, the production bootstrap/atlas gate, 228 original clips at 684 pose samples, clone and material isolation, cached geometry/texture lifetime, source preservation and both excluded fighters. Pass `--export /tmp/roster-qa` to export geometry for `python3 tools/render-character.py /tmp/roster-qa --out /tmp/roster-renders`. The Python tools require NumPy and Pillow. `node tools/generate-eye-atlas.mjs` deterministically regenerates the eye atlas from the authored surface rules and `EYE_STYLES` definitions.

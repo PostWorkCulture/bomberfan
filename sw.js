@@ -11,6 +11,8 @@ const ASSETS = [
   new URL('./apple-touch-icon.png', self.registration.scope).href,
   new URL('./Main Logo.png', self.registration.scope).href,
   new URL('./assets/vendor/character-bootstrap.js', self.registration.scope).href,
+  new URL('./assets/vendor/roster-eyes.js', self.registration.scope).href,
+  new URL('./assets/characters/roster-eye-atlas.png', self.registration.scope).href,
   new URL('./assets/vendor/three.module.min.js', self.registration.scope).href,
   new URL('./assets/vendor/three.core.min.js', self.registration.scope).href,
   new URL('./assets/vendor/GLTFLoader.js', self.registration.scope).href,

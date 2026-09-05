@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="b06e8f4">
+<meta name="build" content="smooth-20260905">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -5538,7 +5538,9 @@ const World = (function () {
     scene: null, camera: null, renderer: null,
     grid: null,              // Int8Array COLS*ROWS of CELL values
     voids: null,             // 1 where a solid grid cell is open chasm, not a wall
-    softMeshes: null,        // Map "x,y" -> mesh, for destructible crates
+    softMeshes: null,        // Map "x,y" -> instance index, for destructible crates
+    softInstances: null,
+    blastLights: [],
     hidden: null,            // Map "x,y" -> power-up id concealed under a crate
     group: null,             // everything that gets rebuilt each round
     clockwork: null,         // Haunted House's live rotating maze sections
@@ -5763,7 +5765,7 @@ const World = (function () {
     initMaterials();
 
     state.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    state.renderer.setPixelRatio(resolutionCeiling());
     state.renderer.shadowMap.enabled = true;
     // PCFSoftShadowMap was deprecated in three r185 — it warns once and falls
     // back to PCFShadowMap anyway, so ask for the real thing and stay quiet.
@@ -5775,6 +5777,14 @@ const World = (function () {
     scene.background = new THREE.Color(0x121826);
     scene.fog = new THREE.Fog(0x121826, 26, 44);
     state.scene = scene;
+    // Keep the light count stable so a chain reaction cannot compile a new
+    // shader for every simultaneous explosion. Idle slots remain visible.
+    state.blastLights = Array.from({ length: 4 }, () => {
+      const light = new THREE.PointLight(0xff8c30, 0, 11, 2);
+      light.userData.inUse = false;
+      scene.add(light);
+      return light;
+    });
 
     // Fixed tilted overhead camera — the whole arena is always in frame
     const cam = new THREE.PerspectiveCamera(46, 16 / 9, 0.1, 120);
@@ -5787,7 +5797,7 @@ const World = (function () {
     const key = new THREE.DirectionalLight(0xfff2d8, 2.0);
     key.position.set(7, 16, 8);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.mapSize.set(1024, 1024);
     const d = 12;
     key.shadow.camera.left = -d; key.shadow.camera.right = d;
     key.shadow.camera.top = d;   key.shadow.camera.bottom = -d;
@@ -5804,17 +5814,24 @@ const World = (function () {
     scene.add(state.group);
 
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', queueResize);
     // Android Chrome and iOS Safari both hide and show the URL bar without firing
     // a window resize. The visual viewport does report it, and everything anchored
     // to the bottom of the screen — the thumb controls above all — depends on
     // knowing. On Android this fires repeatedly during ordinary play.
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', resize);
-      window.visualViewport.addEventListener('scroll', resize);
+      window.visualViewport.addEventListener('resize', queueResize);
+      window.visualViewport.addEventListener('scroll', queueResize);
     }
   }
 
+  let resizeQueued = false;
+  function queueResize() {
+    if (resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(() => { resizeQueued = false; resize(); });
+  }
+  const rendererSize = new THREE.Vector2();
   function resize() {
     // Publish the VISIBLE height before anything measures against it.
     if (typeof UI !== 'undefined' && UI.syncViewport) UI.syncViewport();
@@ -5823,15 +5840,60 @@ const World = (function () {
     // would simply stretch the picture. What the visible height changes is the
     // CAMERA FIT — see LIM.bottom — and where the touch layer ends.
     const w = window.innerWidth, h = window.innerHeight;
-    // Capped at 2: a DPR-3 phone renders 2.25x the pixels of a DPR-2 one for a
-    // difference nobody can see at a 32px tile, and fill rate is the first
-    // thing to run out on mobile.
-    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    state.renderer.setSize(w, h, false);
+    const ceiling = resolutionCeiling();
+    const ratio = Math.min(state.renderer.getPixelRatio(), ceiling);
+    if (state.renderer.getPixelRatio() !== ratio) state.renderer.setPixelRatio(ratio);
+    state.renderer.getSize(rendererSize);
+    if (rendererSize.x !== w || rendererSize.y !== h) state.renderer.setSize(w, h, false);
     state.camera.aspect = w / h;
     state.camera.fov = 46;
     state.camera.updateProjectionMatrix();
     fitCamera();
+  }
+
+  // Bound fill rate independently of the display's physical pixel density.
+  // Only image resolution changes; camera framing and simulation stay exact.
+  function resolutionCeiling() {
+    const pixels = Math.max(1, window.innerWidth * window.innerHeight);
+    return Math.min(window.devicePixelRatio || 1, 1.5, Math.sqrt(2000000 / pixels));
+  }
+  const performanceState = { elapsed: 0, frames: 0, stable: 0, averageMs: 0 };
+  function adaptResolution(dt, active) {
+    const p = performanceState;
+    if (!active || dt <= 0 || dt > 0.25) {
+      p.elapsed = p.frames = p.stable = 0;
+      return;
+    }
+    p.elapsed += dt; p.frames++;
+    if (p.elapsed < 1.5) return;
+    p.averageMs = p.elapsed * 1000 / p.frames;
+    const current = state.renderer.getPixelRatio();
+    const ceiling = resolutionCeiling();
+    let next = current;
+    if (p.averageMs > 22) {
+      next = Math.max(Math.min(0.75, ceiling), current - 0.15);
+      p.stable = 0;
+    } else if (p.averageMs < 17.5) {
+      p.stable += p.elapsed;
+      if (p.stable >= 10) { next = Math.min(ceiling, current + 0.1); p.stable = 0; }
+    } else p.stable = 0;
+    next = Math.min(next, ceiling);
+    if (Math.abs(next - current) > 0.01) state.renderer.setPixelRatio(next);
+    p.elapsed = p.frames = 0;
+  }
+  function acquireBlastLight(x, y) {
+    const light = state.blastLights.find(light => !light.userData.inUse);
+    if (!light) return null; // All blast geometry and damage still run.
+    light.userData.inUse = true;
+    light.color.setHex(0xff8c30);
+    light.intensity = 34;
+    light.position.set(wx(x), 1.4, wz(y));
+    return light;
+  }
+  function releaseBlastLight(light) {
+    if (!light) return;
+    light.intensity = 0;
+    light.userData.inUse = false;
   }
 
   // 'menu' frames the arena as a backdrop: no HUD to dodge, and pulled in so it
@@ -6112,6 +6174,7 @@ const World = (function () {
   // ---- Arena construction -------------------------------------------------
   function disposeGroup() {
     state.group.traverse(o => {
+      if (o.isInstancedMesh) o.dispose();
       if (o.isMesh && o.geometry && o.userData.ownGeometry) o.geometry.dispose();
       if (o.isMesh && o.material && o.userData.ownMaterial) {
         const materials = Array.isArray(o.material) ? o.material : [o.material];
@@ -6836,17 +6899,30 @@ const World = (function () {
     addLattice(pillarCells, MAT.hard, MAT.hardTop);
     buildClockworkWalls(g);
 
-    // Soft crates — individual meshes so they can be destroyed one at a time
-    const crateGeo = new THREE.BoxGeometry(0.92, 0.92, 0.92);
+    // All crates share one draw and shadow draw. Logical cells and hidden
+    // pickups are unchanged; destruction collapses just that instance.
+    const crateCells = [];
     for (let y = 0; y < CFG.ROWS; y++) {
       for (let x = 0; x < CFG.COLS; x++) {
-        if (state.grid[idx(x, y)] !== CELL.SOFT) continue;
-        const mesh = new THREE.Mesh(crateGeo, MAT.soft);
-        mesh.position.set(wx(x), 0.46, wz(y));
-        mesh.castShadow = mesh.receiveShadow = true;
-        g.add(mesh);
-        state.softMeshes.set(key(x, y), mesh);
+        if (state.grid[idx(x, y)] === CELL.SOFT) crateCells.push([x, y]);
       }
+    }
+    state.softInstances = null;
+    if (crateCells.length) {
+      const crates = new THREE.InstancedMesh(new THREE.BoxGeometry(0.92, 0.92, 0.92), MAT.soft, crateCells.length);
+      crates.name = 'ArenaCrates';
+      crates.castShadow = crates.receiveShadow = true;
+      crates.userData.ownGeometry = true;
+      crates.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      crateCells.forEach(([x, y], i) => {
+        m.makeTranslation(wx(x), 0.46, wz(y));
+        crates.setMatrixAt(i, m);
+        state.softMeshes.set(key(x, y), i);
+      });
+      crates.instanceMatrix.needsUpdate = true;
+      crates.computeBoundingSphere();
+      state.softInstances = crates;
+      g.add(crates);
     }
 
     // Theme dressing, sat on the outer wall — decorative only, never collidable
@@ -6904,13 +6980,18 @@ const World = (function () {
     }
   }
 
+  const hiddenCrateMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
   function destroySoft(x, y) {
     // The crate is coming apart, so the marker over it has nothing left to mark
     if (state.heartHint && key(x, y) === state.heartKey) heartHint(false);
     if (cellAt(x, y) !== CELL.SOFT) return null;
     state.grid[idx(x, y)] = CELL.EMPTY;
-    const mesh = state.softMeshes.get(key(x, y));
-    if (mesh) { state.group.remove(mesh); state.softMeshes.delete(key(x, y)); }
+    const instance = state.softMeshes.get(key(x, y));
+    if (instance !== undefined && state.softInstances) {
+      state.softInstances.setMatrixAt(instance, hiddenCrateMatrix);
+      state.softInstances.instanceMatrix.needsUpdate = true;
+      state.softMeshes.delete(key(x, y));
+    }
     const pu = state.hidden.get(key(x, y)) || null;
     state.hidden.delete(key(x, y));
     return pu;
@@ -7075,6 +7156,8 @@ const World = (function () {
 
   return {
     init, buildArena, applyLevel, render, updateCamera, addShake, decayShake,
+    adaptResolution, acquireBlastLight, releaseBlastLight,
+    get performance() { return { averageMs: performanceState.averageMs, pixelRatio: state.renderer.getPixelRatio() }; },
     updateClockwork, settleClockwork,
     fit: fitCamera,
     tintWalls,
@@ -8715,6 +8798,7 @@ const CharacterModels = (() => {
         showcaseEpoch = null;
         play(idle, false);
       },
+      dispose() { mixer.stopAllAction(); mixer.uncacheRoot(model); },
       hasExpressiveHead: !!head,
     };
   }
@@ -8722,9 +8806,13 @@ const CharacterModels = (() => {
   function prepareMaterial(RT, material, def) {
     const copy = material.clone();
     if (copy.map) {
-      copy.map.colorSpace = RT.THREE.SRGBColorSpace;
-      copy.map.anisotropy = Math.max(copy.map.anisotropy || 1, 8);
-      copy.map.needsUpdate = true;
+      // Texture objects belong to the cached source and are reused by clones.
+      const anisotropy = Math.min(4, World.renderer ? World.renderer.capabilities.getMaxAnisotropy() : 4);
+      if (copy.map.colorSpace !== RT.THREE.SRGBColorSpace || copy.map.anisotropy !== anisotropy) {
+        copy.map.colorSpace = RT.THREE.SRGBColorSpace;
+        copy.map.anisotropy = anisotropy;
+        copy.map.needsUpdate = true;
+      }
     }
     if (copy.isMeshStandardMaterial || copy.isMeshPhysicalMaterial) {
       copy.roughness = 0.27;
@@ -8939,6 +9027,7 @@ const CharacterModels = (() => {
       const model = RT.clone(gltf.scene);
       model.traverse(object => {
         if (!object.isMesh) return;
+        object.userData.sharedModelGeometry = true;
         object.castShadow = true;
         object.receiveShadow = true;
         if (Array.isArray(object.material)) {
@@ -8968,6 +9057,7 @@ const CharacterModels = (() => {
 
       const controller = animationController(RT, model, gltf.animations, def);
       if (controller) {
+        group.userData.disposeAnimation = () => controller.dispose();
         group.userData.cosAnim = [t => {
           controller.update(t);
           animateFighterDetails(model, def, t, false);
@@ -8995,7 +9085,27 @@ const CharacterModels = (() => {
     return group;
   }
 
-  return { create };
+  function dispose(root) {
+    if (!root || root.userData.disposed) return;
+    root.userData.disposed = true;
+    root.userData.cancelled = true;
+    const geometries = new Set(), materials = new Set(), skeletons = new Set();
+    root.traverse(o => {
+      o.userData.cancelled = true;
+      if (o.userData.disposeAnimation) o.userData.disposeAnimation();
+      if (o.geometry && !o.userData.sharedModelGeometry) geometries.add(o.geometry);
+      if (o.skeleton) skeletons.add(o.skeleton);
+      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
+        if (m !== World.MAT.bomb) materials.add(m);
+      });
+    });
+    geometries.forEach(g => g.dispose());
+    materials.forEach(m => m.dispose());
+    skeletons.forEach(s => s.dispose());
+    root.removeFromParent();
+  }
+
+  return { create, dispose };
 })();
 
 /* ---------------------------------------------------------------- PLAYER -- */
@@ -9019,12 +9129,7 @@ class Player {
     if (this.kit && COSMETIC_SLOTS.every(s => this.kit[s] === next[s])) return false;
     this.kit = next;
     const old = this.mesh;
-    World.scene.remove(old);
-    old.userData.cancelled = true;
-    old.traverse(o => {
-      if (o.geometry) o.geometry.dispose();
-      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
-    });
+    CharacterModels.dispose(old);
     this.mesh = Player.buildMesh(this.def, next);
     this.aura = this.mesh.userData.aura;
     Player.applyViewScale(this.mesh);
@@ -11155,6 +11260,7 @@ class Bomb {
     this.t = 0;
 
     const g = new THREE.Group();
+    this.sharedShellMaterial = owner.shellMat || World.MAT.bomb;
     // The shell comes from the owner's equipped design. Its COLOUR does not:
     // World.MAT.bomb is chosen per level so the bomb stays visible against that
     // floor, and no cosmetic is allowed to undo that.
@@ -11203,13 +11309,16 @@ class Bomb {
     if (this.isMine) {
       // Mines sit flatter and wear a warning collar
       shell.scale.set(1.15, 0.55, 1.15);
+      band.material.dispose();
       band.material = new THREE.MeshStandardMaterial({ color: 0xb7d321, roughness: 0.4, metalness: 0.3 });
       fuse.visible = false;
+      this.spark.material.dispose();
       this.spark.material = new THREE.MeshStandardMaterial({
         color: 0xd7ff4f, emissive: 0xb7d321, emissiveIntensity: 2.5,
       });
       this.spark.position.set(0, 0.22, 0);
     } else if (this.remote) {
+      band.material.dispose();
       band.material = new THREE.MeshStandardMaterial({ color: 0x2ec4b6, roughness: 0.4, metalness: 0.35 });
     }
 
@@ -11327,11 +11436,32 @@ class Bomb {
     return false;
   }
 
-  dispose() { World.scene.remove(this.mesh); }
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    const geometries = new Set(), materials = new Set();
+    this.mesh.traverse(o => {
+      if (o.geometry) geometries.add(o.geometry);
+      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
+        if (m !== this.sharedShellMaterial) materials.add(m);
+      });
+    });
+    geometries.forEach(g => g.dispose());
+    materials.forEach(m => m.dispose());
+    World.scene.remove(this.mesh);
+  }
 }
 
 /* ----------------------------------------------------------------- BLAST -- */
 class Blast {
+  // Geometry is immutable and shared across every detonation.
+  static geometry = {
+    arm: new THREE.IcosahedronGeometry(0.56, 1),
+    centre: new THREE.IcosahedronGeometry(0.62, 1),
+    inner: new THREE.IcosahedronGeometry(0.32, 1),
+    innerCentre: new THREE.IcosahedronGeometry(0.4, 1),
+    shock: new THREE.RingGeometry(0.35, 0.55, 32),
+  };
   constructor(cells) {
     this.cells = cells;              // [{x,y,kind,dir}]
     this.life = CFG.BLAST_LIFE;
@@ -11349,17 +11479,15 @@ class Blast {
     // so a long blast reads as one continuous rolling fire.
     cells.forEach((c, i) => {
       const isCore = c.kind === 'core';
-      const m = new THREE.Mesh(new THREE.IcosahedronGeometry(isCore ? 0.62 : 0.56, 1), this.matArm);
+      const m = new THREE.Mesh(isCore ? Blast.geometry.centre : Blast.geometry.arm, this.matArm);
       m.position.set(World.wx(c.x), 0.48, World.wz(c.y));
       m.rotation.set(i * 1.7, i * 2.3, i * 0.9);
-      m.userData.ownGeometry = true;
       this.group.add(m);
       this.flames.push(m);
 
-      const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(isCore ? 0.4 : 0.32, 1), this.matCore);
+      const inner = new THREE.Mesh(isCore ? Blast.geometry.innerCentre : Blast.geometry.inner, this.matCore);
       inner.position.copy(m.position);
       inner.rotation.set(i * 0.8, i * 1.1, i * 2.1);
-      inner.userData.ownGeometry = true;
       this.group.add(inner);
       this.cores = this.cores || [];
       this.cores.push(inner);
@@ -11367,15 +11495,12 @@ class Blast {
 
     const c0 = cells[0];
     // Expanding shockwave ring on the ground at the detonation point
-    this.shock = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.55, 32), this.matShock);
+    this.shock = new THREE.Mesh(Blast.geometry.shock, this.matShock);
     this.shock.rotation.x = -Math.PI / 2;
     this.shock.position.set(World.wx(c0.x), 0.06, World.wz(c0.y));
-    this.shock.userData.ownGeometry = true;
     this.group.add(this.shock);
 
-    this.light = new THREE.PointLight(0xff8c30, 34, 11, 2);
-    this.light.position.set(World.wx(c0.x), 1.4, World.wz(c0.y));
-    this.group.add(this.light);
+    this.light = World.acquireBlastLight(c0.x, c0.y);
 
     World.scene.add(this.group);
     this.update(0);
@@ -11421,12 +11546,15 @@ class Blast {
     this.shock.scale.set(s, s, 1);
     this.matShock.opacity = 0.85 * Math.pow(t, 1.6);
 
-    this.light.intensity = 34 * t * t;
+    if (this.light) this.light.intensity = 34 * t * t;
     return this.life <= 0;
   }
 
   dispose() {
-    this.group.traverse(o => { if (o.isMesh) o.geometry.dispose(); });
+    if (this.disposed) return;
+    this.disposed = true;
+    World.releaseBlastLight(this.light);
+    this.light = null;
     this.matArm.dispose();
     this.matCore.dispose();
     this.matShock.dispose();
@@ -12701,6 +12829,7 @@ const AI = (function () {
 const UI = (function () {
   let root, hud, banner, menu, pause, results, rotate, select, victory;
   let cards = [];
+  let hudLayoutDirty = true;
   let lastReserve = -1;      // last measured strip height, to spot growth
 
   const hex = n => '#' + n.toString(16).padStart(6, '0');
@@ -12890,6 +13019,10 @@ const UI = (function () {
     if (bm && bt) bt.textContent = 'build ' + bm.content;
     applyCompact();
     window.addEventListener('resize', applyCompact);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => {
+      hudLayoutDirty = true;
+      if (World.camera) World.fit();
+    });
     window.addEventListener('orientationchange', applyCompact);
   }
 
@@ -12926,6 +13059,7 @@ const UI = (function () {
     applyCompact();
   }
   function applyCompact() {
+    hudLayoutDirty = true;
     document.body.classList.toggle('compact', isCompact());
     document.body.classList.toggle('padded', isPadded());
     if (rotate) rotate.classList.toggle('hidden', !isBlockedByOrientation());
@@ -13548,6 +13682,7 @@ const UI = (function () {
     const right = document.getElementById('cards-right');
     left.innerHTML = right.innerHTML = '';
     cards = [];
+    hudLayoutDirty = true;
     const humans = players.filter(p => p.isHuman);
     const solo = humans.length === 1 ? humans[0].seat : -1;
     hud.classList.toggle('solo', solo >= 0);
@@ -13566,6 +13701,7 @@ const UI = (function () {
         // corner; #cards-right survives as an empty box because the layout code,
         // the camera reserve and the tests all still ask for it by id.
         left.appendChild(el);
+        el._wins = el.querySelector('.wins');
         cards[p.seat] = el;
       });
   }
@@ -13574,16 +13710,17 @@ const UI = (function () {
     game.players.forEach((p, i) => {
       const el = cards[i];
       if (!el) return;
-      el.classList.toggle('dead', !p.alive);
-      el.classList.toggle('cursed', !!p.curse);
+      if (el._alive !== p.alive) { el._alive = p.alive; el.classList.toggle('dead', !p.alive); }
+      if (el._cursed !== !!p.curse) { el._cursed = !!p.curse; el.classList.toggle('cursed', !!p.curse); }
       // NO PICK-UP TALLY. A card carries a name, a seat colour and the score,
       // and nothing else: the bomb count, the fire count and the row of ability
       // chips are all gone. Everything they said is already on the board — you
       // can see how far your own blast reaches, and Kick has the gold boots.
       // What is left is the one thing the arena cannot tell you, which is where
       // the match stands.
-      el.querySelector('.wins').textContent = game.opts.wins > 1
+      const wins = game.opts.wins > 1
         ? p.wins + '/' + game.opts.wins : (p.wins ? String(p.wins) : '');
+      if (el._wins.textContent !== wins) { el._wins.textContent = wins; hudLayoutDirty = true; }
     });
     // NO CLOCK, JUST THE SKULLS. There is nothing to count down to that a player
     // can act on until sudden death, and when it arrives the skulls say so.
@@ -13593,13 +13730,15 @@ const UI = (function () {
     // which stays true until the next round is built — so they sat there flashing
     // over the win banner. Gated on PLAY as well, they go the instant it is won.
     const clock = document.getElementById('clock');
-    if (clock) clock.classList.toggle('sd',
-      !!game.suddenDeath && game.state === STATE.PLAY);
-
-    // Cards grow as players collect things. The camera reserve is measured from
-    // them, so a change in the strip's height has to re-fit — otherwise the
-    // strip creeps down over the board during a round, which is exactly what it
-    // did. Compared, not recomputed blindly: fitCamera runs a binary search.
+    const suddenDeath = !!game.suddenDeath && game.state === STATE.PLAY;
+    if (clock && clock.classList.contains('sd') !== suddenDeath) {
+      clock.classList.toggle('sd', suddenDeath);
+      hudLayoutDirty = true;
+    }
+    // The roster has no changing pickup tally. Re-measure only when its
+    // contents or layout change, never 60 times per second during movement.
+    if (!hudLayoutDirty) return;
+    hudLayoutDirty = false;
     placeCards();
     dropCards();
     placeClock();
@@ -13610,7 +13749,7 @@ const UI = (function () {
     }
   }
 
-  function showHUD(v) { hud.classList.toggle('hidden', !v); }
+  function showHUD(v) { hud.classList.toggle('hidden', !v); hudLayoutDirty = true; }
 
   // THE START COUNTDOWN. One big rainbow number, and while it is up the round
   // clock is hidden — hence the class on #hud rather than on #count alone: it is
@@ -14009,6 +14148,11 @@ const Game = (function () {
         toSelect();
       }
     }
+    document.addEventListener('visibilitychange', () => {
+      last = 0; acc = 0;
+      Input.clearPresses();
+      if (document.hidden) setPaused(true);
+    });
     requestAnimationFrame(frame);
   }
 
@@ -14116,6 +14260,7 @@ const Game = (function () {
     Audio3.menuMove();
   }
 
+  let touchVisibilityKey = null;
   function syncTouchVisibility() {
     const blocked = UI.isBlockedByOrientation();
     // The special button follows the prize the HUMAN at this device is wearing.
@@ -14124,7 +14269,11 @@ const Game = (function () {
     const power = (!blocked && !g.paused && me && me.alive &&
                    (g.state === STATE.PLAY || g.state === STATE.INTRO))
       ? me.special : null;
-    TouchPad.showSpecial(power, !!(me && power === 'hop' && me.hopCool > 0));
+    const cooling = !!(me && power === 'hop' && me.hopCool > 0);
+    const key = [blocked, g.paused, g.state, power, cooling, TouchPad.active].join('|');
+    if (key === touchVisibilityKey) return;
+    touchVisibilityKey = key;
+    TouchPad.showSpecial(power, cooling);
     UI.showTouch(!g.paused
       && (g.state === STATE.PLAY || g.state === STATE.INTRO)
       && !blocked);
@@ -14339,17 +14488,7 @@ const Game = (function () {
     const pv = g.preview;
     [pv.mesh, pv.bomb].forEach(m => {
       if (!m) return;
-      m.userData.cancelled = true;
-      pv.turn.remove(m);
-      pv.scene.remove(m);
-      m.traverse(o => {
-        if (o.geometry) o.geometry.dispose();
-        // World.MAT.bomb is shared with the arena — disposing it would blank
-        // every bomb in the next match.
-        if (o.material && o.material !== World.MAT.bomb) {
-          (Array.isArray(o.material) ? o.material : [o.material]).forEach(x => x.dispose());
-        }
-      });
+      CharacterModels.dispose(m);
     });
     // Every newly selected fighter starts in a readable front three-quarter
     // pose. The old turntable kept its accumulated angle between selections,
@@ -14371,6 +14510,7 @@ const Game = (function () {
 
   // Draw the preview through the game's existing WebGL context. The canvas is
   // physically inside #spreview, so no full-screen DOM layer can cover it.
+  const previewRendererSize = new THREE.Vector2();
   function renderPreview() {
     const pv = g.preview;
     const rect = UI.previewRect();
@@ -14380,13 +14520,13 @@ const Game = (function () {
     const w = Math.round(rect.width);
     const hh = Math.round(rect.height);
     g.previewViewport = { x: 0, y: 0, w, h: hh };
+    r.getSize(previewRendererSize);
+    if (previewRendererSize.x !== w || previewRendererSize.y !== hh) r.setSize(w, hh, false);
     if (w !== pv.width || hh !== pv.height) {
-      pv.width = w;
-      pv.height = hh;
-      r.setSize(w, hh, false);
+      pv.width = w; pv.height = hh;
+      pv.cam.aspect = rect.width / rect.height;
+      pv.cam.updateProjectionMatrix();
     }
-    pv.cam.aspect = rect.width / rect.height;
-    pv.cam.updateProjectionMatrix();
     const wasColour = r.getClearColor(new THREE.Color());
     const wasAlpha = r.getClearAlpha();
     const stageTime = performance.now() * 0.001;
@@ -14407,13 +14547,7 @@ const Game = (function () {
   function clearVictory() {
     const v = g.victory;
     if (!v) return;
-    const geometries = new Set(), materials = new Set();
-    v.scene.traverse(o => {
-      if (o.geometry) geometries.add(o.geometry);
-      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => materials.add(m));
-    });
-    geometries.forEach(x => x.dispose());
-    materials.forEach(x => x.dispose());
+    CharacterModels.dispose(v.scene);
     g.victory = null;
   }
 
@@ -14556,7 +14690,7 @@ const Game = (function () {
     // The Players row is hidden with touch controls up, so make the value match
     // what the player can actually see and choose.
     if (!UI.rowVisible(UI.MENU_ROWS.indexOf('players'))) g.opts.humans = 1;
-    g.players.forEach(p => World.scene.remove(p.mesh));
+    g.players.forEach(p => CharacterModels.dispose(p.mesh));
     g.players = [];
     // Put the chosen fighter in seat one, then draw three distinct opponents
     // from the other nineteen so the full roster keeps appearing across matches.
@@ -14736,7 +14870,7 @@ const Game = (function () {
     clearRoundEntities();
     UI.setCountdown(null);
     g.goT = 0;
-    g.players.forEach(p => World.scene.remove(p.mesh));
+    g.players.forEach(p => CharacterModels.dispose(p.mesh));
     g.players = [];
     g.state = STATE.MENU;
     UI.showResults('', [], false);
@@ -15709,19 +15843,22 @@ const Game = (function () {
   function frame(now) {
     requestAnimationFrame(frame);
     const t = now / 1000;
+    if (document.hidden) { last = t; acc = 0; return; }
+    const victoryVisible = (g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) && g.victory;
+    const arenaVisible = g.state !== STATE.SELECT && !victoryVisible;
     // Animated cosmetics run on the RENDER clock, not the simulation step: they
     // are decoration, they must be smooth on a 120Hz screen, and they must stop
     // dead when the game is paused rather than catching up in a lurch.
     if (!g.paused) {
-      for (let i = 0; i < g.players.length; i++) {
+      for (let i = 0; arenaVisible && i < g.players.length; i++) {
         const p = g.players[i];
-        if (p && p.mesh) Player.tickCosmetics(p.mesh, t);
+        if (p && p.mesh && p.mesh.visible) Player.tickCosmetics(p.mesh, t);
       }
-      if (g.preview && g.preview.mesh) {
+      if (g.state === STATE.SELECT && g.preview && g.preview.mesh) {
         Player.tickCosmetics(g.preview.mesh, t);
         Player.tickShowcase(g.preview.mesh, t);
       }
-      if (g.preview && g.preview.bomb) Player.tickCosmetics(g.preview.bomb, t);
+      if (g.state === STATE.SELECT && g.preview && g.preview.bomb) Player.tickCosmetics(g.preview.bomb, t);
       if ((g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) && g.victory) {
         Player.tickCosmetics(g.victory.mesh, t);
         Player.tickShowcase(g.victory.mesh, t);
@@ -15753,6 +15890,7 @@ const Game = (function () {
       if (g.sdWarned || g.suddenDeath) { UI.placeSdBand(); UI.placeSdCount(); }
     }
     let dt = last ? Math.min(t - last, CFG.MAX_FRAME_DT) : 0;
+    World.adaptResolution(last ? t - last : 0, !g.paused && !UI.isBlockedByOrientation());
     last = t;
 
     // Portrait on a touch device: the rotate overlay is up, so hold the
@@ -15772,12 +15910,11 @@ const Game = (function () {
     // what is already happening, so this costs a string compare per frame.
     syncAudio();
 
-    World.updateCamera();
-    World.render();
-    // The winner owns the whole arena canvas. Loadout renders its fighter into
-    // the dedicated canvas inside the preview panel.
+    // These scenes replace the canvas completely. Rendering the arena first
+    // doubled GPU work and shadow rendering for pixels nobody could see.
     if ((g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) && g.victory) renderVictory();
     else if (g.state === STATE.SELECT) renderPreview();
+    else { World.updateCamera(); World.render(); }
   }
 
   function tick(dt) {

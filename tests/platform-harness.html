@@ -1,0 +1,32 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Bomberfan platform harness</title>
+<style>
+  html, body { margin: 0; min-height: 100%; background: #161922; color: white; font: 14px system-ui; }
+  #meta { position: fixed; inset: 0 0 auto; z-index: 2; padding: 8px 12px; background: #080a0f; }
+  #stage { position: absolute; left: 10px; top: 46px; transform-origin: top left; }
+  iframe { border: 2px solid #6ee7ff; display: block; background: black; }
+</style>
+<div id="meta"></div>
+<div id="stage"><iframe id="game" title="Bomberfan test viewport"></iframe></div>
+<script>
+  const profiles = {
+    desktop: [1440, 900],
+    desktop4k: [3840, 2160],
+    laptop: [1280, 720],
+    hybridLaptop: [1366, 768],
+    tabletLandscape: [1024, 768],
+    tabletPortrait: [768, 1024],
+    phoneLandscape: [844, 390],
+    phonePortrait: [390, 844],
+  };
+  const profile = new URLSearchParams(location.search).get('profile') || 'desktop';
+  const [width, height] = profiles[profile] || profiles.desktop;
+  const frame = document.getElementById('game');
+  frame.width = width;
+  frame.height = height;
+  frame.src = '../index.html?platformQa=' + encodeURIComponent(profile);
+  const scale = Math.min(1, (innerWidth - 20) / width, (innerHeight - 56) / height);
+  document.getElementById('stage').style.transform = `scale(${scale})`;
+  document.getElementById('meta').textContent = `${profile}: ${width} × ${height} CSS px, shown at ${Math.round(scale * 100)}%`;
+</script>

@@ -25,4 +25,6 @@ The 20 animated fighters use the [Ultimate Monsters](https://quaternius.com/pack
 
 ## Regression checks
 
-`node tests/simulation-regression.mjs` checks simulation and resource ownership using Node, the bundled Three.js and `@napi-rs/canvas`. It resolves the existing Codex runtime modules through `CODEX_PRIMARY_RUNTIME_NODE_MODULES` (or its standard installed path). `node tests/hud-regression.mjs` checks HUD update work with no extra dependencies. These checks do not measure browser layout, WebGL performance or device FPS.
+`node tests/platform-regression.mjs` runs the simulation/resource suite twice across eight viewport, pixel-density and pointer profiles, including 4K, hybrid touchscreen laptops, tablets and phones. `node tests/simulation-regression.mjs` runs one detailed profile, `node tests/hud-regression.mjs` independently checks HUD update work, and `node tests/assets-regression.mjs` validates all fighter and runtime assets. The simulation harness uses Node, the bundled Three.js and `@napi-rs/canvas`, resolving runtime modules through `CODEX_PRIMARY_RUNTIME_NODE_MODULES` (or its standard installed path).
+
+`tests/platform-harness.html` is the browser viewport harness for visual passes. Automated Node checks do not measure real WebGL FPS, browser-specific layout or physical-device input latency.

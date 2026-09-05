@@ -11,6 +11,14 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const parentDir = path.resolve(scriptDir, '..');
 const inferredRepo = fs.existsSync(path.join(parentDir, 'index.html')) ? parentDir : path.join(parentDir, 'bomberfan');
 const repo = path.resolve(process.argv[2] || inferredRepo);
+const qaProfile = process.env.BF_QA_PROFILE || 'desktop';
+const qaWidth = Number(process.env.BF_QA_WIDTH || 1280);
+const qaHeight = Number(process.env.BF_QA_HEIGHT || 720);
+const qaDpr = Number(process.env.BF_QA_DPR || 1);
+const qaTouch = process.env.BF_QA_TOUCH === '1';
+const qaCoarse = process.env.BF_QA_COARSE === undefined ? qaTouch : process.env.BF_QA_COARSE === '1';
+const qaFine = process.env.BF_QA_FINE === undefined ? !qaTouch : process.env.BF_QA_FINE === '1';
+const qaQuiet = process.env.BF_QA_QUIET === '1';
 const modules = process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES || '/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules';
 const require = createRequire(path.join(modules, 'package.json'));
 const { createCanvas } = require('@napi-rs/canvas');
@@ -25,12 +33,12 @@ function element() {
     classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
     addEventListener: listen, removeEventListener: noop,
     appendChild: noop, remove: noop, setAttribute: noop, removeAttribute: noop,
-    getBoundingClientRect: () => ({ x: 0, y: 0, left: 0, top: 0, right: 1280, bottom: 720, width: 1280, height: 720 }),
+    getBoundingClientRect: () => ({ x: 0, y: 0, left: 0, top: 0, right: qaWidth, bottom: qaHeight, width: qaWidth, height: qaHeight }),
     querySelector: () => null, querySelectorAll: () => [],
-    width: 1280, height: 720, clientWidth: 1280, clientHeight: 720,
+    width: qaWidth, height: qaHeight, clientWidth: qaWidth, clientHeight: qaHeight,
   };
 }
-const canvas = Object.assign(createCanvas(1280, 720), element());
+const canvas = Object.assign(createCanvas(qaWidth, qaHeight), element());
 class StubRenderer {
   constructor(opts) {
     this.domElement = opts.canvas || canvas;
@@ -58,13 +66,18 @@ const document = {
 const storage = new Map();
 const context = vm.createContext({
   console, THREE: { ...ThreeModule, WebGLRenderer: StubRenderer }, document,
-  navigator: { userAgent: 'Bomberfan Node simulation regression', hardwareConcurrency: 8, maxTouchPoints: 0 },
+  navigator: { userAgent: `Bomberfan ${qaProfile} regression`, hardwareConcurrency: 8, maxTouchPoints: qaCoarse ? 5 : 0 },
   location: { search: '', href: 'https://example.test/' }, URLSearchParams, URL,
   performance: { now: () => 0 },
   setTimeout: () => 0, clearTimeout: noop, setInterval: () => 0, clearInterval: noop,
   requestAnimationFrame: () => 1, cancelAnimationFrame: noop,
-  innerWidth: 1280, innerHeight: 720, devicePixelRatio: 1,
-  matchMedia: () => ({ matches: false, addEventListener: noop, removeEventListener: noop }),
+  innerWidth: qaWidth, innerHeight: qaHeight, devicePixelRatio: qaDpr,
+  matchMedia: query => ({
+    matches: query.includes('(pointer: coarse)') ? qaCoarse
+      : query.includes('(any-pointer: fine)') ? qaFine
+      : query.includes('(prefers-reduced-motion: reduce)') ? false : false,
+    addEventListener: noop, removeEventListener: noop,
+  }),
   getComputedStyle: () => ({ getPropertyValue: () => '', display: 'block' }),
   addEventListener: listen, removeEventListener: noop,
   localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, String(v)), removeItem: k => storage.delete(k) },
@@ -80,6 +93,21 @@ const instrumented = source
   .replace(exportMarker, '    _qa: { tick, frame, startRound, clearRoundEntities, startMatch, toMenu },\n' + exportMarker);
 vm.runInContext(instrumented, context, { filename: path.join(repo, 'index.html:embedded-game') });
 const { Game, World, Input, UI, TouchPad, Audio3, Player, Bomb, Blast, PowerUp, AI, CFG, CELL, STATE, KEYMAPS, LEVELS, PU } = context.BlastArena;
+const touchElements = new Map(['touch', 'tzone', 'tbombzone', 'tspecialzone', 'tspecial', 'tstick', 'tknob', 'tbomb'].map(id => [id, element()]));
+document.getElementById = id => id === 'scene' ? canvas : (touchElements.get(id) || null);
+TouchPad.init();
+const platformState = {
+  touchFirst: TouchPad.available,
+  controlsActive: TouchPad.active,
+  compact: UI.isCompact(),
+  orientationBlocked: UI.isBlockedByOrientation(),
+};
+const manualPreference = qaTouch ? 'off' : 'on';
+TouchPad.setPref(manualPreference);
+platformState.manualPreference = TouchPad.pref;
+platformState.manualControlsActive = TouchPad.active;
+TouchPad._reset();
+platformState.resetControlsActive = TouchPad.active;
 // DOM layout, audio devices and asynchronously loaded character rigs are outside
 // this harness. Actual simulation, scene objects, arena geometry, bombs, blasts,
 // power-ups, collision and AI remain the production implementation.
@@ -90,14 +118,14 @@ for (const target of [UI, TouchPad, Audio3]) {
   }
 }
 UI.rowVisible = () => true; UI.isBlockedByOrientation = () => false;
-UI.isCompact = () => false; UI.isPadded = () => false;
-UI.hudBlockRects = () => []; UI.viewportH = () => 720;
+UI.isCompact = () => platformState.compact; UI.isPadded = () => false;
+UI.hudBlockRects = () => []; UI.viewportH = () => qaHeight;
 Player.buildMesh = () => new ThreeModule.Group();
 Game.init(canvas);
 const results = [];
 const crateMetrics = [];
 function check(name, fn) {
-  fn(); results.push({ name, passed: true }); console.log('PASS ' + name);
+  fn(); results.push({ name, passed: true }); if (!qaQuiet) console.log('PASS ' + name);
 }
 const g = Game._debug;
 const releaseInputs = () => { KEYMAPS.forEach(km => Object.values(km).flat().forEach(k => Input.release(k))); Input.clearPresses(); };
@@ -115,6 +143,20 @@ function start() {
 function put(p, x, y) { World.setCell(x, y, CELL.EMPTY); p.gx = x; p.gy = y; p.syncMesh(); }
 function corridor(y, from = 1, to = CFG.COLS - 2) { for (let x = from; x <= to; x++) World.setCell(x, y, CELL.EMPTY); }
 function tick(n = 1) { Game.advance(n * CFG.FIXED_DT); }
+
+check('platform profile selects the correct input/layout mode and drawing budget', () => {
+  assert.equal(platformState.touchFirst, qaTouch);
+  assert.equal(platformState.controlsActive, qaTouch);
+  assert.equal(platformState.manualPreference, manualPreference);
+  assert.equal(platformState.manualControlsActive, !qaTouch);
+  assert.equal(platformState.resetControlsActive, qaTouch);
+  assert.equal(platformState.compact, qaTouch || qaHeight <= 560 || qaWidth <= 820);
+  assert.equal(platformState.orientationBlocked, qaTouch && qaHeight > qaWidth);
+  assert.ok(Math.abs(World.camera.aspect - qaWidth / qaHeight) < 1e-10);
+  const ratio = World.performance.pixelRatio;
+  assert.ok(ratio <= Math.min(qaDpr, 1.5));
+  assert.ok(qaWidth * qaHeight * ratio * ratio <= 2000000 + 1);
+});
 
 check('match starts after the countdown with four alive players', () => {
   start(); assert.equal(g.players.length, 4); assert.ok(g.players.every(p => p.alive));
@@ -318,7 +360,7 @@ check('adaptive resolution reduces sustained slow-frame load without changing si
     assert.ok(width * height * ratio * ratio <= 2000000 + 1, `${width}x${height} exceeds the 2-million-pixel budget at DPR ${ratio}`);
     assert.ok(ratio <= Math.min(context.devicePixelRatio, 1.5));
   }
-  context.innerWidth = 1280; context.innerHeight = 720; context.devicePixelRatio = 1; World.resize();
+  context.innerWidth = qaWidth; context.innerHeight = qaHeight; context.devicePixelRatio = qaDpr; World.resize();
 });
 
 check('every level renders all logical crates in one instance batch', () => {
@@ -331,5 +373,8 @@ check('every level renders all logical crates in one instance batch', () => {
   }
 });
 
-console.log(JSON.stringify({ source: path.join(repo, 'index.html'), sourceSha256: createHash('sha256').update(html).digest('hex'), checks: results.length, results, crateMetrics,
-  limitations: ['Node only: does not measure WebGL, FPS, visual smoothness or browser layout.', 'UI, audio device access and external character rig creation are stubbed.'] }, null, 2));
+const report = { profile: qaProfile, viewport: [qaWidth, qaHeight], dpr: qaDpr,
+  pointers: { coarse: qaCoarse, fine: qaFine }, touchFirst: qaTouch,
+  source: path.join(repo, 'index.html'), sourceSha256: createHash('sha256').update(html).digest('hex'), checks: results.length, results, crateMetrics,
+  limitations: ['Node only: does not measure WebGL, FPS, visual smoothness or browser layout.', 'UI, audio device access and external character rig creation are stubbed.'] };
+console.log(JSON.stringify(report, null, qaQuiet ? 0 : 2));

@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="smooth-20260905">
+<meta name="build" content="smooth-r2-20260905">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -5199,15 +5199,19 @@ const TouchPad = (function () {
   // with a thumb.
   const REACH = 3.2;
 
-  // Remembered across sessions. The controls are ON by default — they are the
-  // only way to play on a phone, and hunting through a pause menu to find them
-  // is a poor first thirty seconds — so the saved value only ever records a
-  // deliberate decision to turn them OFF.
+  // Remembered across sessions. Controls default ON for a touch-first device —
+  // they are the only way to play on a phone — and OFF when a mouse or trackpad
+  // is present. A saved choice always wins, so a desktop player can still turn
+  // them on deliberately and a phone player can turn them off deliberately.
   const PREF_KEY = 'blastarena.controls';
   function readPref() {
     let v = null;
-    try { v = window.localStorage.getItem(PREF_KEY); } catch (e) { return 'on'; }
-    return v === 'off' ? 'off' : 'on';        // legacy 'auto' lands on 'on'
+    try { v = window.localStorage.getItem(PREF_KEY); }
+    catch (e) { return detect() ? 'on' : 'off'; }
+    if (v === 'on' || v === 'off') return v;
+    // An unset value, and the old `auto` value, now follow the actual primary
+    // input. This avoids covering a fresh desktop game with phone controls.
+    return detect() ? 'on' : 'off';
   }
   function writePref(v) {
     // Best-effort, exactly like the locker: Safari in Private Browsing throws
@@ -5217,7 +5221,7 @@ const TouchPad = (function () {
 
   const state = {
     available: false,          // this device has a coarse pointer
-    pref: 'on',                // 'on' | 'off' — binary, and it starts ON
+    pref: 'off',               // 'on' | 'off'; init chooses the device default
     active: false,             // controls are currently on screen
     stickId: null,             // pointerId owning the stick
     bombId: null,              // pointerId owning the bomb zone
@@ -5497,10 +5501,8 @@ const TouchPad = (function () {
       apply();
       startReadout();
     },
-    // Two states, not three. "Auto" existed because the controls were a setting
-    // you had to go and find; now they are on unless you say otherwise, and the
-    // in-game button flicks them straight back, so a third state guessing on
-    // your behalf is one more thing to explain and nothing to gain.
+    // Two saved states, not three. Device detection chooses only the first-run
+    // default; after that the in-game toggle is explicit and remembered.
     setPref(pref) {
       state.pref = pref === 'off' ? 'off' : 'on';
       writePref(state.pref);

@@ -23,6 +23,7 @@ const modules = process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES || '/opt/codex/ru
 const require = createRequire(path.join(modules, 'package.json'));
 const { createCanvas } = require('@napi-rs/canvas');
 const ThreeModule = await import(pathToFileURL(path.join(repo, 'assets/vendor/three.module.min.js')));
+const { ForestLighting, preloadForestAssets } = await import(pathToFileURL(path.join(repo, 'assets/vendor/forest-lighting.js')));
 const noop = () => {};
 const events = new Map();
 const listen = (name, fn) => { if (!events.has(name)) events.set(name, []); events.get(name).push(fn); };
@@ -65,7 +66,7 @@ const document = {
 };
 const storage = new Map();
 const context = vm.createContext({
-  console, THREE: { ...ThreeModule, WebGLRenderer: StubRenderer }, document,
+  console, ForestLighting, preloadForestAssets, THREE: { ...ThreeModule, WebGLRenderer: StubRenderer }, document,
   navigator: { userAgent: `Bomberfan ${qaProfile} regression`, hardwareConcurrency: 8, maxTouchPoints: qaCoarse ? 5 : 0 },
   location: { search: '', href: 'https://example.test/' }, URLSearchParams, URL,
   performance: { now: () => 0 },
@@ -83,13 +84,13 @@ const context = vm.createContext({
   localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, String(v)), removeItem: k => storage.delete(k) },
 });
 context.window = context; context.self = context;
-const html = fs.readFileSync(path.join(repo, 'index.html'), 'utf8');
+const html = fs.readFileSync(path.join(repo, process.env.BF_QA_ENTRY || 'index.html'), 'utf8');
 const source = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('const Game ='));
 assert.ok(source, 'embedded game script found');
 const exportMarker = '    init, tryPlaceBomb, tryAction, tryKick, spawnPuff';
 assert.ok(source.includes(exportMarker), 'test-only internal export insertion point found');
 const instrumented = source
-  .replace(/^import .*;$/m, '')
+  .replace(/^import .*;$/gm, '')
   .replace(exportMarker, '    _qa: { tick, frame, startRound, clearRoundEntities, startMatch, toMenu },\n' + exportMarker);
 vm.runInContext(instrumented, context, { filename: path.join(repo, 'index.html:embedded-game') });
 const { Game, World, Input, UI, TouchPad, Audio3, Player, Bomb, Blast, PowerUp, AI, CFG, CELL, STATE, KEYMAPS, LEVELS, PU } = context.BlastArena;

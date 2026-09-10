@@ -24,6 +24,7 @@ const require = createRequire(path.join(modules, 'package.json'));
 const { createCanvas } = require('@napi-rs/canvas');
 const ThreeModule = await import(pathToFileURL(path.join(repo, 'assets/vendor/three.module.min.js')));
 const { ForestLighting, preloadForestAssets } = await import(pathToFileURL(path.join(repo, 'assets/vendor/forest-lighting.js')));
+const { ArenaLighting, preloadArenaAssets } = await import(pathToFileURL(path.join(repo, 'assets/vendor/arena-lighting.js')));
 const noop = () => {};
 const events = new Map();
 const listen = (name, fn) => { if (!events.has(name)) events.set(name, []); events.get(name).push(fn); };
@@ -66,7 +67,7 @@ const document = {
 };
 const storage = new Map();
 const context = vm.createContext({
-  console, ForestLighting, preloadForestAssets, THREE: { ...ThreeModule, WebGLRenderer: StubRenderer }, document,
+  console, ArenaLighting, preloadArenaAssets, ForestLighting, preloadForestAssets, THREE: { ...ThreeModule, WebGLRenderer: StubRenderer }, document,
   navigator: { userAgent: `Bomberfan ${qaProfile} regression`, hardwareConcurrency: 8, maxTouchPoints: qaCoarse ? 5 : 0 },
   location: { search: '', href: 'https://example.test/' }, URLSearchParams, URL,
   performance: { now: () => 0 },
@@ -125,6 +126,7 @@ Player.buildMesh = () => new ThreeModule.Group();
 Game.init(canvas);
 const results = [];
 const crateMetrics = [];
+const bakeLayouts = {};
 function check(name, fn) {
   fn(); results.push({ name, passed: true }); if (!qaQuiet) console.log('PASS ' + name);
 }
@@ -370,10 +372,32 @@ check('every level renders all logical crates in one instance batch', () => {
     const count = World.softCount(); const crates = World.group.getObjectByName('ArenaCrates');
     assert.equal(crates?.count || 0, count, level.id);
     assert.ok(count === 0 || crates.isInstancedMesh, level.id);
+    const hard=[];
+    World.group.children.forEach(mesh=>{
+      if(!mesh.isInstancedMesh || (mesh.material!==World.MAT.hard&&mesh.material!==World.MAT.wall))return;
+      const matrix=new ThreeModule.Matrix4();
+      for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);hard.push([matrix.elements[12],matrix.elements[14]]);}
+    });
+    bakeLayouts[level.id]={hard,sky:level.sky,hardColour:level.hard,layout:level.layout||'rectangle'};
     crateMetrics.push({ level: level.id, crates: count, previousCrateMeshCount: count, currentCrateMeshCount: count ? 1 : 0 });
   }
 });
 
+if(process.env.BF_EXPORT_LAYOUTS)fs.writeFileSync(process.env.BF_EXPORT_LAYOUTS,JSON.stringify(bakeLayouts,null,2));
+if (Player.characterFactor) {
+  for(const [id,factor]of [['bomber-og',.8],['blue-demon',1],['bunny',1]]){
+    const mesh=new ThreeModule.Group();mesh.userData.combatClass=id;
+    Player.applyViewScale(mesh);
+    assert.ok(Math.abs(mesh.scale.x-2.35*.75*factor)<1e-9);
+    assert.ok(Math.abs(mesh.scale.y-2.65*.75*factor)<1e-9);
+    Player.applyViewScale(mesh,.6);
+    assert.ok(Math.abs(mesh.scale.x-2.35*.75*factor*.6)<1e-9);
+  }
+  const player=g.players[0];player.mesh.userData.combatClass='bomber-og';player.bob=0;player.syncMesh();
+  assert.ok(Math.abs(player.mesh.scale.x-2.35*.75*.8)<1e-9);
+  player.deathT=0;player.updateDeath(.35);
+  assert.ok(Math.abs(player.mesh.scale.x-2.35*.75*.8*.5)<1e-9);
+}
 const report = { profile: qaProfile, viewport: [qaWidth, qaHeight], dpr: qaDpr,
   pointers: { coarse: qaCoarse, fine: qaFine }, touchFirst: qaTouch,
   source: path.join(repo, 'index.html'), sourceSha256: createHash('sha256').update(html).digest('hex'), checks: results.length, results, crateMetrics,

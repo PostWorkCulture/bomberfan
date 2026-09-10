@@ -38,3 +38,11 @@ The [roster review sheet](docs/roster-eyes-review.png) shows the actual posed ge
 `node tests/abyss-regression.mjs` loads Abyss through the bundled glTF runtime, exercises all 14 animations, and verifies source preservation, clone isolation, geometry budgets and disposal. An optional second positional argument exports posed geometry for offline visual review; `--clip No --time 0.5` selects a pose. Offline model renders use studio lighting and do not substitute for a WebGL device check.
 
 `node tests/roster-eyes-regression.mjs` checks all 18 eye designs, the production bootstrap/atlas gate, 228 original clips at 684 pose samples, clone and material isolation, cached geometry/texture lifetime, source preservation and both excluded fighters. Pass `--export /tmp/roster-qa` to export geometry for `python3 tools/render-character.py /tmp/roster-qa --out /tmp/roster-renders`. The Python tools require NumPy and Pillow. `node tools/generate-eye-atlas.mjs` deterministically regenerates the eye atlas from the authored surface rules and `EYE_STYLES` definitions.
+
+### All-level lighting and smaller fighters
+
+The main game now uses the approved Forest lighting approach across all eight
+arenas, with per-theme light/reflection palettes, map-specific permanent-wall
+ambient bakes, bevelled instanced geometry and adaptive HDR effects. Fighter
+sizes are reduced 25%; BomberOG receives an additional 20% reduction (40% total).
+See `docs/arena-lighting-rollout.md` for implementation and verification limits.

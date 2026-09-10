@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="roster-eyes-r1-20260905">
+<meta name="build" content="arena-lighting-r1-20260910">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2771,9 +2771,10 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=roster-eyes-r1-20260905"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=arena-lighting-r1-20260910"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
+import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';
 (function () {
 'use strict';
 
@@ -5571,7 +5572,7 @@ const World = (function () {
     }
     g.strokeStyle = level.groundLine;
     g.lineWidth = 3;
-    g.strokeRect(1.5, 1.5, S - 3, S - 3);
+    if (new URLSearchParams(location.search).get('lighting') === 'original') g.strokeRect(1.5, 1.5, S - 3, S - 3);
     const tex = new THREE.CanvasTexture(c);
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(CFG.COLS, CFG.ROWS);
@@ -5602,8 +5603,8 @@ const World = (function () {
   // rather than tinted so each level can look genuinely different.
   function applyLevel(level) {
     state.level = level;
-    if (MAT.ground.map) MAT.ground.map.dispose();
-    if (MAT.soft.map) MAT.soft.map.dispose();
+    if (MAT.ground.map && !MAT.ground.map.userData.forestShared) MAT.ground.map.dispose();
+    if (MAT.soft.map && !MAT.soft.map.userData.forestShared) MAT.soft.map.dispose();
     MAT.ground.map = groundTexture(level);
     MAT.soft.map = crateTexture(level);
     MAT.ground.needsUpdate = MAT.soft.needsUpdate = true;
@@ -5794,7 +5795,8 @@ const World = (function () {
     state.camTarget = new THREE.Vector3(0, 0.35, 0.1);
     state.camBase = new THREE.Vector3(0, 15.5, 12.2);
 
-    scene.add(new THREE.HemisphereLight(0xbfd8ff, 0x2b3b1e, 1.05));
+    const hemi = new THREE.HemisphereLight(0xbfd8ff, 0x2b3b1e, 1.05);
+    scene.add(hemi);
 
     const key = new THREE.DirectionalLight(0xfff2d8, 2.0);
     key.position.set(7, 16, 8);
@@ -5811,6 +5813,10 @@ const World = (function () {
     const fill = new THREE.DirectionalLight(0x88aaff, 0.5);
     fill.position.set(-9, 8, -7);
     scene.add(fill);
+    const requestedLighting = new URLSearchParams(window.location.search).get('lighting');
+    state.lighting = new ArenaLighting({renderer: state.renderer, scene, key, fill, hemi, mat: MAT,
+      mobile: window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(any-pointer: fine)').matches,
+      mode: ['original','high','balanced'].includes(requestedLighting) ? requestedLighting : 'auto'});
 
     state.group = new THREE.Group();
     scene.add(state.group);
@@ -5869,6 +5875,7 @@ const World = (function () {
     p.elapsed += dt; p.frames++;
     if (p.elapsed < 1.5) return;
     p.averageMs = p.elapsed * 1000 / p.frames;
+    state.lighting?.adapt(p.averageMs);
     const current = state.renderer.getPixelRatio();
     const ceiling = resolutionCeiling();
     let next = current;
@@ -6361,6 +6368,7 @@ const World = (function () {
     if (level && level !== state.level) applyLevel(level);
     tintWalls(null);              // every new arena starts on its own palette
     disposeGroup();
+    state.lighting?.apply(state.level);
     state.softMeshes = new Map();
     state.hidden = new Map();
     const grid = new Int8Array(CFG.COLS * CFG.ROWS);
@@ -6840,6 +6848,8 @@ const World = (function () {
         new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE),
         MAT.ground
       );
+      state.lighting?.prepareFloor(floor.geometry);
+      floor.name = 'ArenaFloor';
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
       floor.userData.ownGeometry = true;
@@ -6866,8 +6876,8 @@ const World = (function () {
       }
     }
 
-    const box = new THREE.BoxGeometry(0.98, 1.0, 0.98);
-    const cap = new THREE.BoxGeometry(1.0, 0.14, 1.0);
+    const box = state.lighting.geometry(0.98, 1.0, 0.98, 0.07);
+    const cap = state.lighting.geometry(1.0, 0.14, 1.0, 0.045);
     const m = new THREE.Matrix4();
     // THE OUTER WALL IS ONE HEIGHT ALL THE WAY ROUND, and it has to stay that way.
     // A shorter front row was tried, to stop it burying anybody standing on the
@@ -6911,7 +6921,7 @@ const World = (function () {
     }
     state.softInstances = null;
     if (crateCells.length) {
-      const crates = new THREE.InstancedMesh(new THREE.BoxGeometry(0.92, 0.92, 0.92), MAT.soft, crateCells.length);
+      const crates = new THREE.InstancedMesh(state.lighting.geometry(0.92, 0.92, 0.92, 0.055), MAT.soft, crateCells.length);
       crates.name = 'ArenaCrates';
       crates.castShadow = crates.receiveShadow = true;
       crates.userData.ownGeometry = true;
@@ -6929,6 +6939,7 @@ const World = (function () {
 
     // Theme dressing, sat on the outer wall — decorative only, never collidable
     g.add(Props.build(state.level, wx, wz));
+    state.lighting.prepareFloors(g);
   }
 
   // ---- Queries used by gameplay ------------------------------------------
@@ -7154,7 +7165,7 @@ const World = (function () {
     state.camera.lookAt(state.camTarget);
   }
 
-  function render() { state.renderer.render(state.scene, state.camera); }
+  function render() { state.lighting.render(state.scene, state.camera); }
 
   return {
     init, buildArena, applyLevel, render, updateCamera, addShake, decayShake,
@@ -7226,6 +7237,7 @@ const World = (function () {
     get group() { return state.group; },
     get camera() { return state.camera; },
     get renderer() { return state.renderer; },
+    get lighting() { return state.lighting; },
     MAT,
   };
 })();
@@ -9663,7 +9675,8 @@ class Player {
       0.02 + Math.abs(Math.sin(this.bob)) * 0.07 + lift, World.wz(this.gy));
     // Characters are drawn slightly larger than their collision box purely for
     // readability from the overhead camera. Collision still uses PLAYER_RADIUS.
-    const S = Player.VIEW_SCALE, SY = Player.VIEW_SCALE_Y;
+    const characterFactor = Player.characterFactor(this.mesh);
+    const S = Player.VIEW_SCALE * characterFactor, SY = Player.VIEW_SCALE_Y * characterFactor;
     const squash = 1 + Math.sin(this.bob * 2) * 0.03;
     this.mesh.scale.set(S / squash, SY * squash, S / squash);
 
@@ -9671,7 +9684,7 @@ class Player {
     if (this.carrying) {
       this.carrying.mesh.position.set(
         this.mesh.position.x,
-        this.mesh.position.y + 2.2,
+        this.mesh.position.y + 2.2 * 0.75 * characterFactor,
         this.mesh.position.z
       );
     }
@@ -9768,7 +9781,7 @@ class Player {
     const t = Math.min(this.deathT / 0.7, 1);
     this.mesh.rotation.y += dt * 14;
     const k = Math.max(0.001, 1 - t);
-    this.mesh.scale.set(k * Player.VIEW_SCALE, k * Player.VIEW_SCALE_Y, k * Player.VIEW_SCALE);
+    Player.applyViewScale(this.mesh, k);
     this.mesh.position.y = 0.02 + Math.sin(t * Math.PI) * 0.8;
     if (t >= 1) this.mesh.visible = false;
   }
@@ -9778,8 +9791,10 @@ class Player {
   // the render loop for every live player and for the locker's preview — an
   // animated cosmetic must look identical in both or the locker is lying.
   // One place that knows the shape, so a preview and a corpse cannot disagree
+  static characterFactor(mesh) { return mesh.userData.combatClass === 'bomber-og' ? 0.8 : 1; }
+
   static applyViewScale(mesh, k) {
-    const f = k === undefined ? 1 : k;
+    const f = (k === undefined ? 1 : k) * Player.characterFactor(mesh);
     mesh.scale.set(f * Player.VIEW_SCALE, f * Player.VIEW_SCALE_Y, f * Player.VIEW_SCALE);
   }
 
@@ -11398,12 +11413,11 @@ class Player {
 
 // HOW BIG A CHARACTER IS DRAWN, and why it is two numbers.
 //
-// The imported rigs were technically tile-sized but read as tiny from the full
-// arena camera. This is the largest shared visual scale that keeps every spawn
-// inside the board frame. Collision stays on PLAYER_RADIUS, so the larger models
-// improve recognition without changing movement or bomb timing.
-Player.VIEW_SCALE = 2.35;
-Player.VIEW_SCALE_Y = 2.65;
+// User-approved reduction: every fighter is 25% smaller on all axes.
+// BomberOG receives an additional 20% through characterFactor, including
+// movement, selection, victory and death. Collision and movement are unchanged.
+Player.VIEW_SCALE = 2.35 * 0.75;
+Player.VIEW_SCALE_Y = 2.65 * 0.75;
 
 /* ------------------------------------------------------------------ BOMB -- */
 class Bomb {
@@ -14295,6 +14309,7 @@ const Game = (function () {
     World.setFraming('menu');
     // A quiet arena spins behind the title screen, previewing the chosen map
     g.menuCycleT = CFG.MENU_CYCLE;
+    if (new URLSearchParams(window.location.search).has('forestReview')) g.opts.level = 'forest';
     showMenuLevel(0);
     UI.alignOptionsToTitle();
 
@@ -16076,9 +16091,14 @@ const Game = (function () {
 
     // These scenes replace the canvas completely. Rendering the arena first
     // doubled GPU work and shadow rendering for pixels nobody could see.
-    if ((g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) && g.victory) renderVictory();
-    else if (g.state === STATE.SELECT) renderPreview();
-    else { World.updateCamera(); World.render(); }
+    const arenaExposure = World.renderer.toneMappingExposure;
+    try {
+      if ((g.state === STATE.ROUND_END || g.state === STATE.MATCH_END) && g.victory) {
+        World.renderer.toneMappingExposure = 1.15; renderVictory();
+      } else if (g.state === STATE.SELECT) {
+        World.renderer.toneMappingExposure = 1.15; renderPreview();
+      } else { World.updateCamera(); World.render(); }
+    } finally { World.renderer.toneMappingExposure = arenaExposure; }
   }
 
   function tick(dt) {
@@ -16369,8 +16389,9 @@ function initStaticLoadout(error) {
   render();
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   try {
+    await preloadArenaAssets();
     Game.init(document.getElementById('scene'));
   } catch (error) {
     initStaticLoadout(error);

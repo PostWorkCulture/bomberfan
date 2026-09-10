@@ -46,3 +46,5 @@ arenas, with per-theme light/reflection palettes, map-specific permanent-wall
 ambient bakes, bevelled instanced geometry and adaptive HDR effects. Fighter
 sizes are reduced 25%; BomberOG receives an additional 20% reduction (40% total).
 See `docs/arena-lighting-rollout.md` for implementation and verification limits.
+
+The current playable roster contains 16 fighters. Winged Maw, Abyss, Thornz and Death Totem were retired at Pete's request on 10 September 2026.

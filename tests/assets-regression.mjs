@@ -8,10 +8,11 @@ const html = fs.readFileSync(path.join(repo, 'index.html'), 'utf8');
 const fighters = [...html.matchAll(/model:\s*'([^']+)',\s*portrait:\s*'([^']+)'/g)]
   .map(([, model, portrait]) => ({ model, portrait }));
 
-assert.equal(fighters.length, 20, 'all 20 fighter definitions are present');
-assert.equal(new Set(fighters.map(fighter => fighter.model)).size, 20, 'fighter model paths are unique');
-assert.equal(new Set(fighters.map(fighter => fighter.portrait)).size, 20, 'fighter portrait paths are unique');
+assert.equal(fighters.length, 16, 'all 16 fighter definitions are present');
+assert.equal(new Set(fighters.map(fighter => fighter.model)).size, 16, 'fighter model paths are unique');
+assert.equal(new Set(fighters.map(fighter => fighter.portrait)).size, 16, 'fighter portrait paths are unique');
 
+for(const id of ['evolved-goleling','blue-demon','cactoro','flying-tribal'])assert.ok(!fighters.some(f=>f.model.endsWith('/'+id+'.gltf')),id+' retired from the active roster');
 let animations = 0;
 for (const fighter of fighters) {
   const modelPath = path.join(repo, fighter.model);

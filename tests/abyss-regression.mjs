@@ -66,8 +66,10 @@ characterSource = characterSource.replace('return { create, dispose };',
 const context = vm.createContext({ THREE: T, World: { renderer: null, MAT: { bomb: null } }, console });
 vm.runInContext(characterSource + '\nglobalThis.qaCharacterModels = CharacterModels;', context);
 const { _qa: { addAbyssDetails, prepareMaterial }, dispose } = context.qaCharacterModels;
-const definitionMatch = html.match(/id:\s*'blue-demon',\s*name:\s*'Abyss',\s*color:\s*(0x[\da-f]+)/i);
-assert.ok(definitionMatch, 'actual Abyss fighter definition found');
+// Retired artwork remains testable against the frozen, approved Forest review.
+const archive = fs.readFileSync(path.join(repo, 'forest-preview.html'), 'utf8');
+const definitionMatch = archive.match(/id:\s*'blue-demon',\s*name:\s*'Abyss',\s*color:\s*(0x[\da-f]+)/i);
+assert.ok(definitionMatch, 'archived Abyss fighter definition found');
 const definition = { id: 'blue-demon', name: 'Abyss', color: Number(definitionMatch[1]), personality: 'eerie' };
 const sourceMesh = gltf.scene.getObjectByName('BlueDemon');
 assert.ok(sourceMesh?.isSkinnedMesh, 'actual BlueDemon skinned mesh loaded');

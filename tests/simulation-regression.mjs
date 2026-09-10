@@ -136,6 +136,7 @@ function start() {
   releaseInputs();
   g.opts.humans = 2; g.opts.wins = 2; g.opts.level = LEVELS[0].id;
   Game._qa.startMatch();
+  for(const p of g.players)assert.ok(!['evolved-goleling','blue-demon','cactoro','flying-tribal'].includes(p.def.id),'retired fighter cannot spawn');
   // Keep all seats controllable and stationary while isolating physics checks.
   g.players.forEach(p => { p.ai = null; p.isHuman = true; p.keymap = null; });
   g.players[0].keymap = KEYMAPS[1];
@@ -385,7 +386,7 @@ check('every level renders all logical crates in one instance batch', () => {
 
 if(process.env.BF_EXPORT_LAYOUTS)fs.writeFileSync(process.env.BF_EXPORT_LAYOUTS,JSON.stringify(bakeLayouts,null,2));
 if (Player.characterFactor) {
-  for(const [id,factor]of [['bomber-og',.8],['blue-demon',1],['bunny',1]]){
+  for(const [id,factor]of [['bomber-og',.8],['alien',1],['bunny',1]]){
     const mesh=new ThreeModule.Group();mesh.userData.combatClass=id;
     Player.applyViewScale(mesh);
     assert.ok(Math.abs(mesh.scale.x-2.35*.75*factor)<1e-9);

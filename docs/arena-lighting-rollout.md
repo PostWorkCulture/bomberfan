@@ -46,3 +46,13 @@ The previous local-browser URL restrictions must not be bypassed.
 4. `node tests/platform-regression.mjs`
 
 The Python bake uses NumPy/Pillow. It is not a Blender/Cycles export.
+
+## Roster follow-up
+
+Pete also requested removing Winged Maw, Abyss, Thornz and Death Totem. Remove
+those four active definitions so neither the player nor bot roster can select
+them. Loadout now shows a 4x4 roster and derives its 16-fighter count from the
+active definitions. Retain old source assets and the frozen Forest comparison as
+historical reference. The live game's preload list excludes the retired portraits.
+Re-run the eight-profile suite with retired-fighter spawn assertions, plus
+16-model asset integrity (212 clips), lighting and HUD checks.

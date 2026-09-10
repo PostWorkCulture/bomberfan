@@ -23,9 +23,9 @@ const ASSETS = [
   ...['beach','glacier','haunted','haunted-train','factory','circuit','pirate'].flatMap(id => ['ao','bounce'].map(kind => new URL(`./assets/lighting/${id}-${kind}.png`, self.registration.scope).href)),
   ...[
     'bunny', 'alien', 'evolved-dragon', 'skull-orc', 'orc',
-    'fish-monster', 'demon', 'tribal', 'cactoro', 'yeti',
-    'mushroom-king', 'ninja', 'evolved-goleling', 'monkroose',
-    'blue-demon', 'bomber-og', 'dino', 'flying-tribal', 'frog', 'squidle'
+    'fish-monster', 'demon', 'tribal', 'yeti',
+    'mushroom-king', 'ninja', 'monkroose',
+    'bomber-og', 'dino', 'frog', 'squidle'
   ].map(name => new URL(`./assets/portraits/${name}.webp`, self.registration.scope).href)
 ];
 

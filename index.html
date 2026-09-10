@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="arena-lighting-r1-20260910">
+<meta name="build" content="arena-lighting-r2-20260910">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2034,7 +2034,7 @@
   }
 
   /* BOMBER FAN CHARACTER SELECT V6 */
-  /* One large live model, one compact twenty-fighter roster, no prize ladder. */
+  /* One large live model, one compact sixteen-fighter roster, no prize ladder. */
   #select {
     --fighter: #ff5148;
     padding: clamp(10px, 1.6vh, 18px) clamp(16px, 3vw, 44px) clamp(10px, 1.4vh, 16px) !important;
@@ -2259,7 +2259,7 @@
     pointer-events: auto;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: repeat(5, minmax(52px, 1fr));
+    grid-template-rows: repeat(4, minmax(52px, 1fr));
     align-self: stretch;
     gap: clamp(6px, .8vw, 10px);
     width: min(100%, 540px);
@@ -2407,7 +2407,7 @@
     #spreview { min-height: 210px; }
     #select .sidentity { min-height: 52px; padding: 7px 11px; }
     #select .sbio { margin-top: 4px; }
-    #select .sroster { grid-template-rows: repeat(5, minmax(40px, 1fr)); max-height: 56vh; }
+    #select .sroster { grid-template-rows: repeat(4, minmax(40px, 1fr)); max-height: 56vh; }
     #select .charpick { padding: 5px 6px; }
     #select .charface { width: 34px; height: 34px; }
     #select .sfoot { min-height: 45px; }
@@ -2462,7 +2462,7 @@
       max-width: none;
       max-height: none;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      grid-template-rows: repeat(5, minmax(0, 1fr));
+      grid-template-rows: repeat(4, minmax(0, 1fr));
       padding: 5px;
       gap: 4px;
     }
@@ -2499,7 +2499,7 @@
     #select .sidentity { display: none; }
     #select .sroster {
       width: 100%; height: 100%; max-width: none; max-height: none;
-      grid-template-rows: repeat(5, minmax(0, 1fr));
+      grid-template-rows: repeat(4, minmax(0, 1fr));
       padding: 4px; gap: 3px;
     }
     #select .charpick { padding: 3px; gap: 3px; }
@@ -2771,7 +2771,7 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=arena-lighting-r1-20260910"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=arena-lighting-r2-20260910"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';
@@ -3265,9 +3265,6 @@ const PLAYER_DEFS = [
   { id: 'tribal', name: 'Bloodmask', color: 0xc35426, belly: 0xffffff, trim: 0xdaa858, accent: 0x633800,
     model: 'assets/characters/tribal.gltf', portrait: 'assets/portraits/tribal.webp', expression: 'Yes', altExpression: 'Punch', personality: 'manic',
   },
-  { id: 'cactoro', name: 'Thornz', color: 0x6b991f, belly: 0xd8ff91, trim: 0xa6691f, accent: 0x3e6f12,
-    model: 'assets/characters/cactoro.gltf', portrait: 'assets/portraits/cactoro.webp', expression: 'Wave', altExpression: 'Yes', personality: 'playful',
-  },
   { id: 'yeti', name: 'Ice Maul', color: 0xd39793, belly: 0xffe3df, trim: 0x3d98a6, accent: 0x8b3152,
     model: 'assets/characters/yeti.gltf', portrait: 'assets/portraits/yeti.webp', expression: 'Yes', altExpression: 'Wave', personality: 'playful',
   },
@@ -3277,23 +3274,14 @@ const PLAYER_DEFS = [
   { id: 'ninja', name: 'Razor', color: 0xa16261, belly: 0xffc4e0, trim: 0xbf8d6d, accent: 0x71173e,
     model: 'assets/characters/ninja.gltf', portrait: 'assets/portraits/ninja.webp', expression: 'Weapon', altExpression: 'Punch', personality: 'sly',
   },
-  { id: 'evolved-goleling', name: 'Winged Maw', color: 0x96b240, belly: 0xff9237, trim: 0x638012, accent: 0x255c14,
-    model: 'assets/characters/evolved-goleling.gltf', portrait: 'assets/portraits/evolved-goleling.webp', expression: 'Yes', altExpression: 'Headbutt', personality: 'manic', flying: true,
-  },
   { id: 'monkroose', name: 'Ironclaw', color: 0x94ba57, belly: 0xffed8b, trim: 0xda6d27, accent: 0x795a0a,
     model: 'assets/characters/monkroose.gltf', portrait: 'assets/portraits/monkroose.webp', expression: 'Wave', altExpression: 'Yes', personality: 'playful',
-  },
-  { id: 'blue-demon', name: 'Abyss', color: 0x237f9f, belly: 0x91f5ff, trim: 0x8061a5, accent: 0x182449,
-    model: 'assets/characters/blue-demon.gltf', portrait: 'assets/portraits/blue-demon.webp', expression: 'No', altExpression: 'Yes', personality: 'eerie',
   },
   { id: 'bomber-og', name: 'BomberOG', color: 0xff376f, belly: 0xffe58d, trim: 0xffffff, accent: 0x2446f5,
     model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/bomber-og.webp', expression: 'Punch', altExpression: 'Yes', personality: 'fierce',
   },
   { id: 'dino', name: 'Fiend', color: 0xc10449, belly: 0xe2c8ff, trim: 0xbf7755, accent: 0x5f1131,
     model: 'assets/characters/dino.gltf', portrait: 'assets/portraits/dino.webp', expression: 'No', altExpression: 'Punch', personality: 'fierce',
-  },
-  { id: 'flying-tribal', name: 'Death Totem', color: 0xd34632, belly: 0xffc3ba, trim: 0x9b0708, accent: 0x872114,
-    model: 'assets/characters/flying-tribal.gltf', portrait: 'assets/portraits/flying-tribal.webp', expression: 'Headbutt', altExpression: 'Yes', personality: 'manic', flying: true,
   },
   { id: 'frog', name: 'Hexjaw', color: 0xdb9d26, belly: 0xffdf79, trim: 0xb6873a, accent: 0x59430a,
     model: 'assets/characters/frog.gltf', portrait: 'assets/portraits/frog.webp', expression: 'Wave', altExpression: 'Punch', personality: 'sly',
@@ -3817,7 +3805,7 @@ const COSMETIC_SLOTS = ['finish', 'hat', 'extra', 'bomb', 'sound'];
 function defaultLoadout() {
   const kit = {};
   COSMETIC_SLOTS.forEach(slot => { kit[slot] = COSMETICS[slot].def; });
-  // The prize wardrobe is no longer part of the game. The twenty fighters use
+  // The prize wardrobe is no longer part of the game. The sixteen fighters use
   // their authored silhouettes without the old default horns or an extra.
   kit.hat = null;
   kit.extra = null;
@@ -13091,7 +13079,7 @@ const UI = (function () {
           <div>
             <h2>LOADOUT</h2>
           </div>
-          <span class="scount">20 FIGHTERS</span>
+          <span class="scount">${PLAYER_DEFS.length} FIGHTERS</span>
         </div>
         <div class="sbody">
           <div id="spreview">
@@ -13604,7 +13592,7 @@ const UI = (function () {
   function showMenu(v) { menu.classList.toggle('hidden', !v); }
 
   /* ---------------------------------------------------- character select -- */
-  // Twenty fighters and one action. The old prize ladder no longer appears in
+  // Sixteen fighters and one action. The old prize ladder no longer appears in
   // this flow: this screen has one job, choosing who walks into the arena.
   function selectRows() { return PLAYER_DEFS.map((_, i) => 'class:' + i).concat(['fight']); }
 
@@ -14215,7 +14203,7 @@ const Game = (function () {
     opts: { humans: 1, difficulty: 'easy', wins: 2, level: 'random' },
     menuSel: 0,
     selRow: 0,             // fighter index, or PLAYER_DEFS.length for FIGHT
-    selectedClass: 0,      // one of the twenty PLAYER_DEFS
+    selectedClass: 0,      // one of the active PLAYER_DEFS
     preview: null,         // the select screen's own little scene
     level: LEVELS[0],
     menuPreview: 0,        // index of the level currently shown behind the menu
@@ -14872,7 +14860,7 @@ const Game = (function () {
     g.players.forEach(p => CharacterModels.dispose(p.mesh));
     g.players = [];
     // Put the chosen fighter in seat one, then draw three distinct opponents
-    // from the other nineteen so the full roster keeps appearing across matches.
+    // from the other fifteen so the full roster keeps appearing across matches.
     const others = PLAYER_DEFS.filter((_, i) => i !== g.selectedClass);
     const rosterRng = makeRng(g.seed ^ 0xa511e9b3);
     for (let i = others.length - 1; i > 0; i--) {
@@ -16282,7 +16270,7 @@ window.BlastArena = {
   Player, Bomb, Blast, PowerUp, STATE,
 };
 
-// Query-only release audit. It waits for all twenty external rigs, then proves
+// Query-only release audit. It waits for all active external rigs, then proves
 // each has finite skinned geometry, an animation set and a gameplay-safe size.
 if (new URLSearchParams(location.search).get('audit') === 'characters') {
   document.documentElement.dataset.characterAudit = 'running';

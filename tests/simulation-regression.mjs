@@ -92,9 +92,9 @@ const exportMarker = '    init, tryPlaceBomb, tryAction, tryKick, spawnPuff';
 assert.ok(source.includes(exportMarker), 'test-only internal export insertion point found');
 const instrumented = source
   .replace(/^import .*;$/gm, '')
-  .replace(exportMarker, '    _qa: { tick, frame, startRound, clearRoundEntities, startMatch, toMenu },\n' + exportMarker);
+  .replace(exportMarker, '    _qa: { tick, frame, startRound, clearRoundEntities, startMatch, toMenu, fitShowcase, updateHazard },\n' + exportMarker);
 vm.runInContext(instrumented, context, { filename: path.join(repo, 'index.html:embedded-game') });
-const { Game, World, Input, UI, TouchPad, Audio3, Player, Bomb, Blast, PowerUp, AI, CFG, CELL, STATE, KEYMAPS, LEVELS, PU } = context.BlastArena;
+const { Game, World, Input, UI, TouchPad, Audio3, Player, Bomb, Blast, PowerUp, AI, CFG, CELL, STATE, KEYMAPS, LEVELS, PU, Props } = context.BlastArena;
 const touchElements = new Map(['touch', 'tzone', 'tbombzone', 'tspecialzone', 'tspecial', 'tstick', 'tknob', 'tbomb'].map(id => [id, element()]));
 document.getElementById = id => id === 'scene' ? canvas : (touchElements.get(id) || null);
 TouchPad.init();
@@ -382,6 +382,90 @@ check('every level renders all logical crates in one instance batch', () => {
     bakeLayouts[level.id]={hard,sky:level.sky,hardColour:level.hard,layout:level.layout||'rectangle'};
     crateMetrics.push({ level: level.id, crates: count, previousCrateMeshCount: count, currentCrateMeshCount: count ? 1 : 0 });
   }
+});
+
+check('kicked bombs detonate on contact in all directions and respect walls',()=>{
+  for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const owner=start();
+    for(let y=1;y<12;y++)for(let x=1;x<14;x++)World.setCell(x,y,CELL.EMPTY);
+    put(owner,3,3);const victim=g.players[1];put(victim,7+dx*2,6+dy*2);
+    put(g.players[2],1,1);put(g.players[3],13,11);
+    const bomb=new Bomb(7,6,owner);g.bombs.push(bomb);Game.registerBomb(bomb);owner.activeBombs++;
+    assert.ok(bomb.kick(dx,dy));
+    tick(4);assert.ok(victim.alive);assert.ok(!bomb.dead,'no premature contact');
+    tick(12);assert.equal(bomb.dead,true);assert.equal(victim.alive,false);assert.equal(owner.activeBombs,0);
+    assert.ok(!Game.bombs.includes(bomb));assert.ok(!g.bombMap.has(World.key(victim.tileX,victim.tileY)));
+  }
+  const owner=start();corridor(5);put(owner,1,5);put(g.players[1],7,5);
+  World.setCell(6,5,CELL.HARD);const bomb=new Bomb(5,5,owner);g.bombs.push(bomb);Game.registerBomb(bomb);
+  assert.equal(bomb.kick(1,0),false);tick(10);assert.ok(g.players[1].alive);assert.ok(!bomb.dead);
+  // A fighter moving into the path is caught by swept contact, even across a long segment.
+  World.setCell(6,5,CELL.EMPTY);put(g.players[1],7.2,5.15);
+  assert.ok(Game.kickedImpact(bomb,5,5,9,5));assert.equal(bomb.fuse,0);
+});
+
+check('Glacier has four connected play areas and no playable Haunted Train',()=>{
+  assert.equal(LEVELS.length,7);assert.ok(!LEVELS.some(l=>l.id==='haunted-train'));
+  g.opts.level='glacier';Game._qa.startRound();
+  const open=(x,y)=>World.cellAt(x,y)!==CELL.HARD;
+  const seen=new Set(['1,4']),queue=[[1,4]];
+  while(queue.length){const [x,y]=queue.shift();for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const nx=x+dx,ny=y+dy,k=World.key(nx,ny);if(!seen.has(k)&&open(nx,ny)){seen.add(k);queue.push([nx,ny]);}
+  }}
+  for(const k of ['3,6','11,6','7,1','7,11'])assert.ok(seen.has(k),k+' reachable after crates clear');
+  for(const [x,y]of [[5,3],[9,3],[5,9],[9,9],[6,6],[7,6],[8,6]])assert.equal(World.cellAt(x,y),CELL.EMPTY,'bridge clear');
+  let decks=0;World.group.traverse(o=>{if(o.material===World.MAT.ground)decks++;});assert.equal(decks,4);
+  assert.equal(World.cellAt(7,4),CELL.HARD,'chasm stays impassable');
+});
+
+check('throwers face their target through movement, wind-up and release; Factory machines move and throw',()=>{
+  for(const id of ['glacier','haunted','factory','pirate']){
+    g.opts.level=id;Game._qa.startRound();
+    const actors=[];World.group.traverse(o=>{if(o.userData.heldBomb)actors.push(o);});
+    assert.equal(actors.length,Props.hazardCount);assert.ok(actors.length>0);
+    for(let i=0;i<actors.length;i++){
+      const actor=actors[i],target={x:7,y:6};Props.aimAt(i,target);Props.windUp(.8,i);Props.tick(.1);
+      let expected=Math.atan2(World.wx(7)-actor.position.x,World.wz(6)-actor.position.z);
+      assert.ok(Math.abs(actor.rotation.y-expected)<1e-9,id+' aimed during animation');
+      const hand=Props.throwOrigin(i);assert.ok(Number.isFinite(hand.x)&&hand.y>0);
+      Props.windUp(null,i);Props.tick(.1);assert.ok(Math.abs(actor.rotation.y-expected)<1e-9,id+' aimed at release');
+    }
+    if(id==='factory'){
+      assert.equal(actors.filter(a=>a.userData.machine==='forklift').length,2);
+      assert.equal(actors.filter(a=>a.userData.machine==='crane').length,2);
+      Props.tick(1);const positions=actors.map(a=>[a.position.z,a.rotation.y]);Props.tick(.5);
+      assert.ok(actors.every((a,i)=>a.position.z!==positions[i][0]||a.rotation.y!==positions[i][1]));
+      const before=Game.bombs.length;
+      for(let n=0;n<120;n++)Game._qa.updateHazard(.1);
+      assert.ok(Game.bombs.length>=before+4,'all four machines take a turn');
+      assert.ok(Game.bombs.slice(before).every(b=>b.flight&&b.flight.y0>0),'bombs depart machine heights');
+    }
+  }
+});
+
+check('showcase cameras centre the model and fill the preview without changing fighter scale',()=>{
+  for(const aspect of [.5,1,1.8,3])for(const fill of [.88,.62]){
+    const mesh=new ThreeModule.Mesh(new ThreeModule.BoxGeometry(.7,1.2,.4),new ThreeModule.MeshBasicMaterial());
+    mesh.position.y=-.42;mesh.userData.modelReady=true;
+    const stage={mesh,cam:new ThreeModule.PerspectiveCamera(29,aspect,.1,40)};
+    const scale=mesh.scale.clone();Game._qa.fitShowcase(stage,aspect,fill);stage.cam.updateMatrixWorld(true);
+    const centre=stage.bounds.center.clone().project(stage.cam);
+    assert.ok(Math.abs(centre.x)<1e-7&&Math.abs(centre.y)<1e-7,'winner centred');
+    for(const x of [-.35,.35])for(const y of [-1.02,.18])for(const z of [-.2,.2]){
+      const v=new ThreeModule.Vector3(x,y,z).project(stage.cam);assert.ok(Math.abs(v.x)<1&&Math.abs(v.y)<1,'model inside frame');
+    }
+    assert.ok(mesh.scale.equals(scale),'camera fitting preserves gameplay size');
+    mesh.geometry.dispose();mesh.material.dispose();
+  }
+});
+
+check('countdown names the level, marks the final fade and clears both elements',()=>{
+  const classes=()=>{const s=new Set();return {add:c=>s.add(c),remove:c=>s.delete(c),toggle:(c,v)=>v?s.add(c):s.delete(c),contains:c=>s.has(c)};};
+  const count={classList:classes()},title={classList:classes()},hud={classList:classes()};
+  const a=source.indexOf('  function setCountdown(text)'),b=source.indexOf('  // The scrolling warning',a);
+  const fn=new Function('document','hud','World',source.slice(a,b)+';return setCountdown;')({getElementById:id=>id==='count'?count:title},hud,{level:{name:'Glacier'}});
+  fn('3');assert.equal(title.textContent,'Glacier');assert.ok(!title.classList.contains('hidden'));
+  fn('1');assert.ok(count.classList.contains('last'));fn(null);assert.ok(title.classList.contains('hidden')&&count.classList.contains('hidden'));
 });
 
 if(process.env.BF_EXPORT_LAYOUTS)fs.writeFileSync(process.env.BF_EXPORT_LAYOUTS,JSON.stringify(bakeLayouts,null,2));

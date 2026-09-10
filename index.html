@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="arena-lighting-r2-20260910">
+<meta name="build" content="arena-expansion-r1-20260910">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -166,7 +166,7 @@
      a height. */
   @keyframes pulse { 50% { opacity: .45; } }
 
-  /* THE START COUNTDOWN. Big, rainbow, and the ONLY timer on screen while it
+  /* THE START COUNTDOWN. Blood-red and black, and the ONLY timer on screen while it
      runs — the round clock is hidden underneath it (#hud.counting #clock), so
      there is one number to look at instead of two competing for the same
      second. The rainbow is a gradient clipped to the glyph and slid sideways,
@@ -175,42 +175,34 @@
   #count {
     position: absolute; left: 50%; top: 46%; z-index: 3;
     transform: translate(-50%, -50%);
-    font-size: clamp(96px, 21vw, 250px); font-weight: 900; line-height: .9;
+    font-family:Impact,'Arial Black',sans-serif; font-size: clamp(96px, 21vw, 250px); font-weight: 900; line-height: .9;
     letter-spacing: 4px; pointer-events: none; white-space: nowrap;
-    /* THE SPECTRUM TWICE OVER, at 200% — so one COMPLETE rainbow always spans the
-       glyph while the image still has somewhere to slide to. Sized to 320% only
-       one band fell inside a single digit and the "rainbow" came out amber; sized
-       to 100% it fits but has nowhere to move. Two spectra in a 200% image loop
-       seamlessly at -100%.
-       And the motion is background-position, NOT an animated filter: a filter on
-       an element whose text is painted through background-clip renders the glyph
-       away entirely in Chromium. The filter here has to stay static. */
-    background-image: linear-gradient(96deg,
-      #ff2f4f, #ff8a1f, #ffe11a, #46e05a, #21c9ff, #7a5cff, #ff53d8,
-      #ff2f4f, #ff8a1f, #ffe11a, #46e05a, #21c9ff, #7a5cff, #ff53d8, #ff2f4f);
-    background-size: 200% 100%;
-    -webkit-background-clip: text; background-clip: text;
-    color: transparent; -webkit-text-fill-color: transparent;
-    /* Two drop-shadows on the clipped glyph: one hard and dark so it separates
-       from a pale arena, one soft and white so it glows on a dark one. */
-    filter: drop-shadow(0 5px 0 rgba(0,0,0,.6)) drop-shadow(0 0 30px rgba(255,255,255,.4));
-    animation: cshift 1.6s linear infinite;
+    background: linear-gradient(180deg,#ff554c 8%,#bf081c 46%,#210007 94%);
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent; -webkit-text-fill-color:transparent;
+    -webkit-text-stroke:2px #140006;
+    filter:drop-shadow(0 5px 0 #000) drop-shadow(0 0 22px #a4001a);
   }
-  #count.hidden { display: none; }
-  /* Re-triggered per number by removing and re-adding the class */
-  #count.pop { animation: cshift 1.6s linear infinite, cpop .55s cubic-bezier(.2,1.5,.35,1); }
-  @keyframes cshift { from { background-position: 0 0; } to { background-position: -100% 0; } }
+  #count.hidden, #level-intro.hidden { display:none; }
+  #count.pop { animation:cpop .42s cubic-bezier(.2,1.3,.35,1) both; }
+  #count.pop.last { animation:cpop .35s ease-out both, cfade .5s .75s ease-in forwards; }
   @keyframes cpop {
-    from { transform: translate(-50%, -50%) scale(.4);  opacity: 0; }
-    55%  { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-    to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+    from { transform:translate(-50%,-50%) scale(1.35); opacity:0; }
+    to { transform:translate(-50%,-50%) scale(1); opacity:1; }
   }
-  /* Nothing to hide any more — the round clock is gone and #clock is empty until
-     sudden death, which cannot overlap the start countdown. Kept as a no-op guard
-     in case anything is ever put back in that box. */
-  #hud.counting #clock { visibility: hidden; }
-  @media (prefers-reduced-motion: reduce) {
-    #count, #count.pop { animation: cshift 9s linear infinite; }
+  @keyframes cfade { to { opacity:0; transform:translate(-50%,-50%) scale(1.14); filter:blur(7px); } }
+  #level-intro {
+    position:absolute;top:clamp(54px,13vh,145px);left:5%;width:90%;z-index:13;
+    pointer-events:none;text-align:center;text-transform:uppercase;
+    font:1000 clamp(28px,5.5vw,78px)/1.05 Impact,'Arial Black',sans-serif;
+    letter-spacing:.09em;color:#ec263b;-webkit-text-stroke:1px #100006;
+    text-shadow:0 4px 0 #000,0 0 25px #740016;
+  }
+  #hud.counting #clock { visibility:hidden; }
+  @media (prefers-reduced-motion:reduce) {
+    #count.pop { animation:none; }
+    #count.pop.last { animation:count-opacity .5s .75s linear forwards; }
+    @keyframes count-opacity { to { opacity:0; } }
   }
 
   /* Narrow windows: shrink the cards rather than let the strip run off the
@@ -2771,7 +2763,7 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=arena-lighting-r2-20260910"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=arena-expansion-r1-20260910"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';
@@ -3055,33 +3047,9 @@ const LEVELS = [
     // against. A witch's hat is a tile and a half above the wall she stands on,
     // so the tall ones are dealt to the sides and the front where they are nearer
     // the camera and bigger, and the back row gets the two short ones.
-    props: ['gravestone', 'pumpkin', 'ghost', 'witch', 'ghost', 'ghost'],
-    hazard: 'witch',
-  },
-  {
-    // A spectral express split into three playable carriages. Electric cyan,
-    // toxic green and hot magenta keep it deliberately separate from Haunted
-    // House's burnt orange stone and restrained purple gloom.
-    id: 'haunted-train', name: 'Haunted Train',
-    layout: 'haunted-train',
-    sky: 0x120525,
-    ground: [64, 24, 104],
-    groundLine: 'rgba(70,255,230,0.32)',
-    crate: '#16e0d0', crateBand: '#ff3cac', crateEdge: '#5a1499',
-    hard: 0x159d8c, hardTop: 0x75ffcf, border: 0x5b176f,
-    softDensity: 0.66,
-    spawns: [
-      { x: 1,  y: 2, clear: [[0, 0], [1, 0], [0, 1]] },
-      { x: 4,  y: 10, clear: [[0, 0], [-1, 0], [0, -1]] },
-      { x: 10, y: 2, clear: [[0, 0], [1, 0], [0, 1]] },
-      { x: 13, y: 10, clear: [[0, 0], [-1, 0], [0, -1]] },
-    ],
-    props: ['conductor'],
-    propSpots: [
-      [2, 4, 0, 'conductor', 1.12], [3, 8, 0, 'luggage', 1.0],
-      [7, 4, 0, 'spectralengine', 1.08], [8, 8, 0, 'lantern', 1.2],
-      [12, 4, 0, 'conductor', 1.08], [11, 8, 0, 'luggage', 1.0],
-    ],
+    props: ['witch','reaper','gargoyle','ghost','pumpkin','gravestone'],
+    hazards: ['witch','reaper','gargoyle'], hazardCount: 3,
+    propSpots: [[0,2,1.57,'witch'],[14,2,-1.57,'gargoyle'],[0,6,1.57,'reaper'],[14,6,-1.57,'ghost'],[3,12,3.14,'gargoyle'],[11,12,3.14,'reaper'],[6,12,3.14,'pumpkin'],[8,12,3.14,'gravestone']],
   },
   {
     // THE FACTORY. Two conveyor loops, and they carry bombs as well as people —
@@ -3097,7 +3065,9 @@ const LEVELS = [
     crate: '#e08a1e', crateBand: '#b3651b', crateEdge: '#7d4310',   // stacked pallets
     hard: 0x707d8f, hardTop: 0x9aa5b5, border: 0x3a424e,            // bright girder
     softDensity: 0.66,
-    props: ['pylon', 'server'],
+    props: ['forklift','crane'],
+    hazards: ['forklift','crane'], hazardCount: 4,
+    propSpots: [[0,3,1.57,'forklift',1.05],[14,3,-1.57,'forklift',1.05],[0,8,1.57,'crane',1.0],[14,8,-1.57,'crane',1.0]],
     rule: 'belts',
   },
   {
@@ -4544,7 +4514,6 @@ const Audio3 = (function () {
     haunted: { root: 36.71, pattern: [1, 0, 0, 0, 0, 0.45, 0, 0], beat: 0.55, cut: 180, type: 'triangle', wob: 0.35 },
     factory: { root: 41.20, pattern: [1, 0, 0.7, 0, 1, 0, 0.7, 0], beat: 0.32, cut: 340, type: 'triangle', wob: 0.0 },
     circuit: { root: 46.25, pattern: [1, 0, 0.6, 0, 0.8, 0, 0.6, 0.4], beat: 0.30, cut: 380, type: 'triangle', wob: 0.0 },
-    'haunted-train': { root: 46.25, pattern: [1, 0, 0.7, 0.35, 0, 0.9, 0, 0.5], beat: 0.31, cut: 430, type: 'triangle', wob: 0.5 },
     pirate:  { root: 55.00, pattern: [1, 0, 0.55, 0, 0.8, 0.35, 0, 0.55], beat: 0.36, cut: 330, type: 'sine', wob: 0.08 },
   };
   const BASS_DEFAULT = BASS.forest;
@@ -5709,18 +5678,6 @@ const World = (function () {
       color: 0xffc84a, roughness: 0.26, metalness: 0.76,
       emissive: 0x4f2600, emissiveIntensity: 0.35,
     });
-    MAT.trainVoid = new THREE.MeshStandardMaterial({
-      color: 0x10031f, roughness: 0.58, emissive: 0x27044d, emissiveIntensity: 0.8,
-    });
-    MAT.trainHull = new THREE.MeshStandardMaterial({
-      color: 0x351162, roughness: 0.44, metalness: 0.35,
-      emissive: 0x190432, emissiveIntensity: 0.65,
-    });
-    MAT.trainRail = new THREE.MeshStandardMaterial({ color: 0xb7c5d8, roughness: 0.26, metalness: 0.86 });
-    MAT.trainSleeper = new THREE.MeshStandardMaterial({ color: 0x461f62, roughness: 0.72 });
-    MAT.trainWheel = new THREE.MeshStandardMaterial({ color: 0x16203a, roughness: 0.4, metalness: 0.74 });
-    MAT.trainGlow = new THREE.MeshBasicMaterial({ color: 0x58ffe4, toneMapped: false });
-    MAT.trainPink = new THREE.MeshBasicMaterial({ color: 0xff3cac, toneMapped: false });
     MAT.clockwork = new THREE.MeshStandardMaterial({
       color: 0x7b351c, roughness: 0.36, metalness: 0.72,
       emissive: 0x321006, emissiveIntensity: 0.45,
@@ -6268,8 +6225,8 @@ const World = (function () {
   // logical grid so movement, bots, bombs and blasts all agree that they cannot
   // cross them; `voids` only tells the renderer not to draw a wall there.
   const TWIN_ISLANDS = {
-    floors: [[1, 4, 5, 8], [9, 4, 13, 8]],
-    bridge: [[5, 6], [6, 6], [7, 6], [8, 6], [9, 6]],
+    floors: [[1, 4, 5, 8], [9, 4, 13, 8], [5, 1, 9, 2], [5, 10, 9, 11]],
+    bridge: [[5, 6], [6, 6], [7, 6], [8, 6], [9, 6], [5, 3], [9, 3], [5, 9], [9, 9]],
     pillars: [
       [2, 5], [4, 5], [2, 7], [4, 7],
       [10, 5], [12, 5], [10, 7], [12, 7],
@@ -6290,15 +6247,6 @@ const World = (function () {
       [2, 6], [5, 6], [9, 6], [12, 6],
       [3, 10], [11, 2],
     ],
-  };
-
-  const HAUNTED_TRAIN = {
-    floors: [[1, 2, 4, 10], [6, 2, 8, 10], [10, 2, 13, 10]],
-    paths: [
-      [5, 5], [5, 6], [5, 7],
-      [9, 5], [9, 6], [9, 7],
-    ],
-    pillars: [[2, 4], [3, 8], [7, 4], [8, 8], [12, 4], [11, 8]],
   };
 
   // Four three-tile copper walls. Each section reserves both its horizontal
@@ -6372,8 +6320,7 @@ const World = (function () {
     // else begins with the classic rectangle and may layer a live mechanic on it.
     const layout = state.level.layout;
     const shape = layout === 'twin-islands' ? TWIN_ISLANDS
-                : layout === 'pirate-fleet' ? PIRATE_FLEET
-                : layout === 'haunted-train' ? HAUNTED_TRAIN : null;
+                : layout === 'pirate-fleet' ? PIRATE_FLEET : null;
     state.clockwork = null;
     if (shape) {
       seedShapedLayout(grid, state.voids, shape);
@@ -6395,8 +6342,8 @@ const World = (function () {
     // blocks were the more obvious wrong, so they are back. The occlusion is a
     // camera-and-block-height problem and needs its own answer.
 
-    // 2. Keep every spawn pocket clear so nobody is boxed in at the start
-    const safe = new Set();
+    // 2. Keep spawn pockets and narrow bridge spans clear.
+    const safe = new Set((shape?.bridge || []).map(([x,y])=>key(x,y)));
     const spawns = state.level.spawns || SPAWNS;
     const defaultClear = [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [2, 0], [0, 2], [-2, 0], [0, -2]];
     spawns.forEach(s => {
@@ -6538,12 +6485,13 @@ const World = (function () {
   function buildTwinIslandFloor(g) {
     // Two thick ice rafts make the missing floor read as a real drop rather than
     // a texture failure. Their top planes reuse the active Glacier material.
-    [[3, 6], [11, 6]].forEach(([x, y]) => {
-      const slab = new THREE.Mesh(new THREE.BoxGeometry(5.12, 0.32, 5.12), MAT.border);
+    TWIN_ISLANDS.floors.forEach(([x0,y0,x1,y1]) => {
+      const x=(x0+x1)/2, y=(y0+y1)/2, width=x1-x0+1, depth=y1-y0+1;
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(width+.12, 0.32, depth+.12), MAT.border);
       slab.position.set(wx(x), -0.17, wz(y));
       slab.castShadow = slab.receiveShadow = true;
       slab.userData.ownGeometry = true;
-      const top = new THREE.Mesh(tiledFloorGeometry(5, 5), MAT.ground);
+      const top = new THREE.Mesh(tiledFloorGeometry(width, depth), MAT.ground);
       top.rotation.x = -Math.PI / 2;
       top.position.set(wx(x), 0.002, wz(y));
       top.receiveShadow = true;
@@ -6551,49 +6499,29 @@ const World = (function () {
       g.add(slab, top);
     });
 
-    // Rope bridge: five wooden planks span the gap, with sagging hand ropes and
-    // vertical lashings. Gameplay remains tile-flat even though the silhouette
-    // reads as a suspended bridge.
-    const plankGeo = new THREE.BoxGeometry(0.84, 0.12, 0.8);
-    for (let x = 5; x <= 9; x++) {
-      const plank = new THREE.Mesh(plankGeo, MAT.bridge);
-      plank.position.set(wx(x), -0.038, wz(6));
-      plank.rotation.y = (x - 7) * 0.012;
-      plank.castShadow = plank.receiveShadow = true;
-      plank.userData.ownGeometry = true;
-      g.add(plank);
-    }
-
-    const postGeo = new THREE.CylinderGeometry(0.055, 0.07, 0.76, 8);
-    [5, 9].forEach(x => [-1, 1].forEach(side => {
-      const post = new THREE.Mesh(postGeo, MAT.rope);
-      post.position.set(wx(x), 0.35, wz(6) + side * 0.48);
-      post.castShadow = true;
-      post.userData.ownGeometry = true;
-      g.add(post);
-    }));
-
-    [-1, 1].forEach(side => {
-      const points = [
-        new THREE.Vector3(wx(5), 0.72, wz(6) + side * 0.48),
-        new THREE.Vector3(wx(6), 0.52, wz(6) + side * 0.48),
-        new THREE.Vector3(wx(7), 0.38, wz(6) + side * 0.48),
-        new THREE.Vector3(wx(8), 0.52, wz(6) + side * 0.48),
-        new THREE.Vector3(wx(9), 0.72, wz(6) + side * 0.48),
-      ];
-      const rope = new THREE.Mesh(
-        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 28, 0.024, 6, false),
-        MAT.rope
-      );
-      rope.castShadow = true;
-      rope.userData.ownGeometry = true;
-      g.add(rope);
-      [[6, 0.52], [7, 0.38], [8, 0.52]].forEach(([x, top]) => {
-        const h = top - 0.02;
-        const lashing = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, h, 6), MAT.rope);
-        lashing.position.set(wx(x), 0.02 + h / 2, wz(6) + side * 0.48);
-        lashing.userData.ownGeometry = true;
-        g.add(lashing);
+    // All bridge decks come from the same cells that movement and AI use.
+    const plankGeo = new THREE.BoxGeometry(.94,.12,.94);
+    TWIN_ISLANDS.bridge.forEach(([x,y]) => {
+      const plank=new THREE.Mesh(plankGeo,MAT.bridge);
+      plank.name='GlacierBridge'; plank.position.set(wx(x),-.038,wz(y));
+      plank.castShadow=plank.receiveShadow=true;plank.userData.ownGeometry=true;g.add(plank);
+    });
+    // Rails follow each span, leaving its two entrances unobstructed.
+    [[5,6,9,6],[5,2,5,4],[9,2,9,4],[5,8,5,10],[9,8,9,10]].forEach(([ax,ay,bx,by])=>{
+      const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy),sx=-dy/len,sy=dx/len;
+      [-1,1].forEach(side=>{
+        const pts=[];
+        for(let i=0;i<=8;i++){
+          const k=i/8;
+          pts.push(new THREE.Vector3(wx(ax+dx*k)+sx*side*.48,.65-Math.sin(k*Math.PI)*.2,wz(ay+dy*k)+sy*side*.48));
+        }
+        const rope=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),16,.025,5,false),MAT.rope);
+        rope.userData.ownGeometry=true;g.add(rope);
+        [0,1].forEach(k=>{
+          const post=new THREE.Mesh(new THREE.CylinderGeometry(.05,.07,.7,6),MAT.rope);
+          post.position.set(wx(ax+dx*k)+sx*side*.48,.33,wz(ay+dy*k)+sy*side*.48);
+          post.userData.ownGeometry=true;g.add(post);
+        });
       });
     });
   }
@@ -6692,92 +6620,6 @@ const World = (function () {
     });
   }
 
-  function buildHauntedTrainFloor(g) {
-    const bed = new THREE.Mesh(
-      new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE), MAT.trainVoid);
-    bed.rotation.x = -Math.PI / 2;
-    bed.position.y = -0.62;
-    bed.userData.ownGeometry = true;
-    g.add(bed);
-
-    // Rails, sleepers and a spectral centre line run under the whole train.
-    [-4.66, 4.66].forEach(z => {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(15, 0.11, 0.1), MAT.trainRail);
-      rail.position.set(0, -0.42, z);
-      rail.userData.ownGeometry = true;
-      g.add(rail);
-    });
-    for (let x = 0; x < CFG.COLS; x++) {
-      const sleeper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 9.8), MAT.trainSleeper);
-      sleeper.position.set(wx(x), -0.48, 0);
-      sleeper.userData.ownGeometry = true;
-      g.add(sleeper);
-    }
-    const spectralRail = new THREE.Mesh(new THREE.BoxGeometry(15, 0.04, 0.12), MAT.trainGlow);
-    spectralRail.position.set(0, -0.38, 0);
-    spectralRail.userData.ownGeometry = true;
-    g.add(spectralRail);
-
-    const cars = [[2.5, 4], [7, 3], [11.5, 4]];
-    cars.forEach(([cx, width], carIndex) => {
-      const hull = new THREE.Mesh(new THREE.BoxGeometry(width + 0.18, 0.5, 9.2), MAT.trainHull);
-      hull.position.set(wx(cx), -0.28, wz(6));
-      hull.castShadow = hull.receiveShadow = true;
-      hull.userData.ownGeometry = true;
-      const deck = new THREE.Mesh(tiledFloorGeometry(width, 9), MAT.ground);
-      deck.rotation.x = -Math.PI / 2;
-      deck.position.set(wx(cx), 0.004, wz(6));
-      deck.receiveShadow = true;
-      deck.userData.ownGeometry = true;
-      g.add(hull, deck);
-
-      // Hot-magenta roof lines and cyan windows make each carriage glow as an
-      // object even from the high gameplay camera.
-      [-4.6, 4.6].forEach(z => {
-        const trim = new THREE.Mesh(new THREE.BoxGeometry(width + 0.08, 0.12, 0.08), MAT.trainPink);
-        trim.position.set(wx(cx), 0.12, z);
-        trim.userData.ownGeometry = true;
-        g.add(trim);
-        for (let n = 0; n < width; n++) {
-          const window = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.2, 0.035), MAT.trainGlow);
-          window.position.set(wx(cx) + (n - (width - 1) / 2) * 0.83, 0.27, z + (z < 0 ? -0.03 : 0.03));
-          window.userData.ownGeometry = true;
-          g.add(window);
-        }
-      });
-
-      [-1, 1].forEach(side => {
-        const z = side * 4.66;
-        const wheelCount = Math.max(2, Math.ceil(width / 2));
-        for (let n = 0; n < wheelCount; n++) {
-          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.13, 14), MAT.trainWheel);
-          wheel.rotation.x = Math.PI / 2;
-          wheel.position.set(wx(cx) + (n - (wheelCount - 1) / 2) * 1.35, -0.34, z);
-          wheel.userData.ownGeometry = true;
-          g.add(wheel);
-        }
-      });
-    });
-
-    // Flexible vestibules are the only ways between carriages. Their alternating
-    // cyan/magenta ribs make the route obvious while keeping the floor clear.
-    [5, 9].forEach((x, connectorIndex) => {
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(1, 0.18, 3), MAT.trainHull);
-      deck.position.set(wx(x), -0.08, wz(6));
-      deck.userData.ownGeometry = true;
-      g.add(deck);
-      [-1.42, 1.42].forEach(z => {
-        for (let i = 0; i < 4; i++) {
-          const rib = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.07),
-            (i + connectorIndex) % 2 ? MAT.trainPink : MAT.trainGlow);
-          rib.position.set(wx(x) - 0.36 + i * 0.24, 0.12, wz(6) + z);
-          rib.userData.ownGeometry = true;
-          g.add(rib);
-        }
-      });
-    });
-  }
-
   function buildClockworkWalls(g) {
     if (!state.clockwork) return;
     CLOCKWORK_SECTIONS.forEach((section, index) => {
@@ -6829,8 +6671,7 @@ const World = (function () {
       buildTwinIslandFloor(g);
     } else if (state.level.layout === 'pirate-fleet') {
       buildPirateFleetFloor(g);
-    } else if (state.level.layout === 'haunted-train') {
-      buildHauntedTrainFloor(g);
+
     } else {
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE),
@@ -7923,75 +7764,36 @@ const Props = (function () {
       }
     },
 
-    // ---- Haunted Train ---------------------------------------------------
-    conductor(g) {
-      const ghost = mat(0x59ffe2, {
-        roughness: 0.28, metalness: 0.08, transparent: true, opacity: 0.78,
-        emissive: 0x00bfa8, emissiveIntensity: 1.15,
+    // Haunted sentinels, with sculpted faces and articulated silhouettes.
+    reaper(g) {
+      const cloth=mat(0x191122,{roughness:.9}),bone=mat(0xc9c4ac),dark=mat(0x070308);
+      const robe=new THREE.Mesh(new THREE.ConeGeometry(.36,.95,12),cloth);robe.position.y=.5;g.add(robe);
+      const hood=new THREE.Mesh(new THREE.SphereGeometry(.25,16,12),cloth);hood.scale.z=.82;hood.position.set(0,1.02,0);g.add(hood);
+      const skull=new THREE.Mesh(new THREE.SphereGeometry(.15,16,12),bone);skull.scale.set(1,1.12,.65);skull.position.set(0,1.02,.16);g.add(skull);
+      [-1,1].forEach(side=>{
+        const socket=new THREE.Mesh(new THREE.SphereGeometry(.054,10,8),dark);socket.scale.y=.65;socket.position.set(side*.065,1.05,.25);g.add(socket);
+        const eye=new THREE.Mesh(new THREE.SphereGeometry(.022,8,6),mat(0xff203a,{emissive:0xff0620,emissiveIntensity:2}));eye.position.set(side*.065,1.05,.285);g.add(eye);
       });
-      const uniform = mat(0x5c22a9, { roughness: 0.42, emissive: 0x2a0866, emissiveIntensity: 0.6 });
-      const gold = mat(0xffd34d, { roughness: 0.25, metalness: 0.72, emissive: 0x7a4d00, emissiveIntensity: 0.45 });
-      const body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.7, 14, 1, true), ghost);
-      body.position.y = 0.42; g.add(body);
-      const coat = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 0.42, 12), uniform);
-      coat.position.y = 0.48; g.add(coat);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), ghost);
-      head.position.y = 0.84; g.add(head);
-      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.16, 0.1, 12), uniform);
-      cap.position.y = 1.0; g.add(cap);
-      const badge = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.07, 0.03), gold);
-      badge.position.set(0, 1.01, 0.16); g.add(badge);
-      [-1, 1].forEach(side => {
-        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), gold);
-        eye.position.set(side * 0.06, 0.86, 0.15); g.add(eye);
-      });
-      g.userData.hover = true;
+      for(let i=0;i<5;i++){const tooth=new THREE.Mesh(new THREE.BoxGeometry(.023,.042,.02),bone);tooth.position.set((i-2)*.027,.925,.25);g.add(tooth);}
+      const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.026,.035,1.45,8),mat(0x554037));shaft.position.set(-.42,.75,.03);g.add(shaft);
+      const blade=new THREE.Mesh(new THREE.TorusGeometry(.35,.055,6,18,Math.PI*.7),mat(0x9cb1be,{metalness:.8,roughness:.28}));blade.position.set(-.15,1.31,.03);blade.rotation.z=.7;g.add(blade);
+      g.userData.hover=true;
     },
-    luggage(g) {
-      const colours = [0xff3cac, 0x40e0d0, 0xffd447];
-      [[0, 0.17, 0, 0.48, 0.32], [-0.08, 0.46, 0.02, 0.42, 0.25], [0.12, 0.69, -0.02, 0.32, 0.2]]
-        .forEach(([x, y, z, w, h], i) => {
-          const m = mat(colours[i], { roughness: 0.48, emissive: colours[i], emissiveIntensity: 0.18 });
-          const bag = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.34), m);
-          bag.position.set(x, y, z); bag.rotation.y = (i - 1) * 0.09; bag.castShadow = true; g.add(bag);
-          const handle = new THREE.Mesh(new THREE.TorusGeometry(w * 0.19, 0.018, 6, 12, Math.PI), m);
-          handle.position.set(x, y + h * 0.58, z); handle.rotation.z = Math.PI; g.add(handle);
-        });
-    },
-    lantern(g) {
-      const cage = mat(0x142138, { roughness: 0.34, metalness: 0.76 });
-      const glow = mat(0x78ffe7, { roughness: 0.12, emissive: 0x19ffd8, emissiveIntensity: 2.4 });
-      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 12), glow);
-      orb.position.y = 0.48; g.add(orb);
-      [0.28, 0.68].forEach(y => {
-        const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.025, 7, 18), cage);
-        hoop.rotation.x = Math.PI / 2; hoop.position.y = y; g.add(hoop);
+    gargoyle(g) {
+      const stone=mat(0x55606b,{roughness:.72}),wingmat=mat(0x362c45);
+      const body=new THREE.Mesh(new THREE.SphereGeometry(.29,14,10),stone);body.scale.set(1,1.15,.8);body.position.y=.42;g.add(body);
+      const head=new THREE.Mesh(new THREE.SphereGeometry(.22,16,12),stone);head.position.set(0,.83,.05);g.add(head);
+      [-1,1].forEach(side=>{
+        const horn=new THREE.Mesh(new THREE.ConeGeometry(.065,.3,8),stone);horn.position.set(side*.17,1.06,0);horn.rotation.z=-side*.35;g.add(horn);
+        const eye=new THREE.Mesh(new THREE.SphereGeometry(.038,10,8),mat(0xff5a13,{emissive:0xff2705,emissiveIntensity:2}));eye.scale.y=.48;eye.rotation.z=side*.35;eye.position.set(side*.085,.87,.24);g.add(eye);
+        const foot=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),stone);foot.scale.set(1,.5,1.5);foot.position.set(side*.2,.07,.17);g.add(foot);
+        const wing=new THREE.Group();wing.position.set(side*.23,.62,-.08);
+        const shape=new THREE.Shape();shape.moveTo(0,0);shape.lineTo(side*.58,.54);shape.lineTo(side*.48,.02);shape.lineTo(side*.27,.13);shape.lineTo(side*.2,-.18);shape.closePath();
+        const membrane=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.035,bevelEnabled:true,bevelSize:.025,bevelThickness:.02,bevelSegments:1,steps:1}),wingmat);wing.add(membrane);g.add(wing);
+        (g.userData.wings ||= []).push({mesh:wing,side});
       });
-      [-1, 1].forEach(side => {
-        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.5, 7), cage);
-        bar.position.set(side * 0.2, 0.48, 0); g.add(bar);
-      });
-      const light = new THREE.PointLight(0x35ffe0, 2.2, 3.4);
-      light.position.y = 0.5; g.add(light);
-      g.userData.hover = true;
-    },
-    spectralengine(g) {
-      const shell = mat(0x7e35e8, { roughness: 0.3, metalness: 0.62, emissive: 0x300078, emissiveIntensity: 0.9 });
-      const trim = mat(0x3fffe0, { roughness: 0.18, metalness: 0.58, emissive: 0x00c8ad, emissiveIntensity: 1.6 });
-      const boiler = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.68, 16), shell);
-      boiler.rotation.z = Math.PI / 2; boiler.position.y = 0.38; boiler.castShadow = true; g.add(boiler);
-      [-0.24, 0, 0.24].forEach(x => {
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.255, 0.025, 7, 18), trim);
-        ring.rotation.y = Math.PI / 2; ring.position.set(x, 0.38, 0); g.add(ring);
-      });
-      const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 0.48, 10), shell);
-      stack.position.set(0.18, 0.82, 0); g.add(stack);
-      for (let i = 0; i < 3; i++) {
-        const smoke = new THREE.Mesh(new THREE.SphereGeometry(0.1 + i * 0.035, 12, 9), trim);
-        smoke.material = trim.clone(); smoke.material.transparent = true; smoke.material.opacity = 0.5 - i * 0.1;
-        smoke.position.set(0.18 + i * 0.08, 1.12 + i * 0.16, 0); g.add(smoke);
-      }
-      g.userData.hover = true;
+      const mouth=new THREE.Mesh(new THREE.BoxGeometry(.18,.05,.04),mat(0x100b16));mouth.position.set(0,.74,.25);g.add(mouth);
+      g.userData.monster=true;
     },
 
     // ---- Dunes -----------------------------------------------------------
@@ -8192,6 +7994,36 @@ const Props = (function () {
     },
 
     // ---- Circuit ---------------------------------------------------------
+    forklift(g) {
+      const yellow=mat(0xe4aa22,{metalness:.45,roughness:.4}),steel=mat(0x283340,{metalness:.72,roughness:.35});
+      const box=(w,h,d,x,y,z,m=yellow)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;g.add(o);return o;};
+      box(.65,.24,.85,0,.27,-.08);box(.58,.3,.25,0,.52,-.34);
+      box(.3,.11,.26,0,.48,-.09,steel);box(.3,.32,.09,0,.64,-.21,steel);
+      [-1,1].forEach(side=>{box(.055,.75,.055,side*.27,.73,-.33,steel);box(.055,.75,.055,side*.27,.73,.22,steel);});
+      box(.7,.065,.7,0,1.12,-.08);box(.065,.95,.08,-.23,.57,.42,steel);box(.065,.95,.08,.23,.57,.42,steel);
+      const carriage=new THREE.Group();carriage.position.set(0,.37,.47);g.add(carriage);
+      [-1,1].forEach(side=>{const fork=new THREE.Mesh(new THREE.BoxGeometry(.08,.055,.48),steel);fork.position.set(side*.18,0,.15);carriage.add(fork);});
+      g.userData.wheels=[];
+      [-1,1].forEach(side=>[-.31,.28].forEach(z=>{
+        const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.11,14),mat(0x10141b));wheel.rotation.z=Math.PI/2;wheel.position.set(side*.35,.17,z);g.add(wheel);g.userData.wheels.push(wheel);
+        const hub=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.115,10),steel);hub.rotation.z=Math.PI/2;hub.position.copy(wheel.position);g.add(hub);
+      }));
+      const beacon=new THREE.Mesh(new THREE.SphereGeometry(.07,10,8),mat(0xffb423,{emissive:0xff8000,emissiveIntensity:1.8}));beacon.position.set(0,1.22,-.08);g.add(beacon);
+      g.userData.machine='forklift';g.userData.carriage=carriage;
+      g.userData.bombPose={x:0,y:.57,z:.64,pullX:0,pullY:.24,pullZ:0,rock:0};
+    },
+    crane(g) {
+      const yellow=mat(0xd7a331,{metalness:.55,roughness:.4}),steel=mat(0x364350,{metalness:.8,roughness:.3});
+      const box=(w,h,d,x,y,z,m=yellow)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;g.add(o);return o;};
+      box(.8,.16,.8,0,.08,0,steel);
+      [-1,1].forEach(side=>box(.09,1.65,.09,side*.24,.93,0));
+      for(let i=0;i<5;i++){const strut=box(.53,.055,.06,0,.35+i*.28,0);strut.rotation.z=(i%2?1:-1)*.5;}
+      box(.44,.24,.55,0,1.73,-.05);box(.13,.16,1.85,0,1.93,.49);box(.46,.28,.38,0,1.82,-.53,steel);
+      const cable=box(.025,.68,.025,0,1.53,1.21,steel);
+      const hook=new THREE.Mesh(new THREE.TorusGeometry(.08,.025,6,12,Math.PI*1.6),steel);hook.position.set(0,1.16,1.21);g.add(hook);
+      g.userData.machine='crane';g.userData.hook=hook;g.userData.cable=cable;
+      g.userData.bombPose={x:0,y:.98,z:1.21,pullX:0,pullY:.12,pullZ:0,rock:0};
+    },
     pylon(g) {
       const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.0, 0.16), mat(0x1b3a4a, { metalness: 0.4 }));
       post.position.y = 0.5;
@@ -8296,6 +8128,8 @@ const Props = (function () {
   function windActor(actor, k) {
     if (!actor || !actor.bomb) return;
     if (k === null) {
+      if(actor.bomb.visible && actor.group.userData.aimTarget){actor.group.userData.releaseTarget=actor.group.userData.aimTarget;actor.group.userData.releaseT=.45;}
+      actor.group.userData.aimTarget=null;
       actor.bomb.visible = false;
       if (actor.group) actor.group.rotation.z = 0;
       return;
@@ -8332,7 +8166,7 @@ const Props = (function () {
   function throwOrigin(index) {
     const actor = hazards.length ? hazards[(index || 0) % hazards.length] : null;
     if (!actor || !actor.bomb || !actor.group) return null;
-    actor.bomb.updateMatrixWorld(true);
+    actor.group.updateWorldMatrix(true,true);
     const v = new THREE.Vector3();
     actor.bomb.getWorldPosition(v);
     return v;
@@ -8413,16 +8247,17 @@ const Props = (function () {
       // written in here, which was fine while Glacier was the only map with a
       // hazard and would have quietly made the witch harmless the moment a
       // second one existed.
-      const angry = !!level.hazard && kind === level.hazard && angryBuilt < hazardLimit;
+      const angry = (level.hazards || [level.hazard]).includes(kind) && angryBuilt < hazardLimit;
       builder(g, angry);
       if (angry) {
         // Living throwers scowl. Cannons telegraph danger with red-hot iron and
         // a lit muzzle; eyebrows floating above artillery would undercut it.
-        if (kind !== 'cannon') addScowl(g, kind);
+        if (kind === 'snowman' || kind === 'witch') addScowl(g, kind);
         angryBuilt++;
         const bomb = buildHeldBomb();
         g.add(bomb);
         hazards.push({ pos: [spot[0], spot[1]], group: g, bomb });
+        g.userData.heldBomb=bomb;
       }
       g.position.set(wx(spot[0]), 1.02, wz(spot[1]));
       g.rotation.y = spot[2] + (i % 2 ? 0.25 : -0.2);
@@ -8438,7 +8273,9 @@ const Props = (function () {
       });
       register(g, i);
       // ...and if this kind of thing moves under its own steam, sign it up.
-      const idle = g.userData.float ? FLOAT
+      const idle = g.userData.machine ? MACHINE
+                 : g.userData.monster ? MONSTER
+                 : g.userData.float ? FLOAT
                  : g.userData.hover ? HOVER
                  : g.userData.flicker ? FLICKER : null;
       if (idle) {
@@ -8503,6 +8340,37 @@ const Props = (function () {
   const WANDER_ACTIVE = 0.45;      // ...of which this fraction is spent moving
   const PATROL_TILES = 3;          // along its own wall
   const CROSS_TILES = 1.9;         // out over the board — under two squares
+  function MACHINE(g,t,phase){
+    const u=g.userData;
+    if(u.machine==='forklift'){
+      if(!u.aimTarget && !(u.releaseT>0)){
+        const old=g.position.z;
+        g.position.z=u.restZ+Math.sin(t*.45+phase)*1.05;
+        const motion=g.position.z-old;
+        if(Math.abs(motion)>.0001)g.rotation.y=motion>0?0:Math.PI;
+        u.wheels.forEach(w=>w.rotation.x+=motion/.17);
+      }
+      u.carriage.position.y=.37+(u.aimTarget ? .24 : Math.sin(t*1.2+phase)*.04);
+    }else{
+      if(!u.aimTarget && !(u.releaseT>0))g.rotation.y=u.rest+Math.sin(t*.35+phase)*.5;
+      const lift=Math.sin(t*.8+phase)*.08;
+      u.hook.position.y=1.16+lift;u.cable.scale.y=1-lift/.68;u.cable.position.y=1.53+lift*.5;
+    }
+  }
+  function MONSTER(g,t,phase){
+    (g.userData.wings||[]).forEach(w=>w.mesh.rotation.y=w.side*(.14+Math.sin(t*1.4+phase)*.18));
+  }
+  function aimActor(actor){
+    const u=actor.group.userData;
+    const target=u.aimTarget || (u.releaseT>0?u.releaseTarget:null);if(!target)return;
+    const g=actor.group;
+    g.rotation.y=Math.atan2(World.wx(target.x)-g.position.x,World.wz(target.y)-g.position.z);
+  }
+  function aimAt(index,target){
+    const actor=hazards[index];if(!actor)return;
+    actor.group.userData.aimTarget=target;aimActor(actor);
+  }
+
   function FLOAT(g, t, phase) {          // ghosts: bob, sway, turn, fade, wander
     const u = g.userData;
     // Where we are in this ghost's own cycle, and which cycle it is
@@ -8572,6 +8440,7 @@ const Props = (function () {
     shakeAmp = Math.min(shakeAmp + amount, 0.5);
   }
   function tick(dt) {
+    hazards.forEach(a=>{a.group.userData.releaseT=Math.max(0,(a.group.userData.releaseT||0)-dt);});
     // The things that move on their own go FIRST, so a blast still overrides
     // them for as long as it lasts — being knocked about should beat drifting.
     if (drifting.length) {
@@ -8581,6 +8450,7 @@ const Props = (function () {
         d.fn(d.g, driftT, d.phase);
       }
     }
+    hazards.forEach(aimActor);
     if (shakeAmp <= 0) return;
     shakeT += dt;
     shakeAmp = Math.max(0, shakeAmp - dt * 1.6);
@@ -8591,6 +8461,7 @@ const Props = (function () {
       g.rotation.z = Math.sin(t * 0.8 + 1.1) * shakeAmp * 0.35;
       g.position.y = 1.02 + Math.abs(Math.sin(t * 0.5)) * shakeAmp * 0.12;
     }
+    hazards.forEach(aimActor);
     if (shakeAmp === 0) {
       // Settle exactly, so a prop cannot drift a degree per blast. Anything with
       // an idle animation is put back on its baseline here too and picks its own
@@ -8601,6 +8472,7 @@ const Props = (function () {
         g.position.y = 1.02;
       });
     }
+    hazards.forEach(aimActor);
   }
 
   return { build, tick, hit, clear, KINDS: Object.keys(BUILD), SPOTS,
@@ -8608,7 +8480,7 @@ const Props = (function () {
            get moving() { return drifting.length; },
            // World y the back row reaches, drift included. 0 on a bare level.
            get backTop() { return backTop; },
-           windUp, throwOrigin,
+           windUp, throwOrigin, aimAt,
            get holding() { return hazards.some(h => h.bomb && h.bomb.visible); },
            get hazardCount() { return hazards.length; },
            hazardAt(index) {
@@ -11496,7 +11368,7 @@ class Bomb {
   // Start sliding after a kick. Returns false if there is nowhere to go.
   kick(dx, dy) {
     if (this.flight || this.held) return false;
-    if (!Game.bombCanEnter(this.x + dx, this.y + dy, this)) return false;
+    if (!Game.bombCanEnter(this.x + dx, this.y + dy, this, true)) return false;
     this.vel = { x: dx, y: dy };
     return true;
   }
@@ -11545,17 +11417,22 @@ class Bomb {
 
     // --- sliding after a kick ---
     if (this.vel) {
+      if(!Game.bombCanEnter(this.x+this.vel.x,this.y+this.vel.y,this,true)){
+        this.vel=null;this.fx=this.x;this.fy=this.y;return;
+      }
+      const beforeX=this.fx,beforeY=this.fy;
       const step = CFG.KICK_SPEED * dt;
       const nx = this.x + this.vel.x, ny = this.y + this.vel.y;
       this.fx += this.vel.x * step;
       this.fy += this.vel.y * step;
+      if(Game.kickedImpact(this,beforeX,beforeY,this.fx,this.fy))return;
       const passed = this.vel.x !== 0
         ? (this.vel.x > 0 ? this.fx >= nx : this.fx <= nx)
         : (this.vel.y > 0 ? this.fy >= ny : this.fy <= ny);
       if (passed) {
         this.fx = nx; this.fy = ny;
         Game.moveBombTo(this, nx, ny);
-        if (!Game.bombCanEnter(nx + this.vel.x, ny + this.vel.y, this)) this.vel = null;
+        if (!Game.bombCanEnter(nx + this.vel.x, ny + this.vel.y, this, true)) this.vel = null;
       }
     }
 
@@ -12497,7 +12374,7 @@ const AI = (function () {
       // Two guards. Ask the question the KICK will ask (`bombCanEnter`), not a
       // lookalike, and give up on shoving for a moment if it did not work, so a
       // bot that cannot move a bomb goes and does something else instead.
-      if (bot.kick && a.shoveCool <= 0 && Game.bombCanEnter(bx + d.x, by + d.y, bomb)) {
+      if (bot.kick && a.shoveCool <= 0 && Game.bombCanEnter(bx + d.x, by + d.y, bomb, true)) {
         a.path = [{ x: bx, y: by }];      // walking into it IS the kick
         a.shoveKey = key;
         a.shoveT = 0.5;
@@ -13049,6 +12926,7 @@ const UI = (function () {
         <div id="sdband" class="hidden"><div class="sdtrack"></div></div>
         <div id="sdband2" class="hidden"><div class="sdtrack"></div></div>
         <div id="sdcount" class="hidden" aria-live="polite"><b></b></div>
+        <div id="level-intro" class="hidden"></div>
         <div id="count" class="hidden" aria-live="polite"></div>
       </div>
 
@@ -13917,7 +13795,7 @@ const UI = (function () {
 
   function showHUD(v) { hud.classList.toggle('hidden', !v); hudLayoutDirty = true; }
 
-  // THE START COUNTDOWN. One big rainbow number, and while it is up the round
+  // THE START COUNTDOWN. One big red/black number, and while it is up the round
   // clock is hidden — hence the class on #hud rather than on #count alone: it is
   // a statement about the whole HUD ("something else is doing the counting"),
   // not about this one element.
@@ -13929,6 +13807,9 @@ const UI = (function () {
   function setCountdown(text) {
     const el = document.getElementById('count');
     if (!el) return;
+    const title=document.getElementById('level-intro');
+    if(title){title.textContent=World.level.name;title.classList.toggle('hidden',!text);}
+    el.classList.toggle('last',text==='1');
     if (text === null || text === undefined || text === '') {
       el.classList.add('hidden');
       el.classList.remove('pop');
@@ -14668,6 +14549,7 @@ const Game = (function () {
     pv.orbit.material.color.setHex(previewDef.trim || previewDef.color);
     pv.halo.visible = !PORTRAIT_CAPTURE_MODE;
     pv.orbit.visible = !PORTRAIT_CAPTURE_MODE;
+    pv.bounds=null;pv.fitCenter=null;pv.fitDistance=undefined;
     pv.mesh = Player.buildMesh(previewDef, defaultLoadout());
     Player.applyViewScale(pv.mesh, previewDef.flying ? 0.68 : 0.60);
     pv.mesh.position.set(0, -0.4, 0);
@@ -14678,6 +14560,31 @@ const Game = (function () {
   // Draw the preview through the game's existing WebGL context. The canvas is
   // physically inside #spreview, so no full-screen DOM layer can cover it.
   const previewRendererSize = new THREE.Vector2();
+  // One visible showcase model only. Bounds follow the current animated pose,
+  // so raised hands fit without shrinking every fighter for its widest gesture.
+  function fitShowcase(stage, aspect, fill) {
+    if(!stage.mesh)return;
+    stage.mesh.updateWorldMatrix(true,true);
+    const box=stage.fitBox ||= new THREE.Box3();
+    if(stage.mesh.userData.modelReady)box.setFromObject(stage.mesh.userData.modelRoot || stage.mesh,true);
+    else box.set(new THREE.Vector3(-.4,-.4,-.25),new THREE.Vector3(.4,.8,.25));
+    if(box.isEmpty())return;
+    const wanted=box.getCenter(stage.fitWanted ||= new THREE.Vector3());
+    // Ease the focus; fit distance accounts for that eased centre immediately.
+    const center=stage.fitCenter ||= wanted.clone();center.lerp(wanted,.16);
+    const size=box.getSize(stage.fitSize ||= new THREE.Vector3());
+    stage.bounds={center,size};
+    const tan=Math.tan(THREE.MathUtils.degToRad(stage.cam.fov/2));
+    let distance=.1;
+    for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){
+      distance=Math.max(distance,Math.abs(x-center.x)/(tan*aspect*fill)+z-center.z,Math.abs(y-center.y)/(tan*fill)+z-center.z);
+    }
+    // Pull back immediately for an extended arm; return gently after it lowers.
+    stage.fitDistance=stage.fitDistance===undefined?distance:Math.max(distance,lerp(stage.fitDistance,distance,.12));
+    stage.cam.aspect=aspect;stage.cam.position.set(center.x,center.y,center.z+stage.fitDistance);
+    stage.cam.lookAt(center);stage.cam.updateProjectionMatrix();
+  }
+
   function renderPreview() {
     const pv = g.preview;
     const rect = UI.previewRect();
@@ -14694,6 +14601,7 @@ const Game = (function () {
       pv.cam.aspect = rect.width / rect.height;
       pv.cam.updateProjectionMatrix();
     }
+    fitShowcase(pv,rect.width/rect.height,.88);
     const wasColour = r.getClearColor(new THREE.Color());
     const wasAlpha = r.getClearAlpha();
     const stageTime = performance.now() * 0.001;
@@ -14838,15 +14746,7 @@ const Game = (function () {
     const r = World.renderer;
     const w = r.domElement.clientWidth, h = r.domElement.clientHeight;
     const aspect = Math.max(0.32, w / Math.max(1, h));
-    v.cam.aspect = aspect;
-    const shake = (v.blastShake || 0) * 0.018;
-    v.cam.position.set(
-      (aspect < 0.72 ? 0.45 : 0.72) + (Math.random() - 0.5) * shake,
-      0.78 + (Math.random() - 0.5) * shake,
-      aspect < 0.72 ? 4.15 : 3.25
-    );
-    v.cam.lookAt(0, 0.38, 0);
-    v.cam.updateProjectionMatrix();
+    fitShowcase(v,aspect,.62);
     r.setScissorTest(false);
     r.setViewport(0, 0, w, h);
     r.render(v.scene, v.cam);
@@ -15066,13 +14966,34 @@ const Game = (function () {
 
   // Can a bomb occupy this tile? Players block it too, so a kicked bomb
   // stops against whoever it hits rather than sliding through them.
-  function bombCanEnter(x, y, self) {
+  function bombCanEnter(x, y, self, kicking = false) {
     if (World.cellAt(x, y) !== CELL.EMPTY) return false;
     const other = g.bombMap.get(World.key(x, y));
     if (other && other !== self) return false;
-    return !g.players.some(p =>
+    return kicking || !g.players.some(p =>
       p.alive && p.tileX === x && p.tileY === y &&
       !(self && p === self.owner && self.owner.ignoreBombs.has(World.key(x, y))));
+  }
+
+  // Swept segment/circle contact prevents a fast bomb skipping a moving fighter.
+  function kickedImpact(bomb,ax,ay,bx,by) {
+    const dx=bx-ax,dy=by-ay,dd=dx*dx+dy*dy;
+    let hit=null,first=Infinity;
+    for(const p of g.players){
+      if(!p.alive || (p===bomb.owner && p.ignoreBombs.has(World.key(bomb.x,bomb.y))))continue;
+      const px=ax-p.gx,py=ay-p.gy,r=.48;
+      const c=px*px+py*py-r*r, b=px*dx+py*dy;
+      const disc=b*b-dd*c;
+      const t=c<=0?0:dd>0&&disc>=0?(-b-Math.sqrt(disc))/dd:Infinity;
+      if(t>=0&&t<=1&&t<first){first=t;hit=p;}
+    }
+    if(!hit)return false;
+    bomb.fx=ax+dx*first;bomb.fy=ay+dy*first;
+    // Resolve at the victim's tile so the contact is the blast's lethal core.
+    moveBombTo(bomb,hit.tileX,hit.tileY);
+    bomb.vel=null;bomb.fuse=0;
+    bomb.mesh.position.set(World.wx(bomb.fx),.36,World.wz(bomb.fy));
+    return true;
   }
 
   // Where does a punched/thrown bomb come down? Walk out from the thrower and
@@ -15296,6 +15217,7 @@ const Game = (function () {
       Audio3.hazardWind();
     }
     const source = (g.hazardSource || 0) % count;
+    Props.aimAt(source,g.hazardTarget);
     const at = Props.hazardAt(source);
     if (!at) {
       g.hazardT = 0; g.hazardTarget = null; g.hazardSource = null;
@@ -16133,7 +16055,7 @@ const Game = (function () {
         const n = Math.ceil(remain - 0.35);
         if (n !== g.lastCountdown && n >= 1 && n <= 3) {
           g.lastCountdown = n;
-          // Its own element, not the banner: big, rainbow, and the only timer on
+          // Its own element, not the banner: big, red/black, and the only timer on
           // screen while it runs. See UI.setCountdown.
           UI.setCountdown(String(n));
           Audio3.countdown(false);
@@ -16145,8 +16067,8 @@ const Game = (function () {
           Input.clearPresses();          // no stale menu keypress becomes a bomb
           // GO! finishes the same sequence in the same place, so the eye does not
           // have to move; g.goT clears it and hands the clock back.
-          UI.setCountdown('GO!');
-          g.goT = CFG.GO_HOLD;
+          UI.setCountdown(null);
+          g.goT = 0;
           Audio3.go();
         }
         break;
@@ -16230,7 +16152,7 @@ const Game = (function () {
 
   return {
     init, tryPlaceBomb, tryAction, tryKick, spawnPuff, spawnDust, spawnPowerUp, bombAt, powerUpAt, advance,
-    registerBomb, unregisterBomb, moveBombTo, bombCanEnter, landingTile, dropCarried,
+    registerBomb, unregisterBomb, moveBombTo, bombCanEnter, kickedImpact, landingTile, dropCarried,
     endRound, nextWinLine, syncAudio,           // exposed for the test suite
     _dropRingBlock: dropSuddenDeathBlock,
     get players() { return g.players; },

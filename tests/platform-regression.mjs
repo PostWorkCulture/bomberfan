@@ -37,7 +37,7 @@ for (let round = 1; round <= 2; round++) {
     assert.equal(run.status, 0, `${profile.name}, pass ${round}\n${run.stdout}\n${run.stderr}`);
     const lines = run.stdout.trim().split(/\r?\n/);
     const result = JSON.parse(lines.at(-1));
-    assert.equal(result.checks, 16);
+    assert.equal(result.checks, 21);
     assert.equal(result.results.every(check => check.passed), true);
     assert.deepEqual(result.viewport, [profile.width, profile.height]);
     assert.deepEqual(result.pointers, { coarse: profile.coarse, fine: profile.fine });
@@ -47,4 +47,4 @@ for (let round = 1; round <= 2; round++) {
   }
 }
 
-console.log(JSON.stringify({ profiles: profiles.length, rounds: 2, runs: passes.length, checks: passes.length * 16, passes }, null, 2));
+console.log(JSON.stringify({ profiles: profiles.length, rounds: 2, runs: passes.length, checks: passes.reduce((n,p)=>n+p.checks,0), passes }, null, 2));

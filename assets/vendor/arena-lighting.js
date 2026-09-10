@@ -7,7 +7,6 @@ export const ARENA_PROFILES = Object.freeze({
   beach: {key:0xffeed0, fill:0x77c6e9, sky:0xc3e8ff, bounce:0x5b958e, background:0x10394a, power:2.65, exposure:1.04, environment:.48, roughness:.32, crate:.74, glow:.08},
   glacier: {key:0xd7eeff, fill:0x839fe7, sky:0xd3edff, bounce:0x52789b, background:0x152c45, power:2.55, exposure:1.04, environment:.55, roughness:.38, crate:.34, glow:.10},
   haunted: {key:0xd8d9ff, fill:0xa998ce, sky:0xaaaed5, bounce:0x594b69, background:0x211a32, power:2.35, exposure:1.12, environment:.42, roughness:.78, crate:.65, glow:.12},
-  'haunted-train': {key:0xd6e9ff, fill:0x78cec5, sky:0xb5c3ed, bounce:0x63436b, background:0x211731, power:2.45, exposure:1.08, environment:.5, roughness:.48, crate:.53, glow:.09},
   factory: {key:0xffdfb3, fill:0x96bcd5, sky:0xc6d9e1, bounce:0x625449, background:0x252a2c, power:2.55, exposure:1.05, environment:.55, roughness:.57, crate:.54, glow:.10},
   circuit: {key:0xd3eaff, fill:0x88cfdb, sky:0xb2d4eb, bounce:0x3f506e, background:0x141e32, power:2.4, exposure:1.06, environment:.52, roughness:.43, crate:.48, glow:.08},
   pirate: {key:0xffe0b6, fill:0x88bfd6, sky:0xc2deed, bounce:0x675141, background:0x153b47, power:2.65, exposure:1.05, environment:.52, roughness:.76, crate:.68, glow:.10},

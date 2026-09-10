@@ -41,10 +41,18 @@ The [roster review sheet](docs/roster-eyes-review.png) shows the actual posed ge
 
 ### All-level lighting and smaller fighters
 
-The main game now uses the approved Forest lighting approach across all eight
+The main game now uses the approved Forest lighting approach across all seven
 arenas, with per-theme light/reflection palettes, map-specific permanent-wall
 ambient bakes, bevelled instanced geometry and adaptive HDR effects. Fighter
 sizes are reduced 25%; BomberOG receives an additional 20% reduction (40% total).
 See `docs/arena-lighting-rollout.md` for implementation and verification limits.
 
 The current playable roster contains 16 fighters. Winged Maw, Abyss, Thornz and Death Totem were retired at Pete's request on 10 September 2026.
+
+## Arena and presentation update, 10 September 2026
+
+Victory and Loadout cameras now frame the animated character, with a large preview and centred winner. The red/black countdown announces the level and fades out after 1. Kicked bombs detonate on fighter contact, using swept collision while retaining normal blast protection rules.
+
+Glacier has four ice platforms with connecting bridges. Haunted House gains reapers and winged gargoyles; all active throwers face their landing targets through wind-up and release. Factory replaces its old perimeter props with two moving forklifts and two rotating cranes that take turns throwing warned bombs. Haunted Train is removed, leaving seven playable levels.
+
+`node tests/showcase-framing-regression.mjs` checks actual character vertices across showcase poses and viewport ratios. These projection checks supplement the repeated platform matrix, not GPU rendering or real-device FPS measurements.

@@ -32,4 +32,4 @@ let draws=0;const target={name:'previous'};
 const r={toneMapping:T.ACESFilmicToneMapping,current:target,getDrawingBufferSize(v){return v.set(800,600)},getRenderTarget(){return this.current},setRenderTarget(t){this.current=t},render(){draws++}};
 const post=new ArenaPost(r);post.render(new T.Scene(),new T.Camera());assert.equal(draws,5);assert.equal(r.current,target);assert.equal(r.toneMapping,T.ACESFilmicToneMapping);assert.equal(post.a.width,200);assert.equal(post.a.height,150);
 r.render=()=>{throw Error('test draw failure')};assert.throws(()=>post.render(scene,new T.Camera()));assert.equal(r.current,target);assert.equal(r.toneMapping,T.ACESFilmicToneMapping);post.dispose();light.dispose();
-console.log('PASS arena lighting: all 8 profiles across 3 map cycles, distinct static maps, offset-deck UVs, rotating-root invariance, geometry, HDR pass sizing and render-state restoration. GPU execution not measured.');
+console.log('PASS arena lighting: all 7 profiles across 3 map cycles, distinct static maps, offset-deck UVs, rotating-root invariance, geometry, HDR pass sizing and render-state restoration. GPU execution not measured.');

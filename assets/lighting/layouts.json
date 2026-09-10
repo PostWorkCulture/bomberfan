@@ -1043,37 +1043,6 @@
     "hardColour": 11755280,
     "layout": "clockwork-maze"
   },
-  "haunted-train": {
-    "hard": [
-      [
-        -5,
-        -2
-      ],
-      [
-        0,
-        -2
-      ],
-      [
-        5,
-        -2
-      ],
-      [
-        -4,
-        2
-      ],
-      [
-        1,
-        2
-      ],
-      [
-        4,
-        2
-      ]
-    ],
-    "sky": 1180965,
-    "hardColour": 1416588,
-    "layout": "haunted-train"
-  },
   "factory": {
     "hard": [
       [

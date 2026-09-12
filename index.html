@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="loadout-order-r1-20260912">
+<meta name="build" content="roster-nine-r1-20260912">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -1928,7 +1928,7 @@
   }
   #select .classrail {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
     width: 100%;
     pointer-events: auto;
@@ -2250,8 +2250,8 @@
     grid-row: 1 / span 2;
     pointer-events: auto;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: repeat(4, minmax(52px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(52px, 1fr));
     align-self: stretch;
     gap: clamp(6px, .8vw, 10px);
     width: min(100%, 540px);
@@ -2399,7 +2399,7 @@
     #spreview { min-height: 210px; }
     #select .sidentity { min-height: 52px; padding: 7px 11px; }
     #select .sbio { margin-top: 4px; }
-    #select .sroster { grid-template-rows: repeat(4, minmax(40px, 1fr)); max-height: 56vh; }
+    #select .sroster { grid-template-rows: repeat(3, minmax(40px, 1fr)); max-height: 56vh; }
     #select .charpick { padding: 5px 6px; }
     #select .charface { width: 34px; height: 34px; }
     #select .sfoot { min-height: 45px; }
@@ -2453,8 +2453,8 @@
       height: 100%;
       max-width: none;
       max-height: none;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      grid-template-rows: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: repeat(3, minmax(0, 1fr));
       padding: 5px;
       gap: 4px;
     }
@@ -2491,7 +2491,7 @@
     #select .sidentity { display: none; }
     #select .sroster {
       width: 100%; height: 100%; max-width: none; max-height: none;
-      grid-template-rows: repeat(4, minmax(0, 1fr));
+      grid-template-rows: repeat(3, minmax(0, 1fr));
       padding: 4px; gap: 3px;
     }
     #select .charpick { padding: 3px; gap: 3px; }
@@ -2835,7 +2835,7 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=loadout-order-r1-20260912"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=roster-nine-r1-20260912"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';
@@ -3284,20 +3284,8 @@ const PLAYER_DEFS = [
   { id: 'bomber-og', name: 'BomberOG', color: 0xff376f, belly: 0xffe58d, trim: 0xffffff, accent: 0x2446f5,
     model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/bomber-og.webp', expression: 'Punch', altExpression: 'Yes', personality: 'fierce',
   },
-  { id: 'dino', name: 'Fiend', color: 0xc10449, belly: 0xe2c8ff, trim: 0xbf7755, accent: 0x5f1131,
-    model: 'assets/characters/dino.gltf', portrait: 'assets/portraits/dino.webp', expression: 'No', altExpression: 'Punch', personality: 'fierce',
-  },
-  { id: 'frog', name: 'Hexjaw', color: 0xdb9d26, belly: 0xffdf79, trim: 0xb6873a, accent: 0x59430a,
-    model: 'assets/characters/frog.gltf', portrait: 'assets/portraits/frog.webp', expression: 'Wave', altExpression: 'Punch', personality: 'sly',
-  },
   { id: 'squidle', name: 'Voidspawn', color: 0xce5b88, belly: 0xffb4da, trim: 0x142e4c, accent: 0x7a1d55,
     model: 'assets/characters/squidle.gltf', portrait: 'assets/portraits/squidle.webp', expression: 'Yes', altExpression: 'Headbutt', personality: 'eerie', flying: true,
-  },
-  { id: 'bunny', name: 'Gravehare', color: 0xcf6a92, belly: 0xfff2fb, trim: 0x835977, accent: 0x6d1cae,
-    model: 'assets/characters/bunny.gltf', portrait: 'assets/portraits/bunny.webp', expression: 'Wave', altExpression: 'Yes', personality: 'playful',
-  },
-  { id: 'alien', name: 'Void', color: 0x60047b, belly: 0xe9fbff, trim: 0x156309, accent: 0x116a96,
-    model: 'assets/characters/alien.gltf', portrait: 'assets/portraits/alien.webp', expression: 'Yes', altExpression: 'Wave', personality: 'eerie',
   },
   { id: 'evolved-dragon', name: 'Deadwing', color: 0xe85e26, belly: 0x82fff4, trim: 0xc6320f, accent: 0x07667c,
     model: 'assets/characters/evolved-dragon.gltf', portrait: 'assets/portraits/evolved-dragon.webp', expression: 'Headbutt', altExpression: 'Yes', personality: 'fierce', flying: true,
@@ -3317,17 +3305,8 @@ const PLAYER_DEFS = [
   { id: 'tribal', name: 'Bloodmask', color: 0xc35426, belly: 0xffffff, trim: 0xdaa858, accent: 0x633800,
     model: 'assets/characters/tribal.gltf', portrait: 'assets/portraits/tribal.webp', expression: 'Yes', altExpression: 'Punch', personality: 'manic',
   },
-  { id: 'yeti', name: 'Ice Maul', color: 0xd39793, belly: 0xffe3df, trim: 0x3d98a6, accent: 0x8b3152,
-    model: 'assets/characters/yeti.gltf', portrait: 'assets/portraits/yeti.webp', expression: 'Yes', altExpression: 'Wave', personality: 'playful',
-  },
-  { id: 'mushroom-king', name: 'Rotcrown', color: 0x3c9b9c, belly: 0xf4ddb4, trim: 0xc79e6c, accent: 0x276d61,
-    model: 'assets/characters/mushroom-king.gltf', portrait: 'assets/portraits/mushroom-king.webp', expression: 'Wave', altExpression: 'Yes', personality: 'eerie',
-  },
   { id: 'ninja', name: 'Razor', color: 0xa16261, belly: 0xffc4e0, trim: 0xbf8d6d, accent: 0x71173e,
     model: 'assets/characters/ninja.gltf', portrait: 'assets/portraits/ninja.webp', expression: 'Weapon', altExpression: 'Punch', personality: 'sly',
-  },
-  { id: 'monkroose', name: 'Ironclaw', color: 0x94ba57, belly: 0xffed8b, trim: 0xda6d27, accent: 0x795a0a,
-    model: 'assets/characters/monkroose.gltf', portrait: 'assets/portraits/monkroose.webp', expression: 'Wave', altExpression: 'Yes', personality: 'playful',
   },
 
 ];
@@ -14393,9 +14372,9 @@ const Game = (function () {
       } else if (code === 'ArrowRight' || code === 'KeyD') {
         next = onFight ? 0 : (g.selRow + 1) % count;
       } else if (code === 'ArrowUp' || code === 'KeyW') {
-        next = onFight ? count - 2 : (g.selRow - 4 + count) % count;
+        next = onFight ? count - 2 : (g.selRow - 3 + count) % count;
       } else if (code === 'ArrowDown' || code === 'KeyS') {
-        next = onFight || g.selRow >= count - 4 ? count : g.selRow + 4;
+        next = onFight || g.selRow >= count - 3 ? count : g.selRow + 3;
       } else if (code === 'Enter' || code === 'Space') {
         if (onFight) { Audio3.menuSelect(); startMatch(); return; }
         next = count;

@@ -2856,6 +2856,56 @@
     h1.innerHTML = wmLine('one', WM_ONE, WM_HOT) + wmLine('two', WM_TWO, WM_COLD) + burst;
   }
 
+  const MENU_ROWS = ['level', 'rounds', 'difficulty', 'players', 'start'];
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  // Mouse support: hovering a row selects it, clicking adjusts or starts.
+  function bindMenu(handlers) {
+    menu.querySelectorAll('.opt').forEach((el, i) => {
+      el.addEventListener('mouseenter', () => handlers.onHover(i));
+      el.addEventListener('click', () => handlers.onClick(i));
+      el.addEventListener('focus',()=>handlers.onHover(i));
+      el.addEventListener('keydown',event=>{
+        if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();handlers.onClick(i);}
+        else if(event.key==='ArrowUp'||event.key==='ArrowDown'){
+          event.preventDefault();event.stopPropagation();const rows=[...menu.querySelectorAll('.opt')];let next=i;
+          do{next=(next+(event.key==='ArrowDown'?1:-1)+rows.length)%rows.length;}while(!rowVisible(next));
+          rows[next].focus();
+        }
+      });
+    });
+  }
+
+  // Two humans sharing one phone is not something we ship: whenever the
+  // on-screen controls are up, the Players row is hidden and every match is one
+  // human plus three bots. Menu navigation skips hidden rows.
+  function rowVisible(i) {
+    if (MENU_ROWS[i] !== 'players') return true;
+    // Hidden only on a device with NO KEYBOARD. Two humans share one keyboard,
+    // and the on-screen stick drives a single seat — but that is an argument
+    // about the device, not about whether the stick happens to be up. Keyed off
+    // TouchPad.active it vanished from every desktop the moment the controls
+    // became on-by-default.
+    return !TouchPad.available;
+  }
+
+  function renderMenu(sel, opts) {
+    menu.querySelectorAll('.opt').forEach((el, i) => {
+      el.classList.toggle('sel', i === sel);
+      el.classList.toggle('hidden', !rowVisible(i));
+    });
+    menu.querySelector('[data-opt="players"] .val').textContent =
+      opts.humans === 1 ? '1 Human + 3 Bots' : '2 Humans + 2 Bots';
+    menu.querySelector('[data-opt="difficulty"] .val').textContent = cap(opts.difficulty);
+    menu.querySelector('[data-opt="rounds"] .val').textContent =
+      opts.wins === 1 ? 'Single round' : 'First to ' + opts.wins;
+    // The label stays put on "Random" while the maps rotate behind the menu —
+    // a name that changes every few seconds just reads as flicker.
+    const lvl = LEVELS.find(l => l.id === opts.level);
+    menu.querySelector('[data-opt="level"] .val').textContent = lvl ? lvl.name : 'Random';
+    menu.dataset.arena=opts.level;
+    menu.querySelectorAll('.opt').forEach(el=>el.setAttribute('aria-label',el.querySelector('.lbl').textContent.trim()+(el.querySelector('.val')?' · '+el.querySelector('.val').textContent:'')));
+  }
 
 buildWordmark();let selected=0;const opts={level:'random',wins:1,difficulty:'normal',humans:1};
 const next=(arr,value)=>arr[(arr.indexOf(value)+1)%arr.length];

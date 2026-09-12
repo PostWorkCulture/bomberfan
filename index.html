@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="loadout-large-icons-r2-20260912">
+<meta name="build" content="loadout-full-characters-r3-20260912">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2836,7 +2836,7 @@
   #select .sbody {display:block !important;width:100% !important;max-width:none !important;min-height:0 !important;height:100% !important;padding:0 !important;margin:0 auto;}
   #select .sroster {display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;grid-template-rows:repeat(3,minmax(0,1fr)) !important;width:100% !important;max-width:none !important;height:100% !important;max-height:none !important;padding:0 !important;gap:clamp(8px,1.2vw,16px) !important;background:none !important;border:0 !important;box-shadow:none !important;}
   #select .charpick {display:grid !important;grid-template-columns:1fr !important;grid-template-rows:minmax(0,1fr) !important;min-height:0 !important;padding:0 !important;border-radius:18px !important;text-align:center;gap:4px !important;transition:transform .22s,border-color .22s,box-shadow .22s;}
-  #select .charface {display:block !important;width:100% !important;height:100% !important;min-height:0;border:0 !important;border-radius:12px;background-size:auto 210% !important;background-position:center 48% !important;box-shadow:none !important;transform-origin:center 35%;transition:transform .25s;}
+  #select .charface {display:block !important;width:100% !important;height:100% !important;min-height:0;border:0 !important;border-radius:12px;background-size:contain !important;background-position:center !important;box-sizing:border-box;padding:6px 6px 32px;background-origin:content-box;background-clip:content-box;box-shadow:none !important;transform-origin:center 35%;transition:transform .25s;}
   #select .charface::after {display:none;}
   #select .charcopy {position:absolute;left:0;right:0;bottom:0;z-index:1;padding:20px 8px 10px;background:linear-gradient(transparent,rgba(4,6,12,.93));text-shadow:0 2px 4px #000;}
   #select .charcopy b,#select .charpick[data-fighter-id="skull-orc"] .charcopy b {display:block !important;font-size:clamp(11px,1.3vw,19px) !important;line-height:1.1;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -2855,7 +2855,8 @@
   @media(max-height:500px){#select{gap:5px !important;padding:7px 12px !important;}#select .shead h2{font-size:20px !important;}#select .sroster{gap:6px !important;}#select .charpick{padding:0 !important;border-radius:10px !important;}#select .charcopy{padding:12px 3px 5px;}#select .charcopy b,#select .charpick[data-fighter-id="skull-orc"] .charcopy b{font-size:10px !important;letter-spacing:.3px;}#select .sfoot,#select .sfoot .opt{min-height:34px !important;}#select .sfoot .opt{padding:6px !important;}}
   @media(prefers-reduced-motion:reduce){#select .charpick,#select .charface,#select .charpick::after{animation:none !important;transition:none !important;}#select .charpick:hover{transform:none;}}
 
-  @media(max-width:600px){#select .charface{background-size:200% auto !important;background-position:center 48% !important;}}
+  @media(max-width:600px){#select .charface{padding:4px 2px 24px;}}
+  @media(max-height:500px){#select .charface{padding:2px 2px 21px;}}
 </style>
 </head>
 <body>
@@ -2863,7 +2864,7 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=loadout-large-icons-r2-20260912"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=loadout-full-characters-r3-20260912"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';

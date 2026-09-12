@@ -145,6 +145,7 @@ export class ArenaLighting {
     try {this.envTarget=pmrem.fromEquirectangular(texture);this.environments.set(id,this.envTarget);} finally {texture.dispose();pmrem.dispose();}
   }
   apply(level) {
+    this.cols=level.cols||15;this.rows=level.rows||13;
     this.profile=ARENA_PROFILES[level.id];
     this.active=!!this.profile;
     const p=this.profile;
@@ -161,7 +162,7 @@ export class ArenaLighting {
     if(on) {try{this.prepareEnvironment(level.id);}catch(e){console.warn('Arena reflections unavailable',e.message);}}
     this.scene.environment=on?(this.envTarget?.texture||null):null;
     this.scene.environmentIntensity=on?p.environment:1;
-    const d=on?10:12;
+    const d=Math.max(on?10:12,this.cols*.68);
     Object.assign(this.key.shadow.camera,{left:-d,right:d,top:d,bottom:-d,near:1,far:45});
     this.key.shadow.camera.updateProjectionMatrix();
     this.key.shadow.radius=on?2:1;
@@ -214,7 +215,7 @@ export class ArenaLighting {
       const pos=mesh.geometry.attributes.position,uv=new T.Float32BufferAttribute(new Float32Array(pos.count*2),2);
       for(let i=0;i<pos.count;i++){
         v.fromBufferAttribute(pos,i).applyMatrix4(matrix);
-        uv.setXY(i,(v.x+7.5)/15,(6.5-v.z)/13);
+        uv.setXY(i,(v.x+this.cols/2)/this.cols,(this.rows/2-v.z)/this.rows);
       }
       mesh.geometry.setAttribute('uv1',uv);
     });

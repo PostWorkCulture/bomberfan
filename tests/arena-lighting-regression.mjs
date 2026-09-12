@@ -15,7 +15,7 @@ const mat=Object.fromEntries(['ground','soft','hard','hardTop','wall','wallTop',
 const renderer={render(){},toneMappingExposure:1.15};
 const light=new ArenaLighting({scene,key,fill,hemi,mat,renderer});
 for(let pass=0;pass<3;pass++)for(const[id,p]of Object.entries(ARENA_PROFILES)){
- light.apply({id,sky:layouts[id].sky});assert.ok(light.enabled);assert.equal(key.color.getHex(),p.key);
+ light.apply({id,sky:layouts[id].sky,cols:layouts[id].cols,rows:layouts[id].rows});assert.ok(light.enabled);assert.equal(key.color.getHex(),p.key);
  assert.equal(renderer.toneMappingExposure,p.exposure);
  assert.equal(mat.ground.aoMap,arenaAssets[(id==='forest'?'ground':id)+'-ao']);
  assert.equal(mat.soft.aoMap,null,'moving/destructible objects are not baked');
@@ -23,7 +23,7 @@ for(let pass=0;pass<3;pass++)for(const[id,p]of Object.entries(ARENA_PROFILES)){
  const root=new T.Group();root.rotation.y=.87;
  const floor=new T.Mesh(new T.PlaneGeometry(5,5),mat.ground);floor.rotation.x=-Math.PI/2;floor.position.set(-4,.002,0);root.add(floor);
  light.prepareFloors(root);const uv=floor.geometry.attributes.uv1;
- assert.ok(Math.abs(uv.getX(0)-(1/15))<1e-6);assert.ok(Math.abs(uv.getY(0)-(9/13))<1e-6);
+ assert.ok(Math.abs(uv.getX(0)-(-6.5+(layouts[id].cols||15)/2)/(layouts[id].cols||15))<1e-6);assert.ok(Math.abs(uv.getY(0)-(9/13))<1e-6);
  assert.equal(light.geometry(.92,.92,.92,.055).attributes.position.count,150);
 }
 light.apply({id:'unknown',sky:0});assert.equal(light.enabled,false);assert.equal(mat.ground.aoMap,null);assert.equal(renderer.toneMappingExposure,1.15);

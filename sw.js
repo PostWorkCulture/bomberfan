@@ -20,6 +20,7 @@ const ASSETS = [
   new URL('./assets/vendor/BufferGeometryUtils.js', self.registration.scope).href,
   ...['ground','ground-normal','wood','stone','ground-ao','ground-bounce'].map(name => new URL(`./assets/forest/${name}.png`, self.registration.scope).href),
   new URL('./assets/vendor/arena-lighting.js', self.registration.scope).href,
+  new URL('./assets/vendor/pirate-water.js', self.registration.scope).href,
   ...['beach','glacier','haunted','factory','circuit','pirate'].flatMap(id => ['ao','bounce'].map(kind => new URL(`./assets/lighting/${id}-${kind}.png`, self.registration.scope).href)),
   ...[
     'bunny', 'alien', 'evolved-dragon', 'skull-orc', 'orc',

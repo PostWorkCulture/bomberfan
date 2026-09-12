@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="arena-expansion-r1-20260910">
+<meta name="build" content="pirate-tides-r1-20260912">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2756,6 +2756,78 @@
     #select .sfoot .opt.go { pointer-events: auto; }
   }
 
+
+  /* Arena-inspired front screen. Logo geometry and lettering stay intact. */
+  #menu {
+    --menu-cyan:#5ee9ff;--menu-purple:#a571ff;--menu-ember:#ff9b42;
+    grid-template-columns:minmax(0,650px) minmax(320px,440px);
+    column-gap:clamp(24px,4vw,72px) !important;
+    background:radial-gradient(ellipse at 24% 45%,#15243b 0,transparent 52%),radial-gradient(ellipse at 83% 30%,#281638 0,transparent 45%),#060912 !important;
+  }
+  #menu[data-arena="haunted"] {--menu-cyan:#c39aff;--menu-purple:#ff4167;}
+  #menu[data-arena="glacier"] {--menu-cyan:#a0f5ff;--menu-purple:#568aff;}
+  #menu[data-arena="factory"] {--menu-cyan:#ffc665;--menu-purple:#ff713b;}
+  #menu[data-arena="pirate"] {--menu-cyan:#32d9ff;--menu-purple:#167ad4;}
+  #menu[data-arena="forest"] {--menu-cyan:#8de6a6;--menu-purple:#478fbb;}
+  #menu::before {
+    inset:-15% !important;opacity:.65 !important;
+    background:radial-gradient(ellipse at 23% 52%,color-mix(in srgb,var(--menu-cyan) 13%,transparent),transparent 45%),radial-gradient(ellipse at 81% 40%,color-mix(in srgb,var(--menu-purple) 18%,transparent),transparent 35%) !important;
+    animation:arenaAtmosphere 12s ease-in-out infinite alternate !important;
+  }
+  #menu::after {
+    background:linear-gradient(180deg,transparent 72%,#020409aa),linear-gradient(125deg,transparent 0 48%,#7fe9ff08 48.2% 48.4%,transparent 49%) !important;
+    box-shadow:inset 0 0 100px #0007 !important;
+  }
+  #menu .arena-vfx {position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+  #menu .arena-vfx .rift {position:absolute;width:46vw;height:46vw;left:5%;top:50%;border:1px solid #66dfff25;border-radius:50%;transform:translateY(-50%) rotateX(56deg) rotate(-25deg);box-shadow:0 0 0 28px #61a8ff04,0 0 0 29px #69cfff12,inset 0 0 80px #6cbfff08;}
+  #menu .arena-vfx .shard {position:absolute;width:10vw;height:42vh;left:8%;top:24%;clip-path:polygon(50% 0,100% 69%,47% 100%,0 61%);background:linear-gradient(135deg,#aeedff30,#328ed807 55%,#71ddff24);transform:rotate(-24deg);animation:iceDrift 7s ease-in-out infinite alternate;}
+  #menu .arena-vfx .shard.two {left:45%;top:49%;height:31vh;width:6vw;transform:rotate(33deg);animation-delay:-4s;}
+  #menu .arena-vfx .embers {position:absolute;inset:0;background:radial-gradient(2px 5px at 15% 76%,#ffbb61,transparent),radial-gradient(2px 3px at 43% 87%,#f2745a,transparent),radial-gradient(1px 4px at 78% 73%,#66dcff,transparent),radial-gradient(2px 3px at 60% 23%,#c380ff,transparent);opacity:.65;animation:menuEmbers 5s ease-in-out infinite;}
+  #menu .opts {
+    width:min(440px,36vw) !important;padding:22px !important;gap:10px !important;
+    border-radius:24px !important;border:1px solid #90bde329 !important;
+    background:linear-gradient(150deg,#172032e8,#090e1bee) !important;
+    box-shadow:0 32px 95px #0009,inset 0 1px #c6e7ff12,0 0 70px #8060ef0b !important;
+  }
+  #menu .opts::before {content:'CHOOSE YOUR CHAOS';font:900 11px/1.3 system-ui,sans-serif;letter-spacing:3px;color:#c8d6ee99;margin:1px 3px 12px;}
+  #menu .opt {
+    --row-glow:var(--menu-cyan);position:relative;isolation:isolate;overflow:hidden;
+    min-height:62px !important;padding:14px 16px !important;
+    border-radius:12px !important;border:1px solid #7f9dbd29 !important;
+    background:linear-gradient(115deg,#1b2944b0,#0b1429da) !important;
+    backdrop-filter:none;outline:none;
+    transition:transform .2s ease,border-color .2s,box-shadow .2s;
+  }
+  #menu .opt[data-opt="rounds"] {--row-glow:#ffbd66;}
+  #menu .opt[data-opt="difficulty"] {--row-glow:#ff4777;background:linear-gradient(115deg,#33182bb0,#160f21da) !important;}
+  #menu .opt[data-opt="players"] {--row-glow:#b596ff;}
+  #menu .opt::before {content:'';position:absolute;inset:-100% -70%;z-index:-1;pointer-events:none;background:linear-gradient(115deg,transparent 43%,color-mix(in srgb,var(--row-glow) 25%,transparent) 49%,#ffffff32 50%,transparent 57%);transform:translateX(-48%);opacity:0;}
+  #menu .opt::after {content:'';position:absolute;left:0;top:18%;bottom:18%;width:3px;background:var(--row-glow);box-shadow:0 0 14px var(--row-glow);opacity:.4;transition:opacity .2s;}
+  #menu .opt:is(:hover,:focus-visible,.sel) {border-color:color-mix(in srgb,var(--row-glow) 70%,transparent) !important;box-shadow:inset 0 0 22px color-mix(in srgb,var(--row-glow) 8%,transparent),0 6px 24px #0005,0 0 16px color-mix(in srgb,var(--row-glow) 11%,transparent);transform:translateX(-5px);}
+  #menu .opt:is(:hover,:focus-visible,.sel)::before {opacity:.8;animation:menuSweep 2.8s ease-in-out infinite;}
+  #menu .opt:is(:hover,:focus-visible,.sel)::after {opacity:1;}
+  #menu .opt:active {transform:translateX(-2px) scale(.98);}
+  #menu .opt .lbl {display:flex;align-items:center;gap:10px;color:#e7efff;font-size:15px;font-weight:850;letter-spacing:.25px;margin-right:12px;}
+  #menu .opt .val {color:#e1edff;opacity:1;font-size:13px;font-weight:650;letter-spacing:0;text-shadow:0 1px #000;}
+  #menu .opt.sel .val {color:var(--row-glow);}
+  #menu .opt .menu-icon {width:23px;height:23px;flex:none;color:var(--row-glow);filter:drop-shadow(0 0 5px color-mix(in srgb,var(--row-glow) 35%,transparent));transition:transform .3s ease;}
+  #menu .opt[data-opt="rounds"]:is(:hover,.sel) .menu-icon {transform:rotate(-20deg);}
+  #menu .opt[data-opt="difficulty"]:is(:hover,.sel) .menu-icon {animation:hauntedPulse 1.8s ease-in-out infinite;}
+  #menu .opt[data-opt="level"]:is(:hover,.sel) .menu-icon {transform:rotate(8deg) scale(1.12);}
+  #menu .opt.go {--row-glow:#ffc663;min-height:66px !important;margin-top:7px;background:linear-gradient(110deg,#cf5820,#9d2544) !important;border-color:#ffb868a0 !important;box-shadow:0 7px 0 #4d1824,0 12px 30px #0006;}
+  #menu .opt.go .lbl.start {justify-content:center;width:auto;color:#fff2df !important;font-size:17px;letter-spacing:2.3px;margin:0;}
+  #menu .opt.go::after {left:auto;right:14px;top:50%;bottom:auto;width:8px;height:8px;transform:translateY(-50%) rotate(-45deg);border-right:2px solid #fff0ce;border-bottom:2px solid #fff0ce;background:none;box-shadow:none;opacity:1;}
+  #menu .opt.go:is(:hover,:focus-visible,.sel) {transform:translateY(-3px);box-shadow:0 9px 0 #4d1824,0 15px 40px #c93b3b30;}
+  @keyframes menuSweep {0%,15%{transform:translateX(-48%)}75%,100%{transform:translateX(48%)}}
+  @keyframes hauntedPulse {50%{filter:drop-shadow(0 0 9px #ff225e);transform:scale(1.13)}}
+  @keyframes menuEmbers {0%,100%{transform:translateY(12px);opacity:.3}50%{transform:translateY(-20px);opacity:.85}}
+  @keyframes arenaAtmosphere {to{transform:translate3d(2%,-2%,0);opacity:.85}}
+  @keyframes iceDrift {to{translate:0 -18px;opacity:.65}}
+  @media(max-width:1000px) and (min-width:720px){#menu{grid-template-columns:minmax(0,1fr) minmax(300px,380px);padding:22px !important;column-gap:18px !important;}#menu .opts{width:100% !important;padding:16px !important;}#menu h1{font-size:clamp(58px,8.5vw,90px) !important;}#menu .opt{padding:12px !important;}}
+  @media(max-width:719px){#menu{grid-template-columns:1fr;grid-template-rows:auto auto;align-content:center;gap:20px !important;padding:24px 14px !important;}#menu h1{top:0;font-size:clamp(54px,16vw,96px) !important;}#menu .opts{top:0;width:min(94vw,440px) !important;padding:16px !important;gap:8px !important;}#menu .opt{min-height:52px !important;padding:11px 13px !important;}#menu .opt.go{min-height:58px !important;}#menu .arena-vfx .shard{width:20vw;}#menu .opt .lbl{font-size:14px;}#menu .opt .val{font-size:12px;}}
+  @media(max-height:520px) and (min-width:720px){#menu{grid-template-columns:minmax(0,1fr) minmax(310px,390px);padding:12px 24px !important;column-gap:18px !important;}#menu h1{font-size:clamp(52px,17vh,86px) !important;top:0;}#menu .opts{top:0;width:100% !important;padding:12px !important;gap:5px !important;}#menu .opts::before{font-size:8px;margin-bottom:4px;}#menu .opt{min-height:42px !important;padding:8px 12px !important;}#menu .opt.go{min-height:44px !important;margin-top:3px;}#menu .opt .lbl{font-size:13px;}#menu .opt .val{font-size:12px;}#menu .opt .menu-icon{width:19px;height:19px;}}
+  @media(prefers-reduced-motion:reduce){#menu,#menu::before,#menu::after,#menu h1,#menu .wburst,#menu .arena-vfx *,#menu .opt,#menu .opt::before,#menu .opt .menu-icon{animation:none !important;transition:none !important;}#menu .opt::before{display:none;}#menu .opt:is(:hover,:focus-visible,.sel){transform:none;}}
+
 </style>
 </head>
 <body>
@@ -2763,10 +2835,11 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=arena-expansion-r1-20260910"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=pirate-tides-r1-20260912"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';
+import { createPirateWater } from './assets/vendor/pirate-water.js';
 (function () {
 'use strict';
 
@@ -3042,14 +3115,11 @@ const LEVELS = [
     crate: '#9a5cf0', crateBand: '#7a37d6', crateEdge: '#4f1c96',   // purple caskets
     hard: 0xb35f10, hardTop: 0xd9812a, border: 0x5c2f07,            // burnt pumpkin stone
     softDensity: 0.72,
-    // ORDER MATTERS. Props are dealt round the six wall spots in this order, and
-    // the first two spots are the BACK wall — the edge the card strip is placed
-    // against. A witch's hat is a tile and a half above the wall she stands on,
-    // so the tall ones are dealt to the sides and the front where they are nearer
-    // the camera and bigger, and the back row gets the two short ones.
+    // The former near-edge decorations stand on the far wall, facing inward.
+    // Back-row bounds keep their silhouettes clear of the card strip.
     props: ['witch','reaper','gargoyle','ghost','pumpkin','gravestone'],
     hazards: ['witch','reaper','gargoyle'], hazardCount: 3,
-    propSpots: [[0,2,1.57,'witch'],[14,2,-1.57,'gargoyle'],[0,6,1.57,'reaper'],[14,6,-1.57,'ghost'],[3,12,3.14,'gargoyle'],[11,12,3.14,'reaper'],[6,12,3.14,'pumpkin'],[8,12,3.14,'gravestone']],
+    propSpots: [[0,2,1.57,'witch'],[14,2,-1.57,'gargoyle'],[0,6,1.57,'reaper'],[14,6,-1.57,'ghost'],[3,0,0,'gargoyle'],[11,0,0,'reaper'],[6,0,0,'pumpkin'],[8,0,0,'gravestone']],
   },
   {
     // THE FACTORY. Two conveyor loops, and they carry bombs as well as people —
@@ -3089,7 +3159,7 @@ const LEVELS = [
     // turns firing while the remaining guns, crews, masts and treasure make the
     // arena read as a fleet rather than a wooden recolour of the standard grid.
     id: 'pirate', name: 'Pirate Fleet',
-    layout: 'pirate-fleet',
+    layout: 'pirate-fleet', cols: 21,
     sky: 0x031b35,
     ground: [126, 74, 35],
     groundLine: 'rgba(255,214,126,0.24)',
@@ -3099,22 +3169,22 @@ const LEVELS = [
     spawns: [
       { x: 1,  y: 1, clear: [[0, 0], [1, 0], [0, 1]] },
       { x: 6,  y: 11, clear: [[0, 0], [-1, 0], [0, -1]] },
-      { x: 8,  y: 1, clear: [[0, 0], [1, 0], [0, 1]] },
-      { x: 13, y: 11, clear: [[0, 0], [-1, 0], [0, -1]] },
+      { x: 14,  y: 1, clear: [[0, 0], [1, 0], [0, 1]] },
+      { x: 19, y: 11, clear: [[0, 0], [-1, 0], [0, -1]] },
     ],
     props: ['cannon'],
     hazard: 'cannon',
     hazardCount: 4,
     propSpots: [
-      [1, 4, -Math.PI / 2, 'cannon', 1.15], [13, 4, Math.PI / 2, 'cannon', 1.15],
-      [6, 8, Math.PI / 2, 'cannon', 1.1], [8, 8, -Math.PI / 2, 'cannon', 1.1],
-      [1, 8, -Math.PI / 2, 'cannon', 1.0], [13, 8, Math.PI / 2, 'cannon', 1.0],
-      [6, 4, Math.PI / 2, 'cannon', 1.0], [8, 4, -Math.PI / 2, 'cannon', 1.0],
+      [1, 4, -Math.PI / 2, 'cannon', 1.15], [19, 4, Math.PI / 2, 'cannon', 1.15],
+      [6, 8, Math.PI / 2, 'cannon', 1.1], [14, 8, -Math.PI / 2, 'cannon', 1.1],
+      [1, 8, -Math.PI / 2, 'cannon', 1.0], [19, 8, Math.PI / 2, 'cannon', 1.0],
+      [6, 4, Math.PI / 2, 'cannon', 1.0], [14, 4, -Math.PI / 2, 'cannon', 1.0],
       [3, 4, 0, 'mast', 1.18], [4, 8, 0, 'mast', 1.08],
-      [10, 4, 0, 'mast', 1.18], [11, 8, 0, 'mast', 1.08],
+      [16, 4, 0, 'mast', 1.18], [17, 8, 0, 'mast', 1.08],
       [2, 6, 0, 'pirate', 1.0], [5, 6, Math.PI, 'pirate', 1.0],
-      [9, 6, 0, 'pirate', 1.0], [12, 6, Math.PI, 'pirate', 1.0],
-      [3, 10, 0, 'barrels', 1.0], [11, 2, 0, 'treasure', 1.08],
+      [15, 6, 0, 'pirate', 1.0], [18, 6, Math.PI, 'pirate', 1.0],
+      [3, 10, 0, 'barrels', 1.0], [17, 2, 0, 'treasure', 1.08],
     ],
   },
 ];
@@ -5560,6 +5630,8 @@ const World = (function () {
   // rather than tinted so each level can look genuinely different.
   function applyLevel(level) {
     state.level = level;
+    CFG.COLS=level.cols || 15;
+    CFG.ROWS=level.rows || 13;
     if (MAT.ground.map && !MAT.ground.map.userData.forestShared) MAT.ground.map.dispose();
     if (MAT.soft.map && !MAT.soft.map.userData.forestShared) MAT.soft.map.dispose();
     MAT.ground.map = groundTexture(level);
@@ -5668,10 +5740,8 @@ const World = (function () {
     MAT.border = new THREE.MeshStandardMaterial({ color: L0.border, roughness: 0.85 });
     MAT.bridge = new THREE.MeshStandardMaterial({ color: 0x82502c, roughness: 0.88, metalness: 0.02 });
     MAT.rope = new THREE.MeshStandardMaterial({ color: 0xc69a57, roughness: 0.92, metalness: 0.01 });
-    MAT.sea = new THREE.MeshStandardMaterial({
-      color: 0x075b88, roughness: 0.26, metalness: 0.12,
-      emissive: 0x01293d, emissiveIntensity: 0.6,
-    });
+    MAT.sea = createPirateWater();
+    MAT.bridgeWarning=new THREE.MeshBasicMaterial({color:0xff4021,toneMapped:false});
     MAT.shipHull = new THREE.MeshStandardMaterial({ color: 0x3b170d, roughness: 0.78 });
     MAT.shipRail = new THREE.MeshStandardMaterial({ color: 0x723916, roughness: 0.66 });
     MAT.shipGold = new THREE.MeshStandardMaterial({
@@ -6234,18 +6304,11 @@ const World = (function () {
   };
 
   const PIRATE_FLEET = {
-    floors: [[1, 1, 6, 11], [8, 1, 13, 11]],
-    paths: [
-      [6, 2], [7, 2], [8, 2],
-      [6, 6], [7, 6], [8, 6],
-      [6, 10], [7, 10], [8, 10],
-    ],
+    floors: [[1,1,6,11],[14,1,19,11]],
+    paths: [2,6,10].flatMap(y=>Array.from({length:9},(_,i)=>[6+i,y])),
     pillars: [
-      [1, 4], [13, 4], [6, 8], [8, 8],
-      [1, 8], [13, 8], [6, 4], [8, 4],
-      [3, 4], [4, 8], [10, 4], [11, 8],
-      [2, 6], [5, 6], [9, 6], [12, 6],
-      [3, 10], [11, 2],
+      [1,4],[19,4],[6,8],[14,8],[1,8],[19,8],[6,4],[14,4],
+      [3,4],[4,8],[16,4],[17,8],[2,6],[5,6],[15,6],[18,6],[3,10],[17,2],
     ],
   };
 
@@ -6322,6 +6385,8 @@ const World = (function () {
     const shape = layout === 'twin-islands' ? TWIN_ISLANDS
                 : layout === 'pirate-fleet' ? PIRATE_FLEET : null;
     state.clockwork = null;
+    state.bridgeTiles=new Map();
+    state.bridgeCycle={phase:'wait',timer:4,index:0,active:null};
     if (shape) {
       seedShapedLayout(grid, state.voids, shape);
     } else {
@@ -6531,14 +6596,16 @@ const World = (function () {
     // rectangle with a gap painted into it. The logical decks above match these
     // slabs exactly; the hull and rails sit outside the playable footprint.
     const ocean = new THREE.Mesh(
-      new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE), MAT.sea);
+      new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE, state.lighting.tier==='high'?96:48, state.lighting.tier==='high'?64:32), MAT.sea);
     ocean.rotation.x = -Math.PI / 2;
-    ocean.position.y = -0.54;
+    ocean.position.y = -0.47;
+    ocean.name='PirateWater';
+    MAT.sea.userData.waterTime.value=0;
     ocean.receiveShadow = true;
     ocean.userData.ownGeometry = true;
     g.add(ocean);
 
-    [[3.5, 6], [10.5, 6]].forEach(([cx, cy], shipIndex) => {
+    [[3.5, 6], [16.5, 6]].forEach(([cx, cy], shipIndex) => {
       const hull = new THREE.Mesh(new THREE.BoxGeometry(6.18, 0.48, 11.22), MAT.shipHull);
       hull.position.set(wx(cx), -0.27, wz(cy));
       hull.castShadow = hull.receiveShadow = true;
@@ -6552,8 +6619,8 @@ const World = (function () {
 
       // Gunwales and gold trim outline each ship without occupying a gameplay
       // tile. Broken runs leave the three gangplank landings visually open.
-      const outerX = shipIndex ? 13.58 : 0.42;
-      const innerX = shipIndex ? 7.42 : 6.58;
+      const outerX = shipIndex ? 19.58 : 0.42;
+      const innerX = shipIndex ? 13.42 : 6.58;
       const outerRail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.34, 11.08), MAT.shipRail);
       outerRail.position.set(wx(outerX), 0.15, wz(cy));
       outerRail.castShadow = true;
@@ -6586,24 +6653,33 @@ const World = (function () {
     // Three broad gangplanks make several tactical routes between the ships.
     // Rope lashings and staggered boards make them read as hand-built bridges.
     [2, 6, 10].forEach((y, bridgeIndex) => {
-      for (let x = 6; x <= 8; x++) {
+      for (let x = 6; x <= 14; x++) {
         const plank = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.13, 0.82), MAT.bridge);
         plank.position.set(wx(x), -0.01, wz(y));
         plank.rotation.y = ((x + bridgeIndex) % 2 ? 1 : -1) * 0.018;
         plank.castShadow = plank.receiveShadow = true;
         plank.userData.ownGeometry = true;
+        plank.name='PirateBridgeTile';
         g.add(plank);
+        if(x>6 && x<14){
+          const warning=new THREE.Group();warning.position.set(wx(x),.085,wz(y));warning.visible=false;
+          for(const [w,d,ox,oz,angle]of [[.85,.055,0,-.42,0],[.85,.055,0,.42,0],[.055,.85,-.42,0,0],[.055,.85,.42,0,0],[.65,.065,0,0,.78],[.65,.065,0,0,-.78]]){
+            const bar=new THREE.Mesh(new THREE.BoxGeometry(w,.018,d),MAT.bridgeWarning);bar.position.set(ox,0,oz);bar.rotation.y=angle;bar.userData.ownGeometry=true;warning.add(bar);
+          }
+          g.add(warning);
+          state.bridgeTiles.set(key(x,y),{x,y,mesh:plank,warning,baseRotation:plank.rotation.y});
+        }
       }
       [-0.48, 0.48].forEach(side => {
-        const rope = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.035, 0.035), MAT.rope);
-        rope.position.set(wx(7), 0.1, wz(y) + side);
+        const rope = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.035, 0.035), MAT.rope);
+        rope.position.set(wx(10), 0.1, wz(y) + side);
         rope.userData.ownGeometry = true;
         g.add(rope);
       });
     });
 
     // A gold anchor on each outer hull makes the silhouettes unmistakably ships.
-    [[0.3, 6, -Math.PI / 2], [13.7, 6, Math.PI / 2]].forEach(([x, y, rot]) => {
+    [[0.3, 6, -Math.PI / 2], [19.7, 6, Math.PI / 2]].forEach(([x, y, rot]) => {
       const anchor = new THREE.Group();
       const stem = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.72, 0.08), MAT.shipGold);
       const bar = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.08), MAT.shipGold);
@@ -6972,6 +7048,7 @@ const World = (function () {
 
   function decayShake(dt) {
     state.shake = Math.max(0, state.shake - dt * 1.8);
+    if(state.level?.id==='pirate')MAT.sea.userData.waterTime.value+=dt;
     // The props on the outer wall rock on the same step, for the same reason:
     // frame-rate independent, frozen while paused, testable headlessly.
     if (typeof Props !== 'undefined' && Props.tick) Props.tick(dt);
@@ -6982,6 +7059,42 @@ const World = (function () {
       state.hazardMark.material.opacity =
         0.62 + 0.38 * (0.5 + 0.5 * Math.sin(state.hazardMarkT * 8.6));
     }
+  }
+
+  function floorMissing(x,y){
+    return state.level?.id==='pirate' && x>=0 && x<CFG.COLS && y>=0 && y<CFG.ROWS && !!state.voids?.[idx(x,y)];
+  }
+  function updateBridges(dt){
+    if(state.level?.id!=='pirate'||!state.bridgeTiles?.size)return;
+    const c=state.bridgeCycle;c.timer-=dt;
+    if(c.phase==='warning'){
+      const a=c.active;a.warning.visible=true;
+      const pulse=.75+.25*Math.sin(c.timer*19);a.warning.scale.setScalar(pulse);
+      a.mesh.rotation.z=Math.sin(c.timer*25)*.035;
+    }else if(c.phase==='hole'){
+      const a=c.active,fall=Math.min(1,3-c.timer);
+      a.mesh.position.y=-.01-3.8*fall*fall;a.mesh.rotation.z=fall*.7;
+      a.mesh.visible=fall<.8;
+    }
+    if(c.timer>0)return;
+    if(c.phase==='wait'){
+      const y=[2,6,10][c.index%3],x=7+((Math.floor(c.index/3)*3+c.index%3*2)%7);c.index++;
+      const a=state.bridgeTiles.get(key(x,y));
+      if(!a||cellAt(x,y)!==CELL.EMPTY){c.timer=1;return;}
+      c.active=a;c.phase='warning';c.timer=1.8;a.warning.visible=true;
+    }else if(c.phase==='warning'){
+      c.phase='hole';c.timer=3;c.active.warning.visible=false;
+      state.voids[idx(c.active.x,c.active.y)]=1;
+    }else{
+      const a=c.active;state.voids[idx(a.x,a.y)]=0;
+      a.mesh.visible=true;a.mesh.position.y=-.01;a.mesh.rotation.set(0,a.baseRotation,0);
+      c.active=null;c.phase='wait';c.timer=3;
+    }
+  }
+  function bridgeDanger(x,y){
+    if(floorMissing(x,y))return 0;
+    const c=state.bridgeCycle;
+    return state.level?.id==='pirate' && c?.phase==='warning' && c.active.x===x && c.active.y===y ? c.timer : Infinity;
   }
 
   function updateCamera() {
@@ -7000,7 +7113,8 @@ const World = (function () {
     init, buildArena, applyLevel, render, updateCamera, addShake, decayShake,
     adaptResolution, acquireBlastLight, releaseBlastLight,
     get performance() { return { averageMs: performanceState.averageMs, pixelRatio: state.renderer.getPixelRatio() }; },
-    updateClockwork, settleClockwork,
+    updateClockwork, settleClockwork, updateBridges, floorMissing, bridgeDanger,
+    get bridgeState(){return state.bridgeCycle;},
     fit: fitCamera,
     tintWalls,
     flashHearts, updateHeartFlash, clearHeartFlash,
@@ -9198,6 +9312,7 @@ class Player {
     // on the floor can touch you until it runs out. `hopCool` stops it being
     // held down as permanent immunity.
     this.airT = 0;
+    this.falling=false;
     this.hopCool = 0;
 
     // Abilities from collectables
@@ -9576,6 +9691,7 @@ class Player {
   // than across the board from it. Ties break in a fixed order, so the same hop
   // lands in the same place every time.
   land() {
+    if(World.floorMissing(this.tileX,this.tileY)){this.fall();return null;}
     if (!this.blockedAt(this.gx, this.gy, false)) return null;
     const cx = Math.round(this.gx), cy = Math.round(this.gy);
     for (let ring = 1; ring <= Math.max(CFG.COLS, CFG.ROWS); ring++) {
@@ -9636,13 +9752,18 @@ class Player {
     Game.spawnPuff(this.gx, this.gy, this.def.color);
   }
 
+  fall(){
+    if(!this.alive)return;
+    this.kill(true);this.falling=true;
+  }
+
   updateDeath(dt) {
     this.deathT += dt;
     const t = Math.min(this.deathT / 0.7, 1);
     this.mesh.rotation.y += dt * 14;
     const k = Math.max(0.001, 1 - t);
-    Player.applyViewScale(this.mesh, k);
-    this.mesh.position.y = 0.02 + Math.sin(t * Math.PI) * 0.8;
+    Player.applyViewScale(this.mesh, this.falling ? 1 : k);
+    this.mesh.position.y = this.falling ? .02-4*t*t : 0.02 + Math.sin(t * Math.PI) * 0.8;
     if (t >= 1) this.mesh.visible = false;
   }
 
@@ -11863,6 +11984,11 @@ const AI = (function () {
       });
     });
 
+    for(let y=0;y<CFG.ROWS;y++)for(let x=0;x<CFG.COLS;x++){
+      const when=World.bridgeDanger(x,y);
+      if(Number.isFinite(when)){const i=World.idx(x,y);danger[i]=Math.min(danger[i],when);clear[i]=SAFE;}
+    }
+
     const live = game.bombs.filter(b => !b.dead && !b.held && !b.flight);
 
     // WHERE THE BOMB WILL BE, NOT WHERE IT IS. On a conveyor a bomb travels
@@ -12036,7 +12162,7 @@ const AI = (function () {
 
   // ---- Pathfinding --------------------------------------------------------
   function passable(game, x, y, ignoreBombAt, alsoIgnore) {
-    if (World.cellAt(x, y) !== CELL.EMPTY) return false;
+    if (World.floorMissing(x,y) || World.cellAt(x, y) !== CELL.EMPTY) return false;
     const k = World.key(x, y);
     if (!game.bombAt(k)) return true;
     if (ignoreBombAt && ignoreBombAt === k) return true;
@@ -12938,14 +13064,15 @@ const UI = (function () {
       </div>
 
       <div id="menu">
+        <div class="arena-vfx" aria-hidden="true"><i class="rift"></i><i class="shard"></i><i class="shard two"></i><i class="embers"></i></div>
         <p class="dim build"></p>
         <h1 aria-label="Bomber Fan"></h1>
         <div class="opts">
-          <div class="opt" data-opt="level"><span class="lbl">Level</span><span class="val"></span></div>
-          <div class="opt" data-opt="rounds"><span class="lbl">Rounds</span><span class="val"></span></div>
-          <div class="opt" data-opt="difficulty"><span class="lbl">Difficulty</span><span class="val"></span></div>
-          <div class="opt" data-opt="players"><span class="lbl">Players</span><span class="val"></span></div>
-          <div class="opt go" data-opt="start"><span class="lbl start">START MATCH</span></div>
+          <div class="opt" data-opt="level" role="button" tabindex="0"><span class="lbl"><svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 18 6-12 4 7 3-5 5 10H3Z"/><path d="m6 12 3 2 3-2"/></svg>Level</span><span class="val"></span></div>
+          <div class="opt" data-opt="rounds" role="button" tabindex="0"><span class="lbl"><svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="14" r="7"/><path d="m15 8 2-3 3 1M19 3l2-1M5 10l2 1"/></svg>Rounds</span><span class="val"></span></div>
+          <div class="opt" data-opt="difficulty" role="button" tabindex="0"><span class="lbl"><svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5q7-6 14 0v8l-3 2v5H8v-5l-3-2V5Z"/><path d="m8 8 3 2-3 1m8-3-3 2 3 1M11 16v4m3-4v4"/></svg>Difficulty</span><span class="val"></span></div>
+          <div class="opt" data-opt="players" role="button" tabindex="0"><span class="lbl"><svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 21v-3a6 6 0 0 1 12 0v3m1-7q7-1 7 5v2"/></svg>Players</span><span class="val"></span></div>
+          <div class="opt go" data-opt="start" role="button" tabindex="0"><span class="lbl start">START MATCH</span></div>
         </div>
       </div>
 
@@ -13386,6 +13513,15 @@ const UI = (function () {
     menu.querySelectorAll('.opt').forEach((el, i) => {
       el.addEventListener('mouseenter', () => handlers.onHover(i));
       el.addEventListener('click', () => handlers.onClick(i));
+      el.addEventListener('focus',()=>handlers.onHover(i));
+      el.addEventListener('keydown',event=>{
+        if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();handlers.onClick(i);}
+        else if(event.key==='ArrowUp'||event.key==='ArrowDown'){
+          event.preventDefault();event.stopPropagation();const rows=[...menu.querySelectorAll('.opt')];let next=i;
+          do{next=(next+(event.key==='ArrowDown'?1:-1)+rows.length)%rows.length;}while(!rowVisible(next));
+          rows[next].focus();
+        }
+      });
     });
   }
 
@@ -13416,6 +13552,8 @@ const UI = (function () {
     // a name that changes every few seconds just reads as flicker.
     const lvl = LEVELS.find(l => l.id === opts.level);
     menu.querySelector('[data-opt="level"] .val').textContent = lvl ? lvl.name : 'Random';
+    menu.dataset.arena=opts.level;
+    menu.querySelectorAll('.opt').forEach(el=>el.setAttribute('aria-label',el.querySelector('.lbl').textContent.trim()+(el.querySelector('.val')?' · '+el.querySelector('.val').textContent:'')));
   }
   /* ------------------------------------------------------- the wordmark -- */
   // Built here rather than typed into the markup so each letter's tilt, bob and
@@ -14967,7 +15105,7 @@ const Game = (function () {
   // Can a bomb occupy this tile? Players block it too, so a kicked bomb
   // stops against whoever it hits rather than sliding through them.
   function bombCanEnter(x, y, self, kicking = false) {
-    if (World.cellAt(x, y) !== CELL.EMPTY) return false;
+    if (World.floorMissing(x,y) || World.cellAt(x, y) !== CELL.EMPTY) return false;
     const other = g.bombMap.get(World.key(x, y));
     if (other && other !== self) return false;
     return kicking || !g.players.some(p =>
@@ -15292,7 +15430,7 @@ const Game = (function () {
     const k = World.key(x, y);
     if (g.bombMap.has(k)) return false;
     if (player.activeBombs >= player.maxBombs) return false;
-    if (World.cellAt(x, y) !== CELL.EMPTY) return false;
+    if (World.floorMissing(x,y) || World.cellAt(x, y) !== CELL.EMPTY) return false;
 
     const bomb = new Bomb(x, y, player);
     g.bombs.push(bomb);
@@ -15788,6 +15926,7 @@ const Game = (function () {
 
   /* ------------------------------------------------------- simulation ---- */
   function stepSim(dt) {
+    if(g.state===STATE.PLAY)World.updateBridges(dt);
     g.dangerMap = AI.buildDanger(g);
 
     // Players
@@ -15829,6 +15968,7 @@ const Game = (function () {
     // is the hop working; `land()` is what guarantees they are not still there
     // when they come down, and this guard is what catches it if it ever is.
     g.players.forEach(p => {
+      if(p.alive && !p.airborne && World.floorMissing(p.tileX,p.tileY)){p.fall();}
       if (p.alive && !p.airborne && World.isSolid(p.tileX, p.tileY)) {
         p.kill(true);
         spawnPuff(p.tileX, p.tileY, 0xffffff);
@@ -15881,7 +16021,11 @@ const Game = (function () {
     for (let i = g.bombs.length - 1; i >= 0; i--) {
       const b = g.bombs[i];
       if (b.dead) { b.dispose(); g.bombs.splice(i, 1); continue; }
-      if (b.update(dt)) { detonate(b); b.dispose(); g.bombs.splice(i, 1); }
+      const explode=b.update(dt);
+      if(!b.flight&&!b.held&&World.floorMissing(b.x,b.y)){
+        unregisterBomb(b);b.dead=true;b.owner.activeBombs=Math.max(0,b.owner.activeBombs-1);b.dispose();g.bombs.splice(i,1);continue;
+      }
+      if (explode) { detonate(b); b.dispose(); g.bombs.splice(i, 1); }
     }
 
     // Blasts (lethal for their whole lifetime, not just the first frame)
@@ -15891,7 +16035,7 @@ const Game = (function () {
       if (bl.update(dt)) { bl.dispose(); g.blasts.splice(i, 1); }
     }
 
-    g.powerUps.forEach(p => p.update(dt));
+    g.powerUps.forEach((p,k) => {if(World.floorMissing(p.x,p.y)){p.dispose();g.powerUps.delete(k);}else p.update(dt);});
     updatePuffs(dt);
     updateDust(dt);
     updateFallingBlocks(dt);

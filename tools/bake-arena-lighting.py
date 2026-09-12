@@ -3,15 +3,16 @@ Generate layouts with BF_EXPORT_LAYOUTS=assets/lighting/layouts.json node tests/
 Only static wall meshes are exported. Moving maze walls, crates and actors are excluded.
 """
 from pathlib import Path
-import json
+import json,sys
 import numpy as np
 from PIL import Image
 root=Path(__file__).resolve().parents[1];out=root/'assets/lighting'
 layouts=json.loads((out/'layouts.json').read_text())
 w,h=384,333; yy,xx=np.mgrid[0:h,0:w]
-px=(xx+.5)/w*15-7.5;pz=(yy+.5)/h*13-6.5
 for name,layout in layouts.items():
- if name=='forest':continue
+ if name=='forest' or (len(sys.argv)>1 and name not in sys.argv[1:]):continue
+ cols=layout.get('cols',15);rows=layout.get('rows',13)
+ px=(xx+.5)/w*cols-cols/2;pz=(yy+.5)/h*rows-rows/2
  visibility=np.zeros((h,w));bounce=np.zeros((h,w,3))
  c=layout['hardColour'];colour=np.array([(c>>16)&255,(c>>8)&255,c&255])/255*.075
  for i in range(64):

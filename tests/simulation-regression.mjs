@@ -24,6 +24,7 @@ const require = createRequire(path.join(modules, 'package.json'));
 const { createCanvas } = require('@napi-rs/canvas');
 const ThreeModule = await import(pathToFileURL(path.join(repo, 'assets/vendor/three.module.min.js')));
 const { ForestLighting, preloadForestAssets } = await import(pathToFileURL(path.join(repo, 'assets/vendor/forest-lighting.js')));
+const {createPirateWater}=await import(pathToFileURL(path.join(repo,'assets/vendor/pirate-water.js')));
 const { ArenaLighting, preloadArenaAssets } = await import(pathToFileURL(path.join(repo, 'assets/vendor/arena-lighting.js')));
 const noop = () => {};
 const events = new Map();
@@ -67,7 +68,7 @@ const document = {
 };
 const storage = new Map();
 const context = vm.createContext({
-  console, ArenaLighting, preloadArenaAssets, ForestLighting, preloadForestAssets, THREE: { ...ThreeModule, WebGLRenderer: StubRenderer }, document,
+  console, createPirateWater, ArenaLighting, preloadArenaAssets, ForestLighting, preloadForestAssets, THREE: { ...ThreeModule, WebGLRenderer: StubRenderer }, document,
   navigator: { userAgent: `Bomberfan ${qaProfile} regression`, hardwareConcurrency: 8, maxTouchPoints: qaCoarse ? 5 : 0 },
   location: { search: '', href: 'https://example.test/' }, URLSearchParams, URL,
   performance: { now: () => 0 },
@@ -379,7 +380,7 @@ check('every level renders all logical crates in one instance batch', () => {
       const matrix=new ThreeModule.Matrix4();
       for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);hard.push([matrix.elements[12],matrix.elements[14]]);}
     });
-    bakeLayouts[level.id]={hard,sky:level.sky,hardColour:level.hard,layout:level.layout||'rectangle'};
+    bakeLayouts[level.id]={hard,cols:CFG.COLS,rows:CFG.ROWS,sky:level.sky,hardColour:level.hard,layout:level.layout||'rectangle'};
     crateMetrics.push({ level: level.id, crates: count, previousCrateMeshCount: count, currentCrateMeshCount: count ? 1 : 0 });
   }
 });
@@ -466,6 +467,55 @@ check('countdown names the level, marks the final fade and clears both elements'
   const fn=new Function('document','hud','World',source.slice(a,b)+';return setCountdown;')({getElementById:id=>id==='count'?count:title},hud,{level:{name:'Glacier'}});
   fn('3');assert.equal(title.textContent,'Glacier');assert.ok(!title.classList.contains('hidden'));
   fn('1');assert.ok(count.classList.contains('last'));fn(null);assert.ok(title.classList.contains('hidden')&&count.classList.contains('hidden'));
+});
+
+check('Pirate Fleet has three nine-tile bridges, preserved ships and reversible map dimensions',()=>{
+  start();g.opts.level='pirate';Game._qa.startRound();
+  assert.equal(CFG.COLS,21);assert.equal(AI.buildDanger(g).length,21*13);
+  const planks=[];World.group.traverse(o=>{if(o.name==='PirateBridgeTile')planks.push(o);});
+  assert.equal(planks.length,27);
+  for(const y of [2,6,10])for(let x=6;x<=14;x++)assert.equal(World.cellAt(x,y),CELL.EMPTY,'bridge route open');
+  assert.equal(World.spawnFor(2).x,14);assert.equal(World.spawnFor(3).x,19);
+  const floors=[];World.group.traverse(o=>{if(o.material===World.MAT.ground)floors.push(o);});
+  assert.equal(floors.length,2);assert.ok(floors.every(m=>m.geometry.parameters.width===6&&m.geometry.parameters.height===11));
+  assert.equal(World.floorMissing(10,4),true);assert.equal(World.floorMissing(3,5),false);
+  for(const id of ['forest','glacier','factory','pirate','haunted']){
+    g.opts.level=id;Game._qa.startRound();assert.equal(CFG.COLS,id==='pirate'?21:15);assert.equal(AI.buildDanger(g).length,CFG.COLS*13);
+  }
+  const haunted=LEVELS.find(l=>l.id==='haunted');assert.ok(!haunted.propSpots.some(p=>p[1]===12));
+  assert.equal(haunted.propSpots.filter(p=>p[1]===0).length,4);assert.ok(Props.backTop>1.5,'far scenery included in HUD clearance');
+});
+
+check('bridge tiles warn before dropping, kill on collapse or entry, and restore cleanly',()=>{
+  start();g.opts.level='pirate';Game._qa.startRound();
+  Game.advance(CFG.ROUND_INTRO+.02);g.players.forEach(p=>{p.ai=null;p.isHuman=true;p.keymap=null;p.invuln=100;});
+  // Isolate gravity from the independently tested random cannon blasts.
+  const victim=g.players[0];put(victim,7,2);victim.shield=true;victim.invuln=10;
+  Game.advance(4.02);assert.equal(World.bridgeState.phase,'warning');assert.ok(victim.alive);
+  const active=World.bridgeState.active;assert.equal(active.x,7);assert.equal(active.y,2);assert.ok(active.warning.visible);
+  const danger=AI.buildDanger(g);assert.ok(danger[World.idx(7,2)]>0&&danger[World.idx(7,2)]<=1.8);
+  Game.advance(1.85);assert.equal(World.bridgeState.phase,'hole');assert.ok(World.floorMissing(7,2));assert.equal(victim.alive,false);assert.equal(victim.falling,true);
+  Game.advance(.15);assert.ok(victim.mesh.position.y<0,'death moves down through the water');
+  // Open holes remain physically enterable; they are not invisible wall tiles.
+  const walker=g.players[1];put(walker,6,2);walker.keymap=KEYMAPS[1];Input.press(KEYMAPS[1].right);Game.advance(.3);Input.release(KEYMAPS[1].right);
+  assert.equal(walker.alive,false);assert.equal(walker.falling,true);
+  const jumper=g.players[2];put(jumper,7,2);jumper.airT=.2;Game.advance(.05);assert.ok(jumper.alive);Game.advance(.2);assert.equal(jumper.alive,false,'landing in the hole cannot teleport to safety');
+  // Timer can restore independently of a concluded round; lifecycle resets too.
+  World.updateBridges(3.1);assert.equal(World.bridgeState.phase,'wait');assert.equal(World.floorMissing(7,2),false);assert.ok(active.mesh.visible);assert.equal(active.mesh.position.y,-.01);
+  g.opts.level='pirate';Game._qa.startRound();assert.equal(World.bridgeState.phase,'wait');assert.equal(World.floorMissing(7,2),false);
+});
+
+check('unsupported bombs and pickups disappear, water time pauses and all bridge rows cycle',()=>{
+  start();g.opts.level='pirate';Game._qa.startRound();Game.advance(CFG.ROUND_INTRO+.02);
+  g.players.forEach(p=>{p.ai=null;p.keymap=null;});
+  const owner=g.players[0];World.updateBridges(4);World.updateBridges(1.81);
+  const b=new Bomb(7,2,owner);owner.activeBombs++;g.bombs.push(b);Game.registerBomb(b);
+  g.powerUps.set('7,2',new PowerUp(7,2,PU.FIRE));tick();assert.ok(b.dead&&b.disposed);assert.equal(owner.activeBombs,0);assert.ok(!g.bombMap.has('7,2'));assert.ok(!g.powerUps.has('7,2'));
+  const water=World.MAT.sea,uniform=water.userData.waterTime;assert.ok(uniform.value>0);
+  const before=uniform.value;g.paused=true;Game._qa.frame(1000);Game._qa.frame(1500);assert.equal(uniform.value,before);g.paused=false;
+  const rows=new Set();for(let n=0;n<6;n++){World.updateBridges(4);World.updateBridges(4);if(World.bridgeState.active)rows.add(World.bridgeState.active.y);World.updateBridges(4);}
+  assert.equal(rows.size,3,'all three crossings receive collapsing sections');
+  g.opts.level='forest';Game._qa.startRound();assert.equal(World.MAT.sea,water,'reuse one water material');
 });
 
 if(process.env.BF_EXPORT_LAYOUTS)fs.writeFileSync(process.env.BF_EXPORT_LAYOUTS,JSON.stringify(bakeLayouts,null,2));

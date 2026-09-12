@@ -10,6 +10,16 @@ https://postworkculture.github.io/bomberfan/
 
 The game is hosted with GitHub Pages from the `main` branch. `index.html` is the game. The manifest, service worker, and icon files provide installable/offline PWA support for the hosted version.
 
+## Pirate tides and front screen (12 September 2026)
+
+Haunted House now places its four former bottom-edge props behind the arena. Pirate Fleet keeps both full-size ships on a wider 21×13 grid with three nine-tile bridges. Red marked tiles warn for 1.8 seconds, collapse for three seconds, then return. Grounded fighters fall through gaps; airborne fighters fall on landing. Unsupported bombs and pickups are removed and bots avoid the gaps.
+
+Pirate water uses animated physical-material waves, layered cyan ripples and caustic highlights inspired by the supplied reference. Balanced mode halves mesh subdivisions in both directions. The wider arena has rebuilt lighting maps and shadow coverage. GPU appearance and physical-device frame rates still require hardware verification.
+
+The front screen keeps the original wordmark and adds ice shards, embers, arena colours, animated menu glints, a pulsing skull and a raised orange/red Start button. Keyboard focus and reduced-motion behaviour are supported. `menu-review.html` is a GPU-independent review generated from production markup, CSS and menu handlers with `node tools/build-menu-review.mjs`.
+
+The current simulation matrix covers 24 groups across eight environment profiles, twice (384 group checks). These are simulated input/viewport profiles, not native OS browser or hardware runs. Water shader structure is checked by `node tests/pirate-water-regression.mjs`; actual GPU compilation is not covered by that test.
+
 ## Character assets
 
 The 20 animated fighters use the [Ultimate Monsters](https://quaternius.com/packs/ultimatemonsters.html) pack by Quaternius under CC0 1.0. Bomber Fan ships colour-enhanced texture variants, individually lit portraits, signature-move Loadout previews, five character-specific head-acting profiles, and a lazy-loaded animated glTF runtime. Full provenance is recorded in `assets/characters/LICENSE.txt`.

@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="loadout-cards-r1-20260912">
+<meta name="build" content="loadout-closeups-r1-20260912">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2836,7 +2836,7 @@
   #select .sbody {display:block !important;width:100% !important;max-width:1500px !important;min-height:0 !important;height:100% !important;padding:0 !important;margin:0 auto;}
   #select .sroster {display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;grid-template-rows:repeat(3,minmax(0,1fr)) !important;width:100% !important;max-width:none !important;height:100% !important;max-height:none !important;padding:0 !important;gap:clamp(8px,1.2vw,16px) !important;background:none !important;border:0 !important;box-shadow:none !important;}
   #select .charpick {display:grid !important;grid-template-columns:1fr !important;grid-template-rows:minmax(0,1fr) auto !important;min-height:0 !important;padding:8px !important;border-radius:18px !important;text-align:center;gap:4px !important;transition:transform .22s,border-color .22s,box-shadow .22s;}
-  #select .charface {display:block !important;width:100% !important;height:100% !important;min-height:0;border:0 !important;border-radius:12px;background-size:contain !important;background-position:center !important;box-shadow:none !important;transform-origin:center 70%;transition:transform .25s;}
+  #select .charface {display:block !important;width:100% !important;height:100% !important;min-height:0;border:0 !important;border-radius:12px;background-size:cover !important;background-position:center top !important;box-shadow:none !important;transform-origin:center 35%;transition:transform .25s;}
   #select .charface::after {display:none;}
   #select .charcopy {z-index:1;padding:5px 0;}
   #select .charcopy b,#select .charpick[data-fighter-id="skull-orc"] .charcopy b {display:block !important;font-size:clamp(11px,1.3vw,19px) !important;line-height:1.1;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -2862,7 +2862,7 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=loadout-cards-r1-20260912"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=loadout-closeups-r1-20260912"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';

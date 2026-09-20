@@ -3253,8 +3253,8 @@ const PLAYER_DEFS = [
   { id: 'skull-orc', name: 'Skullcrusher', color: 0x76952c, belly: 0xf3dfb9, trim: 0xc0a383, accent: 0x4f7520,
     model: 'assets/characters/skull-orc.gltf', portrait: 'assets/portraits/skull-orc.webp', expression: 'Punch', altExpression: 'Weapon', personality: 'fierce',
   },
-  { id: 'orc', name: 'Goregrin', color: 0x7b9620, belly: 0xdfffb8, trim: 0xa7c057, accent: 0x315f24,
-    model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Yes', altExpression: 'Weapon', personality: 'sly',
+  { id: 'orc', name: 'Behemoth', color: 0x5db329, belly: 0x82db3d, trim: 0x652b88, accent: 0x141416,
+    model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Punch', altExpression: 'Headbutt', personality: 'fierce',
   },
   { id: 'fish-monster', name: 'Gill', color: 0x48adc8, belly: 0x8df5e5, trim: 0x016c99, accent: 0x15658d,
     model: 'assets/characters/fish-monster.gltf', portrait: 'assets/portraits/fish-monster.webp', expression: 'Punch', altExpression: 'No', personality: 'fierce',
@@ -9143,6 +9143,10 @@ const CharacterModels = (() => {
     if (def.id === 'bomber-og') {
       addBomberOGDetails(RT, model);
       return;
+    }
+    if (def.id === 'orc') {
+      const weapon = model.getObjectByName('Orc_Weapon');
+      if (weapon) weapon.visible = false;
     }
     RT.addRosterEyes(model, def);
     if (def.id !== 'mushroom-king') return;

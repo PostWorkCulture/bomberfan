@@ -10,6 +10,7 @@ export const ARENA_PROFILES = Object.freeze({
   factory: {key:0xffdfb3, fill:0x96bcd5, sky:0xc6d9e1, bounce:0x625449, background:0x252a2c, power:2.55, exposure:1.05, environment:.55, roughness:.57, crate:.54, glow:.10},
   circuit: {key:0xd3eaff, fill:0x88cfdb, sky:0xb2d4eb, bounce:0x3f506e, background:0x141e32, power:2.4, exposure:1.06, environment:.52, roughness:.43, crate:.48, glow:.08},
   pirate: {key:0xffe0b6, fill:0x88bfd6, sky:0xc2deed, bounce:0x675141, background:0x153b47, power:2.65, exposure:1.05, environment:.52, roughness:.76, crate:.68, glow:.10},
+  volcano: {key:0xff7844, fill:0xa83818, sky:0x6e1b10, bounce:0x85240c, background:0x180503, power:2.8, exposure:1.08, environment:.54, roughness:.82, crate:.64, glow:.18},
 });
 const files = ['ground', 'ground-normal', 'wood', 'stone', 'ground-ao', 'ground-bounce'];
 const bakedFiles = Object.keys(ARENA_PROFILES).filter(id=>id!=='forest').flatMap(id=>[id+'-ao',id+'-bounce']);

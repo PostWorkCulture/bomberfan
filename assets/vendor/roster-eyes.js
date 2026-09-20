@@ -12,7 +12,7 @@ export const EYE_STYLES = Object.freeze({
   alien: { label: 'Glossy alien beads', refs:[4,20], iris:0x38c7b5, white:0x183747, size:.81, pupil:[.69,.77], shape:[.82,1.16], lid:.96, lidColor:0x591875 },
   'evolved-dragon': { label:'Amber predator slits', refs:[10,23], iris:0xffb62f, white:0xffeed0, size:.76, pupil:[.115,.58], shape:[1.05,.79], lid:.40, slant:.24, lidColor:0xab391b },
   'skull-orc': { label:'Embers inside skull sockets', refs:[4,12], iris:0xff9429, white:0x180e18, size:.33, pupil:[.10,.15], shape:[1,.93], lid:.94, glow:.3, shine:.4, lidColor:0x3e2829 },
-  orc: { label:'Asymmetric sly stare', refs:[1,9], iris:0xbd8a32, white:0xf4eccf, size:.68, pupil:[.36,.40], shape:[1.13,.93], lid:[.08,.43], lidColor:0x668e27 },
+  orc: { label:'Raging behemoth glare', refs:[1,9], iris:0x32cd32, white:0xf4f4f4, size:.68, pupil:[.36,.40], shape:[1.13,.93], lid:[.08,.43], lidColor:0x357d19 },
   'fish-monster': { label:'Round ocean-blue irises', refs:[7,15], iris:0x167ccc, white:0xe9fff6, size:.77, pupil:[.42,.45], shape:[1.05,1.02], lid:.88, lidColor:0x238aab },
   demon: { label:'Unhinged mismatched stare', refs:[8,17], iris:[0xffad33,0xf0d82c], white:0xffe4eb, size:.43, pupil:[.17,.21], shape:[1,1.08], asym:[1.10,.90], lid:[.91,.45], lidColor:0x9b102b },
   tribal: { label:'Wide carved-mask eyes', refs:[5,21], iris:0xbf8537, white:0xffeac2, size:.79, pupil:[.64,.69], shape:[1.06,.87], lid:.68, lidColor:0x537528 },

@@ -12,7 +12,7 @@ import {addRosterEyes} from '../assets/vendor/roster-eyes.js';
 export {T,addRosterEyes};
 export const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const modules=process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES||'/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules';
-const require=createRequire(path.join(modules,'package.json'));
+const require=fs.existsSync(modules)?createRequire(path.join(modules,'package.json')):createRequire(import.meta.url);
 const {createCanvas,loadImage}=require('@napi-rs/canvas');
 globalThis.document ||= {createElement:()=>createCanvas(256,128)};
 const eyeImage=await loadImage(path.join(repo,'assets/characters/roster-eye-atlas.png'));

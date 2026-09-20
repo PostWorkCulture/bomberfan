@@ -1,7 +1,7 @@
 const params = new URL(self.location.href).searchParams;
 const BUILD = params.get('v') || 'dev';
 const DOC = params.get('doc') || new URL('./', self.registration.scope).href;
-const CACHE = `bomberfan-${BUILD}-v2`;
+const CACHE = `bomberfan-${BUILD}-v3`;
 const ASSETS = [
   DOC,
   new URL('./manifest.webmanifest', self.registration.scope).href,

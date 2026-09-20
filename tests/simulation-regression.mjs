@@ -19,8 +19,9 @@ const qaTouch = process.env.BF_QA_TOUCH === '1';
 const qaCoarse = process.env.BF_QA_COARSE === undefined ? qaTouch : process.env.BF_QA_COARSE === '1';
 const qaFine = process.env.BF_QA_FINE === undefined ? !qaTouch : process.env.BF_QA_FINE === '1';
 const qaQuiet = process.env.BF_QA_QUIET === '1';
-const modules = process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES || '/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules';
-const require = createRequire(path.join(modules, 'package.json'));
+const require = process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES
+  ? createRequire(path.join(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES, 'package.json'))
+  : createRequire(import.meta.url);
 const { createCanvas } = require('@napi-rs/canvas');
 const ThreeModule = await import(pathToFileURL(path.join(repo, 'assets/vendor/three.module.min.js')));
 const { ForestLighting, preloadForestAssets } = await import(pathToFileURL(path.join(repo, 'assets/vendor/forest-lighting.js')));
@@ -406,7 +407,7 @@ check('kicked bombs detonate on contact in all directions and respect walls',()=
 });
 
 check('Glacier has four connected play areas and no playable Haunted Train',()=>{
-  assert.equal(LEVELS.length,7);assert.ok(!LEVELS.some(l=>l.id==='haunted-train'));
+  assert.equal(LEVELS.length,8);assert.ok(!LEVELS.some(l=>l.id==='haunted-train'));
   g.opts.level='glacier';Game._qa.startRound();
   const open=(x,y)=>World.cellAt(x,y)!==CELL.HARD;
   const seen=new Set(['1,4']),queue=[[1,4]];
@@ -420,7 +421,7 @@ check('Glacier has four connected play areas and no playable Haunted Train',()=>
 });
 
 check('throwers face their target through movement, wind-up and release; Factory machines move and throw',()=>{
-  for(const id of ['glacier','haunted','factory','pirate']){
+  for(const id of ['glacier','haunted','factory','pirate','volcano']){
     g.opts.level=id;Game._qa.startRound();
     const actors=[];World.group.traverse(o=>{if(o.userData.heldBomb)actors.push(o);});
     assert.equal(actors.length,Props.hazardCount);assert.ok(actors.length>0);

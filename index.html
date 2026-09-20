@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="loadout-pictures-r5-20260912">
+<meta name="build" content="behemoth-r1-20260920">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -670,6 +670,17 @@
   #tspecial[data-power="detonate"] b::after {
     content: ''; position: absolute; left: 18%; top: -76%;
     width: 64%; height: 22%; border-radius: 3px; background: #f4f7fb;
+  }
+  /* LINE BOMB: triple bomb dots across a forward strike */
+  #tspecial[data-power="linebomb"] b {
+    background: #00b4d8; border-radius: 4px; height: calc(var(--ctl, 152px) * 0.12);
+    align-self: center; box-shadow: 0 0 10px rgba(0, 180, 216, 0.6);
+  }
+  #tspecial[data-power="linebomb"] b::before {
+    content: ''; position: absolute; left: 18%; top: 50%;
+    width: 20%; height: 20%; border-radius: 50%; background: #ffffff;
+    transform: translate(-50%, -50%);
+    box-shadow: calc(var(--ctl, 152px) * 0.22) 0 0 #ffffff, calc(var(--ctl, 152px) * 0.44) 0 0 #ffffff;
   }
 
   /* Tall windows (tablets) have room to spare, so the controls hug the corners
@@ -2876,7 +2887,7 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=loadout-pictures-r5-20260912"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=behemoth-r1-20260920"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';
@@ -3086,9 +3097,7 @@ const BELT_DIR = {
 
 // ---- Front-screen option values -----------------------------------------
 const DIFFICULTIES = ['easy', 'normal', 'hard'];
-// FIRST TO 5 AND FIRST TO 7 ARE GONE. A best-of-seven at roughly a minute a
-// round is an hour's sitting, which is a different game from this one.
-const ROUND_OPTIONS = [1, 2, 3];
+const ROUND_OPTIONS = [1, 2, 3, 5];
 
 // Levels. Each entry is a palette plus its arena tuning. Adding a new level is
 // just another object in this array — the menu and Random pick it up for free.
@@ -3228,6 +3237,26 @@ const LEVELS = [
       [3, 10, 0, 'barrels', 1.0], [17, 2, 0, 'treasure', 1.08],
     ],
   },
+  {
+    id: 'volcano', name: 'Volcano',
+    sky: 0x140502,
+    ground: [34, 18, 14],
+    groundLine: 'rgba(255, 80, 20, 0.28)',
+    crate: '#45221b', crateBand: '#6e2b17', crateEdge: '#ff4d17',
+    hard: 0x221318, hardTop: 0x3d1d1a, border: 0x180a08,
+    softDensity: 0.68,
+    props: ['magma_spire', 'vent', 'geyser'],
+    hazard: 'geyser',
+    hazardCount: 3,
+    propSpots: [
+      [0, 2, Math.PI / 2, 'geyser', 1.1],
+      [14, 2, -Math.PI / 2, 'geyser', 1.1],
+      [0, 6, Math.PI / 2, 'geyser', 1.1],
+      [14, 6, -Math.PI / 2, 'magma_spire', 1.0],
+      [3, 12, Math.PI, 'vent', 1.05],
+      [11, 12, Math.PI, 'vent', 1.05],
+    ],
+  },
 ];
 
 // ---- Collectables --------------------------------------------------------
@@ -3241,6 +3270,7 @@ const PU = {
   GLOVE: 'glove',         // pick a bomb up and throw it
   REMOTE: 'remote',       // detonate on demand instead of on a timer
   PIERCE: 'pierce',       // blast tears straight through crates
+  LINEBOMB: 'linebomb',   // lay a trail of bombs in one strike
   BOMBPASS: 'bombpass',   // walk through bombs
   BLOCKPASS: 'blockpass', // walk through crates
   SHIELD: 'shield',       // absorb one hit
@@ -3266,6 +3296,7 @@ const PU_TABLE = [
   { id: PU.PIERCE,    weight: 5,  label: 'Pierce',     color: 0xffd166 },
   { id: PU.SHIELD,    weight: 5,  label: 'Extra Life', color: 0xff4d6d },
   { id: PU.REMOTE,    weight: 4,  label: 'Remote',     color: 0x2ec4b6 },
+  { id: PU.LINEBOMB,  weight: 6,  label: 'Line Bomb',  color: 0x00b4d8 },
   { id: PU.BOMBPASS,  weight: 4,  label: 'Bomb Pass',  color: 0x8d99ae },
   { id: PU.BLOCKPASS, weight: 4,  label: 'Block Pass', color: 0xa47148 },
   { id: PU.FULLFIRE,  weight: 3,  label: 'Full Fire',  color: 0xff2e00 },
@@ -3273,27 +3304,27 @@ const PU_TABLE = [
   { id: PU.SKULL,     weight: 8,  label: 'Curse',      color: 0x6c757d },
 ];
 
-// Only these drop from crates. The rest of the table stays implemented and
-// tested, so re-enabling any of them is one line here.
-// Bomb Up is deliberately the most common find by a wide margin.
-//
-// WEIGHTS ARE RELATIVE. Changing one alone silently re-rates the other three,
-// so every change here moves POWERUP_CHANCE by the matching amount:
-//   per-crate rate = POWERUP_CHANCE * weight / (sum of weights)
-// With chance 0.26004 and weights summing to 110 that gives, per crate:
-//   Bomb .1182   Fire .0567   Speed .0378   Kick .0473
-// Kick is doubled without making Bomb, Fire or Speed any scarcer.
+// Expanded crate drops: core stats remain common, while game-changing
+// abilities (Shield, Remote, Pierce, Line Bomb, Punch, Glove, Full Fire)
+// drop at balanced tactical rates.
 const PU_DROPS = [
-  { id: PU.BOMB,  weight: 50 },   // one more bomb at a time — the common find
-  { id: PU.FIRE,  weight: 24 },   // bigger blast — the way out of a slow round
-  { id: PU.SPEED, weight: 16 },   // faster on foot
-  { id: PU.KICK,  weight: 20 },   // doubled: shove a laid bomb across the floor
+  { id: PU.BOMB,     weight: 38 },   // one more bomb at a time — standard find
+  { id: PU.FIRE,     weight: 22 },   // bigger blast
+  { id: PU.SPEED,    weight: 15 },   // faster on foot
+  { id: PU.KICK,     weight: 14 },   // shove a laid bomb across the floor
+  { id: PU.SHIELD,   weight: 6 },    // extra life / protective shield
+  { id: PU.PIERCE,   weight: 7 },    // tears straight through crates
+  { id: PU.REMOTE,   weight: 6 },    // on-demand detonator
+  { id: PU.LINEBOMB, weight: 6 },    // corridor-clearing line bomb
+  { id: PU.GLOVE,    weight: 6 },    // pick up and throw bombs
+  { id: PU.PUNCH,    weight: 6 },    // punch adjacent bombs
+  { id: PU.FULLFIRE, weight: 3 },    // instant max fire
 ];
 
 // Short codes shown on the HUD when a player holds an ability
 const PU_CODE = {
   [PU.KICK]: 'K', [PU.PUNCH]: 'P', [PU.GLOVE]: 'G', [PU.REMOTE]: 'R',
-  [PU.PIERCE]: 'X', [PU.BOMBPASS]: 'B', [PU.BLOCKPASS]: 'W',
+  [PU.PIERCE]: 'X', [PU.LINEBOMB]: 'L', [PU.BOMBPASS]: 'B', [PU.BLOCKPASS]: 'W',
   [PU.SHIELD]: 'S', [PU.MINE]: 'M',
 };
 
@@ -3334,8 +3365,8 @@ const PLAYER_DEFS = [
   { id: 'skull-orc', name: 'Skullcrusher', color: 0x76952c, belly: 0xf3dfb9, trim: 0xc0a383, accent: 0x4f7520,
     model: 'assets/characters/skull-orc.gltf', portrait: 'assets/portraits/skull-orc.webp', expression: 'Punch', altExpression: 'Weapon', personality: 'fierce',
   },
-  { id: 'orc', name: 'Goregrin', color: 0x7b9620, belly: 0xdfffb8, trim: 0xa7c057, accent: 0x315f24,
-    model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Yes', altExpression: 'Weapon', personality: 'sly',
+  { id: 'orc', name: 'Behemoth', color: 0x5db329, belly: 0x82db3d, trim: 0x652b88, accent: 0x141416,
+    model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Punch', altExpression: 'Headbutt', personality: 'fierce',
   },
   { id: 'fish-monster', name: 'Gill', color: 0x48adc8, belly: 0x8df5e5, trim: 0x016c99, accent: 0x15658d,
     model: 'assets/characters/fish-monster.gltf', portrait: 'assets/portraits/fish-monster.webp', expression: 'Punch', altExpression: 'No', personality: 'fierce',
@@ -4086,6 +4117,7 @@ const Audio3 = (function () {
     musicOut = chain.music;
     verb = chain.send;
     applyMusicLevel();
+    applySfxLevel();
     return ctx;
   }
 
@@ -4252,24 +4284,33 @@ const Audio3 = (function () {
       hiss(c, o, t, { dur: 0.06, vol: 0.05, cut: 1400, band: true, q: 0.9, room: 0.3 });
     },
     explode(c, o, t) {
-      // Body, air, and a tail — in that order, and all of it under a falling
-      // filter so it collapses inwards the way a real one does.
-      thump(c, o, t, { from: 190, to: 34, glide: 0.16, dur: 0.62, vol: 0.42, room: 0.5 });
-      hiss(c, o, t, { dur: 0.5, vol: 0.30, cut: 1500, cutTo: 180, q: 0.6, room: 0.9 });
-      voice(c, o, t + 0.012, { type: 'triangle', freq: 110, to: 44, glide: 0.2, dur: 0.42,
-                               vol: 0.16, cut: 900, cutTo: 160, attack: 0.008, hold: 0.02 });
+      // Body, air, crack and tail — with deep sub-bass thump and falling filter.
+      thump(c, o, t, { from: 220, to: 28, glide: 0.15, dur: 0.68, vol: 0.48, room: 0.6 });
+      hiss(c, o, t, { dur: 0.08, vol: 0.24, cut: 2400, cutTo: 450, band: true, q: 1.1, room: 0.4 });
+      hiss(c, o, t, { dur: 0.52, vol: 0.32, cut: 1500, cutTo: 160, q: 0.65, room: 0.9 });
+      voice(c, o, t + 0.012, { type: 'triangle', freq: 115, to: 40, glide: 0.22, dur: 0.46,
+                               vol: 0.18, cut: 950, cutTo: 150, attack: 0.008, hold: 0.025 });
     },
     // The Mega Boom prize. Longer tail, an octave lower, and a second thump a
     // beat behind the first, so it lands like something much bigger went off.
     explodeBig(c, o, t) {
-      thump(c, o, t, { from: 150, to: 22, glide: 0.26, dur: 1.0, vol: 0.5, room: 0.7 });
-      hiss(c, o, t, { dur: 0.85, vol: 0.34, cut: 1200, cutTo: 90, q: 0.5, room: 1.2 });
-      voice(c, o, t + 0.02, { type: 'triangle', freq: 90, to: 30, glide: 0.3, dur: 0.7,
-                              vol: 0.18, cut: 700, cutTo: 120, attack: 0.01, hold: 0.03 });
+      thump(c, o, t, { from: 165, to: 18, glide: 0.28, dur: 1.1, vol: 0.56, room: 0.8 });
+      hiss(c, o, t, { dur: 0.12, vol: 0.30, cut: 2200, cutTo: 300, band: true, q: 1.2, room: 0.5 });
+      hiss(c, o, t, { dur: 0.9, vol: 0.38, cut: 1250, cutTo: 80, q: 0.5, room: 1.3 });
+      voice(c, o, t + 0.02, { type: 'triangle', freq: 95, to: 26, glide: 0.35, dur: 0.75,
+                              vol: 0.22, cut: 750, cutTo: 110, attack: 0.01, hold: 0.03 });
       // The second thump is BOOKED, not queued on a timer. Under load a
       // setTimeout arrives late and the two hits smear into one.
-      thump(c, o, t + 0.115, { from: 110, to: 18, glide: 0.3, dur: 0.8, vol: 0.4, room: 0.9 });
-      hiss(c, o, t + 0.115, { dur: 0.5, vol: 0.2, cut: 700, cutTo: 70, q: 0.5, room: 1.0 });
+      thump(c, o, t + 0.115, { from: 120, to: 16, glide: 0.32, dur: 0.85, vol: 0.45, room: 1.0 });
+      hiss(c, o, t + 0.115, { dur: 0.55, vol: 0.22, cut: 700, cutTo: 60, q: 0.5, room: 1.0 });
+    },
+    suddenDeath(c, o, t) {
+      thump(c, o, t, { from: 140, to: 24, glide: 0.45, dur: 1.2, vol: 0.55, room: 1.2 });
+      voice(c, o, t, { type: 'sawtooth', freq: 73.42, to: 36.71, glide: 0.7, dur: 1.3,
+                       vol: 0.28, cut: 850, cutTo: 110, q: 1.2, detune: -15, attack: 0.02, hold: 0.25, room: 1.4 });
+      voice(c, o, t + 0.04, { type: 'triangle', freq: 110, to: 55, glide: 0.6, dur: 1.1,
+                              vol: 0.2, cut: 900, cutTo: 140, detune: 18, attack: 0.02, hold: 0.2, room: 1.2 });
+      hiss(c, o, t, { dur: 0.75, vol: 0.18, cut: 500, cutTo: 100, band: true, q: 0.8, room: 1.1 });
     },
     breakBlock(c, o, t) {
       // Wood, not glass: a bandpass around 700Hz with a very short tail.
@@ -4364,6 +4405,18 @@ const Audio3 = (function () {
       voice(c, o, t, { type: 'sine', freq: 880, to: 440, glide: 0.2, dur: 0.34,
                        vol: 0.13, cut: 3000, cutTo: 1200, attack: 0.008, hold: 0.02, room: 1.4 });
     },
+    lineBomb(c, o, t) {
+      [360, 480, 640].forEach((f, i) => {
+        voice(c, o, t + i * 0.045, { type: 'triangle', freq: f, dur: 0.12, vol: 0.14,
+                                    cut: 1800, cutTo: 800, attack: 0.005, hold: 0.02, room: 0.4 });
+      });
+    },
+    remoteTrigger(c, o, t) {
+      voice(c, o, t, { type: 'sine', freq: 1200, to: 1800, glide: 0.06, dur: 0.1,
+                       vol: 0.18, cut: 3000, attack: 0.005, hold: 0.02, room: 0.5 });
+      voice(c, o, t + 0.07, { type: 'sine', freq: 2400, dur: 0.08,
+                              vol: 0.15, cut: 4000, attack: 0.005, hold: 0.02, room: 0.5 });
+    },
   };
 
   const SFX_NAMES = Object.keys(SFX);
@@ -4427,8 +4480,15 @@ const Audio3 = (function () {
     { key: 'mid',  label: 'Mid',  gain: 0.7 },
     { key: 'full', label: 'Full', gain: 1 },
   ];
+  const SFX_STEPS = [
+    { key: 'off',  label: 'Off',  gain: 0 },
+    { key: 'low',  label: 'Low',  gain: 0.4 },
+    { key: 'mid',  label: 'Mid',  gain: 0.75 },
+    { key: 'full', label: 'Full', gain: 1 },
+  ];
   const AUDIO_KEY = 'blastarena.audio';
   let musicStepIdx = 2;                       // Mid by default
+  let sfxStepIdx = 3;                         // Full by default
 
   // Storage is best-effort, exactly like the locker: Safari in Private Browsing
   // throws on every access, and an uncaught throw at boot takes the game down.
@@ -4439,13 +4499,15 @@ const Audio3 = (function () {
       const data = JSON.parse(raw);
       const i = MUSIC_STEPS.findIndex(s => s.key === (data && data.music));
       if (i !== -1) musicStepIdx = i;
+      const j = SFX_STEPS.findIndex(s => s.key === (data && data.sfx));
+      if (j !== -1) sfxStepIdx = j;
     } catch (e) { /* play on regardless */ }
   })();
 
   function saveAudioPref() {
     try {
       window.localStorage.setItem(AUDIO_KEY,
-        JSON.stringify({ music: MUSIC_STEPS[musicStepIdx].key }));
+        JSON.stringify({ music: MUSIC_STEPS[musicStepIdx].key, sfx: SFX_STEPS[sfxStepIdx].key }));
     } catch (e) { /* nothing is kept; the game is unaffected */ }
   }
 
@@ -4454,11 +4516,23 @@ const Audio3 = (function () {
     musicOut.gain.value = MUSIC_STEPS[musicStepIdx].gain;
   }
 
+  function applySfxLevel() {
+    if (!sfxBus) return;
+    sfxBus.gain.value = SFX_STEPS[sfxStepIdx].gain;
+  }
+
   function setMusicStep(i) {
     musicStepIdx = ((i % MUSIC_STEPS.length) + MUSIC_STEPS.length) % MUSIC_STEPS.length;
     applyMusicLevel();
     saveAudioPref();
     return MUSIC_STEPS[musicStepIdx];
+  }
+
+  function setSfxStep(i) {
+    sfxStepIdx = ((i % SFX_STEPS.length) + SFX_STEPS.length) % SFX_STEPS.length;
+    applySfxLevel();
+    saveAudioPref();
+    return SFX_STEPS[sfxStepIdx];
   }
 
   let musicBus = null, musicPad = null, musicPadOsc = null;
@@ -4606,6 +4680,7 @@ const Audio3 = (function () {
     factory: { root: 41.20, pattern: [1, 0, 0.7, 0, 1, 0, 0.7, 0], beat: 0.32, cut: 340, type: 'triangle', wob: 0.0 },
     circuit: { root: 46.25, pattern: [1, 0, 0.6, 0, 0.8, 0, 0.6, 0.4], beat: 0.30, cut: 380, type: 'triangle', wob: 0.0 },
     pirate:  { root: 55.00, pattern: [1, 0, 0.55, 0, 0.8, 0.35, 0, 0.55], beat: 0.36, cut: 330, type: 'sine', wob: 0.08 },
+    volcano: { root: 32.70, pattern: [1, 0, 0.7, 0, 0.85, 0, 0.5, 0.3], beat: 0.38, cut: 240, type: 'triangle', wob: 0.25 },
   };
   const BASS_DEFAULT = BASS.forest;
   const BASS_LEVEL = 0.5;            // against MUSIC.LEVEL, on the same bus
@@ -4855,6 +4930,15 @@ const Audio3 = (function () {
     setMusicStep,
     cycleMusic(delta) { return setMusicStep(musicStepIdx + (delta || 1)); },
 
+    // ---- The SFX setting ----
+    SFX_STEPS,
+    get sfxStepIndex() { return sfxStepIdx; },
+    get sfxStepKey() { return SFX_STEPS[sfxStepIdx].key; },
+    get sfxStepLabel() { return SFX_STEPS[sfxStepIdx].label; },
+    get sfxBusGain() { return sfxBus ? +sfxBus.gain.value.toFixed(3) : null; },
+    setSfxStep,
+    cycleSfx(delta) { return setSfxStep(sfxStepIdx + (delta || 1)); },
+
     // ---- For the measurement rig and the audition page ----
     SFX_NAMES,
     _renderInto: renderInto,
@@ -4882,6 +4966,9 @@ const Audio3 = (function () {
     hazardWind() { play('hazardWind'); },
     curse()      { play('curse'); },
     shieldBreak(){ play('shieldBreak'); },
+    lineBomb()   { play('lineBomb'); },
+    remoteTrigger(){ play('remoteTrigger'); },
+    suddenDeath(){ play('suddenDeath'); },
   };
 })();
 
@@ -7334,6 +7421,16 @@ const Icons = (function () {
       g.beginPath(); g.moveTo(12, 64); g.lineTo(112, 64); g.stroke();
       g.beginPath(); g.moveTo(92, 46); g.lineTo(114, 64); g.lineTo(92, 82); g.closePath(); g.fill();
     },
+    [PU.LINEBOMB](g) {
+      g.lineWidth = 6; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(16, 72); g.lineTo(112, 72); g.stroke();
+      [30, 64, 98].forEach(x => {
+        g.beginPath(); g.arc(x, 72, 14, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.moveTo(x + 5, 60); g.quadraticCurveTo(x + 12, 50, x + 8, 42); g.stroke();
+      });
+      g.beginPath(); g.moveTo(34, 30); g.lineTo(90, 30); g.stroke();
+      g.beginPath(); g.moveTo(82, 22); g.lineTo(96, 30); g.lineTo(82, 38); g.closePath(); g.fill();
+    },
     [PU.BOMBPASS](g) {
       g.lineWidth = 9; g.setLineDash([14, 11]);
       g.beginPath(); g.arc(64, 72, 34, 0, Math.PI * 2); g.stroke();
@@ -8222,6 +8319,90 @@ const Props = (function () {
       g.add(crown);
     },
 
+    // ---- Volcano ---------------------------------------------------------
+    magma_spire(g) {
+      const darkRock = mat(0x1a1215, { roughness: 0.45, metalness: 0.3 });
+      const lavaGlow = mat(0xff4a12, { roughness: 0.3, emissive: 0xff3200, emissiveIntensity: 2.2 });
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.28, 0.4, 7), darkRock);
+      base.position.y = 0.2;
+      base.castShadow = true;
+      g.add(base);
+      const spire = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.85, 6), darkRock);
+      spire.position.set(0, 0.75, 0);
+      spire.rotation.y = 0.4;
+      spire.castShadow = true;
+      g.add(spire);
+      [[-0.14, 0.32, 0.08, -0.3], [0.12, 0.45, -0.06, 0.35], [0.02, 0.28, -0.15, 0.2]].forEach(([x, y, z, rz]) => {
+        const shard = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.38, 5), lavaGlow);
+        shard.position.set(x, y, z);
+        shard.rotation.z = rz;
+        shard.castShadow = true;
+        g.add(shard);
+      });
+      const glow = new THREE.PointLight(0xff5511, 0.8, 2.0);
+      glow.position.set(0, 0.6, 0);
+      g.add(glow);
+      g.userData.scale = 1.1;
+    },
+    vent(g) {
+      const rock = mat(0x281916, { roughness: 0.75 });
+      const lava = mat(0xff4800, { roughness: 0.2, emissive: 0xff3b00, emissiveIntensity: 2.5 });
+      const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.36, 0.35, 12), rock);
+      cone.position.y = 0.175;
+      cone.castShadow = true;
+      g.add(cone);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.045, 6, 14), rock);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = 0.35;
+      g.add(rim);
+      const pool = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.04, 12), lava);
+      pool.position.y = 0.33;
+      g.add(pool);
+      const glow = new THREE.PointLight(0xff6600, 1.2, 2.2);
+      glow.position.set(0, 0.42, 0);
+      g.add(glow);
+      g.userData.flicker = true;
+      g.userData.scale = 1.05;
+    },
+    geyser(g, angry) {
+      const rock = mat(angry ? 0x3d1712 : 0x241614, {
+        roughness: 0.65,
+        emissive: angry ? 0x4a0e08 : 0x000000,
+        emissiveIntensity: angry ? 0.8 : 0
+      });
+      const molten = mat(angry ? 0xff2e00 : 0xd44000, {
+        roughness: 0.2,
+        emissive: angry ? 0xff3300 : 0xcc2800,
+        emissiveIntensity: angry ? 2.8 : 1.5
+      });
+      const caldera = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.46, 0.52, 14), rock);
+      caldera.position.y = 0.26;
+      caldera.castShadow = true;
+      g.add(caldera);
+      const lip = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.06, 8, 16), rock);
+      lip.rotation.x = Math.PI / 2;
+      lip.position.y = 0.52;
+      g.add(lip);
+      const core = new THREE.Mesh(new THREE.SphereGeometry(0.23, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), molten);
+      core.position.y = 0.48;
+      g.add(core);
+      [-0.26, 0.24, 0.02].forEach((x, i) => {
+        const crag = new THREE.Mesh(new THREE.DodecahedronGeometry(0.12), rock);
+        crag.position.set(x, 0.1, i === 2 ? 0.32 : -0.28);
+        g.add(crag);
+      });
+      if (angry) {
+        const glow = new THREE.PointLight(0xff3a00, 2.4, 3.2);
+        glow.position.set(0, 0.65, 0);
+        g.add(glow);
+      }
+      g.userData.bombPose = {
+        x: 0, y: 0.52, z: 0.12,
+        pullX: 0, pullY: 0.36, pullZ: -0.06, rock: 0.06
+      };
+      g.userData.scale = 1.15;
+    },
+
   };
 
   // THE BOMB IN ITS HANDS. Built once with the prop and simply hidden, rather
@@ -8646,6 +8827,21 @@ function addPlayerStatusSprites(group) {
   };
   group.userData.heartStatus = make(Icons.heartDecal());
   group.userData.kickStatus = make(Icons.kickDecal());
+  const bubble = new THREE.Mesh(
+    new THREE.SphereGeometry(0.72, 16, 12),
+    new THREE.MeshBasicMaterial({
+      color: 0xff4d6d,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  bubble.position.y = 0.55;
+  bubble.visible = false;
+  root.add(bubble);
+  group.userData.shieldBubble = bubble;
 }
 
 
@@ -9140,6 +9336,10 @@ const CharacterModels = (() => {
       addBomberOGDetails(RT, model);
       return;
     }
+    if (def.id === 'orc') {
+      const weapon = model.getObjectByName('Orc_Weapon');
+      if (weapon) weapon.visible = false;
+    }
     RT.addRosterEyes(model, def);
     if (def.id !== 'mushroom-king') return;
     const head = model.getObjectByName('Head');
@@ -9342,10 +9542,12 @@ class Player {
     this.glove = false;
     this.remote = false;
     this.pierce = false;
+    this.lineBomb = false;
     this.bombPass = false;
     this.blockPass = false;
     this.mine = false;
     this.shield = false;
+    this.lastActionTime = 0;
 
     this.carrying = null;      // bomb held above the head (Power Glove)
     this.padCool = 0;          // stops a pair of pads bouncing you forever
@@ -9643,6 +9845,16 @@ class Player {
       kickStatus.scale.set(pulse, pulse, 1);
       // Keep the pair left-to-right in world space while the fighter turns.
       if (statusRoot) statusRoot.rotation.y = -this.mesh.rotation.y;
+    }
+    const shieldBubble = this.mesh.userData.shieldBubble;
+    if (shieldBubble) {
+      shieldBubble.visible = hasHeart;
+      if (hasHeart) {
+        shieldBubble.rotation.y += 0.035;
+        shieldBubble.rotation.z += 0.015;
+        const bPulse = 1 + Math.sin(this.statusT * 4.2) * 0.05;
+        shieldBubble.scale.set(bPulse, bPulse, bPulse);
+      }
     }
     // Gold shoes mean Kick. Compared before writing so an unchanged pair costs a
     // boolean per frame rather than a material update.
@@ -11499,7 +11711,18 @@ class Bomb {
       this.spark.position.set(0, 0.22, 0);
     } else if (this.remote) {
       band.material.dispose();
-      band.material = new THREE.MeshStandardMaterial({ color: 0x2ec4b6, roughness: 0.4, metalness: 0.35 });
+      band.material = new THREE.MeshStandardMaterial({ color: 0x2ec4b6, roughness: 0.3, metalness: 0.5, emissive: 0x007f73, emissiveIntensity: 0.4 });
+      this.spark.material.dispose();
+      this.spark.material = new THREE.MeshStandardMaterial({
+        color: 0x48cae4, emissive: 0x00f5d4, emissiveIntensity: 4.0,
+      });
+    } else if (this.pierce) {
+      band.material.dispose();
+      band.material = new THREE.MeshStandardMaterial({ color: 0xffd166, roughness: 0.2, metalness: 0.8, emissive: 0xcc8a00, emissiveIntensity: 0.5 });
+      this.spark.material.dispose();
+      this.spark.material = new THREE.MeshStandardMaterial({
+        color: 0xffe66d, emissive: 0xffa200, emissiveIntensity: 4.5,
+      });
     }
 
     g.position.set(World.wx(x), 0.36, World.wz(y));
@@ -11646,6 +11869,7 @@ class Blast {
     inner: new THREE.IcosahedronGeometry(0.32, 1),
     innerCentre: new THREE.IcosahedronGeometry(0.4, 1),
     shock: new THREE.RingGeometry(0.35, 0.55, 32),
+    shockOuter: new THREE.RingGeometry(0.58, 0.76, 32),
   };
   constructor(cells) {
     this.cells = cells;              // [{x,y,kind,dir}]
@@ -11679,11 +11903,16 @@ class Blast {
     });
 
     const c0 = cells[0];
-    // Expanding shockwave ring on the ground at the detonation point
+    // Expanding dual shockwave rings on the ground at the detonation point
     this.shock = new THREE.Mesh(Blast.geometry.shock, this.matShock);
     this.shock.rotation.x = -Math.PI / 2;
     this.shock.position.set(World.wx(c0.x), 0.06, World.wz(c0.y));
     this.group.add(this.shock);
+
+    this.shockOuter = new THREE.Mesh(Blast.geometry.shockOuter, this.matShock);
+    this.shockOuter.rotation.x = -Math.PI / 2;
+    this.shockOuter.position.set(World.wx(c0.x), 0.05, World.wz(c0.y));
+    this.group.add(this.shockOuter);
 
     this.light = World.acquireBlastLight(c0.x, c0.y);
 
@@ -11729,9 +11958,11 @@ class Blast {
 
     const s = 1 + age * 4.2;
     this.shock.scale.set(s, s, 1);
+    const s2 = 1 + age * 6.5;
+    this.shockOuter.scale.set(s2, s2, 1);
     this.matShock.opacity = 0.85 * Math.pow(t, 1.6);
 
-    if (this.light) this.light.intensity = 34 * t * t;
+    if (this.light) this.light.intensity = 42 * t * t;
     return this.life <= 0;
   }
 
@@ -11829,6 +12060,7 @@ class PowerUp {
       case PU.GLOVE:     player.glove = true; break;
       case PU.REMOTE:    player.remote = true; break;
       case PU.PIERCE:    player.pierce = true; break;
+      case PU.LINEBOMB:  player.lineBomb = true; break;
       case PU.BOMBPASS:  player.bombPass = true; break;
       case PU.BLOCKPASS: player.blockPass = true; break;
       case PU.SHIELD:    player.shield = true; break;
@@ -11866,12 +12098,19 @@ const AI = (function () {
   // obviously silly version of pick-up obsession.
   function wantsPickup(bot, id) {
     switch (id) {
-      case PU.BOMB:  return bot.maxBombs < CFG.MAX_BOMBS;
-      case PU.FIRE:  return bot.fire < CFG.MAX_FIRE;
-      case PU.KICK:  return !bot.kick;
+      case PU.BOMB:     return bot.maxBombs < CFG.MAX_BOMBS;
+      case PU.FIRE:     return bot.fire < CFG.MAX_FIRE;
+      case PU.FULLFIRE: return bot.fire < CFG.MAX_FIRE;
+      case PU.KICK:     return !bot.kick;
+      case PU.PUNCH:    return !bot.punch;
+      case PU.GLOVE:    return !bot.glove;
+      case PU.REMOTE:   return !bot.remote;
+      case PU.PIERCE:   return !bot.pierce;
+      case PU.LINEBOMB: return !bot.lineBomb;
+      case PU.SHIELD:   return !bot.shield;
       // Speed is temporary, so it is worth taking unless already boosted and capped
-      case PU.SPEED: return (bot.speedT || 0) <= 0 || bot.speed < CFG.MAX_SPEED;
-      default:       return true;
+      case PU.SPEED:    return (bot.speedT || 0) <= 0 || bot.speed < CFG.MAX_SPEED;
+      default:          return true;
     }
   }
 
@@ -13148,6 +13387,12 @@ const UI = (function () {
             <span class="pmval">Mid</span>
             <button class="pmmore" data-act="musicup" aria-label="Music louder">&#9654;</button>
           </div>
+          <div class="pmusic psfx" data-act="sfx">
+            <button class="pmless" data-act="sfxdown" aria-label="SFX quieter">&#9664;</button>
+            <span class="pmlbl">SFX</span>
+            <span class="pmval">Full</span>
+            <button class="pmmore" data-act="sfxup" aria-label="SFX louder">&#9654;</button>
+          </div>
           <div class="pbtns">
             <button data-act="resume">RESUME</button>
             <button data-act="restart">RESTART ROUND</button>
@@ -13258,12 +13503,16 @@ const UI = (function () {
     pause.querySelectorAll('.pbtns button').forEach(btn => {
       btn.addEventListener('click', () => handlers[btn.dataset.act] && handlers[btn.dataset.act]());
     });
-    // The music row. Its own binding rather than one of the .pbtns, because
-    // those close the panel and this one must not.
+    // The audio rows (music and sfx). Their own bindings rather than .pbtns, because
+    // those close the panel and these must not.
     pause.querySelectorAll('.pmusic button').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        if (handlers.music) handlers.music(btn.dataset.act === 'musicup' ? 1 : -1);
+        if (btn.dataset.act.startsWith('sfx')) {
+          if (handlers.sfx) handlers.sfx(btn.dataset.act === 'sfxup' ? 1 : -1);
+        } else {
+          if (handlers.music) handlers.music(btn.dataset.act === 'musicup' ? 1 : -1);
+        }
       });
     });
     const tp = document.getElementById('tpause');
@@ -14153,8 +14402,10 @@ const UI = (function () {
   // The setting is read from Audio3 rather than mirrored here, so the panel can
   // never claim a level the audio is not actually at.
   function renderMusicRow() {
-    const el = pause.querySelector('.pmusic .pmval');
+    const el = pause.querySelector('.pmusic:not(.psfx) .pmval');
     if (el) el.textContent = Audio3.musicStepLabel;
+    const elS = pause.querySelector('.psfx .pmval');
+    if (elS) elS.textContent = Audio3.sfxStepLabel;
   }
 
   // The pause panel lists whatever scheme is actually in play
@@ -14228,6 +14479,7 @@ const Game = (function () {
     powerUps: new Map(),
     puffs: [],
     dust: [],
+    embers: [],
     dangerMap: new Float32Array(CFG.COLS * CFG.ROWS),
     roundTime: CFG.ROUND_SECONDS,
     stateT: 0,
@@ -14317,6 +14569,7 @@ const Game = (function () {
       // The one setting on the panel. It steps the music bus and repaints the
       // row from what the audio is actually at, not from what was asked for.
       music(delta) { Audio3.cycleMusic(delta); UI.renderMusicRow(); },
+      sfx(delta) { Audio3.cycleSfx(delta); UI.renderMusicRow(); },
       // Out of a round and back to the menu from anywhere, without going through
       // the pause panel. setPaused(false) first, or the menu inherits a paused
       // clock and the next round starts frozen.
@@ -14366,15 +14619,25 @@ const Game = (function () {
     // keyboard in front of them.
     if (code === 'KeyC') { toggleControls(); return; }
 
-    // PAUSED, THE ARROWS DRIVE THE MUSIC SETTING. It is the only thing on the
-    // panel to adjust, and it works the way every other row in the game does
-    // rather than needing anything explained.
+    // PAUSED, THE ARROWS DRIVE THE AUDIO SETTINGS (Music and SFX).
     if (g.paused) {
+      if (code === 'ArrowUp' || code === 'KeyW') {
+        g.pauseRow = 0;
+        Audio3.menuMove(); return;
+      }
+      if (code === 'ArrowDown' || code === 'KeyS') {
+        g.pauseRow = 1;
+        Audio3.menuMove(); return;
+      }
       if (code === 'ArrowLeft' || code === 'KeyA') {
-        Audio3.cycleMusic(-1); UI.renderMusicRow(); Audio3.menuMove(); return;
+        if (g.pauseRow === 1) Audio3.cycleSfx(-1);
+        else Audio3.cycleMusic(-1);
+        UI.renderMusicRow(); Audio3.menuMove(); return;
       }
       if (code === 'ArrowRight' || code === 'KeyD') {
-        Audio3.cycleMusic(1); UI.renderMusicRow(); Audio3.menuMove(); return;
+        if (g.pauseRow === 1) Audio3.cycleSfx(1);
+        else Audio3.cycleMusic(1);
+        UI.renderMusicRow(); Audio3.menuMove(); return;
       }
     }
 
@@ -14470,7 +14733,7 @@ const Game = (function () {
     const me = g.players.find(p => p.isHuman) || null;
     const power = (!blocked && !g.paused && me && me.alive &&
                    (g.state === STATE.PLAY || g.state === STATE.INTRO))
-      ? me.special : null;
+      ? (me.special || (me.remote ? 'detonate' : (me.lineBomb ? 'linebomb' : null))) : null;
     const cooling = !!(me && power === 'hop' && me.hopCool > 0);
     const key = [blocked, g.paused, g.state, power, cooling, TouchPad.active].join('|');
     if (key === touchVisibilityKey) return;
@@ -15001,6 +15264,10 @@ const Game = (function () {
     g.puffs.forEach(p => { World.scene.remove(p.mesh); p.geo.dispose(); p.mat.dispose(); });
     g.dust.forEach(d => { World.scene.remove(d.m); d.mat.dispose(); });
     g.dust = [];
+    if (g.embers) {
+      g.embers.forEach(e => { World.scene.remove(e.m); e.mat.dispose(); });
+      g.embers = [];
+    }
     g.bombs = []; g.bombMap.clear(); g.blasts = []; g.powerUps.clear(); g.puffs = [];
     g.fallingBlocks = [];
     // A bomb still in the witch's hand when the round ends would sit there
@@ -15234,15 +15501,45 @@ const Game = (function () {
     return true;
   }
 
+  function doLineBomb(player) {
+    if (!player.alive || !player.canBomb) return false;
+    if (player.activeBombs >= player.maxBombs) return false;
+    const dx = player.dir ? player.dir.x : 0;
+    const dy = player.dir ? player.dir.y : 0;
+    if (!dx && !dy) return false;
+
+    let placed = 0;
+    const maxSteps = Math.max(CFG.COLS, CFG.ROWS);
+    for (let step = 0; step < maxSteps; step++) {
+      if (player.activeBombs >= player.maxBombs) break;
+      const tx = player.tileX + dx * step;
+      const ty = player.tileY + dy * step;
+      if (tx < 1 || ty < 1 || tx > CFG.COLS - 2 || ty > CFG.ROWS - 2) break;
+      if (World.floorMissing(tx, ty)) break;
+      if (World.cellAt(tx, ty) !== CELL.EMPTY) break;
+      const k = World.key(tx, ty);
+      if (g.bombMap.has(k)) continue;
+
+      const bomb = new Bomb(tx, ty, player);
+      g.bombs.push(bomb);
+      g.bombMap.set(k, bomb);
+      player.activeBombs++;
+      player.ignoreBombs.add(k);
+      player.bombsLaid = (player.bombsLaid || 0) + 1;
+      if (player.ai) player.ai.bombsLaid++;
+      placed++;
+    }
+    if (placed > 0) {
+      Audio3.lineBomb();
+      return true;
+    }
+    return false;
+  }
+
   // `intent` is for the BOTS. A human has one button and it does the most
   // useful thing available, in priority order — throw a held bomb, pick one up,
   // punch an adjacent one, place, then detonate by remote. That chain is what
   // makes one key playable, and it is deliberately untouched.
-  //
-  // A bot has no such constraint and the chain actively works against it: a bot
-  // that owns the Power Glove and is standing on a bomb would pick that bomb up
-  // every time it meant to place one, with no way to say which it wanted. So a
-  // bot names the action instead.
   function tryAction(player, intent) {
     if (!player.alive) return false;
 
@@ -15252,6 +15549,7 @@ const Game = (function () {
         case 'glove': return doGlove(player);
         case 'punch': return doPunch(player);
         case 'bomb':  return tryPlaceBomb(player);
+        case 'linebomb': return doLineBomb(player);
         case 'remote': return player.remote ? detonateRemote(player) : false;
         default: return false;
       }
@@ -15260,7 +15558,18 @@ const Game = (function () {
     if (doThrow(player)) return true;
     if (doGlove(player)) return true;
     if (doPunch(player)) return true;
+
+    const now = performance.now() / 1000;
+    const isDoubleTap = player.lastActionTime && (now - player.lastActionTime < 0.32);
+    player.lastActionTime = now;
+
+    // Double-tap with Line Bomb lays a corridor line
+    if (player.lineBomb && isDoubleTap && doLineBomb(player)) return true;
+
     if (tryPlaceBomb(player)) return true;
+
+    // If standing on an existing bomb and holding Line Bomb, lay forward
+    if (player.lineBomb && doLineBomb(player)) return true;
 
     // Nothing left to place — a remote holder sets off what is already down
     if (player.remote) return detonateRemote(player);
@@ -15270,6 +15579,7 @@ const Game = (function () {
   function detonateRemote(player) {
     const mine = g.bombs.filter(b => b.owner === player && b.remote && !b.dead && !b.held);
     if (!mine.length) return false;
+    Audio3.remoteTrigger();
     mine.forEach(b => { b.fuse = 0; });
     return true;
   }
@@ -15436,8 +15746,11 @@ const Game = (function () {
         Audio3.placeBomb();
         return true;
       }
-      default:
+      default: {
+        if (player.remote && detonateRemote(player)) return true;
+        if (player.lineBomb && doLineBomb(player)) return true;
         return false;
+      }
     }
   }
 
@@ -15753,6 +16066,49 @@ const Game = (function () {
     }
   }
 
+  /* ---- Volcano ambient embers ------------------------------------------- */
+  const EMBER_CAP = 32;
+  let emberGeo = null;
+  function updateEmbers(dt) {
+    if (!g.embers) g.embers = [];
+    const isVolcano = (g.opts && g.opts.level === 'volcano') || (g.level && g.level.id === 'volcano');
+    if (isVolcano && g.state === STATE.PLAY && g.embers.length < EMBER_CAP && Math.random() < 0.65) {
+      if (!emberGeo) emberGeo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
+      const emberMat = new THREE.MeshBasicMaterial({
+        color: Math.random() < 0.4 ? 0xffaa22 : (Math.random() < 0.7 ? 0xff4d17 : 0xff2200),
+        transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false
+      });
+      const m = new THREE.Mesh(emberGeo, emberMat);
+      const rx = (Math.random() * (CFG.COLS - 2)) + 1;
+      const rz = (Math.random() * (CFG.ROWS - 2)) + 1;
+      m.position.set(World.wx(rx) + (Math.random() - 0.5) * 0.5, 0.05 + Math.random() * 0.2, World.wz(rz) + (Math.random() - 0.5) * 0.5);
+      World.scene.add(m);
+      g.embers.push({
+        m, mat: emberMat,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: 0.8 + Math.random() * 1.2,
+        vz: (Math.random() - 0.5) * 0.4,
+        life: 1.4 + Math.random() * 1.2,
+        maxLife: 1.4 + Math.random() * 1.2
+      });
+    }
+    for (let i = g.embers.length - 1; i >= 0; i--) {
+      const e = g.embers[i];
+      e.life -= dt;
+      e.m.position.x += e.vx * dt;
+      e.m.position.y += e.vy * dt;
+      e.m.position.z += e.vz * dt;
+      e.vx += (Math.random() - 0.5) * 0.2 * dt;
+      const progress = Math.max(0, e.life / e.maxLife);
+      e.mat.opacity = 0.85 * Math.sin(progress * Math.PI);
+      if (e.life <= 0 || e.m.position.y > 4.5) {
+        World.scene.remove(e.m);
+        e.mat.dispose();
+        g.embers.splice(i, 1);
+      }
+    }
+  }
+
   /* ------------------------------------------------------- sudden death -- */
 
   // A weighted picker for resupply drops, matching the crate drop table
@@ -15796,7 +16152,7 @@ const Game = (function () {
     // No centred slab: the words run along the edge of the board instead, where
     // they cover nothing you have to see to stay alive.
     UI.setSdBand('SUDDEN DEATH');
-    Audio3.death();
+    Audio3.suddenDeath();
     // THE FIRST RING FALLS NOW, on the same frame the countdown reads zero.
     //
     // It used to start a SD_RING_INTERVAL timer here, so the number hit zero,
@@ -16055,6 +16411,7 @@ const Game = (function () {
     g.powerUps.forEach((p,k) => {if(World.floorMissing(p.x,p.y)){p.dispose();g.powerUps.delete(k);}else p.update(dt);});
     updatePuffs(dt);
     updateDust(dt);
+    updateEmbers(dt);
     updateFallingBlocks(dt);
   }
 

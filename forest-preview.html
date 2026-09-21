@@ -7713,32 +7713,156 @@ const Props = (function () {
   const BUILD = {
     // ---- Forest ----------------------------------------------------------
     pine(g) {
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 0.36, 8), mat(0x6b4423));
-      trunk.position.y = 0.18;
+      const bark = mat(0x422a18, { roughness: 0.88, metalness: 0.05 });
+      const needlesBase = mat(0x183b1e, { roughness: 0.82 });
+      const needlesMid  = mat(0x23542b, { roughness: 0.80 });
+      const needlesHigh = mat(0x2f6e39, { roughness: 0.78 });
+      const needlesTip  = mat(0x3d8549, { roughness: 0.75 });
+      const coneMat     = mat(0x382012, { roughness: 0.9 });
+
+      // Gnarled tapered trunk
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.13, 0.42, 10), bark);
+      trunk.position.y = 0.21;
+      trunk.castShadow = true;
       g.add(trunk);
-      [[0.42, 0.5, 0.36], [0.33, 0.42, 0.66], [0.22, 0.34, 0.92]].forEach(([r, h, y]) => {
-        const tier = new THREE.Mesh(new THREE.ConeGeometry(r, h, 9), mat(0x2f7d3a));
-        tier.position.y = y;
+
+      // Root buttress flares anchoring into the mossy stone
+      for (let i = 0; i < 4; i++) {
+        const ang = (i * Math.PI / 2) + 0.3;
+        const root = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.05, 0.18, 6), bark);
+        root.position.set(Math.cos(ang) * 0.1, 0.07, Math.sin(ang) * 0.1);
+        root.rotation.z = Math.cos(ang) * 0.45;
+        root.rotation.x = -Math.sin(ang) * 0.45;
+        g.add(root);
+      }
+
+      // Small dead branch stubs near base
+      [0.22, 0.31].forEach((by, idx) => {
+        const stub = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.02, 0.11, 5), bark);
+        const a = idx * 2.2 + 0.5;
+        stub.position.set(Math.cos(a) * 0.09, by, Math.sin(a) * 0.09);
+        stub.rotation.z = Math.cos(a) * 1.1;
+        stub.rotation.x = -Math.sin(a) * 1.1;
+        g.add(stub);
+      });
+
+      // 5 Tiered drooping foliage canopies with natural overlap and subtle rotational offsets
+      const tiers = [
+        { r: 0.46, h: 0.42, y: 0.38, mat: needlesBase, rotY: 0.1 },
+        { r: 0.38, h: 0.38, y: 0.60, mat: needlesMid,  rotY: 0.6 },
+        { r: 0.30, h: 0.34, y: 0.81, mat: needlesMid,  rotY: 1.1 },
+        { r: 0.21, h: 0.30, y: 0.99, mat: needlesHigh, rotY: 1.7 },
+        { r: 0.12, h: 0.24, y: 1.15, mat: needlesTip,  rotY: 2.2 },
+      ];
+
+      tiers.forEach((t, i) => {
+        const tier = new THREE.Mesh(new THREE.ConeGeometry(t.r, t.h, 11), t.mat);
+        tier.position.y = t.y;
+        tier.rotation.y = t.rotY;
         tier.castShadow = true;
         g.add(tier);
+
+        if (i < 3) {
+          const skirt = new THREE.Mesh(new THREE.CylinderGeometry(t.r * 0.92, t.r * 0.4, 0.07, 10, 1, true), t.mat);
+          skirt.position.y = t.y - t.h * 0.42;
+          skirt.rotation.y = t.rotY + 0.2;
+          g.add(skirt);
+        }
       });
+
+      // Hanging pine cones beneath middle tier
+      for (let i = 0; i < 3; i++) {
+        const a = (i * Math.PI * 2 / 3) + 0.4;
+        const pcone = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.08, 6), coneMat);
+        pcone.rotation.x = Math.PI;
+        pcone.position.set(Math.cos(a) * 0.24, 0.53, Math.sin(a) * 0.24);
+        g.add(pcone);
+      }
     },
     toadstool(g) {
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.34, 10), mat(0xf2e6cf));
-      stem.position.y = 0.17;
+      const stemMat   = mat(0xf5eedc, { roughness: 0.85 });
+      const capMat    = mat(0xb81c14, { roughness: 0.48, metalness: 0.02 });
+      const gillMat   = mat(0xeddcc4, { roughness: 0.9 });
+      const spotMat   = mat(0xfdf7eb, { roughness: 0.7 });
+      const skirtMat  = mat(0xeee4ce, { roughness: 0.85, side: THREE.DoubleSide });
+      const mossMat   = mat(0x355e2b, { roughness: 0.95 });
+      const babyCapM  = mat(0xc7261e, { roughness: 0.5 });
+
+      // Woodland moss / forest floor clod at base
+      const mossClod = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.32, 0.06, 10), mossMat);
+      mossClod.position.y = 0.03;
+      g.add(mossClod);
+
+      // Main Mushroom Stem: curved, organic stipe with bulbous volva base
+      const volva = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), stemMat);
+      volva.scale.set(1.2, 0.8, 1.2);
+      volva.position.set(0, 0.08, 0);
+      volva.castShadow = true;
+      g.add(volva);
+
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.105, 0.36, 12), stemMat);
+      stem.position.set(0.015, 0.23, 0);
+      stem.rotation.z = -0.07;
+      stem.castShadow = true;
       g.add(stem);
+
+      // Annulus veil skirt / collar halfway up stem
+      const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.06, 10, 1, true), skirtMat);
+      skirt.position.set(0.018, 0.28, 0);
+      skirt.rotation.x = Math.PI;
+      g.add(skirt);
+
+      // Underside gills (radial lamellae disc under cap)
+      const gills = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.08, 0.04, 14), gillMat);
+      gills.position.set(0.025, 0.38, 0);
+      gills.rotation.z = -0.07;
+      g.add(gills);
+
+      // Main Cap (Pileus): elegant bell-shaped woodland toadstool
       const cap = new THREE.Mesh(
-        new THREE.SphereGeometry(0.3, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), mat(0xd8352a));
-      cap.scale.y = 0.75;
-      cap.position.y = 0.32;
+        new THREE.SphereGeometry(0.31, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.52), capMat);
+      cap.scale.set(1.04, 0.82, 1.04);
+      cap.position.set(0.025, 0.38, 0);
+      cap.rotation.z = -0.07;
       cap.castShadow = true;
       g.add(cap);
-      [[0.12, 0.1], [-0.14, -0.06], [0.02, -0.16]].forEach(([x, z]) => {
-        const spot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), mat(0xfff4e6));
-        spot.scale.set(1, 0.4, 1);
-        spot.position.set(x, 0.46, z);
+
+      // Organic spore/veil flecks scattered across the cap
+      const spots = [
+        [0.02, 0.58, 0.02, 0.045],
+        [0.14, 0.53, 0.08, 0.038],
+        [-0.10, 0.54, 0.07, 0.040],
+        [0.05, 0.54, -0.12, 0.036],
+        [-0.08, 0.51, -0.11, 0.034],
+        [0.21, 0.45, 0.04, 0.032],
+        [-0.19, 0.44, -0.05, 0.035],
+        [0.12, 0.44, -0.16, 0.030],
+        [-0.04, 0.46, 0.19, 0.032],
+      ];
+      spots.forEach(([x, y, z, r]) => {
+        const spot = new THREE.Mesh(new THREE.SphereGeometry(r, 7, 5), spotMat);
+        spot.scale.set(1, 0.35, 1);
+        spot.position.set(x, y, z);
         g.add(spot);
       });
+
+      // Little companion button mushroom sprouting beside it
+      const babyStem = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.16, 8), stemMat);
+      babyStem.position.set(-0.19, 0.08, 0.12);
+      babyStem.rotation.z = 0.25;
+      g.add(babyStem);
+
+      const babyCap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.11, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), babyCapM);
+      babyCap.scale.set(1, 0.9, 1);
+      babyCap.position.set(-0.21, 0.16, 0.13);
+      babyCap.rotation.z = 0.25;
+      babyCap.castShadow = true;
+      g.add(babyCap);
+
+      const babySpot = new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 4), spotMat);
+      babySpot.position.set(-0.21, 0.23, 0.13);
+      g.add(babySpot);
     },
 
     // ---- Beach -----------------------------------------------------------
@@ -11651,7 +11775,6 @@ class Blast {
     // explosion on screen at the same time.
     this.matArm = World.MAT.flame.clone();
     this.matCore = World.MAT.flameCore.clone();
-    this.matShock = World.MAT.shock.clone();
     this.flames = [];
 
     // Billowing blobs rather than boxes: neighbouring tiles overlap slightly,
@@ -11673,12 +11796,6 @@ class Blast {
     });
 
     const c0 = cells[0];
-    // Expanding shockwave ring on the ground at the detonation point
-    this.shock = new THREE.Mesh(Blast.geometry.shock, this.matShock);
-    this.shock.rotation.x = -Math.PI / 2;
-    this.shock.position.set(World.wx(c0.x), 0.06, World.wz(c0.y));
-    this.group.add(this.shock);
-
     this.light = World.acquireBlastLight(c0.x, c0.y);
 
     World.scene.add(this.group);
@@ -11707,7 +11824,6 @@ class Blast {
       const h = (age * 2.4) % 1;
       this.matArm.color.setHSL(h, 1, 0.58);
       this.matCore.color.setHSL((h + 0.45) % 1, 1, 0.78);
-      this.matShock.color.setHSL((h + 0.2) % 1, 1, 0.7);
       if (this.light) this.light.color.setHSL(h, 1, 0.6);
     }
     this.flames.forEach((m, i) => {
@@ -11721,10 +11837,6 @@ class Blast {
       m.rotation.x -= dt * 3.1;
     });
 
-    const s = 1 + age * 4.2;
-    this.shock.scale.set(s, s, 1);
-    this.matShock.opacity = 0.85 * Math.pow(t, 1.6);
-
     if (this.light) this.light.intensity = 34 * t * t;
     return this.life <= 0;
   }
@@ -11736,7 +11848,6 @@ class Blast {
     this.light = null;
     this.matArm.dispose();
     this.matCore.dispose();
-    this.matShock.dispose();
     World.scene.remove(this.group);
   }
 }

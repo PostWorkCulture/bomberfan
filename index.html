@@ -874,6 +874,147 @@
     background: rgba(255,255,255,.07); color: #fff;
   }
   #pause .pmusic button:hover { background: rgba(255,255,255,.16); }
+
+  /* Pickup Guide panel inside Pause menu */
+  #pause .pause-guide {
+    max-width: min(580px, 92vw);
+    max-height: min(86vh, 600px);
+    display: flex;
+    flex-direction: column;
+    padding: 22px 26px 18px;
+    box-sizing: border-box;
+  }
+  #pause .pause-guide.hidden { display: none !important; }
+  #pause .pause-main.hidden { display: none !important; }
+  #pause .pause-guide h2 {
+    margin: 0 0 4px;
+    font-size: clamp(20px, 2.5vw, 26px);
+    letter-spacing: 2px;
+    color: var(--hi);
+  }
+  #pause .pause-guide p.dim {
+    margin: 0 0 12px;
+    font-size: 12px;
+    opacity: 0.7;
+    letter-spacing: 0.5px;
+  }
+  #pause .pg-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    padding-right: 6px;
+    margin-bottom: 12px;
+    flex: 1;
+    min-height: 0;
+    text-align: left;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.25) transparent;
+  }
+  #pause .pg-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  #pause .pg-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.25);
+    border-radius: 3px;
+  }
+  #pause .pg-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 8px 12px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  #pause .pg-item:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.2);
+  }
+  #pause .pg-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    user-select: none;
+  }
+  #pause .pg-info {
+    flex: 1;
+    min-width: 0;
+  }
+  #pause .pg-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    color: #fff;
+  }
+  #pause .pg-title .pg-hud {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--hi);
+    background: rgba(255,255,255,0.1);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  #pause .pg-title .pg-sub {
+    font-size: 11px;
+    font-weight: 600;
+    color: #a0aec0;
+    margin-left: auto;
+  }
+  #pause .pg-desc {
+    font-size: 12px;
+    line-height: 1.35;
+    color: #cbd5e1;
+    margin-top: 2px;
+  }
+  #pause .pg-ctrl {
+    font-size: 11px;
+    line-height: 1.3;
+    color: #ffe6a8;
+    margin-top: 3px;
+    font-weight: 600;
+  }
+  #pause .pg-ctrl b {
+    color: #fff;
+    background: rgba(255,255,255,0.16);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+  }
+  .pbtn-guide {
+    background: rgba(255,214,10,0.12) !important;
+    border-color: rgba(255,214,10,0.35) !important;
+    color: #ffe68a !important;
+  }
+  .pbtn-guide:hover {
+    background: rgba(255,214,10,0.22) !important;
+    border-color: var(--hi) !important;
+  }
+  .pbtn-back {
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+  }
+  @media (max-height: 560px) {
+    #pause .pause-guide { max-height: 94vh; padding: 12px 18px 10px; }
+    #pause .pause-guide h2 { font-size: 18px; margin-bottom: 2px; }
+    #pause .pause-guide p.dim { margin-bottom: 6px; font-size: 11px; }
+    #pause .pg-list { gap: 6px; margin-bottom: 8px; }
+    #pause .pg-item { padding: 6px 10px; }
+    #pause .pg-badge { width: 32px; height: 32px; font-size: 15px; }
+    #pause .pg-title { font-size: 13px; }
+    #pause .pg-desc, #pause .pg-ctrl { font-size: 11px; }
+  }
   /* Build id, moved to the front screen. Still readable on a phone, still the
      answer to "did my upload land?", and no longer in the way mid-round. */
   #menu .build {
@@ -7775,32 +7916,156 @@ const Props = (function () {
   const BUILD = {
     // ---- Forest ----------------------------------------------------------
     pine(g) {
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 0.36, 8), mat(0x6b4423));
-      trunk.position.y = 0.18;
+      const bark = mat(0x422a18, { roughness: 0.88, metalness: 0.05 });
+      const needlesBase = mat(0x183b1e, { roughness: 0.82 });
+      const needlesMid  = mat(0x23542b, { roughness: 0.80 });
+      const needlesHigh = mat(0x2f6e39, { roughness: 0.78 });
+      const needlesTip  = mat(0x3d8549, { roughness: 0.75 });
+      const coneMat     = mat(0x382012, { roughness: 0.9 });
+
+      // Gnarled tapered trunk
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.13, 0.42, 10), bark);
+      trunk.position.y = 0.21;
+      trunk.castShadow = true;
       g.add(trunk);
-      [[0.42, 0.5, 0.36], [0.33, 0.42, 0.66], [0.22, 0.34, 0.92]].forEach(([r, h, y]) => {
-        const tier = new THREE.Mesh(new THREE.ConeGeometry(r, h, 9), mat(0x2f7d3a));
-        tier.position.y = y;
+
+      // Root buttress flares anchoring into the mossy stone
+      for (let i = 0; i < 4; i++) {
+        const ang = (i * Math.PI / 2) + 0.3;
+        const root = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.05, 0.18, 6), bark);
+        root.position.set(Math.cos(ang) * 0.1, 0.07, Math.sin(ang) * 0.1);
+        root.rotation.z = Math.cos(ang) * 0.45;
+        root.rotation.x = -Math.sin(ang) * 0.45;
+        g.add(root);
+      }
+
+      // Small dead branch stubs near base
+      [0.22, 0.31].forEach((by, idx) => {
+        const stub = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.02, 0.11, 5), bark);
+        const a = idx * 2.2 + 0.5;
+        stub.position.set(Math.cos(a) * 0.09, by, Math.sin(a) * 0.09);
+        stub.rotation.z = Math.cos(a) * 1.1;
+        stub.rotation.x = -Math.sin(a) * 1.1;
+        g.add(stub);
+      });
+
+      // 5 Tiered drooping foliage canopies with natural overlap and subtle rotational offsets
+      const tiers = [
+        { r: 0.46, h: 0.42, y: 0.38, mat: needlesBase, rotY: 0.1 },
+        { r: 0.38, h: 0.38, y: 0.60, mat: needlesMid,  rotY: 0.6 },
+        { r: 0.30, h: 0.34, y: 0.81, mat: needlesMid,  rotY: 1.1 },
+        { r: 0.21, h: 0.30, y: 0.99, mat: needlesHigh, rotY: 1.7 },
+        { r: 0.12, h: 0.24, y: 1.15, mat: needlesTip,  rotY: 2.2 },
+      ];
+
+      tiers.forEach((t, i) => {
+        const tier = new THREE.Mesh(new THREE.ConeGeometry(t.r, t.h, 11), t.mat);
+        tier.position.y = t.y;
+        tier.rotation.y = t.rotY;
         tier.castShadow = true;
         g.add(tier);
+
+        if (i < 3) {
+          const skirt = new THREE.Mesh(new THREE.CylinderGeometry(t.r * 0.92, t.r * 0.4, 0.07, 10, 1, true), t.mat);
+          skirt.position.y = t.y - t.h * 0.42;
+          skirt.rotation.y = t.rotY + 0.2;
+          g.add(skirt);
+        }
       });
+
+      // Hanging pine cones beneath middle tier
+      for (let i = 0; i < 3; i++) {
+        const a = (i * Math.PI * 2 / 3) + 0.4;
+        const pcone = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.08, 6), coneMat);
+        pcone.rotation.x = Math.PI;
+        pcone.position.set(Math.cos(a) * 0.24, 0.53, Math.sin(a) * 0.24);
+        g.add(pcone);
+      }
     },
     toadstool(g) {
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.34, 10), mat(0xf2e6cf));
-      stem.position.y = 0.17;
+      const stemMat   = mat(0xf5eedc, { roughness: 0.85 });
+      const capMat    = mat(0xb81c14, { roughness: 0.48, metalness: 0.02 });
+      const gillMat   = mat(0xeddcc4, { roughness: 0.9 });
+      const spotMat   = mat(0xfdf7eb, { roughness: 0.7 });
+      const skirtMat  = mat(0xeee4ce, { roughness: 0.85, side: THREE.DoubleSide });
+      const mossMat   = mat(0x355e2b, { roughness: 0.95 });
+      const babyCapM  = mat(0xc7261e, { roughness: 0.5 });
+
+      // Woodland moss / forest floor clod at base
+      const mossClod = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.32, 0.06, 10), mossMat);
+      mossClod.position.y = 0.03;
+      g.add(mossClod);
+
+      // Main Mushroom Stem: curved, organic stipe with bulbous volva base
+      const volva = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), stemMat);
+      volva.scale.set(1.2, 0.8, 1.2);
+      volva.position.set(0, 0.08, 0);
+      volva.castShadow = true;
+      g.add(volva);
+
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.105, 0.36, 12), stemMat);
+      stem.position.set(0.015, 0.23, 0);
+      stem.rotation.z = -0.07;
+      stem.castShadow = true;
       g.add(stem);
+
+      // Annulus veil skirt / collar halfway up stem
+      const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.06, 10, 1, true), skirtMat);
+      skirt.position.set(0.018, 0.28, 0);
+      skirt.rotation.x = Math.PI;
+      g.add(skirt);
+
+      // Underside gills (radial lamellae disc under cap)
+      const gills = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.08, 0.04, 14), gillMat);
+      gills.position.set(0.025, 0.38, 0);
+      gills.rotation.z = -0.07;
+      g.add(gills);
+
+      // Main Cap (Pileus): elegant bell-shaped woodland toadstool
       const cap = new THREE.Mesh(
-        new THREE.SphereGeometry(0.3, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), mat(0xd8352a));
-      cap.scale.y = 0.75;
-      cap.position.y = 0.32;
+        new THREE.SphereGeometry(0.31, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.52), capMat);
+      cap.scale.set(1.04, 0.82, 1.04);
+      cap.position.set(0.025, 0.38, 0);
+      cap.rotation.z = -0.07;
       cap.castShadow = true;
       g.add(cap);
-      [[0.12, 0.1], [-0.14, -0.06], [0.02, -0.16]].forEach(([x, z]) => {
-        const spot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), mat(0xfff4e6));
-        spot.scale.set(1, 0.4, 1);
-        spot.position.set(x, 0.46, z);
+
+      // Organic spore/veil flecks scattered across the cap
+      const spots = [
+        [0.02, 0.58, 0.02, 0.045],
+        [0.14, 0.53, 0.08, 0.038],
+        [-0.10, 0.54, 0.07, 0.040],
+        [0.05, 0.54, -0.12, 0.036],
+        [-0.08, 0.51, -0.11, 0.034],
+        [0.21, 0.45, 0.04, 0.032],
+        [-0.19, 0.44, -0.05, 0.035],
+        [0.12, 0.44, -0.16, 0.030],
+        [-0.04, 0.46, 0.19, 0.032],
+      ];
+      spots.forEach(([x, y, z, r]) => {
+        const spot = new THREE.Mesh(new THREE.SphereGeometry(r, 7, 5), spotMat);
+        spot.scale.set(1, 0.35, 1);
+        spot.position.set(x, y, z);
         g.add(spot);
       });
+
+      // Little companion button mushroom sprouting beside it
+      const babyStem = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.16, 8), stemMat);
+      babyStem.position.set(-0.19, 0.08, 0.12);
+      babyStem.rotation.z = 0.25;
+      g.add(babyStem);
+
+      const babyCap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.11, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), babyCapM);
+      babyCap.scale.set(1, 0.9, 1);
+      babyCap.position.set(-0.21, 0.16, 0.13);
+      babyCap.rotation.z = 0.25;
+      babyCap.castShadow = true;
+      g.add(babyCap);
+
+      const babySpot = new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 4), spotMat);
+      babySpot.position.set(-0.21, 0.23, 0.13);
+      g.add(babySpot);
     },
 
     // ---- Beach -----------------------------------------------------------
@@ -11903,17 +12168,6 @@ class Blast {
     });
 
     const c0 = cells[0];
-    // Expanding dual shockwave rings on the ground at the detonation point
-    this.shock = new THREE.Mesh(Blast.geometry.shock, this.matShock);
-    this.shock.rotation.x = -Math.PI / 2;
-    this.shock.position.set(World.wx(c0.x), 0.06, World.wz(c0.y));
-    this.group.add(this.shock);
-
-    this.shockOuter = new THREE.Mesh(Blast.geometry.shockOuter, this.matShock);
-    this.shockOuter.rotation.x = -Math.PI / 2;
-    this.shockOuter.position.set(World.wx(c0.x), 0.05, World.wz(c0.y));
-    this.group.add(this.shockOuter);
-
     this.light = World.acquireBlastLight(c0.x, c0.y);
 
     World.scene.add(this.group);
@@ -11942,7 +12196,6 @@ class Blast {
       const h = (age * 2.4) % 1;
       this.matArm.color.setHSL(h, 1, 0.58);
       this.matCore.color.setHSL((h + 0.45) % 1, 1, 0.78);
-      this.matShock.color.setHSL((h + 0.2) % 1, 1, 0.7);
       if (this.light) this.light.color.setHSL(h, 1, 0.6);
     }
     this.flames.forEach((m, i) => {
@@ -11955,12 +12208,6 @@ class Blast {
       m.scale.setScalar(scale * f);
       m.rotation.x -= dt * 3.1;
     });
-
-    const s = 1 + age * 4.2;
-    this.shock.scale.set(s, s, 1);
-    const s2 = 1 + age * 6.5;
-    this.shockOuter.scale.set(s2, s2, 1);
-    this.matShock.opacity = 0.85 * Math.pow(t, 1.6);
 
     if (this.light) this.light.intensity = 42 * t * t;
     return this.life <= 0;
@@ -13375,7 +13622,7 @@ const UI = (function () {
            id now lives on the front screen, where it is still reachable on a
            phone without stopping a round. -->
       <div id="pause" class="hidden">
-        <div class="panel">
+        <div class="panel pause-main">
           <p class="ptaunt"></p>
           <!-- The one setting on this panel. Four steps rather than a slider:
                the panel is read once, in a hurry, and a thin drag target is
@@ -13395,8 +13642,139 @@ const UI = (function () {
           </div>
           <div class="pbtns">
             <button data-act="resume">RESUME</button>
+            <button data-act="guide" class="pbtn-guide">📖 PICKUP GUIDE</button>
             <button data-act="restart">RESTART ROUND</button>
             <button data-act="quit">QUIT TO MENU</button>
+          </div>
+        </div>
+
+        <div class="panel pause-guide hidden">
+          <h2>PICKUP GUIDE</h2>
+          <p class="dim">Item abilities &amp; how to trigger them</p>
+          <div class="pg-list">
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#22242a;border:1px solid #5a6270">💣</div>
+              <div class="pg-info">
+                <div class="pg-title">Bomb Up <span class="pg-sub">+1 Capacity</span></div>
+                <div class="pg-desc">Increases the maximum number of simultaneous bombs you can place (up to 8).</div>
+                <div class="pg-ctrl">Trigger: <b>Space</b> / Touch Bomb</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#d42424">🔥</div>
+              <div class="pg-info">
+                <div class="pg-title">Fire Up <span class="pg-sub">+1 Blast Tile</span></div>
+                <div class="pg-desc">Increases explosion blast range by +1 square in all four cardinal directions.</div>
+                <div class="pg-ctrl">Trigger: Passive on all your bombs</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#ff3b10">💥</div>
+              <div class="pg-info">
+                <div class="pg-title">Full Fire <span class="pg-sub">Max Range</span></div>
+                <div class="pg-desc">Instantly maximizes blast explosion range to span the entire arena row and column.</div>
+                <div class="pg-ctrl">Trigger: Passive on pickup</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#1b9a47">⚡</div>
+              <div class="pg-info">
+                <div class="pg-title">Speed Up <span class="pg-sub">Faster Move</span></div>
+                <div class="pg-desc">Increases foot running speed for a generous timed duration (stacks with multiple pickups).</div>
+                <div class="pg-ctrl">Trigger: Move with <b>WASD</b> / Arrows / Stick</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#8b44d8">👟</div>
+              <div class="pg-info">
+                <div class="pg-title">Kick <span class="pg-hud">[K]</span> <span class="pg-sub">Shove Bombs</span></div>
+                <div class="pg-desc">Gold pulsing shoes that shove stationary bombs sliding across the floor in a straight line.</div>
+                <div class="pg-ctrl">Trigger: Simply walk into any stationary bomb</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#d43870">🥊</div>
+              <div class="pg-info">
+                <div class="pg-title">Punch <span class="pg-hud">[P]</span> <span class="pg-sub">Fly Over Obstacles</span></div>
+                <div class="pg-desc">Punches an adjacent bomb, launching it flying 3 tiles through the air over blocks and players.</div>
+                <div class="pg-ctrl">Trigger: Face a bomb and press <b>Space</b> / Touch Bomb</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#e07a38">🧤</div>
+              <div class="pg-info">
+                <div class="pg-title">Power Glove <span class="pg-hud">[G]</span> <span class="pg-sub">Carry &amp; Hurl</span></div>
+                <div class="pg-desc">Pick up a bomb underfoot and throw it across the arena over crates and walls.</div>
+                <div class="pg-ctrl">Trigger: Stand on bomb, press <b>Space</b> to lift; press again to hurl</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#1ea89b">📡</div>
+              <div class="pg-info">
+                <div class="pg-title">Remote Detonator <span class="pg-hud">[R]</span> <span class="pg-sub">On-Demand Detonation</span></div>
+                <div class="pg-desc">Bombs no longer blow up on a timer; you choose the exact moment they detonate.</div>
+                <div class="pg-ctrl">Trigger: Press <b>Q</b> / Touch Special (or Space when bomb cap is reached)</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#cca018">⚡</div>
+              <div class="pg-info">
+                <div class="pg-title">Pierce Bomb <span class="pg-hud">[X]</span> <span class="pg-sub">Through Crates</span></div>
+                <div class="pg-desc">Explosion flames tear straight through soft crates without being extinguished by the first block.</div>
+                <div class="pg-ctrl">Trigger: Passive on all your bombs</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#1495c0">〰</div>
+              <div class="pg-info">
+                <div class="pg-title">Line Bomb <span class="pg-hud">[L]</span> <span class="pg-sub">Corridor Spread</span></div>
+                <div class="pg-desc">Lays a continuous row of bombs in front of you down an entire straight path in one strike.</div>
+                <div class="pg-ctrl">Trigger: Double-tap <b>Space</b> / Touch Bomb, or press Space while on a bomb</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#e03858">🛡</div>
+              <div class="pg-info">
+                <div class="pg-title">Extra Life / Shield <span class="pg-hud">[S]</span> <span class="pg-sub">Heart Absorber</span></div>
+                <div class="pg-desc">Grants a protective forcefield that absorbs 1 fatal bomb blast or hazard projectile.</div>
+                <div class="pg-ctrl">Trigger: Automatic passive protection upon taking damage</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#748296">👟</div>
+              <div class="pg-info">
+                <div class="pg-title">Bomb Pass <span class="pg-hud">[B]</span> <span class="pg-sub">Walk Thru Bombs</span></div>
+                <div class="pg-desc">Phasing shoes that let you walk directly through laid bombs so you can never be trapped.</div>
+                <div class="pg-ctrl">Trigger: Passive; walk freely through any bombs</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#8d5d36">🧱</div>
+              <div class="pg-info">
+                <div class="pg-title">Block Pass <span class="pg-hud">[W]</span> <span class="pg-sub">Ghost Walk</span></div>
+                <div class="pg-desc">Ethereal boots that allow you to step straight through soft wooden crates.</div>
+                <div class="pg-ctrl">Trigger: Passive; walk freely through crates</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#55680c">⚠️</div>
+              <div class="pg-info">
+                <div class="pg-title">Land Mine <span class="pg-hud">[M]</span> <span class="pg-sub">Pressure Plate</span></div>
+                <div class="pg-desc">Turns your placed bombs into concealed contact land mines that detonate the instant any player steps on them.</div>
+                <div class="pg-ctrl">Trigger: Passive on all placed bombs</div>
+              </div>
+            </div>
+            <div class="pg-item">
+              <div class="pg-badge" style="background:#525860">💀</div>
+              <div class="pg-info">
+                <div class="pg-title">Curse / Skull <span class="pg-sub">Affliction</span></div>
+                <div class="pg-desc">Inflicts a random debuff (Slow Legs, Hyper Speed, Tiny Flame, No Bombs, Bomb Fever, or Reversed Controls).</div>
+                <div class="pg-ctrl">Trigger: Pass curse to opponents by touching them; clears when timer expires</div>
+              </div>
+            </div>
+          </div>
+          <div class="pbtns">
+            <button data-act="guideclose" class="pbtn-back">⬅ BACK TO PAUSE</button>
           </div>
         </div>
       </div>
@@ -14396,7 +14774,15 @@ const UI = (function () {
   // ---- Overlays -----------------------------------------------------------
   function showPause(v) {
     pause.classList.toggle('hidden', !v);
-    if (v) renderMusicRow();
+    if (v) {
+      renderMusicRow();
+      const pm = pause.querySelector('.pause-main');
+      const pg = pause.querySelector('.pause-guide');
+      if (pm && pg) {
+        pm.classList.remove('hidden');
+        pg.classList.add('hidden');
+      }
+    }
   }
 
   // The setting is read from Audio3 rather than mirrored here, so the panel can
@@ -14561,6 +14947,22 @@ const Game = (function () {
     UI.bindPause({
       pause() { togglePause('touch'); },
       resume() { setPaused(false); },
+      guide() {
+        const pm = document.querySelector('#pause .pause-main');
+        const pg = document.querySelector('#pause .pause-guide');
+        if (pm && pg) {
+          pm.classList.add('hidden');
+          pg.classList.remove('hidden');
+        }
+      },
+      guideclose() {
+        const pm = document.querySelector('#pause .pause-main');
+        const pg = document.querySelector('#pause .pause-guide');
+        if (pm && pg) {
+          pg.classList.add('hidden');
+          pm.classList.remove('hidden');
+        }
+      },
       restart() { setPaused(false); startRound(); },
       quit() { setPaused(false); toMenu(); },
       continue() { if (g.state === STATE.MATCH_END) toMenu(); },
@@ -14695,7 +15097,19 @@ const Game = (function () {
       return;
     }
 
-    if (code === 'KeyP' || code === 'Escape') { togglePause(code); return; }
+    if (code === 'KeyP' || code === 'Escape') {
+      const pg = document.querySelector('#pause .pause-guide');
+      if (g.paused && pg && !pg.classList.contains('hidden')) {
+        const pm = document.querySelector('#pause .pause-main');
+        if (pm) {
+          pg.classList.add('hidden');
+          pm.classList.remove('hidden');
+          return;
+        }
+      }
+      togglePause(code);
+      return;
+    }
 
     if (g.paused) {
       if (code === 'KeyR') { setPaused(false); startRound(); }

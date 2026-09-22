@@ -46,7 +46,8 @@ assert.ok(source.includes("gills"), 'underside radial gills present in Props.BUI
 assert.ok(html.includes('data-act="guide" class="pbtn-guide"'), 'Pickup Guide button present in pause panel');
 assert.ok(html.includes('class="panel pause-guide hidden"'), 'Pickup Guide modal present in pause menu');
 assert.ok(html.includes('Bomb Up'), 'Bomb Up pickup listed in Pickup Guide');
-assert.ok(html.includes('Power Glove'), 'Power Glove pickup listed in Pickup Guide');
+assert.ok(!html.includes('Power Glove'), 'Power Glove pickup removed from Pickup Guide');
+assert.ok(!source.includes('{ id: PU.PUNCH, weight:'), 'Punch removed from drops');
 assert.ok(html.includes('Remote Detonator'), 'Remote Detonator pickup listed in Pickup Guide');
 assert.ok(html.includes('Curse / Skull'), 'Curse / Skull listed in Pickup Guide');
 assert.ok(source.includes("guide() {"), 'guide action handler present in bindPause');

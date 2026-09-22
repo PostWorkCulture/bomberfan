@@ -3180,8 +3180,6 @@ const PU_TABLE = [
   { id: PU.FIRE,      weight: 26, label: 'Fire Up',    color: 0xe01f1f },
   { id: PU.SPEED,     weight: 18, label: 'Speed Up',   color: 0x22b356 },
   { id: PU.KICK,      weight: 10, label: 'Kick',       color: 0x9b5de5 },
-  { id: PU.PUNCH,     weight: 7,  label: 'Punch',      color: 0xe0457b },
-  { id: PU.GLOVE,     weight: 7,  label: 'Power Glove',color: 0xf7a072 },
   { id: PU.PIERCE,    weight: 5,  label: 'Pierce',     color: 0xffd166 },
   { id: PU.SHIELD,    weight: 5,  label: 'Extra Life', color: 0xff4d6d },
   { id: PU.REMOTE,    weight: 4,  label: 'Remote',     color: 0x2ec4b6 },
@@ -3211,7 +3209,7 @@ const PU_DROPS = [
 
 // Short codes shown on the HUD when a player holds an ability
 const PU_CODE = {
-  [PU.KICK]: 'K', [PU.PUNCH]: 'P', [PU.GLOVE]: 'G', [PU.REMOTE]: 'R',
+  [PU.KICK]: 'K', [PU.REMOTE]: 'R',
   [PU.PIERCE]: 'X', [PU.BOMBPASS]: 'B', [PU.BLOCKPASS]: 'W',
   [PU.SHIELD]: 'S', [PU.MINE]: 'M',
 };

@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="creepy-cute-r1-20260922">
+<meta name="build" content="creepy-cute-r2-20260922">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -3028,7 +3028,7 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=creepy-cute-r1-20260922"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=creepy-cute-r2-20260922"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';
@@ -3432,8 +3432,6 @@ const PU_TABLE = [
   { id: PU.FIRE,      weight: 26, label: 'Fire Up',    color: 0xe01f1f },
   { id: PU.SPEED,     weight: 18, label: 'Speed Up',   color: 0x22b356 },
   { id: PU.KICK,      weight: 10, label: 'Kick',       color: 0x9b5de5 },
-  { id: PU.PUNCH,     weight: 7,  label: 'Punch',      color: 0xe0457b },
-  { id: PU.GLOVE,     weight: 7,  label: 'Power Glove',color: 0xf7a072 },
   { id: PU.PIERCE,    weight: 5,  label: 'Pierce',     color: 0xffd166 },
   { id: PU.SHIELD,    weight: 5,  label: 'Extra Life', color: 0xff4d6d },
   { id: PU.REMOTE,    weight: 4,  label: 'Remote',     color: 0x2ec4b6 },
@@ -3457,14 +3455,12 @@ const PU_DROPS = [
   { id: PU.PIERCE,   weight: 7 },    // tears straight through crates
   { id: PU.REMOTE,   weight: 6 },    // on-demand detonator
   { id: PU.LINEBOMB, weight: 6 },    // corridor-clearing line bomb
-  { id: PU.GLOVE,    weight: 6 },    // pick up and throw bombs
-  { id: PU.PUNCH,    weight: 6 },    // punch adjacent bombs
   { id: PU.FULLFIRE, weight: 3 },    // instant max fire
 ];
 
 // Short codes shown on the HUD when a player holds an ability
 const PU_CODE = {
-  [PU.KICK]: 'K', [PU.PUNCH]: 'P', [PU.GLOVE]: 'G', [PU.REMOTE]: 'R',
+  [PU.KICK]: 'K', [PU.REMOTE]: 'R',
   [PU.PIERCE]: 'X', [PU.LINEBOMB]: 'L', [PU.BOMBPASS]: 'B', [PU.BLOCKPASS]: 'W',
   [PU.SHIELD]: 'S', [PU.MINE]: 'M',
 };
@@ -12549,8 +12545,6 @@ const AI = (function () {
       case PU.FIRE:     return bot.fire < CFG.MAX_FIRE;
       case PU.FULLFIRE: return bot.fire < CFG.MAX_FIRE;
       case PU.KICK:     return !bot.kick;
-      case PU.PUNCH:    return !bot.punch;
-      case PU.GLOVE:    return !bot.glove;
       case PU.REMOTE:   return !bot.remote;
       case PU.PIERCE:   return !bot.pierce;
       case PU.LINEBOMB: return !bot.lineBomb;
@@ -13189,15 +13183,12 @@ const AI = (function () {
       return !!(r && r.safe);
     };
 
-    if (bot.glove && game.bombAt(here) && opens(here)) { a.act = 'glove'; return true; }
-
     for (const d of DIRS) {
       const bx = bot.tileX + d.x, by = bot.tileY + d.y;
       const key = World.key(bx, by);
       const bomb = game.bombAt(key);
       if (!bomb || bomb.flight || bomb.held) continue;
       if (!opens(key)) continue;
-      if (bot.punch) { a.act = 'punch'; a.face = d; return true; }
       // KICK IS A ROUTE, NOT AN ACTION — walking into the bomb is what kicks it
       // — and that makes it the one option here that can fail silently. If the
       // shove does not take, the bot keeps walking into the same bomb, gets
@@ -13892,22 +13883,7 @@ const UI = (function () {
                 <div class="pg-ctrl">Trigger: Simply walk into any stationary bomb</div>
               </div>
             </div>
-            <div class="pg-item">
-              <div class="pg-badge" style="background:#d43870">🥊</div>
-              <div class="pg-info">
-                <div class="pg-title">Punch <span class="pg-hud">[P]</span> <span class="pg-sub">Fly Over Obstacles</span></div>
-                <div class="pg-desc">Punches an adjacent bomb, launching it flying 3 tiles through the air over blocks and players.</div>
-                <div class="pg-ctrl">Trigger: Face a bomb and press <b>Space</b> / Touch Bomb</div>
-              </div>
-            </div>
-            <div class="pg-item">
-              <div class="pg-badge" style="background:#e07a38">🧤</div>
-              <div class="pg-info">
-                <div class="pg-title">Power Glove <span class="pg-hud">[G]</span> <span class="pg-sub">Carry &amp; Hurl</span></div>
-                <div class="pg-desc">Pick up a bomb underfoot and throw it across the arena over crates and walls.</div>
-                <div class="pg-ctrl">Trigger: Stand on bomb, press <b>Space</b> to lift; press again to hurl</div>
-              </div>
-            </div>
+
             <div class="pg-item">
               <div class="pg-badge" style="background:#1ea89b">📡</div>
               <div class="pg-info">
@@ -16159,19 +16135,12 @@ const Game = (function () {
 
     if (intent) {
       switch (intent) {
-        case 'throw': return doThrow(player);
-        case 'glove': return doGlove(player);
-        case 'punch': return doPunch(player);
-        case 'bomb':  return tryPlaceBomb(player);
+        case 'bomb':     return tryPlaceBomb(player);
         case 'linebomb': return doLineBomb(player);
-        case 'remote': return player.remote ? detonateRemote(player) : false;
+        case 'remote':   return player.remote ? detonateRemote(player) : false;
         default: return false;
       }
     }
-
-    if (doThrow(player)) return true;
-    if (doGlove(player)) return true;
-    if (doPunch(player)) return true;
 
     const now = performance.now() / 1000;
     const isDoubleTap = player.lastActionTime && (now - player.lastActionTime < 0.32);

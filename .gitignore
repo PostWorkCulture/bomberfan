@@ -1,3 +1,6 @@
 node_modules/
 .DS_Store
 Thumbs.db
+*_backup/
+*.backup.*
+live_preview.html

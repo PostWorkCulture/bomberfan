@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="behemoth-r1-20260920">
+<meta name="build" content="creepy-cute-r1-20260922">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -3028,7 +3028,7 @@
 <div id="ui"></div>
 
 <!-- three.js r0.185.1 loads from the checked-in ES module bundle. -->
-<script type="module" src="assets/vendor/character-bootstrap.js?v=behemoth-r1-20260920"></script>
+<script type="module" src="assets/vendor/character-bootstrap.js?v=creepy-cute-r1-20260922"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { ArenaLighting, preloadArenaAssets } from './assets/vendor/arena-lighting.js';
@@ -3497,28 +3497,28 @@ const PLAYER_DEFS = [
   { id: 'bomber-og', name: 'BomberOG', color: 0xff376f, belly: 0xffe58d, trim: 0xffffff, accent: 0x2446f5,
     model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/bomber-og.webp', expression: 'Punch', altExpression: 'Yes', personality: 'fierce',
   },
-  { id: 'squidle', name: 'Voidspawn', color: 0xce5b88, belly: 0xffb4da, trim: 0x142e4c, accent: 0x7a1d55,
+  { id: 'squidle', name: 'Voidspawn', color: 0x7c3aed, belly: 0xffaa00, trim: 0x241040, accent: 0xa855f7,
     model: 'assets/characters/squidle.gltf', portrait: 'assets/portraits/squidle.webp', expression: 'Yes', altExpression: 'Headbutt', personality: 'eerie', flying: true,
   },
-  { id: 'evolved-dragon', name: 'Deadwing', color: 0xe85e26, belly: 0x82fff4, trim: 0xc6320f, accent: 0x07667c,
+  { id: 'evolved-dragon', name: 'Deadwing', color: 0x39ff14, belly: 0xdce0d2, trim: 0x32383a, accent: 0x22c55e,
     model: 'assets/characters/evolved-dragon.gltf', portrait: 'assets/portraits/evolved-dragon.webp', expression: 'Headbutt', altExpression: 'Yes', personality: 'fierce', flying: true,
   },
-  { id: 'skull-orc', name: 'Skullcrusher', color: 0x76952c, belly: 0xf3dfb9, trim: 0xc0a383, accent: 0x4f7520,
+  { id: 'skull-orc', name: 'Skullcrusher', color: 0xd46815, belly: 0xcdd2d7, trim: 0x383e46, accent: 0xb45014,
     model: 'assets/characters/skull-orc.gltf', portrait: 'assets/portraits/skull-orc.webp', expression: 'Punch', altExpression: 'Weapon', personality: 'fierce',
   },
   { id: 'orc', name: 'Behemoth', color: 0x5db329, belly: 0x82db3d, trim: 0x652b88, accent: 0x141416,
     model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Punch', altExpression: 'Headbutt', personality: 'fierce',
   },
-  { id: 'fish-monster', name: 'Gill', color: 0x48adc8, belly: 0x8df5e5, trim: 0x016c99, accent: 0x15658d,
+  { id: 'fish-monster', name: 'Gill', color: 0x00f0ff, belly: 0x184252, trim: 0x0e2834, accent: 0x38bdf8,
     model: 'assets/characters/fish-monster.gltf', portrait: 'assets/portraits/fish-monster.webp', expression: 'Punch', altExpression: 'No', personality: 'fierce',
   },
-  { id: 'demon', name: 'Hellshade', color: 0xbc040f, belly: 0x6ecfff, trim: 0xc37c88, accent: 0x4e1738,
+  { id: 'demon', name: 'Hellshade', color: 0xff5a00, belly: 0xffcc00, trim: 0x1a161c, accent: 0xd92626,
     model: 'assets/characters/demon.gltf', portrait: 'assets/portraits/demon.webp', expression: 'No', altExpression: 'Punch', personality: 'manic',
   },
-  { id: 'tribal', name: 'Bloodmask', color: 0xc35426, belly: 0xffffff, trim: 0xdaa858, accent: 0x633800,
+  { id: 'tribal', name: 'Bloodmask', color: 0xd92626, belly: 0xf5f3eb, trim: 0x20222c, accent: 0x991b1b,
     model: 'assets/characters/tribal.gltf', portrait: 'assets/portraits/tribal.webp', expression: 'Yes', altExpression: 'Punch', personality: 'manic',
   },
-  { id: 'ninja', name: 'Razor', color: 0xa16261, belly: 0xffc4e0, trim: 0xbf8d6d, accent: 0x71173e,
+  { id: 'ninja', name: 'Razor', color: 0xef4444, belly: 0x14161a, trim: 0x2a2e36, accent: 0xb91822,
     model: 'assets/characters/ninja.gltf', portrait: 'assets/portraits/ninja.webp', expression: 'Weapon', altExpression: 'Punch', personality: 'sly',
   },
 
@@ -9419,6 +9419,30 @@ const CharacterModels = (() => {
   }
 
   function animateFighterDetails(model, def, t, showcase) {
+    if (def.id === 'fish-monster') {
+      const angler = model.userData.gillAngler;
+      if (angler) {
+        angler.bulb.position.y = 0.69 + Math.sin(t * 3.5) * 0.025;
+        angler.bulbMat.emissiveIntensity = 1.3 + Math.sin(t * 5.0) * 0.35;
+      }
+      return;
+    }
+    if (def.id === 'demon') {
+      const flames = model.userData.demonFlames;
+      if (flames) {
+        const pulse = 1 + Math.sin(t * 7.5) * 0.07;
+        flames.flames.scale.setScalar(pulse);
+        flames.flameMat.emissiveIntensity = 1.1 + Math.sin(t * 8.2) * 0.25;
+      }
+      return;
+    }
+    if (def.id === 'squidle') {
+      const vn = model.userData.voidspawnNodes;
+      if (vn) {
+        vn.nodeMat.emissiveIntensity = 0.85 + Math.sin(t * 4.2) * 0.25;
+      }
+      return;
+    }
     if (def.id !== 'bomber-og') return;
     const rig = model.userData.bomberOGRig;
     if (!rig) return;
@@ -9606,9 +9630,185 @@ const CharacterModels = (() => {
       if (weapon) weapon.visible = false;
     }
     RT.addRosterEyes(model, def);
-    if (def.id !== 'mushroom-king') return;
+
     const head = model.getObjectByName('Head');
     if (!head) return;
+    const T = RT.THREE;
+
+    // 1. Gill (fish-monster): Angler fish arching stalk and glowing cyan bulb
+    if (def.id === 'fish-monster') {
+      const angler = new T.Group();
+      angler.name = 'GillAngler';
+      const stalkMat = new T.MeshStandardMaterial({ color: 0x184252, roughness: 0.5 });
+      const bulbMat = new T.MeshPhysicalMaterial({
+        color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 1.4,
+        roughness: 0.15, clearcoat: 0.8,
+      });
+      const segGeo = new T.CylinderGeometry(0.022, 0.025, 0.12, 8);
+      const points = [
+        [0, 0.58, 0.15, 0.25, 0, 0],
+        [0, 0.67, 0.23, 0.55, 0, 0],
+        [0, 0.73, 0.33, 0.95, 0, 0],
+        [0, 0.72, 0.44, 1.45, 0, 0],
+      ];
+      points.forEach(([x, y, z, rx, ry, rz]) => {
+        const seg = new T.Mesh(segGeo, stalkMat);
+        seg.position.set(x, y, z);
+        seg.rotation.set(rx, ry, rz);
+        angler.add(seg);
+      });
+      const bulbGeo = new T.SphereGeometry(0.085, 14, 10);
+      const bulb = new T.Mesh(bulbGeo, bulbMat);
+      bulb.name = 'GillAnglerBulb';
+      bulb.position.set(0, 0.69, 0.52);
+      angler.add(bulb);
+      head.add(angler);
+      model.userData.gillAngler = { bulb, bulbMat };
+      return;
+    }
+
+    // 2. Hellshade (demon): Flame-tipped magma horns
+    if (def.id === 'demon') {
+      const flames = new T.Group();
+      flames.name = 'HellshadeFlames';
+      const flameMat = new T.MeshPhysicalMaterial({
+        color: 0xffaa00, emissive: 0xff4400, emissiveIntensity: 1.2,
+        roughness: 0.25, clearcoat: 0.6,
+      });
+      const coneGeo = new T.ConeGeometry(0.07, 0.20, 8);
+      [
+        [-0.34, 0.72, 0.02, -0.28, 0, -0.42],
+        [ 0.34, 0.72, 0.02, -0.28, 0,  0.42],
+      ].forEach(([x, y, z, rx, ry, rz]) => {
+        const flame = new T.Mesh(coneGeo, flameMat);
+        flame.position.set(x, y, z);
+        flame.rotation.set(rx, ry, rz);
+        flames.add(flame);
+      });
+      head.add(flames);
+      model.userData.demonFlames = { flames, flameMat };
+      return;
+    }
+
+    // 3. Razor (ninja): Red oni horns protruding from dark cowl
+    if (def.id === 'ninja') {
+      const oniHorns = new T.Group();
+      oniHorns.name = 'RazorOniHorns';
+      const hornMat = new T.MeshStandardMaterial({
+        color: 0xd92626, emissive: 0x550808, roughness: 0.35, metalness: 0.1,
+      });
+      const coneGeo = new T.ConeGeometry(0.065, 0.22, 8);
+      [
+        [-0.16, 0.54, 0.18, 0.22, 0, -0.32],
+        [ 0.16, 0.54, 0.18, 0.22, 0,  0.32],
+      ].forEach(([x, y, z, rx, ry, rz]) => {
+        const horn = new T.Mesh(coneGeo, hornMat);
+        horn.position.set(x, y, z);
+        horn.rotation.set(rx, ry, rz);
+        oniHorns.add(horn);
+      });
+      head.add(oniHorns);
+      return;
+    }
+
+    // 4. Bloodmask (tribal): Raven feather plumes and forehead crest
+    if (def.id === 'tribal') {
+      const headdress = new T.Group();
+      headdress.name = 'BloodmaskHeaddress';
+      const featherMat = new T.MeshStandardMaterial({
+        color: 0x141620, roughness: 0.55, metalness: 0.2,
+      });
+      const beadMat = new T.MeshStandardMaterial({
+        color: 0xf5f3eb, roughness: 0.6,
+      });
+      const featherGeo = new T.BoxGeometry(0.045, 0.26, 0.015);
+      [
+        [-0.24, 0.60, 0.02, 0, 0, -0.42],
+        [-0.12, 0.68, 0.03, 0, 0, -0.20],
+        [ 0.00, 0.72, 0.04, 0, 0,  0.00],
+        [ 0.12, 0.68, 0.03, 0, 0,  0.20],
+        [ 0.24, 0.60, 0.02, 0, 0,  0.42],
+      ].forEach(([x, y, z, rx, ry, rz]) => {
+        const f = new T.Mesh(featherGeo, featherMat);
+        f.position.set(x, y, z);
+        f.rotation.set(rx, ry, rz);
+        headdress.add(f);
+      });
+      const skullBead = new T.Mesh(new T.SphereGeometry(0.05, 8, 6), beadMat);
+      skullBead.position.set(0, 0.54, 0.22);
+      headdress.add(skullBead);
+      head.add(headdress);
+      return;
+    }
+
+    // 5. Voidspawn (squidle): Cosmic forehead ocular nodes
+    if (def.id === 'squidle') {
+      const nodes = new T.Group();
+      nodes.name = 'VoidspawnNodes';
+      const nodeMat = new T.MeshPhysicalMaterial({
+        color: 0xffaa00, emissive: 0xff7700, emissiveIntensity: 0.85,
+        roughness: 0.2, clearcoat: 0.7,
+      });
+      const nodeGeo = new T.SphereGeometry(1, 10, 8);
+      [
+        [ 0.00, 0.46, 0.17, 0.065],
+        [-0.16, 0.39, 0.15, 0.048],
+        [ 0.16, 0.39, 0.15, 0.048],
+      ].forEach(([x, y, z, r]) => {
+        const eye = new T.Mesh(nodeGeo, nodeMat);
+        eye.position.set(x, y, z);
+        eye.scale.setScalar(r);
+        nodes.add(eye);
+      });
+      head.add(nodes);
+      model.userData.voidspawnNodes = { nodes, nodeMat };
+      return;
+    }
+
+    // 6. Skullcrusher (skull-orc): Iron helmet horn crest
+    if (def.id === 'skull-orc') {
+      const crest = new T.Group();
+      crest.name = 'SkullcrusherCrest';
+      const ironMat = new T.MeshStandardMaterial({
+        color: 0x5a6068, roughness: 0.35, metalness: 0.65,
+      });
+      const spikeGeo = new T.ConeGeometry(0.06, 0.18, 8);
+      [
+        [-0.34, 0.66, 0.28, -0.15, 0, -0.45],
+        [ 0.34, 0.66, 0.28, -0.15, 0,  0.45],
+      ].forEach(([x, y, z, rx, ry, rz]) => {
+        const s = new T.Mesh(spikeGeo, ironMat);
+        s.position.set(x, y, z);
+        s.rotation.set(rx, ry, rz);
+        crest.add(s);
+      });
+      head.add(crest);
+      return;
+    }
+
+    // 7. Deadwing (evolved-dragon): Skeletal bone ridge
+    if (def.id === 'evolved-dragon') {
+      const ridge = new T.Group();
+      ridge.name = 'DeadwingRidge';
+      const boneMat = new T.MeshStandardMaterial({
+        color: 0xdce0d2, roughness: 0.7,
+      });
+      const boneGeo = new T.ConeGeometry(0.05, 0.16, 7);
+      [
+        [0, 0.44, -0.14, -0.3, 0, 0],
+        [0, 0.52, -0.26, -0.4, 0, 0],
+        [0, 0.58, -0.38, -0.5, 0, 0],
+      ].forEach(([x, y, z, rx, ry, rz]) => {
+        const b = new T.Mesh(boneGeo, boneMat);
+        b.position.set(x, y, z);
+        b.rotation.set(rx, ry, rz);
+        ridge.add(b);
+      });
+      head.add(ridge);
+      return;
+    }
+
+    if (def.id !== 'mushroom-king') return;
 
     // Rotcrown's cap is part of the skinned body, so destructive mesh edits
     // would jeopardise every supplied animation. These low-profile growths sit

@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="b06e8f4">
+<meta name="build" content="six-roster-20260923">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -390,7 +390,7 @@
     position: absolute; inset: 0; z-index: 14; pointer-events: none;
     display: flex; flex-direction: column; align-items: center;
     justify-content: space-between; text-align: center;
-    padding: clamp(22px, 4vh, 48px) 18px clamp(24px, 5vh, 56px);
+    padding: clamp(18px, 3vh, 36px) 18px clamp(20px, 4vh, 44px);
     overflow: hidden;
   }
   #victory.hidden { display: none; }
@@ -401,31 +401,31 @@
     text-transform: uppercase;
     text-shadow: 0 2px 8px #000;
   }
-  #victory .vbottom { width: min(92vw, 900px); }
+  #victory .vbottom { width: min(86vw, 760px); }
   #victory .vname {
     color: #fff8e9;
-    font: 1000 clamp(42px, 8vw, 104px)/.88 'Arial Black', Impact, system-ui, sans-serif;
-    letter-spacing: clamp(3px, .7vw, 10px);
+    font: 1000 clamp(34px, 6.5vw, 84px)/.9 'Arial Black', Impact, system-ui, sans-serif;
+    letter-spacing: clamp(2px, .55vw, 8px);
     text-transform: uppercase;
     -webkit-text-stroke: 1px rgba(0,0,0,.5);
     text-shadow: 0 6px 0 rgba(0,0,0,.7), 0 0 28px var(--winner), 0 0 70px var(--winner);
   }
   #victory .vline {
-    display: inline-block; margin-top: 12px;
-    padding: .45em 1.15em .5em;
+    display: inline-block; margin-top: 8px;
+    padding: .36em .95em .4em;
     border: 1px solid color-mix(in srgb, var(--winner) 72%, white);
     border-radius: 999px;
     background: rgba(5,7,11,.76);
     color: #fff5e5;
-    font: 900 clamp(12px, 1.7vw, 22px)/1.1 system-ui, sans-serif;
+    font: 900 clamp(11px, 1.35vw, 18px)/1.1 system-ui, sans-serif;
     letter-spacing: clamp(1px, .25vw, 4px);
     text-transform: uppercase;
     box-shadow: 0 0 30px color-mix(in srgb, var(--winner) 38%, transparent);
   }
   @media (max-width: 719px) {
-    #victory { padding-top: 18px; padding-bottom: 30px; }
-    #victory .vname { font-size: clamp(38px, 13vw, 64px); }
-    #victory .vline { max-width: 94vw; }
+    #victory { padding-top: 15px; padding-bottom: 24px; }
+    #victory .vname { font-size: clamp(32px, 11vw, 52px); }
+    #victory .vline { max-width: 90vw; }
   }
 
   /* ------------------------------------------------- touch controls --- */
@@ -1573,7 +1573,6 @@
     border: 1px solid rgba(255,153,43,.26) !important;
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.065),
-      inset 4px 0 0 rgba(255,134,28,.12),
       0 6px 18px rgba(0,0,0,.36) !important;
     transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease, background .12s ease !important;
   }
@@ -1583,14 +1582,7 @@
     transform: translateX(-48%);
     transition: transform .26s ease;
   }
-  #menu .opt::after {
-    content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px;
-    border-radius: 0 3px 3px 0;
-    background: linear-gradient(#ffc86b, #f06c12);
-    opacity: .24;
-    box-shadow: 0 0 14px rgba(255,113,19,.36);
-    transition: opacity .12s ease;
-  }
+  #menu .opt::after { display: none !important; }
   #menu .opt:hover::before, #menu .opt.sel::before { transform: translateX(24%); }
   #menu .opt:hover::after, #menu .opt.sel::after { opacity: 1; }
   #menu .opt:hover, #menu .opt.sel, #menu .opt:focus-within {
@@ -1599,7 +1591,6 @@
     background: linear-gradient(180deg, rgba(76,45,23,.99), rgba(27,18,12,.99)) !important;
     box-shadow:
       inset 0 1px 0 rgba(255,231,187,.14),
-      inset 4px 0 0 rgba(255,145,33,.66),
       0 0 0 1px rgba(255,118,15,.14),
       0 0 26px rgba(255,111,13,.23),
       0 12px 30px rgba(0,0,0,.50) !important;
@@ -2764,6 +2755,27 @@
     #select .sfoot .opt.go { pointer-events: auto; }
   }
 
+  /* Six-fighter layout: give the model most of the available space. */
+  #select .sbody { grid-template-columns: minmax(0,1.4fr) minmax(240px,.8fr) !important; grid-template-rows:minmax(0,1fr) !important; }
+  #select .sroster { grid-template-columns:repeat(2,minmax(0,1fr)) !important; grid-template-rows:repeat(3,minmax(0,1fr)) !important; height:100% !important; max-height:none !important; }
+  #select .charpick { flex-direction:column; justify-content:center; gap:8px; padding:10px; }
+  #select .charface { width:clamp(48px,7vw,88px); height:clamp(48px,7vw,88px); }
+  #select .charcopy b { font-size:clamp(10px,1.1vw,15px); }
+  #select .charindex { display:none; }
+  #spreview { min-height:0 !important; }
+  @media(max-width:719px) {
+    #select .sbody { grid-template-columns:minmax(0,1fr) !important; grid-template-rows:minmax(0,1fr) 150px !important; padding:3px !important; }
+    #select .sroster { grid-row:2; grid-template-columns:repeat(3,minmax(0,1fr)) !important; grid-template-rows:repeat(2,minmax(0,1fr)) !important; }
+    #select .charpick { flex-direction:row; gap:5px; padding:4px; }
+    #select .charface { width:42px; height:42px; flex-shrink:0; }
+    #select .charcopy b { font-size:10px; }
+  }
+  @media(max-height:450px) and (min-width:600px) {
+    #select .sbody { grid-template-columns:minmax(0,1fr) minmax(240px,.8fr) !important; grid-template-rows:minmax(0,1fr) !important; }
+    #select .sroster { grid-column:2; grid-row:1; grid-template-columns:repeat(2,minmax(0,1fr)) !important; grid-template-rows:repeat(3,minmax(0,1fr)) !important; }
+    #select .charpick { flex-direction:row; }
+    #select .charface { width:38px; height:38px; }
+  }
 </style>
 </head>
 <body>
@@ -2774,6 +2786,7 @@
 <script type="module" src="assets/vendor/character-bootstrap.js"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
+import { createHulk } from './assets/characters/hulk.js';
 (function () {
 'use strict';
 
@@ -2808,10 +2821,10 @@ const CFG = {
   // and a low value reads as the controls lagging behind your thumb.
   TURN_SNAP: 2.8,
   START_BOMBS: 1,
-  // Classic reach: a fresh bomb clears one square in each direction. Every
-  // Fire Up adds one more. Nobody starts with any Fire Ups, so the fire stat
+  // A fresh bomb reaches two squares in each direction. Every Fire Up adds
+  // exactly one more square. Nobody starts with any Fire Ups, so the fire stat
   // is absent from the HUD card until the first one is collected.
-  START_FIRE: 1,
+  START_FIRE: 2,
   MAX_BOMBS: 8,
   MAX_FIRE: 9,           // effectively full-map
 
@@ -2922,7 +2935,7 @@ const CFG = {
   // the round opened on "2" — so this is 3.0 for the three numbers plus a
   // beat for the last one to finish its pop before GO!.
   ROUND_INTRO: 3.35,     // 3 - 2 - 1, then GO!
-  ROUND_OUTRO: 6.0,      // full-screen character celebration after a round
+  ROUND_OUTRO: 3.0,      // full-screen character celebration after a round
 
   // ---- Simulation --------------------------------------------------------
   FIXED_DT: 1 / 60,
@@ -3020,7 +3033,7 @@ const LEVELS = [
     props: ['snowman', 'icespike'],
     hazardCount: 2,
     // Two fighters start on each island. The short clear lists preserve room
-    // for crates on the compact 5x5 floors without boxing anyone in.
+    // for crates on the 7x7 floors without boxing anyone in.
     spawns: [
       { x: 1,  y: 4, clear: [[0, 0], [1, 0], [0, 1]] },
       { x: 5,  y: 8, clear: [[0, 0], [-1, 0], [0, -1]] },
@@ -3058,16 +3071,16 @@ const LEVELS = [
     hazard: 'witch',
   },
   {
-    // A spectral express split into three playable carriages. Electric cyan,
-    // toxic green and hot magenta keep it deliberately separate from Haunted
-    // House's burnt orange stone and restrained purple gloom.
+    // A midnight spectral express split into three playable carriages. Cold
+    // window light and restrained signal red punctuate iron, soot and blackened
+    // timber without turning the train into another neon arena.
     id: 'haunted-train', name: 'Haunted Train',
     layout: 'haunted-train',
-    sky: 0x120525,
-    ground: [64, 24, 104],
-    groundLine: 'rgba(70,255,230,0.32)',
-    crate: '#16e0d0', crateBand: '#ff3cac', crateEdge: '#5a1499',
-    hard: 0x159d8c, hardTop: 0x75ffcf, border: 0x5b176f,
+    sky: 0x020409,
+    ground: [18, 24, 31],
+    groundLine: 'rgba(132,176,194,0.17)',
+    crate: '#26323d', crateBand: '#131a22', crateEdge: '#607583',
+    hard: 0x1d2832, hardTop: 0x425464, border: 0x080d13,
     softDensity: 0.66,
     spawns: [
       { x: 1,  y: 2, clear: [[0, 0], [1, 0], [0, 1]] },
@@ -3135,9 +3148,9 @@ const LEVELS = [
     hazard: 'cannon',
     hazardCount: 4,
     propSpots: [
-      [1, 4, -Math.PI / 2, 'cannon', 1.15], [13, 4, Math.PI / 2, 'cannon', 1.15],
+      [1, 4, Math.PI / 2, 'cannon', 1.15], [13, 4, -Math.PI / 2, 'cannon', 1.15],
       [6, 8, Math.PI / 2, 'cannon', 1.1], [8, 8, -Math.PI / 2, 'cannon', 1.1],
-      [1, 8, -Math.PI / 2, 'cannon', 1.0], [13, 8, Math.PI / 2, 'cannon', 1.0],
+      [1, 8, Math.PI / 2, 'cannon', 1.0], [13, 8, -Math.PI / 2, 'cannon', 1.0],
       [6, 4, Math.PI / 2, 'cannon', 1.0], [8, 4, -Math.PI / 2, 'cannon', 1.0],
       [3, 4, 0, 'mast', 1.18], [4, 8, 0, 'mast', 1.08],
       [10, 4, 0, 'mast', 1.18], [11, 8, 0, 'mast', 1.08],
@@ -3147,6 +3160,22 @@ const LEVELS = [
     ],
   },
 ];
+
+// Enclosed arenas share an odd-sized 11x11 footprint (including walls).
+// Odd dimensions keep symmetric corner spawns and a connected pillar lattice.
+// The multi-platform maps retain their purpose-built geometry.
+LEVELS.filter(level => !level.layout || level.layout === 'clockwork-maze').forEach(level => {
+  level.bounds = { x0: 2, y0: 1, x1: 12, y1: 11 };
+  level.spawns = [{ x: 3, y: 2 }, { x: 11, y: 10 }, { x: 11, y: 2 }, { x: 3, y: 10 }];
+  level.propSpots = [
+    [2, 3, Math.PI / 2], [12, 3, -Math.PI / 2],
+    [2, 6, Math.PI / 2], [12, 6, -Math.PI / 2],
+    [5, 11, Math.PI], [9, 11, Math.PI],
+  ];
+});
+function arenaBounds(level) {
+  return level.bounds || { x0: 0, y0: 0, x1: CFG.COLS - 1, y1: CFG.ROWS - 1 };
+}
 
 // ---- Collectables --------------------------------------------------------
 const PU = {
@@ -3239,7 +3268,7 @@ const FIGHTER_PERSONALITIES = Object.freeze({
   eerie:   Object.freeze({ tempo: 1.8, tilt: 0.13,  turn: 0.040, nod: 0.025, pulse: 0.032 }),
 });
 
-const PLAYER_DEFS = [
+const PLAYER_CATALOG = [
   { id: 'bunny', name: 'Gravehare', color: 0xcf6a92, belly: 0xfff2fb, trim: 0x835977, accent: 0x6d1cae,
     model: 'assets/characters/bunny.gltf', portrait: 'assets/portraits/bunny.webp', expression: 'Wave', altExpression: 'Yes', personality: 'playful',
   },
@@ -3285,7 +3314,7 @@ const PLAYER_DEFS = [
   { id: 'blue-demon', name: 'Abyss', color: 0x398cac, belly: 0x55ddff, trim: 0xac6567, accent: 0x1f4f6e,
     model: 'assets/characters/blue-demon.gltf', portrait: 'assets/portraits/blue-demon.webp', expression: 'No', altExpression: 'Yes', personality: 'eerie',
   },
-  { id: 'bomber-og', name: 'BomberOG', color: 0xff376f, belly: 0xffe58d, trim: 0xffffff, accent: 0x2446f5,
+  { id: 'bomber-og', name: 'Bomberman', color: 0xff376f, belly: 0xffe58d, trim: 0xffffff, accent: 0x2446f5,
     model: 'assets/characters/birb.gltf', portrait: 'assets/portraits/bomber-og.webp', expression: 'Punch', altExpression: 'Yes', personality: 'fierce',
   },
   { id: 'dino', name: 'Fiend', color: 0xc10449, belly: 0xe2c8ff, trim: 0xbf7755, accent: 0x5f1131,
@@ -3301,6 +3330,13 @@ const PLAYER_DEFS = [
     model: 'assets/characters/squidle.gltf', portrait: 'assets/portraits/squidle.webp', expression: 'Yes', altExpression: 'Headbutt', personality: 'eerie', flying: true,
   },
 ];
+
+// A focused roster: the five most detailed original rigs plus a bespoke Hulk.
+const PLAYER_DEFS = ['tribal', 'bunny', 'skull-orc', 'evolved-dragon', 'orc']
+  .map(id => PLAYER_CATALOG.find(def => def.id === id));
+PLAYER_DEFS.push({ id: 'hulk', name: 'Hulk', color: 0x599631, belly: 0x94bc50,
+  trim: 0x352a48, accent: 0x1a2815, model: 'procedural:hulk',
+  portrait: 'assets/portraits/hulk.webp', personality: 'fierce', expression: 'Roar', altExpression: 'Smash' });
 
 // Fixed spawn corners in grid coordinates
 const SPAWNS = [
@@ -5172,7 +5208,7 @@ const Input = (function () {
    An on-screen thumbstick and bomb button for phones and tablets.
 
    These do not introduce a second input path. They synthesise presses on the
-   solo keymap (arrows + CTRL) through Input.press/release, so by the time the
+   solo keymap (WASD + SPACE) through Input.press/release, so by the time the
    simulation reads a direction it cannot tell a thumb from a keyboard — and
    every existing input behaviour (newest direction wins, one-shot bomb
    presses, release-on-blur) applies unchanged.
@@ -5181,7 +5217,7 @@ const Input = (function () {
 const TouchPad = (function () {
   // Solo layout: this is the keymap a single human is always given, so the
   // stick drives whichever seat that human occupies.
-  const KM = KEYMAPS[1];
+  const KM = KEYMAPS[0];
   const BOMB = KM.action[0];
   const SPECIAL = KM.special[0];
 
@@ -5717,17 +5753,21 @@ const World = (function () {
       emissive: 0x4f2600, emissiveIntensity: 0.35,
     });
     MAT.trainVoid = new THREE.MeshStandardMaterial({
-      color: 0x10031f, roughness: 0.58, emissive: 0x27044d, emissiveIntensity: 0.8,
+      color: 0x020409, roughness: 0.72, emissive: 0x040915, emissiveIntensity: 0.34,
     });
     MAT.trainHull = new THREE.MeshStandardMaterial({
-      color: 0x351162, roughness: 0.44, metalness: 0.35,
-      emissive: 0x190432, emissiveIntensity: 0.65,
+      color: 0x111923, roughness: 0.38, metalness: 0.7,
+      emissive: 0x03070b, emissiveIntensity: 0.22,
     });
-    MAT.trainRail = new THREE.MeshStandardMaterial({ color: 0xb7c5d8, roughness: 0.26, metalness: 0.86 });
-    MAT.trainSleeper = new THREE.MeshStandardMaterial({ color: 0x461f62, roughness: 0.72 });
-    MAT.trainWheel = new THREE.MeshStandardMaterial({ color: 0x16203a, roughness: 0.4, metalness: 0.74 });
-    MAT.trainGlow = new THREE.MeshBasicMaterial({ color: 0x58ffe4, toneMapped: false });
-    MAT.trainPink = new THREE.MeshBasicMaterial({ color: 0xff3cac, toneMapped: false });
+    MAT.trainRail = new THREE.MeshStandardMaterial({ color: 0x71808a, roughness: 0.24, metalness: 0.9 });
+    MAT.trainSleeper = new THREE.MeshStandardMaterial({ color: 0x140d10, roughness: 0.9 });
+    MAT.trainWheel = new THREE.MeshStandardMaterial({ color: 0x06090e, roughness: 0.42, metalness: 0.82 });
+    MAT.trainGlow = new THREE.MeshBasicMaterial({ color: 0x79ffe3, toneMapped: false });
+    MAT.trainPink = new THREE.MeshBasicMaterial({ color: 0xd73845, toneMapped: false });
+    MAT.trainWalkway = new THREE.MeshStandardMaterial({
+      color: 0xb07b2c, roughness: 0.34, metalness: 0.78,
+      emissive: 0x301500, emissiveIntensity: 0.9,
+    });
     MAT.clockwork = new THREE.MeshStandardMaterial({
       color: 0x7b351c, roughness: 0.36, metalness: 0.72,
       emissive: 0x321006, emissiveIntensity: 0.45,
@@ -5763,7 +5803,12 @@ const World = (function () {
     initMaterials();
 
     state.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    const modestHardware = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+    // Small/touch screens gain far more from stable frame pacing than from
+    // rendering four times as many pixels. Desktop keeps the full DPR-2 cap.
+    state.pixelRatioCap = coarsePointer || modestHardware ? 1.5 : 2;
+    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, state.pixelRatioCap));
     state.renderer.shadowMap.enabled = true;
     // PCFSoftShadowMap was deprecated in three r185 — it warns once and falls
     // back to PCFShadowMap anyway, so ask for the real thing and stay quiet.
@@ -5787,7 +5832,8 @@ const World = (function () {
     const key = new THREE.DirectionalLight(0xfff2d8, 2.0);
     key.position.set(7, 16, 8);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    const shadowSize = state.pixelRatioCap < 2 ? 1024 : 2048;
+    key.shadow.mapSize.set(shadowSize, shadowSize);
     const d = 12;
     key.shadow.camera.left = -d; key.shadow.camera.right = d;
     key.shadow.camera.top = d;   key.shadow.camera.bottom = -d;
@@ -5823,10 +5869,7 @@ const World = (function () {
     // would simply stretch the picture. What the visible height changes is the
     // CAMERA FIT — see LIM.bottom — and where the touch layer ends.
     const w = window.innerWidth, h = window.innerHeight;
-    // Capped at 2: a DPR-3 phone renders 2.25x the pixels of a DPR-2 one for a
-    // difference nobody can see at a 32px tile, and fill rate is the first
-    // thing to run out on mobile.
-    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, state.pixelRatioCap || 2));
     state.renderer.setSize(w, h, false);
     state.camera.aspect = w / h;
     state.camera.fov = 46;
@@ -6126,8 +6169,8 @@ const World = (function () {
   // where to expect is a hazard; one that moves every round is noise — the same
   // argument that fixed the snowman's corner.
   const RULE_LAYOUTS = {
-    // Two counter-rotating loops, one either side of centre, well clear of the
-    // spawn pockets. Each is a rectangle of belts that carries you round it.
+    // One complete loop fits the compact arena without intersecting itself or
+    // running through the protected corner routes.
     belts() {
       const out = [];
       const loop = (x0, y0, x1, y1, clockwise) => {
@@ -6136,13 +6179,12 @@ const World = (function () {
         for (let x = x1; x > x0; x--) out.push([x, y1, clockwise ? RULE.BELT_L : RULE.BELT_R]);
         for (let y = y1; y > y0; y--) out.push([x0, y, clockwise ? RULE.BELT_U : RULE.BELT_D]);
       };
-      loop(3, 3, 5, 5, true);
-      loop(9, 7, 11, 9, false);
+      loop(5, 4, 9, 8, true);
       return out;
     },
     // Two pairs, on opposite diagonals, each a long way from its twin.
     pads() {
-      return [[3, 9, RULE.PAD], [11, 3, RULE.PAD], [3, 3, RULE.PAD], [11, 9, RULE.PAD]];
+      return [[5, 8, RULE.PAD], [9, 4, RULE.PAD], [5, 4, RULE.PAD], [9, 8, RULE.PAD]];
     },
     // Ice covers the whole interior: a rink you have to learn, not a patch you
     // can walk around and forget about.
@@ -6208,8 +6250,8 @@ const World = (function () {
   // logical grid so movement, bots, bombs and blasts all agree that they cannot
   // cross them; `voids` only tells the renderer not to draw a wall there.
   const TWIN_ISLANDS = {
-    floors: [[1, 4, 5, 8], [9, 4, 13, 8]],
-    bridge: [[5, 6], [6, 6], [7, 6], [8, 6], [9, 6]],
+    floors: [[0, 3, 6, 9], [8, 3, 14, 9]],
+    bridge: [[6, 6], [7, 6], [8, 6]],
     pillars: [
       [2, 5], [4, 5], [2, 7], [4, 7],
       [10, 5], [12, 5], [10, 7], [12, 7],
@@ -6245,8 +6287,8 @@ const World = (function () {
   // and vertical footprint before crates are dealt, so a turn can never reveal
   // a crate inside a wall or silently delete a hidden pickup.
   const CLOCKWORK_SECTIONS = [
-    { x: 3, y: 3 }, { x: 11, y: 3 },
-    { x: 3, y: 9 }, { x: 11, y: 9 },
+    { x: 5, y: 4 }, { x: 9, y: 4 },
+    { x: 5, y: 8 }, { x: 9, y: 8 },
   ];
   const clockworkCells = (section, vertical) => vertical
     ? [[section.x, section.y - 1], [section.x, section.y], [section.x, section.y + 1]]
@@ -6272,6 +6314,12 @@ const World = (function () {
 
   function initClockwork(grid) {
     const all = new Set();
+    CLOCKWORK_SECTIONS.forEach(section => {
+      [false, true].forEach(vertical => clockworkCells(section, vertical).forEach(([x, y]) => {
+        grid[idx(x, y)] = CELL.EMPTY;
+        all.add(key(x, y));
+      }));
+    });
     CLOCKWORK_SECTIONS.forEach(section => {
       clockworkCells(section, false).forEach(([x, y]) => {
         grid[idx(x, y)] = CELL.HARD;
@@ -6317,11 +6365,17 @@ const World = (function () {
     if (shape) {
       seedShapedLayout(grid, state.voids, shape);
     } else {
+      const { x0, y0, x1, y1 } = arenaBounds(state.level);
       for (let y = 0; y < CFG.ROWS; y++) {
         for (let x = 0; x < CFG.COLS; x++) {
-          const border = x === 0 || y === 0 || x === CFG.COLS - 1 || y === CFG.ROWS - 1;
-          const pillar = x % 2 === 0 && y % 2 === 0;
+          const outside = x < x0 || y < y0 || x > x1 || y > y1;
+          const border = x === x0 || y === y0 || x === x1 || y === y1;
+          const pillar = (x - x0) % 2 === 0 && (y - y0) % 2 === 0;
           grid[idx(x, y)] = (border || pillar) ? CELL.HARD : CELL.EMPTY;
+          if (outside) {
+            grid[idx(x, y)] = CELL.HARD;
+            state.voids[idx(x, y)] = 1;
+          }
         }
       }
       if (layout === 'clockwork-maze') initClockwork(grid);
@@ -6343,6 +6397,22 @@ const World = (function () {
         const x = s.x + dx, y = s.y + dy;
         if (x > 0 && y > 0 && x < CFG.COLS - 1 && y < CFG.ROWS - 1) safe.add(key(x, y));
       });
+      // Reserve a reachable three-step pocket, including turns. The original
+      // three-cell L pockets became death traps when starting fire grew to 2.
+      const queue = [{ x: s.x, y: s.y, distance: 0 }];
+      const visited = new Set([key(s.x, s.y)]);
+      for (let i = 0; i < queue.length; i++) {
+        const cell = queue[i];
+        if (grid[idx(cell.x, cell.y)] !== CELL.EMPTY) continue;
+        safe.add(key(cell.x, cell.y));
+        if (cell.distance === 3) continue;
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
+          const x = cell.x + dx, y = cell.y + dy, k = key(x, y);
+          if (x < 0 || y < 0 || x >= CFG.COLS || y >= CFG.ROWS || visited.has(k)) return;
+          visited.add(k);
+          if (grid[idx(x, y)] === CELL.EMPTY) queue.push({ x, y, distance: cell.distance + 1 });
+        });
+      }
     });
     // The bridge is a route, never a crate lottery. Include both landing planks
     // so each island always has a clean approach to it.
@@ -6350,6 +6420,17 @@ const World = (function () {
     // A rotating wall's destination must remain genuinely empty for the whole
     // round. Occupants delay a turn; crates must never be dealt there at all.
     if (state.clockwork) state.clockwork.cells.forEach(k => safe.add(k));
+
+    // Keep a continuous perimeter lane on compact arenas. All four starts
+    // have room to turn out of a two-tile blast, even at maximum crate density.
+    if (state.level.bounds) {
+      const { x0, y0, x1, y1 } = state.level.bounds;
+      for (let y = y0 + 1; y < y1; y++) {
+        for (let x = x0 + 1; x < x1; x++) {
+          if (x === x0 + 1 || x === x1 - 1 || y === y0 + 1 || y === y1 - 1) safe.add(key(x, y));
+        }
+      }
+    }
 
     // 3. Scatter crates
     const puBag = weightedBag(rng);
@@ -6478,11 +6559,11 @@ const World = (function () {
     // Two thick ice rafts make the missing floor read as a real drop rather than
     // a texture failure. Their top planes reuse the active Glacier material.
     [[3, 6], [11, 6]].forEach(([x, y]) => {
-      const slab = new THREE.Mesh(new THREE.BoxGeometry(5.12, 0.32, 5.12), MAT.border);
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(7.12, 0.32, 7.12), MAT.border);
       slab.position.set(wx(x), -0.17, wz(y));
       slab.castShadow = slab.receiveShadow = true;
       slab.userData.ownGeometry = true;
-      const top = new THREE.Mesh(tiledFloorGeometry(5, 5), MAT.ground);
+      const top = new THREE.Mesh(tiledFloorGeometry(7, 7), MAT.ground);
       top.rotation.x = -Math.PI / 2;
       top.position.set(wx(x), 0.002, wz(y));
       top.receiveShadow = true;
@@ -6490,11 +6571,11 @@ const World = (function () {
       g.add(slab, top);
     });
 
-    // Rope bridge: five wooden planks span the gap, with sagging hand ropes and
+    // Rope bridge: three wooden planks span the narrower gap, with sagging hand ropes and
     // vertical lashings. Gameplay remains tile-flat even though the silhouette
     // reads as a suspended bridge.
     const plankGeo = new THREE.BoxGeometry(0.84, 0.12, 0.8);
-    for (let x = 5; x <= 9; x++) {
+    for (let x = 6; x <= 8; x++) {
       const plank = new THREE.Mesh(plankGeo, MAT.bridge);
       plank.position.set(wx(x), -0.038, wz(6));
       plank.rotation.y = (x - 7) * 0.012;
@@ -6504,7 +6585,7 @@ const World = (function () {
     }
 
     const postGeo = new THREE.CylinderGeometry(0.055, 0.07, 0.76, 8);
-    [5, 9].forEach(x => [-1, 1].forEach(side => {
+    [6, 8].forEach(x => [-1, 1].forEach(side => {
       const post = new THREE.Mesh(postGeo, MAT.rope);
       post.position.set(wx(x), 0.35, wz(6) + side * 0.48);
       post.castShadow = true;
@@ -6514,11 +6595,9 @@ const World = (function () {
 
     [-1, 1].forEach(side => {
       const points = [
-        new THREE.Vector3(wx(5), 0.72, wz(6) + side * 0.48),
-        new THREE.Vector3(wx(6), 0.52, wz(6) + side * 0.48),
+        new THREE.Vector3(wx(6), 0.72, wz(6) + side * 0.48),
         new THREE.Vector3(wx(7), 0.38, wz(6) + side * 0.48),
-        new THREE.Vector3(wx(8), 0.52, wz(6) + side * 0.48),
-        new THREE.Vector3(wx(9), 0.72, wz(6) + side * 0.48),
+        new THREE.Vector3(wx(8), 0.72, wz(6) + side * 0.48),
       ];
       const rope = new THREE.Mesh(
         new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 28, 0.024, 6, false),
@@ -6527,7 +6606,7 @@ const World = (function () {
       rope.castShadow = true;
       rope.userData.ownGeometry = true;
       g.add(rope);
-      [[6, 0.52], [7, 0.38], [8, 0.52]].forEach(([x, top]) => {
+      [[7, 0.38]].forEach(([x, top]) => {
         const h = top - 0.02;
         const lashing = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, h, 6), MAT.rope);
         lashing.position.set(wx(x), 0.02 + h / 2, wz(6) + side * 0.48);
@@ -6698,13 +6777,21 @@ const World = (function () {
       });
     });
 
-    // Flexible vestibules are the only ways between carriages. Their alternating
-    // cyan/magenta ribs make the route obvious while keeping the floor clear.
+    // Flexible vestibules are the only ways between carriages. Brass tread
+    // plates, lit insets and signal-red/cyan ribs make the routes unmistakable
+    // against the black carriage decks while keeping the floor clear.
     [5, 9].forEach((x, connectorIndex) => {
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(1, 0.18, 3), MAT.trainHull);
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.2, 3.06), MAT.trainWalkway);
       deck.position.set(wx(x), -0.08, wz(6));
       deck.userData.ownGeometry = true;
       g.add(deck);
+      [-1, 0, 1].forEach((offset, panelIndex) => {
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.035, 0.66),
+          (panelIndex + connectorIndex) % 2 ? MAT.trainPink : MAT.trainGlow);
+        panel.position.set(wx(x), 0.035, wz(6) + offset);
+        panel.userData.ownGeometry = true;
+        g.add(panel);
+      });
       [-1.42, 1.42].forEach(z => {
         for (let i = 0; i < 4; i++) {
           const rib = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.07),
@@ -6771,11 +6858,13 @@ const World = (function () {
     } else if (state.level.layout === 'haunted-train') {
       buildHauntedTrainFloor(g);
     } else {
+      const { x0, y0, x1, y1 } = arenaBounds(state.level);
       const floor = new THREE.Mesh(
-        new THREE.PlaneGeometry(CFG.COLS * CFG.TILE, CFG.ROWS * CFG.TILE),
+        new THREE.PlaneGeometry((x1 - x0 + 1) * CFG.TILE, (y1 - y0 + 1) * CFG.TILE),
         MAT.ground
       );
       floor.rotation.x = -Math.PI / 2;
+      floor.position.set(wx((x0 + x1) / 2), 0, wz((y0 + y1) / 2));
       floor.receiveShadow = true;
       floor.userData.ownGeometry = true;
       g.add(floor);
@@ -6796,7 +6885,8 @@ const World = (function () {
         if (state.grid[idx(x, y)] !== CELL.HARD) continue;
         if (state.voids && state.voids[idx(x, y)]) continue;
         if (state.clockwork && state.clockwork.cells.has(key(x, y))) continue;
-        const edge = x === 0 || y === 0 || x === CFG.COLS - 1 || y === CFG.ROWS - 1;
+        const { x0, y0, x1, y1 } = arenaBounds(state.level);
+        const edge = x === x0 || y === y0 || x === x1 || y === y1;
         (edge ? ringCells : pillarCells).push([x, y]);
       }
     }
@@ -7073,8 +7163,17 @@ const World = (function () {
 
   function render() { state.renderer.render(state.scene, state.camera); }
 
+  async function warmShaders() {
+    if (!state.renderer || !state.scene || !state.camera) return;
+    if (typeof state.renderer.compileAsync === 'function') {
+      await state.renderer.compileAsync(state.scene, state.camera);
+    } else if (typeof state.renderer.compile === 'function') {
+      state.renderer.compile(state.scene, state.camera);
+    }
+  }
+
   return {
-    init, buildArena, applyLevel, render, updateCamera, addShake, decayShake,
+    init, buildArena, applyLevel, render, warmShaders, updateCamera, addShake, decayShake,
     updateClockwork, settleClockwork,
     fit: fitCamera,
     tintWalls,
@@ -7720,6 +7819,7 @@ const Props = (function () {
 
     // ---- Pirate Fleet ----------------------------------------------------
     cannon(g, angry) {
+      g.userData.aimsAtHazardTarget = true;
       const iron = mat(angry ? 0xd51f18 : 0x263746, {
         roughness: 0.26, metalness: 0.72,
         emissive: angry ? 0x5a0502 : 0x000000,
@@ -8235,12 +8335,20 @@ const Props = (function () {
 
   // With two throwers only the active one winds up. Omitting an index clears
   // every hand, which is what round teardown needs.
-  function windUp(k, index) {
+  function windUp(k, index, target) {
     if (index === undefined || index === null) {
       hazards.forEach(actor => windActor(actor, k));
       return;
     }
-    windActor(hazards[index % hazards.length], k);
+    const actor = hazards[index % hazards.length];
+    if (actor && target && actor.group && actor.group.userData.aimsAtHazardTarget) {
+      // The cannon barrel points down local +Z. Rotate that axis directly at
+      // the marked landing tile, so the muzzle and the bomb's flight agree.
+      const aim = Math.atan2(target.x - actor.pos[0], target.y - actor.pos[1]);
+      actor.group.rotation.y = aim;
+      actor.group.userData.rest = aim;
+    }
+    windActor(actor, k);
   }
 
   // Where the thrown bomb leaves from, in world units — the hand, not the tile.
@@ -8340,7 +8448,7 @@ const Props = (function () {
         hazards.push({ pos: [spot[0], spot[1]], group: g, bomb });
       }
       g.position.set(wx(spot[0]), 1.02, wz(spot[1]));
-      g.rotation.y = spot[2] + (i % 2 ? 0.25 : -0.2);
+      g.rotation.y = spot[2] + (kind === 'cannon' ? 0 : (i % 2 ? 0.25 : -0.2));
       // Per-spot variation, times whatever the builder asked for. A ghost and a
       // toadstool are not the same size of thing and one shared number said they
       // were.
@@ -8366,9 +8474,10 @@ const Props = (function () {
         // the left wall goes right to cross the arena; one on the front wall
         // goes back. Worked out from the spot rather than guessed, so a prop
         // moved to a different wall keeps behaving.
-        const inward = spot[0] === 0 ? { x: 1, z: 0 }
-                     : spot[0] === CFG.COLS - 1 ? { x: -1, z: 0 }
-                     : spot[1] === 0 ? { x: 0, z: 1 }
+        const { x0, y0, x1 } = arenaBounds(level);
+        const inward = spot[0] === x0 ? { x: 1, z: 0 }
+                     : spot[0] === x1 ? { x: -1, z: 0 }
+                     : spot[1] === y0 ? { x: 0, z: 1 }
                      : { x: 0, z: -1 };
         g.userData.inward = inward;
         g.userData.along = { x: inward.z, z: inward.x };   // perpendicular
@@ -8727,7 +8836,7 @@ const CharacterModels = (() => {
       copy.map.needsUpdate = true;
     }
     if (copy.isMeshStandardMaterial || copy.isMeshPhysicalMaterial) {
-      copy.roughness = 0.27;
+      copy.roughness = def.id === 'evolved-dragon' ? 0.48 : 0.64;
       copy.metalness = Math.min(copy.metalness || 0, 0.08);
       if (copy.isMeshPhysicalMaterial) {
         copy.clearcoat = Math.max(copy.clearcoat || 0, 0.14);
@@ -8737,7 +8846,7 @@ const CharacterModels = (() => {
         if (copy.map) {
           copy.emissiveMap = copy.map;
           copy.emissive.setHex(0xffffff);
-          copy.emissiveIntensity = 0.15;
+          copy.emissiveIntensity = 0.025;
         } else {
           copy.emissive.setHex(def.color).multiplyScalar(0.06);
           copy.emissiveIntensity = 0.38;
@@ -8762,33 +8871,35 @@ const CharacterModels = (() => {
 
     const shell = new T.Group();
     shell.name = 'BomberOGShell';
-    // His bomb-and-glove victory pose is wider than the source bird rig. A
-    // restrained horizontal fit keeps that pose inside one Bomber Fan tile.
-    shell.scale.x = 0.88;
+    // Keep Bomberman deliberately compact beside the other upright fighters.
+    // This is a further 25% reduction from his previously approved scale.
+    shell.scale.set(0.5148, 0.585, 0.585);
+    // Standard materials keep the polished cartoon look without compiling the
+    // heavier clear-coat shader once for every colour on the first game frame.
     const material = (color, roughness = 0.25, metalness = 0.02) =>
-      new T.MeshPhysicalMaterial({
-        color, roughness, metalness, clearcoat: 0.62,
-        clearcoatRoughness: 0.22, flatShading: false,
-      });
+      new T.MeshStandardMaterial({ color, roughness, metalness, flatShading: false });
     const ink = material(0x090a10, 0.34, 0.04);
     const white = material(0xfffbff, 0.2);
     const blue = material(0x2446f5, 0.21);
     const pink = material(0xff376f, 0.18);
     const yellow = material(0xffdf78, 0.3);
-    const purple = material(0x40307e, 0.26);
-    const fuse = material(0xc69a67, 0.7);
-    const sphere = new T.SphereGeometry(1, 24, 18);
-    const cylinder = new T.CylinderGeometry(1, 1, 1, 18);
+    // At arena scale these silhouettes are only a few dozen pixels high. The
+    // previous segment counts spent vertices without adding visible roundness.
+    const sphere = new T.SphereGeometry(1, 18, 12);
+    const cylinder = new T.CylinderGeometry(1, 1, 1, 12);
     const box = new T.BoxGeometry(1, 1, 1);
-    const torus = new T.TorusGeometry(1, 0.1, 10, 28);
+    const torus = new T.TorusGeometry(1, 0.1, 8, 20);
     const part = (name, geometry, mat, position, scale, parent = shell, rotation) => {
       const mesh = new T.Mesh(geometry, mat);
       mesh.name = name;
       mesh.position.set(...position);
       mesh.scale.set(...scale);
       if (rotation) mesh.rotation.set(...rotation);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
+      // Let the large silhouette parts cast; omitting tiny face/belt/fuse
+      // details removes more than half of BomberOG's shadow-pass draw calls.
+      const smallDetail = /Belt|Buckle|Face|Eye|Brow|Antenna|Cap|Fuse/.test(name);
+      mesh.castShadow = !smallDetail;
+      mesh.receiveShadow = !smallDetail;
       parent.add(mesh);
       return mesh;
     };
@@ -8839,24 +8950,9 @@ const CharacterModels = (() => {
     const leftLeg = makeLeg(-1);
     const rightLeg = makeLeg(1);
 
-    // The bomb sits behind the glove so the silhouette reads clearly from both
-    // the menu camera and the high arena camera.
-    const bomb = new T.Group();
-    bomb.name = 'BomberOGBomb';
-    bomb.position.set(-1.17, 2.9, -0.08);
-    shell.add(bomb);
-    part('BombShell', sphere, purple, [0, 0, 0], [0.68, 0.68, 0.68], bomb);
-    part('BombCapOutline', cylinder, ink, [0.02, 0.64, 0], [0.23, 0.23, 0.23], bomb);
-    part('BombCap', cylinder, purple, [0.02, 0.67, 0.015], [0.17, 0.2, 0.17], bomb);
-    [-0.06, 0.12, 0.3].forEach((y, index) => {
-      part(`BombFuse${index + 1}`, cylinder, index === 1 ? ink : fuse,
-        [0.06 + index * 0.06, 0.83 + y, 0], [0.065, 0.22, 0.065], bomb,
-        [0, 0, -0.18 - index * 0.08]);
-    });
-
     model.add(shell);
     model.userData.bomberOGRig = {
-      shell, leftArm, rightArm, leftLeg, rightLeg, bomb, antennaBall,
+      shell, leftArm, rightArm, leftLeg, rightLeg, antennaBall,
     };
   }
 
@@ -8872,7 +8968,6 @@ const CharacterModels = (() => {
     rig.rightArm.rotation.z = 0.82 - step * 0.08 + hero * 1.05;
     rig.leftLeg.rotation.z = -0.16 + step * 0.09;
     rig.rightLeg.rotation.z = 0.16 - step * 0.09;
-    rig.bomb.rotation.z = Math.sin(t * 2.1) * 0.055;
     const pulse = 1 + Math.sin(t * 4.2) * 0.035;
     rig.antennaBall.scale.setScalar(0.29 * pulse);
   }
@@ -8917,6 +9012,16 @@ const CharacterModels = (() => {
   }
 
   function create(def) {
+    if (def.id === 'hulk') {
+      const group = createHulk(THREE);
+      addPlayerStatusSprites(group);
+      const aura = new THREE.Mesh(new THREE.SphereGeometry(0.52, 16, 12),
+        new THREE.MeshBasicMaterial({color:0x7bd83a,transparent:true,opacity:0.2,depthWrite:false}));
+      aura.position.y = 0.5; aura.visible = false; group.add(aura);
+      group.userData.aura = aura;
+      group.userData.modelPromise = Promise.resolve(true);
+      return group;
+    }
     const group = new THREE.Group();
     group.userData.combatClass = def.id || def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     group.userData.modelReady = false;
@@ -12784,7 +12889,7 @@ const UI = (function () {
           <div>
             <h2>LOADOUT</h2>
           </div>
-          <span class="scount">20 FIGHTERS</span>
+          <span class="scount">${PLAYER_DEFS.length} FIGHTERS</span>
         </div>
         <div class="sbody">
           <div id="spreview">
@@ -13881,6 +13986,8 @@ const Game = (function () {
   const g = {
     state: STATE.MENU,
     paused: false,
+    preparingMatch: false,
+    prepareToken: 0,
     players: [],
     bombs: [],
     bombMap: new Map(),
@@ -13894,8 +14001,8 @@ const Game = (function () {
     round: 1,
     seed: 12345,
     // The front screen opens on the settings most people want: one human
-    // against three easy bots, a random map, first to two.
-    opts: { humans: 1, difficulty: 'easy', wins: 2, level: 'random' },
+    // against three normal bots, a random map, first to two.
+    opts: { humans: 1, difficulty: 'normal', wins: 2, level: 'random' },
     menuSel: 0,
     selRow: 0,             // fighter index, or PLAYER_DEFS.length for FIGHT
     selectedClass: 0,      // one of the twenty PLAYER_DEFS
@@ -14285,8 +14392,8 @@ const Game = (function () {
       const cam = new THREE.PerspectiveCamera(29, 1, 0.1, 40);
       cam.position.set(0.08, 0.86, 3.55);
       cam.lookAt(0.08, 0.33, 0);
-      scene.add(new THREE.HemisphereLight(0xfff6e8, 0x31284d, 2.35));
-      const key = new THREE.DirectionalLight(0xffefd6, 3.35);
+      scene.add(new THREE.HemisphereLight(0xf0f4ff, 0x252131, 1.25));
+      const key = new THREE.DirectionalLight(0xffefd6, 2.8);
       key.position.set(2.4, 4, 3.2);
       key.castShadow = true;
       key.shadow.mapSize.set(1024, 1024);
@@ -14310,10 +14417,10 @@ const Game = (function () {
       // background is a silhouette of nothing — Cursed Skull and the stock
       // shell on a dark level both vanished before this was added.
       const plinth = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.5, 1.6, 0.12, 40),
-        new THREE.MeshStandardMaterial({ color: 0x858b95, roughness: 0.62, metalness: 0.24 })
+        new THREE.CylinderGeometry(0.68, 0.74, 0.08, 40),
+        new THREE.MeshStandardMaterial({ color: 0x252d39, roughness: 0.8, metalness: 0.12 })
       );
-      plinth.position.set(0.2, -0.47, 0);
+      plinth.position.set(0, -0.44, 0);
       plinth.receiveShadow = true;
       scene.add(plinth);
       const haloMaterial = new THREE.MeshBasicMaterial({
@@ -14356,16 +14463,19 @@ const Game = (function () {
     // which could make the entire roster appear back-first.
     pv.turn.rotation.y = -0.28;
     const previewDef = PLAYER_DEFS[g.selectedClass];
-    pv.rim.color.setHex(PORTRAIT_CAPTURE_MODE ? 0xffffff : previewDef.color);
-    pv.fill.color.setHex(PORTRAIT_CAPTURE_MODE ? 0xffffff : (previewDef.trim || previewDef.color)).lerp(new THREE.Color(0xffffff), 0.18);
+    pv.rim.color.setHex(0xb9d9ff);
+    pv.fill.color.setHex(0xe8efff);
     pv.halo.material.color.setHex(previewDef.color);
     pv.orbit.material.color.setHex(previewDef.trim || previewDef.color);
     pv.halo.visible = !PORTRAIT_CAPTURE_MODE;
     pv.orbit.visible = !PORTRAIT_CAPTURE_MODE;
     pv.mesh = Player.buildMesh(previewDef, defaultLoadout());
-    Player.applyViewScale(pv.mesh, previewDef.flying ? 0.68 : 0.60);
+    const previewScale = PORTRAIT_CAPTURE_MODE && previewDef.id === 'bomber-og'
+      ? 0.94 : (previewDef.flying ? 0.68 : 0.60);
+    Player.applyViewScale(pv.mesh, previewScale);
     pv.mesh.position.set(0, -0.4, 0);
     pv.turn.add(pv.mesh);
+    pv.framed = false;
     pv.bomb = null;
   }
 
@@ -14386,6 +14496,16 @@ const Game = (function () {
       r.setSize(w, hh, false);
     }
     pv.cam.aspect = rect.width / rect.height;
+    if (pv.mesh.userData.modelReady && (!pv.framed || pv.framedAspect !== pv.cam.aspect)) {
+      pv.turn.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(pv.mesh.userData.modelRoot);
+      const size = box.getSize(new THREE.Vector3()), centre = box.getCenter(new THREE.Vector3());
+      const halfFov = Math.tan(THREE.MathUtils.degToRad(pv.cam.fov / 2));
+      const distance = Math.max(size.y / (2 * halfFov), size.x / (2 * halfFov * pv.cam.aspect)) * 1.28 + size.z * .5;
+      pv.cam.position.set(centre.x, centre.y + size.y * .09, centre.z + distance);
+      pv.cam.lookAt(centre.x, centre.y - size.y * .025, centre.z);
+      pv.framed = true; pv.framedAspect = pv.cam.aspect;
+    }
     pv.cam.updateProjectionMatrix();
     const wasColour = r.getClearColor(new THREE.Color());
     const wasAlpha = r.getClearAlpha();
@@ -14394,7 +14514,7 @@ const Game = (function () {
     pv.orbit.rotation.z = -0.35 + stageTime * 0.035;
     const stage = PORTRAIT_CAPTURE_MODE
       ? new THREE.Color(0x0c1119)
-      : new THREE.Color(0x080b14).lerp(new THREE.Color(PLAYER_DEFS[g.selectedClass].color), 0.18);
+      : new THREE.Color(0x111923);
     r.setClearColor(stage, 1);
     r.setScissorTest(false);
     r.setViewport(0, 0, w, hh);
@@ -14434,7 +14554,7 @@ const Game = (function () {
     fill.position.set(-1.8, 1.3, 2.6); scene.add(fill);
 
     const halo = new THREE.Mesh(
-      new THREE.CircleGeometry(1.45, 48),
+      new THREE.CircleGeometry(1.25, 48),
       new THREE.MeshBasicMaterial({
         color: winner.def.color, transparent: true, opacity: 0.16,
         blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
@@ -14444,7 +14564,7 @@ const Game = (function () {
     scene.add(halo);
 
     const plinth = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.72, 0.92, 0.12, 48),
+      new THREE.CylinderGeometry(0.62, 0.78, 0.11, 48),
       new THREE.MeshStandardMaterial({
         color: 0x151821, roughness: 0.32, metalness: 0.68,
         emissive: winner.def.color, emissiveIntensity: 0.18,
@@ -14453,7 +14573,7 @@ const Game = (function () {
     plinth.position.y = -0.48;
     scene.add(plinth);
     const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(0.78, 0.025, 8, 48),
+      new THREE.TorusGeometry(0.66, 0.022, 8, 48),
       new THREE.MeshBasicMaterial({
         color: winner.def.color, transparent: true, opacity: 0.9,
         blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
@@ -14466,13 +14586,13 @@ const Game = (function () {
     const points = [];
     for (let i = 0; i < 90; i++) {
       const a = i * 2.399963;
-      const radius = 1.15 + (i % 9) * 0.12;
-      points.push(Math.cos(a) * radius, -0.35 + (i % 15) * 0.115, -0.8 + Math.sin(a) * 0.5);
+      const radius = 1.0 + (i % 9) * 0.1;
+      points.push(Math.cos(a) * radius, -0.32 + (i % 15) * 0.1, -0.8 + Math.sin(a) * 0.44);
     }
     const sparksGeo = new THREE.BufferGeometry();
     sparksGeo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
     const sparks = new THREE.Points(sparksGeo, new THREE.PointsMaterial({
-      color: winner.def.trim || winner.def.color, size: 0.035,
+      color: winner.def.trim || winner.def.color, size: 0.03,
       transparent: true, opacity: 0.82, blending: THREE.AdditiveBlending,
       depthWrite: false, toneMapped: false,
     }));
@@ -14482,11 +14602,12 @@ const Game = (function () {
     // owns its materials because opacity and scale run on different phases.
     const explosions = [
       [-0.62, 0.12, -0.34, 0.00], [0.62, 0.42, -0.36, 0.23],
-      [-0.50, 1.02, -0.48, 0.46], [0.50, 1.16, -0.5, 0.69],
-      [-0.72, 0.68, -0.58, 0.84], [0.72, -0.02, -0.42, 0.12],
+      [-0.48, 0.84, -0.48, 0.46], [0.48, 0.92, -0.5, 0.69],
+      [-0.64, 0.58, -0.58, 0.84], [0.64, -0.02, -0.42, 0.12],
     ].map(spec => {
       const group = new THREE.Group();
       group.position.set(spec[0], spec[1], spec[2]);
+      group.scale.setScalar(0.86);
       const flameMat = new THREE.MeshBasicMaterial({
         color: 0xff5a12, transparent: true, opacity: 0,
         blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
@@ -14523,8 +14644,8 @@ const Game = (function () {
     turn.rotation.y = -0.28;
     scene.add(turn);
     const mesh = Player.buildMesh(winner.def, winner.kit || defaultLoadout());
-    Player.applyViewScale(mesh, winner.def.flying ? 0.72 : 0.60);
-    mesh.position.y = -0.42;
+    Player.applyViewScale(mesh, winner.def.flying ? 0.64 : 0.54);
+    mesh.position.y = -0.39;
     turn.add(mesh);
 
     const cam = new THREE.PerspectiveCamera(28, 16 / 9, 0.1, 30);
@@ -14540,15 +14661,32 @@ const Game = (function () {
     v.cam.aspect = aspect;
     const shake = (v.blastShake || 0) * 0.018;
     v.cam.position.set(
-      (aspect < 0.72 ? 0.45 : 0.72) + (Math.random() - 0.5) * shake,
+      (aspect < 0.72 ? 0.4 : 0.62) + (Math.random() - 0.5) * shake,
       0.78 + (Math.random() - 0.5) * shake,
-      aspect < 0.72 ? 4.15 : 3.25
+      aspect < 0.72 ? 4.8 : 4.0
     );
     v.cam.lookAt(0, 0.38, 0);
     v.cam.updateProjectionMatrix();
     r.setScissorTest(false);
     r.setViewport(0, 0, w, h);
     r.render(v.scene, v.cam);
+  }
+
+  async function prepareOpeningModels(token, meshes) {
+    await Promise.allSettled(meshes.map(mesh => mesh.userData.modelPromise));
+    if (token !== g.prepareToken || !g.preparingMatch) return;
+    try {
+      // Compile while READY is on screen so the countdown and first playable
+      // frame never pay the shader cost one character at a time.
+      await World.warmShaders();
+    } catch (error) {
+      console.warn('Shader warm-up was unavailable; continuing normally.', error);
+    }
+    if (token !== g.prepareToken || !g.preparingMatch) return;
+    g.preparingMatch = false;
+    g.stateT = 0;
+    g.lastCountdown = -1;
+    UI.setCountdown(null);
   }
 
   function startMatch() {
@@ -14570,9 +14708,9 @@ const Game = (function () {
     for (let seat = 0; seat < CFG.MAX_PLAYERS; seat++) {
       const isHuman = seat < g.opts.humans;
       const p = new Player(seat, matchDefs[seat], isHuman);
-      // Solo play uses the arrow keys — the comfortable one-handed layout.
-      // With two humans, P1 takes WASD and P2 takes the arrows as usual.
-      p.keymap = isHuman ? (g.opts.humans === 1 ? KEYMAPS[1] : KEYMAPS[seat]) : null;
+      // Solo play uses the standard WASD + SPACE layout.
+      // With two humans, P1 keeps WASD and P2 uses the arrow-key layout.
+      p.keymap = isHuman ? (g.opts.humans === 1 ? KEYMAPS[0] : KEYMAPS[seat]) : null;
       if (!isHuman) AI.attach(p, g.opts.difficulty);
       g.players.push(p);
     }
@@ -14583,7 +14721,19 @@ const Game = (function () {
     UI.showHUD(true);
     World.setFraming('play');
     UI.showResults('', g.players, false);
-    startRound();
+    // Paint a real READY frame before the arena rebuild. On slower devices the
+    // synchronous board geometry work used to make Loadout look frozen.
+    g.state = STATE.INTRO;
+    g.stateT = 0;
+    g.preparingMatch = true;
+    const token = ++g.prepareToken;
+    UI.setCountdown('READY');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (token !== g.prepareToken || !g.preparingMatch) return;
+        startRound();
+        UI.setCountdown('READY');
+        prepareOpeningModels(token, g.players.map(player => player.mesh));
+      }));
   }
 
   function startRound() {
@@ -14734,6 +14884,8 @@ const Game = (function () {
     clearVictory();
     UI.showVictory('', '#ffffff', '', false, false);
     clearRoundEntities();
+    g.preparingMatch = false;
+    g.prepareToken++;
     UI.setCountdown(null);
     g.goT = 0;
     g.players.forEach(p => World.scene.remove(p.mesh));
@@ -15002,7 +15154,7 @@ const Game = (function () {
       return;
     }
     if (g.hazardT < cadence) {
-      Props.windUp((g.hazardT - windStart) / CFG.HAZARD_WINDUP, source);
+      Props.windUp((g.hazardT - windStart) / CFG.HAZARD_WINDUP, source, g.hazardTarget);
       return;
     }
 
@@ -15390,8 +15542,9 @@ const Game = (function () {
   // The tiles forming one square ring, `inset` steps in from the outer wall.
   // inset 1 is the outermost playable row/column.
   function ringTiles(inset) {
-    const x0 = inset, x1 = CFG.COLS - 1 - inset;
-    const y0 = inset, y1 = CFG.ROWS - 1 - inset;
+    const bounds = arenaBounds(g.level);
+    const x0 = bounds.x0 + inset, x1 = bounds.x1 - inset;
+    const y0 = bounds.y0 + inset, y1 = bounds.y1 - inset;
     if (x0 > x1 || y0 > y1) return [];
     const out = [];
     for (let x = x0; x <= x1; x++) {
@@ -15736,12 +15889,12 @@ const Game = (function () {
           const open = Math.min(1, age / 0.1);
           const fade = Math.max(0, 1 - age / 0.76);
           const heat = Math.max(0, 1 - age / 0.48);
-          const scale = 0.28 + open * 0.72 + age * 0.72;
+      const scale = (0.28 + open * 0.72 + age * 0.72) * 0.58;
           blast.group.scale.setScalar(scale);
           blast.group.rotation.z = t * (i % 2 ? -0.24 : 0.24);
           blast.fire.rotation.z = t * (i % 2 ? 0.55 : -0.48);
           blast.core.scale.setScalar(0.65 + open * 0.72);
-          blast.shock.scale.setScalar(0.7 + age * 3.5);
+          blast.shock.scale.setScalar(0.6 + age * 2.0);
           blast.flameMat.opacity = fade * 0.92;
           blast.coreMat.opacity = heat * 0.98;
           blast.shockMat.opacity = fade * 0.68;
@@ -15760,10 +15913,14 @@ const Game = (function () {
     if (!g.paused && !UI.isBlockedByOrientation()) {
       acc += dt;
       let guard = 0;
-      while (acc >= CFG.FIXED_DT && guard++ < 8) {
+      while (acc >= CFG.FIXED_DT && guard < 8) {
         tick(CFG.FIXED_DT);
         acc -= CFG.FIXED_DT;
+        guard++;
       }
+      // A slow asset/shader frame must not create a multi-frame spiral of
+      // catch-up work. Eight steps preserve continuity; any older debt is stale.
+      if (guard === 8 && acc >= CFG.FIXED_DT) acc = 0;
     }
 
     // The menu track follows the game's own state, checked here rather than
@@ -15781,6 +15938,11 @@ const Game = (function () {
   }
 
   function tick(dt) {
+    if (g.preparingMatch && g.state === STATE.INTRO) {
+      World.group.rotation.y = 0;
+      Input.endTick();
+      return;
+    }
     g.stateT += dt;
     g.stepIndex++;
     syncTouchVisibility();
@@ -16014,8 +16176,8 @@ if (new URLSearchParams(location.search).get('audit') === 'characters') {
         ].every(Number.isFinite);
         Player.resetShowcase(root);
         const ok = !!loaded && root.userData.modelReady && meshes >= 2 &&
-          skinnedMeshes > 0 && vertices > 0 && badValues === 0 &&
-          standardMaterials > 0 && flatShadedMaterials === 0 && animations >= 8 &&
+          (root.userData.customRig || skinnedMeshes > 0) && vertices > 0 && badValues === 0 &&
+          standardMaterials > 0 && flatShadedMaterials === 0 && animations >= (root.userData.customRig ? 3 : 8) &&
           personalityRig && personalityPoseFinite && !!FIGHTER_PERSONALITIES[def.personality] &&
           Number.isFinite(size.x + size.y + size.z) && size.x <= 0.725 && size.z <= 0.725;
         return { name: def.name, ok, meshes, skinnedMeshes, vertices, badValues,
@@ -16075,6 +16237,58 @@ window.addEventListener('load', () => {
     initStaticLoadout(error);
   }
 });
+
+// Query-only composition check for the full-screen celebration. It lets the
+// release pass inspect long names and every fighter without playing a round.
+if (new URLSearchParams(location.search).get('audit') === 'victory') {
+  window.addEventListener('load', () => requestAnimationFrame(() => {
+    const requested = new URLSearchParams(location.search).get('fighter') || 'bomber-og';
+    const def = PLAYER_DEFS.find(fighter => fighter.id === requested) || PLAYER_DEFS[0];
+    UI.showMenu(false);
+    UI.showSelect(false);
+    UI.showHUD(false);
+    Game.endRound({ def, kit: defaultLoadout(), wins: 0 });
+  }));
+}
+
+// Query-only frame-pacing audit for release checks. It deliberately observes
+// the opening few seconds, where model decoding and shader compilation used to
+// cause the most visible hitching, and leaves normal sessions untouched.
+if (new URLSearchParams(location.search).get('audit') === 'performance') {
+  window.addEventListener('load', () => {
+    const samples = [];
+    let last = performance.now();
+    let maxCalls = 0;
+    let maxTriangles = 0;
+    const finishAt = last + 7000;
+    document.documentElement.dataset.performanceAudit = 'running';
+    const sample = now => {
+      samples.push(now - last);
+      last = now;
+      const info = World.renderer && World.renderer.info && World.renderer.info.render;
+      if (info) {
+        maxCalls = Math.max(maxCalls, info.calls || 0);
+        maxTriangles = Math.max(maxTriangles, info.triangles || 0);
+      }
+      if (now < finishAt) {
+        requestAnimationFrame(sample);
+        return;
+      }
+      const sorted = samples.slice(1).sort((a, b) => a - b);
+      const percentile = value => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * value))] || 0;
+      document.documentElement.dataset.performanceAudit = JSON.stringify({
+        frames: sorted.length,
+        meanMs: Number((sorted.reduce((sum, value) => sum + value, 0) / Math.max(1, sorted.length)).toFixed(2)),
+        p95Ms: Number(percentile(0.95).toFixed(2)),
+        p99Ms: Number(percentile(0.99).toFixed(2)),
+        worstMs: Number(percentile(1).toFixed(2)),
+        maxCalls,
+        maxTriangles,
+      });
+    };
+    requestAnimationFrame(sample);
+  });
+}
 
 })();
 </script>

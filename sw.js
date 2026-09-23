@@ -11,16 +11,14 @@ const ASSETS = [
   new URL('./apple-touch-icon.png', self.registration.scope).href,
   new URL('./Main Logo.png', self.registration.scope).href,
   new URL('./assets/vendor/character-bootstrap.js', self.registration.scope).href,
+  new URL('./assets/characters/hulk.js', self.registration.scope).href,
   new URL('./assets/vendor/three.module.min.js', self.registration.scope).href,
   new URL('./assets/vendor/three.core.min.js', self.registration.scope).href,
   new URL('./assets/vendor/GLTFLoader.js', self.registration.scope).href,
   new URL('./assets/vendor/SkeletonUtils.js', self.registration.scope).href,
   new URL('./assets/vendor/BufferGeometryUtils.js', self.registration.scope).href,
   ...[
-    'bunny', 'alien', 'evolved-dragon', 'skull-orc', 'orc',
-    'fish-monster', 'demon', 'tribal', 'cactoro', 'yeti',
-    'mushroom-king', 'ninja', 'evolved-goleling', 'monkroose',
-    'blue-demon', 'bomber-og', 'dino', 'flying-tribal', 'frog', 'squidle'
+    'tribal', 'bunny', 'skull-orc', 'evolved-dragon', 'orc', 'hulk'
   ].map(name => new URL(`./assets/portraits/${name}.webp`, self.registration.scope).href)
 ];
 

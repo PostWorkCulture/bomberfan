@@ -1,0 +1,143 @@
+<!doctype html><meta charset="utf-8"><title>Bomber Fan arena quality check</title>
+<style>body{background:#10131b;color:#eee;font:14px monospace}iframe{position:fixed;right:0;top:0;width:60vw;height:90vh;border:0}pre{width:38vw;white-space:pre-wrap}</style>
+<pre id="report">Running real-game arena checks…</pre><iframe src="../?quality=arena"></iframe>
+<script>
+const frame = document.querySelector('iframe');
+const report = document.querySelector('#report');
+frame.addEventListener('load', async () => {
+ try {
+  const w = frame.contentWindow;
+  const A = w.BlastArena;
+  const {World, Game, CELL, CFG, LEVELS, Player, PowerUp, PU, Bomb, Input, KEYMAPS, STATE} = A;
+  const g = Game._debug;
+  g.paused = true;
+  const failures = [], rows = [];
+  const assert = (ok, message) => { if (!ok) failures.push(message); };
+  const key = (x,y) => `${x},${y}`;
+  const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+  const rng = seed => () => { seed = (Math.imul(seed,1664525)+1013904223)|0; return (seed>>>0)/4294967296; };
+  const flood = (start, pass) => {
+    const seen = new Map([[key(start.x,start.y),0]]), queue = [[start.x,start.y]];
+    for(let i=0;i<queue.length;i++) {
+      const [x,y]=queue[i];
+      for(const [dx,dy] of dirs) {
+        const nx=x+dx,ny=y+dy,k=key(nx,ny);
+        if(nx<0||ny<0||nx>=CFG.COLS||ny>=CFG.ROWS||seen.has(k)||!pass(nx,ny)) continue;
+        seen.set(k,seen.get(key(x,y))+1); queue.push([nx,ny]);
+      }
+    }
+    return seen;
+  };
+  const blastCells = (x,y,range) => {
+    const set = new Set([key(x,y)]);
+    for(const [dx,dy] of dirs) for(let n=1;n<=range;n++) {
+      const cell=World.cellAt(x+dx*n,y+dy*n);
+      if(cell===CELL.HARD)break;
+      set.add(key(x+dx*n,y+dy*n)); if(cell===CELL.SOFT)break;
+    }
+    return set;
+  };
+  for(const level of LEVELS) {
+    let minPocket=Infinity,minEscape=Infinity;
+    for(let seed=1;seed<=24;seed++) {
+      World.buildArena(rng(seed),level);
+      for(let phase=0;phase<(level.layout==='clockwork-maze'?2:1);phase++) {
+        if(phase) { World.updateClockwork(8,()=>false); World.updateClockwork(2,()=>false); }
+        const spawns=[0,1,2,3].map(i=>World.spawnFor(i));
+        const reachable=flood(spawns[0],(x,y)=>World.cellAt(x,y)!==CELL.HARD);
+        let openCount=0;
+        for(let y=0;y<CFG.ROWS;y++)for(let x=0;x<CFG.COLS;x++)if(World.cellAt(x,y)!==CELL.HARD)openCount++;
+        assert(reachable.size===openCount,`${level.id} seed ${seed} phase ${phase}: disconnected floor ${reachable.size}/${openCount}`);
+        for(const [seat,s] of spawns.entries()) {
+          assert(World.cellAt(s.x,s.y)===CELL.EMPTY,`${level.id} seed ${seed}: blocked spawn ${seat}`);
+          const pocket=flood(s,(x,y)=>World.cellAt(x,y)===CELL.EMPTY);
+          minPocket=Math.min(minPocket,pocket.size);
+          const blast=blastCells(s.x,s.y,2);
+          const escape=[...pocket].filter(([k])=>!blast.has(k)).map(([,d])=>d);
+          const distance=escape.length?Math.min(...escape):Infinity;
+          minEscape=Math.min(minEscape,distance);
+          assert(distance/CFG.BASE_SPEED<CFG.BOMB_FUSE-0.2,`${level.id} seed ${seed} phase ${phase}: no first-bomb escape for seat ${seat}`);
+        }
+        if(level.rule==='pads') {
+          let pads=0;
+          for(let y=0;y<CFG.ROWS;y++)for(let x=0;x<CFG.COLS;x++)if(World.ruleAt(x,y)===A.RULE.PAD){pads++;assert(!!World.padTwin(x,y),'unpaired pad');}
+          assert(pads===4,`${level.id}: expected four working teleport pads, got ${pads}`);
+        }
+        if(level.rule==='belts') {
+          for(let y=0;y<CFG.ROWS;y++)for(let x=0;x<CFG.COLS;x++) {
+            const d=World.beltAt(x,y);
+            if(d){
+              assert(World.cellAt(x+d.x,y+d.y)!==CELL.HARD,`factory: belt points into wall at ${x},${y}`);
+              assert(!!World.beltAt(x+d.x,y+d.y),`factory: broken conveyor loop at ${x},${y}`);
+            }
+          }
+        }
+      }
+      if(seed%6===0) await new Promise(resolve=>setTimeout(resolve,0));
+    }
+    const b=level.bounds;
+    if(b)assert(b.x1-b.x0+1<=12&&b.y1-b.y0+1<=12,`${level.id}: oversized`);
+    rows.push({level:level.name,footprint:b?`${b.x1-b.x0+1}x${b.y1-b.y0+1}`:'custom platforms',seeds:24,minStartingArea:minPocket,minEscapeSteps:minEscape});
+    report.textContent=JSON.stringify({status:'running',rows,failures},null,2);
+  }
+  // Actual input, pickup and detonation code, using a clear test arena.
+  World.buildArena(rng(77),LEVELS[0]); g.level=LEVELS[0];
+  for(let y=2;y<=10;y++)for(let x=3;x<=11;x++)World.setCell(x,y,CELL.EMPTY);
+  const p=new Player(0,A.PLAYER_DEFS[0],true);
+  p.keymap=KEYMAPS[0];p.gx=7;p.gy=6;
+  g.players=[p];g.state=STATE.PLAY;g.paused=false;g.roundTime=100;
+  // Avoid round-end transitions while exercising controls and explosions.
+  const dummy=new Player(1,A.PLAYER_DEFS[1],true);dummy.gx=11;dummy.gy=10;dummy.invuln=100;
+  g.players.push(dummy);UIFix();
+  function UIFix(){ A.UI.buildCards(g.players); }
+  Input.press('KeyD');Game.advance(0.25);Input.release('KeyD');
+  assert(p.gx>7.5,'D did not move P1 right');
+  Input.press('KeyA');Game.advance(0.25);Input.release('KeyA');
+  Input.press('KeyW');Game.advance(0.25);Input.release('KeyW');assert(p.gy<5.5,'W did not move P1 up');
+  Input.press('KeyS');Game.advance(0.25);Input.release('KeyS');
+  assert(Math.abs(p.gx-7)<0.2&&Math.abs(p.gy-6)<0.2,'WASD return movement failed');
+  const apply=id=>PowerUp.prototype.apply.call({id,def:{label:id}},p);
+  assert(p.fire===2,'initial player range is not 2');
+  apply(PU.BOMB);apply(PU.SPEED);apply(PU.KICK);apply(PU.SHIELD);
+  assert(p.fire===2,'non-fire pickup increased range');
+  for(let expected=2;expected<=4;expected++) {
+    p.gx=7;p.gy=6;p.invuln=100;p.activeBombs=0;p.ignoreBombs.clear();
+    Input.press('Space');Game.advance(CFG.FIXED_DT);Input.release('Space');
+    const bomb=Game.bombs.find(b=>b.owner===p&&!b.dead);
+    assert(!!bomb,`Space did not place bomb at range ${expected}`);
+    if(bomb){assert(bomb.fire===expected,'bomb range differs from player range');bomb.fuse=0;Game.advance(CFG.FIXED_DT);}
+    const blast=Game.blasts[Game.blasts.length-1];
+    const expectedTiles=blastCells(7,6,expected);
+    assert(blast&&blast.tiles.size===expectedTiles.size&&[...expectedTiles].every(k=>blast.tiles.has(k)),`actual explosion footprint incorrect for range ${expected}`);
+    for(const b of g.blasts)b.dispose();g.blasts=[];
+    if(expected<4){apply(PU.FIRE);assert(p.fire===expected+1,'Fire pickup increment is not exactly 1');}
+  }
+  g.paused=true;
+  const simulations=[];
+  for(const level of LEVELS) {
+    g.opts.level=level.id;g.opts.humans=1;g.opts.difficulty='hard';
+    Game.toSelect();w.document.querySelector('[data-srow="fight"]').click();
+    const deadline=performance.now()+30000;
+    while(g.preparingMatch&&performance.now()<deadline)await new Promise(resolve=>setTimeout(resolve,50));
+    assert(!g.preparingMatch,`${level.id}: opening never became ready`);
+    g.paused=false;Game.advance(CFG.ROUND_INTRO+0.1);
+    assert(g.players[0].keymap.up==='KeyW'&&g.players[0].keymap.action[0]==='Space',`${level.id}: actual solo map incorrect`);
+    const starts=g.players.map(p=>[p.gx,p.gy]);
+    const moved=new Set();
+    g.players.forEach(p=>{p.isHuman=false;A.AI.attach(p,'hard');});
+    for(let step=0;step<1800&&g.state===STATE.PLAY;step++) {
+      Game.advance(CFG.FIXED_DT);
+      g.players.forEach((p,i)=>{if(Math.hypot(p.gx-starts[i][0],p.gy-starts[i][1])>0.5)moved.add(i);});
+    }
+    const bombs=g.players.reduce((n,p)=>n+(p.bombsLaid||0),0);
+    assert(moved.size===4,`${level.id}: bot movement stalled (${moved.size}/4 moved)`);
+    assert(bombs>0,`${level.id}: no bombs placed during simulation`);
+    simulations.push({level:level.name,playersMoved:moved.size,bombsPlaced:bombs,state:g.state});
+    g.paused=true;
+    report.textContent=JSON.stringify({status:'running simulations',rows,simulations,failures},null,2);
+  }
+  const result={status:failures.length?'FAIL':'PASS',rows,simulations,checks:'192 generated maps; both maze orientations; connected floors; 864 spawn/escape checks; teleport pairs; complete conveyor loop; live WASD and Space; actual blast footprints 2/3/4; non-fire pickups; eight 30-second bot simulations',failures};
+  report.textContent=JSON.stringify(result,null,2);document.documentElement.dataset.result=JSON.stringify(result);
+ }catch(error){report.textContent=error.stack;document.documentElement.dataset.result=JSON.stringify({status:'ERROR',error:error.stack});}
+});
+</script>

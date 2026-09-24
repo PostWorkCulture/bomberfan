@@ -1,11 +1,12 @@
-<!doctype html><meta charset="utf-8"><title>Six fighter quality check</title>
+<!doctype html><meta charset="utf-8"><title>Full roster quality check</title>
 <style>body{background:#151b24;color:white;font:14px monospace}iframe{position:fixed;right:0;top:0;width:512px;height:512px;border:0}pre{width:35vw;white-space:pre-wrap}</style>
-<pre id="report">Loading six fighters…</pre><iframe></iframe>
+<pre id="report">Loading thirteen fighters…</pre><iframe></iframe>
 <script>
 const frame=document.querySelector('iframe'), report=document.querySelector('#report');
+const fighters=['tribal','bunny','skull-orc','evolved-dragon','orc','hulk','batman','bowser','buzz','donatello','joker','marshmallow','minion'];
 (async()=>{
  const rows=[],failures=[];
- for(const id of ['tribal','bunny','skull-orc','evolved-dragon','orc','hulk']) {
+ for(const id of fighters) {
   await new Promise(resolve=>{frame.onload=resolve;frame.src=`../?preview=${id}&portraitCapture=1&audit=characters`;});
   const w=frame.contentWindow,A=w.BlastArena,g=A.Game._debug;
   const deadline=performance.now()+30000;
@@ -15,7 +16,7 @@ const frame=document.querySelector('iframe'), report=document.querySelector('#re
   while(w.document.documentElement.dataset.characterAudit==='running'&&performance.now()<deadline)await new Promise(r=>setTimeout(r,50));
   const audit=JSON.parse(w.document.documentElement.dataset.characterAudit||'null');
   if(audit?.failures.length)failures.push(...audit.failures);
-  if(A.PLAYER_DEFS.length!==6)failures.push('roster is not six');
+  if(A.PLAYER_DEFS.length!==fighters.length)failures.push('roster count mismatch');
   if(A.Game.opts.difficulty!=='normal')failures.push('default is not normal');
   if(!g.preview.mesh.userData.signatureEffect)failures.push(`${id}: missing signature effect`);
   if(g.preview.mesh.userData.effectParticleCount>16)failures.push(`${id}: effect exceeds particle budget`);
@@ -32,7 +33,7 @@ const frame=document.querySelector('iframe'), report=document.querySelector('#re
  const layouts=[];
  for(const [width,height] of [[390,844],[844,390],[1280,720]]) {
   frame.style.width=width+'px';frame.style.height=height+'px';
-  for(const id of ['tribal','bunny','skull-orc','evolved-dragon','orc','hulk']) {
+  for(const id of fighters) {
    await new Promise(resolve=>{frame.onload=resolve;frame.src=`../?preview=${id}&layoutReview=1`;});
    const w=frame.contentWindow,A=w.BlastArena,g=A.Game._debug,T=w.BFCharacter3D.THREE;
    while(!g.preview?.mesh?.userData.modelReady)await new Promise(r=>setTimeout(r,50));
@@ -45,7 +46,7 @@ const frame=document.querySelector('iframe'), report=document.querySelector('#re
    }
    const cards=[...w.document.querySelectorAll('.charpick')],fight=w.document.querySelector('[data-srow="fight"]');
    const onScreen=el=>{const r=el.getBoundingClientRect();return r.width>0&&r.height>0&&r.left>=0&&r.right<=width+1&&r.top>=0&&r.bottom<=height+1;};
-   const ok=!clipped&&cards.length===6&&cards.every(onScreen)&&onScreen(fight);
+   const ok=!clipped&&cards.length===fighters.length&&cards.every(onScreen)&&onScreen(fight);
    if(!ok)failures.push({id,width,height,clipped,cardsFit:cards.every(onScreen),fightFits:onScreen(fight)});
    layouts.push({id,width,height,ok});
   }

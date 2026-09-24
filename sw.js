@@ -13,13 +13,15 @@ const ASSETS = [
   new URL('./assets/vendor/character-bootstrap.js', self.registration.scope).href,
   new URL('./assets/characters/hulk.js', self.registration.scope).href,
   new URL('./assets/characters/fighter-finish.js', self.registration.scope).href,
+  new URL('./assets/characters/reference-fighters.js', self.registration.scope).href,
   new URL('./assets/vendor/three.module.min.js', self.registration.scope).href,
   new URL('./assets/vendor/three.core.min.js', self.registration.scope).href,
   new URL('./assets/vendor/GLTFLoader.js', self.registration.scope).href,
   new URL('./assets/vendor/SkeletonUtils.js', self.registration.scope).href,
   new URL('./assets/vendor/BufferGeometryUtils.js', self.registration.scope).href,
   ...[
-    'tribal', 'bunny', 'skull-orc', 'evolved-dragon', 'orc', 'hulk'
+    'tribal', 'bunny', 'skull-orc', 'evolved-dragon', 'orc', 'hulk',
+    'batman', 'bowser', 'buzz', 'donatello', 'joker', 'marshmallow', 'minion'
   ].map(name => new URL(`./assets/portraits/${name}.webp`, self.registration.scope).href)
 ];
 

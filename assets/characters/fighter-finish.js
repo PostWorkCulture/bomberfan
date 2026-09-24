@@ -7,6 +7,13 @@ const LOOKS = {
   'evolved-dragon': { skin: 0x4379c4, glow: 0xff6327, label: 'Dragon cinders' },
   orc: { skin: 0xb32c48, glow: 0xf04478, label: 'Crimson ash' },
   hulk: { skin: 0x568e32, glow: 0x80ea46, label: 'Gamma shimmer' },
+  batman: { glow: 0x7396c4, label: 'Night motes' },
+  bowser: { glow: 0xff8a32, label: 'Embers' },
+  buzz: { glow: 0x7be2ff, label: 'Ion sparks' },
+  donatello: { glow: 0xa286eb, label: 'Violet sparks' },
+  joker: { glow: 0xd667e0, label: 'Joker glitter' },
+  marshmallow: { glow: 0xb9e6ff, label: 'Stage shimmer' },
+  minion: { glow: 0xffdc65, label: 'Golden motes' },
 };
 
 export function finishMaterial(T, material, def) {

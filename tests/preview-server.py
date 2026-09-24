@@ -4,7 +4,8 @@ from pathlib import Path
 import os
 
 ROOT = Path(__file__).resolve().parent.parent
-ALLOWED = {"tribal", "bunny", "skull-orc", "evolved-dragon", "orc", "hulk"}
+ALLOWED = {"tribal", "bunny", "skull-orc", "evolved-dragon", "orc", "hulk",
+           "batman", "bowser", "buzz", "donatello", "joker", "marshmallow", "minion"}
 
 class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):

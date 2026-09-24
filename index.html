@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="fighter-finish-20260923">
+<meta name="build" content="reference-seven-20260924">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2755,26 +2755,27 @@
     #select .sfoot .opt.go { pointer-events: auto; }
   }
 
-  /* Six-fighter layout: give the model most of the available space. */
+  /* Expanded roster: keep the preview and every selectable fighter visible. */
   #select .sbody { grid-template-columns: minmax(0,1.4fr) minmax(240px,.8fr) !important; grid-template-rows:minmax(0,1fr) !important; }
-  #select .sroster { grid-template-columns:repeat(2,minmax(0,1fr)) !important; grid-template-rows:repeat(3,minmax(0,1fr)) !important; height:100% !important; max-height:none !important; }
-  #select .charpick { flex-direction:column; justify-content:center; gap:8px; padding:10px; }
-  #select .charface { width:clamp(48px,7vw,88px); height:clamp(48px,7vw,88px); }
-  #select .charcopy b { font-size:clamp(10px,1.1vw,15px); }
+  #select .sroster { grid-template-columns:repeat(3,minmax(0,1fr)) !important; grid-template-rows:repeat(5,minmax(0,1fr)) !important; height:100% !important; max-height:none !important; }
+  #select .charpick { display:flex !important; flex-direction:column; justify-content:center; gap:4px; padding:6px; }
+  #select .charface { width:52px; height:52px; }
+  #select .charcopy b { font-size:10px; }
   #select .charindex { display:none; }
   #spreview { min-height:0 !important; }
   @media(max-width:719px) {
-    #select .sbody { grid-template-columns:minmax(0,1fr) !important; grid-template-rows:minmax(0,1fr) 150px !important; padding:3px !important; }
-    #select .sroster { grid-row:2; grid-template-columns:repeat(3,minmax(0,1fr)) !important; grid-template-rows:repeat(2,minmax(0,1fr)) !important; }
+    #select .sbody { grid-template-columns:minmax(0,1fr) !important; grid-template-rows:minmax(0,1fr) 240px !important; padding:3px !important; }
+    #select .sroster { grid-row:2; grid-template-columns:repeat(3,minmax(0,1fr)) !important; grid-template-rows:repeat(5,minmax(0,1fr)) !important; }
     #select .charpick { flex-direction:row; gap:5px; padding:4px; }
-    #select .charface { width:42px; height:42px; flex-shrink:0; }
-    #select .charcopy b { font-size:10px; }
+    #select .charface { width:32px; height:32px; flex-shrink:0; }
+    #select .charcopy b { font-size:9px; }
   }
   @media(max-height:450px) and (min-width:600px) {
     #select .sbody { grid-template-columns:minmax(0,1fr) minmax(240px,.8fr) !important; grid-template-rows:minmax(0,1fr) !important; }
-    #select .sroster { grid-column:2; grid-row:1; grid-template-columns:repeat(2,minmax(0,1fr)) !important; grid-template-rows:repeat(3,minmax(0,1fr)) !important; }
-    #select .charpick { flex-direction:row; }
-    #select .charface { width:38px; height:38px; }
+    #select .sroster { grid-column:2; grid-row:1; grid-template-columns:repeat(3,minmax(0,1fr)) !important; grid-template-rows:repeat(5,minmax(0,1fr)) !important; }
+    #select .charpick { flex-direction:column; gap:2px; padding:2px; }
+    #select .charface { width:26px; height:26px; }
+    #select .charcopy b { font-size:8px; }
   }
 </style>
 </head>
@@ -2787,6 +2788,7 @@
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { createHulk } from './assets/characters/hulk.js';
+import { createReferenceFighter, REFERENCE_FIGHTERS } from './assets/characters/reference-fighters.js';
 import { finishMaterial, addSignatureEffect } from './assets/characters/fighter-finish.js';
 (function () {
 'use strict';
@@ -3338,6 +3340,7 @@ const PLAYER_DEFS = ['tribal', 'bunny', 'skull-orc', 'evolved-dragon', 'orc']
 PLAYER_DEFS.push({ id: 'hulk', name: 'Hulk', color: 0x599631, belly: 0x94bc50,
   trim: 0x352a48, accent: 0x1a2815, model: 'procedural:hulk',
   portrait: 'assets/portraits/hulk.webp', personality: 'fierce', expression: 'Roar', altExpression: 'Smash' });
+PLAYER_DEFS.unshift(...REFERENCE_FIGHTERS);
 
 // Fixed spawn corners in grid coordinates
 const SPAWNS = [
@@ -9014,8 +9017,8 @@ const CharacterModels = (() => {
   }
 
   function create(def) {
-    if (def.id === 'hulk') {
-      const group = createHulk(THREE);
+    if (def.model.startsWith('procedural:')) {
+      const group = def.id === 'hulk' ? createHulk(THREE) : createReferenceFighter(THREE, def);
       addPlayerStatusSprites(group);
       const aura = new THREE.Mesh(new THREE.SphereGeometry(0.52, 16, 12),
         new THREE.MeshBasicMaterial({color:0x7bd83a,transparent:true,opacity:0.2,depthWrite:false}));
@@ -14167,15 +14170,16 @@ const Game = (function () {
     if (g.state === STATE.SELECT) {
       const count = PLAYER_DEFS.length;
       const onFight = g.selRow === count;
+      const columns = getComputedStyle(document.querySelector('#select .sroster')).gridTemplateColumns.split(' ').length;
       let next = g.selRow;
       if (code === 'ArrowLeft' || code === 'KeyA') {
         next = onFight ? count - 1 : (g.selRow - 1 + count) % count;
       } else if (code === 'ArrowRight' || code === 'KeyD') {
         next = onFight ? 0 : (g.selRow + 1) % count;
       } else if (code === 'ArrowUp' || code === 'KeyW') {
-        next = onFight ? count - 2 : (g.selRow - 4 + count) % count;
+        next = onFight ? count - 1 : (g.selRow - columns + count) % count;
       } else if (code === 'ArrowDown' || code === 'KeyS') {
-        next = onFight || g.selRow >= count - 4 ? count : g.selRow + 4;
+        next = onFight || g.selRow >= count - columns ? count : g.selRow + columns;
       } else if (code === 'Enter' || code === 'Space') {
         if (onFight) { Audio3.menuSelect(); startMatch(); return; }
         next = count;

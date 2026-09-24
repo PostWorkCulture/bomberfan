@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Seven new fighters — Bomberfan</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0d1420;color:#eff4fa;font:15px system-ui,sans-serif;padding:24px}
+header{max-width:1200px;margin:0 auto 22px}h1{font-size:28px;margin:0 0 8px}p{color:#aebdce;margin:0;line-height:1.5}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;max-width:1200px;margin:auto}
+a{display:block;text-decoration:none;color:inherit;background:#151f2e;border:1px solid #2b3a50;border-radius:14px;overflow:hidden}
+a:hover{border-color:#8baed4}img{display:block;width:100%;aspect-ratio:1;object-fit:cover}h2{font-size:18px;margin:14px 16px 4px}.detail{padding:0 16px 18px;font-size:12px}
+</style>
+<header><h1>Seven new fighters</h1><p>Select a character to see their animated 3D preview.</p></header>
+<main id="gallery"></main>
+<script>
+const refs=[['batman','Batman','Cowl, scalloped cape and utility belt'],['bowser','Bowser','Spiked shell, flame mane and fangs'],['buzz','Buzz','Clear helmet, chest controls and wings'],['donatello','Donatello','Purple mask, glasses, shell and bo staff'],['joker','Joker','Top hat, green waistcoat and painted grin'],['marshmallow','Marshmallow','Cross-eye helmet, white suit and utility strap'],['minion','Minion','Twin goggles, stitched overalls and fine hair']];
+document.querySelector('#gallery').innerHTML=refs.map(([id,name,detail])=>`<a href="../?preview=${id}&review=reference-seven"><img src="../assets/portraits/${id}.webp" alt="${name} in-game model"><h2>${name}</h2><p class="detail">${detail}</p></a>`).join('');
+</script></html>

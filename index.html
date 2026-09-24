@@ -2803,8 +2803,8 @@
 <script type="module" src="assets/vendor/character-bootstrap.js"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
-import { createHulk } from './assets/characters/hulk.js?v=movement-20260924';
-import { createReferenceFighter, REFERENCE_FIGHTERS } from './assets/characters/reference-fighters.js?v=movement-20260924';
+import { createHulk } from './assets/characters/hulk.js?v=uniform-height-20260924';
+import { createReferenceFighter, REFERENCE_FIGHTERS } from './assets/characters/reference-fighters.js?v=uniform-height-20260924';
 import { finishMaterial, addSignatureEffect } from './assets/characters/fighter-finish.js';
 (function () {
 'use strict';
@@ -5792,17 +5792,17 @@ const World = (function () {
       emissive: 0x301500, emissiveIntensity: 0.9,
     });
     MAT.clockwork = new THREE.MeshStandardMaterial({
-      color: 0x7b351c, roughness: 0.36, metalness: 0.72,
-      emissive: 0x321006, emissiveIntensity: 0.45,
+      color: 0x11070b, roughness: 0.42, metalness: 0.72,
+      emissive: 0x210006, emissiveIntensity: 0.25,
     });
     MAT.clockworkTrim = new THREE.MeshStandardMaterial({
-      color: 0xe0a33c, roughness: 0.28, metalness: 0.84,
-      emissive: 0x513000, emissiveIntensity: 0.4,
+      color: 0x8e071c, roughness: 0.3, metalness: 0.7,
+      emissive: 0x49000c, emissiveIntensity: 0.45,
     });
     MAT.clockworkGear = new THREE.MeshStandardMaterial({
-      color: 0xffcf5a, roughness: 0.22, metalness: 0.9,
+      color: 0x190a10, roughness: 0.3, metalness: 0.85,
     });
-    MAT.clockworkGlow = new THREE.MeshBasicMaterial({ color: 0xff5b25, toneMapped: false });
+    MAT.clockworkGlow = new THREE.MeshBasicMaterial({ color: 0xc80c27, toneMapped: false });
     state.level = L0;
     MAT.bomb = new THREE.MeshStandardMaterial({ color: bombColourFor(L0), roughness: 0.35, metalness: 0.35 });
     // Unlit + additive + toneMapped:false keeps the fire vivid orange instead
@@ -6830,6 +6830,20 @@ const World = (function () {
       trim.castShadow = true;
       body.userData.ownGeometry = trim.userData.ownGeometry = true;
       pivot.add(body, trim);
+      // Black iron, crimson spikes and paired angry eye slits on both faces.
+      // Instanced details keep the four moving gates inexpensive to render.
+      const spikes=new THREE.InstancedMesh(new THREE.ConeGeometry(.105,.3,4),MAT.clockworkTrim,5);
+      spikes.name='Crimson gate spikes';spikes.userData.ownGeometry=true;spikes.castShadow=true;
+      const detail=new THREE.Object3D();
+      for(let i=0;i<5;i++){detail.position.set((i-2)*.62,1.06,0);detail.rotation.set(0,Math.PI/4,0);detail.updateMatrix();spikes.setMatrixAt(i,detail.matrix);}
+      pivot.add(spikes);
+      const eyes=new THREE.InstancedMesh(new THREE.BoxGeometry(.20,.045,.025),MAT.clockworkGlow,12);
+      eyes.name='Crimson gate eyes';eyes.userData.ownGeometry=true;
+      let eye=0;
+      for(const face of [-1,1])for(const x of [-.9,0,.9])for(const side of [-1,1]){
+        detail.position.set(x+side*.13,.55,face*.304);detail.rotation.set(0,0,side*face*.3);detail.updateMatrix();eyes.setMatrixAt(eye++,detail.matrix);
+      }
+      pivot.add(eyes);
 
       const gears = [];
       [-0.78, 0, 0.78].forEach((x, gearIndex) => {
@@ -9120,11 +9134,11 @@ const CharacterModels = (() => {
       model.updateMatrixWorld(true);
       let box = new THREE.Box3().setFromObject(model);
       const size = box.getSize(new THREE.Vector3());
-      const fit = Math.min(
+      const fit = def.flying ? Math.min(
         0.72 / Math.max(size.x, 0.001),
         0.95 / Math.max(size.y, 0.001),
         0.72 / Math.max(size.z, 0.001)
-      );
+      ) : .4522562782221358 / Math.max(size.y, 0.001);
       model.scale.setScalar(fit);
       model.updateMatrixWorld(true);
       box = new THREE.Box3().setFromObject(model);

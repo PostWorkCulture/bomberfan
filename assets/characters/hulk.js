@@ -134,7 +134,7 @@ export function createHulk(T) {
   }
   model.updateMatrixWorld(true);
   const bounds=new T.Box3().setFromObject(model),size=bounds.getSize(new T.Vector3());
-  const fit=Math.min(.72/size.x,.95/size.y,.72/size.z);model.scale.setScalar(fit);
+  const fit=.4522562782221358/size.y;model.scale.setScalar(fit);
   model.position.y=-bounds.min.y*fit;
   const animate=(t,showcase=false)=>{
     const breath=Math.sin(t*2.0),smash=showcase?Math.pow(Math.max(0,Math.sin(t*2)),6):0;

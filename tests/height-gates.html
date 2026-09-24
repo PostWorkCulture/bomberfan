@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><title>Haunted gates and character size review</title>
+<style>body{margin:0;background:#100b10;color:#eddce0;font:14px system-ui}pre{padding:12px;white-space:pre-wrap}iframe{width:100%;height:84vh;border:0}</style>
+<pre id="report">Checking uniform character heights and Haunted House gates…</pre><iframe src="../?review=height-gates"></iframe>
+<script>
+const frame=document.querySelector('iframe'),report=document.querySelector('#report');
+frame.onload=async()=>{try{
+ const w=frame.contentWindow,A=w.BlastArena,T=w.BFCharacter3D.THREE,g=A.Game._debug,failures=[],heights=[];
+ g.paused=true;
+ for(const def of A.PLAYER_DEFS){
+  const p=new A.Player(0,def,true);await p.mesh.userData.modelPromise;
+  p.mesh.updateMatrixWorld(true);
+  const height=new T.Box3().setFromObject(p.mesh.userData.modelRoot).getSize(new T.Vector3()).y;
+  if(!def.flying&&Math.abs(height-1.19847913728866)>.002)failures.push(def.name+': incorrect standing height '+height);
+  heights.push({name:def.name,height:Number(height.toFixed(4)),flying:!!def.flying});A.World.scene.remove(p.mesh);
+ }
+ g.opts.level='haunted';g.opts.humans=1;A.Game.toSelect();w.document.querySelector('[data-srow="fight"]').click();
+ const deadline=performance.now()+30000;
+ while(g.preparingMatch&&performance.now()<deadline)await new Promise(r=>setTimeout(r,50));
+ g.paused=false;A.Game.advance(A.CFG.ROUND_INTRO+.1);g.paused=true;A.UI.setCountdown(null);
+ const spikes=[],eyes=[];A.World.scene.traverse(o=>{if(o.name==='Crimson gate spikes')spikes.push(o);if(o.name==='Crimson gate eyes')eyes.push(o);});
+ if(spikes.length!==4||eyes.length!==4)failures.push('Expected four decorated moving gates');
+ if(A.World.MAT.clockwork.color.getHex()!==0x11070b||A.World.MAT.clockworkTrim.color.getHex()!==0x8e071c)failures.push('Incorrect gate palette');
+ report.textContent=JSON.stringify({status:failures.length?'FAIL':'PASS',heights,gateCount:spikes.length,failures});
+ A.World.resize();
+ new ResizeObserver(()=>A.World.resize()).observe(frame);
+ }catch(e){report.textContent=e.stack;}};
+</script>

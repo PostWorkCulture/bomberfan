@@ -304,7 +304,8 @@ export function createReferenceFighter(T, def) {
     }
   }
   model.updateMatrixWorld(true);const bounds=new T.Box3().setFromObject(model),size=bounds.getSize(new T.Vector3());
-  const fit=Math.min(.72/size.x,(def.id==='minion'?.78:.95)/size.y,.72/size.z);model.scale.setScalar(fit);
+  // One standing height for every walker: half the former Buzz height.
+  const fit=.4522562782221358/size.y;model.scale.setScalar(fit);
   model.position.set(-(bounds.min.x+bounds.max.x)*fit/2,-bounds.min.y*fit,-(bounds.min.z+bounds.max.z)*fit/2);
   let showcase=false;
   function animate(t){

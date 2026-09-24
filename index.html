@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="six-roster-20260923">
+<meta name="build" content="fighter-finish-20260923">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -2787,6 +2787,7 @@
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
 import { createHulk } from './assets/characters/hulk.js';
+import { finishMaterial, addSignatureEffect } from './assets/characters/fighter-finish.js';
 (function () {
 'use strict';
 
@@ -3278,10 +3279,10 @@ const PLAYER_CATALOG = [
   { id: 'evolved-dragon', name: 'Deadwing', color: 0xe85e26, belly: 0x82fff4, trim: 0xc6320f, accent: 0x07667c,
     model: 'assets/characters/evolved-dragon.gltf', portrait: 'assets/portraits/evolved-dragon.webp', expression: 'Headbutt', altExpression: 'Yes', personality: 'fierce', flying: true,
   },
-  { id: 'skull-orc', name: 'Skullcrusher', color: 0x76952c, belly: 0xf3dfb9, trim: 0xc0a383, accent: 0x4f7520,
+  { id: 'skull-orc', name: 'Skullcrusher', color: 0xb87a36, belly: 0xf3dfb9, trim: 0x58402c, accent: 0xffc768,
     model: 'assets/characters/skull-orc.gltf', portrait: 'assets/portraits/skull-orc.webp', expression: 'Punch', altExpression: 'Weapon', personality: 'fierce',
   },
-  { id: 'orc', name: 'Goregrin', color: 0x7b9620, belly: 0xdfffb8, trim: 0xa7c057, accent: 0x315f24,
+  { id: 'orc', name: 'Goregrin', color: 0xb32c48, belly: 0xf7b8b8, trim: 0x30232b, accent: 0xf04478,
     model: 'assets/characters/orc.gltf', portrait: 'assets/portraits/orc.webp', expression: 'Yes', altExpression: 'Weapon', personality: 'sly',
   },
   { id: 'fish-monster', name: 'Gill', color: 0x48adc8, belly: 0x8df5e5, trim: 0x016c99, accent: 0x15658d,
@@ -8855,6 +8856,7 @@ const CharacterModels = (() => {
     }
     copy.flatShading = false;
     copy.dithering = true;
+    finishMaterial(RT.THREE, copy, def);
     copy.needsUpdate = true;
     return copy;
   }
@@ -9020,6 +9022,7 @@ const CharacterModels = (() => {
       aura.position.y = 0.5; aura.visible = false; group.add(aura);
       group.userData.aura = aura;
       group.userData.modelPromise = Promise.resolve(true);
+      addSignatureEffect(THREE, group, def);
       return group;
     }
     const group = new THREE.Group();
@@ -9089,6 +9092,7 @@ const CharacterModels = (() => {
       group.userData.personality = def.personality || 'playful';
       group.userData.personalityRig = !!(controller && controller.hasExpressiveHead);
       group.userData.animationCount = gltf.animations.length;
+      addSignatureEffect(THREE, group, def);
       group.userData.modelReady = true;
       return true;
     }).catch(error => {

@@ -12,6 +12,7 @@ const ASSETS = [
   new URL('./Main Logo.png', self.registration.scope).href,
   new URL('./assets/vendor/character-bootstrap.js', self.registration.scope).href,
   new URL('./assets/characters/hulk.js', self.registration.scope).href,
+  new URL('./assets/characters/fighter-finish.js', self.registration.scope).href,
   new URL('./assets/vendor/three.module.min.js', self.registration.scope).href,
   new URL('./assets/vendor/three.core.min.js', self.registration.scope).href,
   new URL('./assets/vendor/GLTFLoader.js', self.registration.scope).href,

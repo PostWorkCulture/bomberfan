@@ -17,6 +17,8 @@ const frame=document.querySelector('iframe'), report=document.querySelector('#re
   if(audit?.failures.length)failures.push(...audit.failures);
   if(A.PLAYER_DEFS.length!==6)failures.push('roster is not six');
   if(A.Game.opts.difficulty!=='normal')failures.push('default is not normal');
+  if(!g.preview.mesh.userData.signatureEffect)failures.push(`${id}: missing signature effect`);
+  if(g.preview.mesh.userData.effectParticleCount>16)failures.push(`${id}: effect exceeds particle budget`);
   const r=g.preview;
   const canvas=A.World.renderer.domElement;
   A.Game._renderPreview();

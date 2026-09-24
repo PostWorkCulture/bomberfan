@@ -61,6 +61,7 @@ export function createReferenceFighter(T, def) {
     part('Thigh',m,[0,-length*.24,0],[width,length*.34,width],l);
     part('Shin',m,[0,-length*.69,.005],[width*.86,length*.29,width*.86],l);
     part('Boot',boot,[0,-length,.08],[width*1.12,.105,width*1.65],l);
+    joint('KickFoot',[0,-length,.08],l);
     limbs.push({joint:l,side,kind:'leg',rest:0});return l;
   }
   function eyes(h,{y=.08,z=.245,gap=.11,iris=0x448aa3,size=.065}={}){
@@ -95,7 +96,20 @@ export function createReferenceFighter(T, def) {
     cube('Utility belt',gold,[0,.9,.04],[.62,.12,.44]);
     for(let i=-2;i<=2;i++){cube('Belt pouch',gold,[i*.115,.9,.28],[.093,.14,.055]);part('Pouch stud',black,[i*.115,.93,.31],[.012,.012,.006]);}
     const cape=panel('Scalloped cape',[[-.46,1.68],[.46,1.68],[.61,.21],[.42,.38],[.26,.14],[.11,.33],[0,.13],[-.12,.32],[-.29,.15],[-.43,.36],[-.6,.2]],capeMat);cape.position.z=-.28;
-    motions.push((t,s)=>{cape.rotation.y=Math.sin(t*1.6)*(.035+s*.04);});
+    // Hang from the shoulders, with movement-driven flutter towards the hem.
+    cape.geometry.translate(0,-1.68,0);cape.position.y=1.68;
+    const capePositions=cape.geometry.attributes.position,capeRest=capePositions.array.slice();
+    cape.frustumCulled=false;
+    motions.push((t,s)=>{
+      const move=root.userData.locomotion?.amount||0;
+      cape.rotation.x=.22*move;
+      cape.rotation.y=Math.sin(t*1.6)*(.035+s*.04)+Math.sin(t*8)*move*.075;
+      for(let i=0;i<capePositions.count;i++){
+        const weight=Math.min(1,Math.max(0,-capeRest[i*3+1]/1.55));
+        capePositions.setZ(i,capeRest[i*3+2]+Math.sin(t*(3+move*7)+weight*5+capeRest[i*3]*3)*weight*weight*(.015+move*.095));
+      }
+      capePositions.needsUpdate=true;
+    });
   }
   function bowser(){
     const gold=mat(0xe6af24,.54),cream=mat(0xe9cd89),green=mat(0x397940,.7),red=mat(0xc93c22,.5);
@@ -295,9 +309,11 @@ export function createReferenceFighter(T, def) {
   let showcase=false;
   function animate(t){
     const s=showcase?Math.max(0,Math.sin(t*1.8)):0;
+    const motion=root.userData.locomotion,move=motion?.amount||0,phase=motion?.phase||0;
     model.position.y=-bounds.min.y*fit+Math.sin(t*2)*.004;
     for(const limb of limbs){
       limb.joint.rotation.x=limb.kind==='arm'?Math.sin(t*1.8+limb.side)*.035-s*.24:Math.sin(t*1.8+limb.side)*.018;
+      limb.joint.rotation.x+=Math.sin(phase)*limb.side*move*(limb.kind==='leg'?.55:-.38);
       limb.joint.rotation.z=limb.rest+(limb.kind==='arm'?limb.side*s*.13:0);
     }
     head.rotation.y=Math.sin(t*.8)*.07;

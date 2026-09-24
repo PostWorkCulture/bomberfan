@@ -138,9 +138,10 @@ export function createHulk(T) {
   model.position.y=-bounds.min.y*fit;
   const animate=(t,showcase=false)=>{
     const breath=Math.sin(t*2.0),smash=showcase?Math.pow(Math.max(0,Math.sin(t*2)),6):0;
+    const motion=root.userData.locomotion,stride=Math.sin(motion?.phase||0)*(motion?.amount||0);
     torso.scale.y=1+breath*.008;
-    arms.forEach(({arm,forearm,side})=>{arm.rotation.z=side*(.16+breath*.013+smash*.19);arm.rotation.x=-smash*.75;forearm.rotation.x=-.20-smash*.42;});
-    legs.forEach(({leg,side})=>{leg.rotation.x=Math.sin(t*3.0+side)*.018;});
+    arms.forEach(({arm,forearm,side})=>{arm.rotation.z=side*(.16+breath*.013+smash*.19);arm.rotation.x=-smash*.75-side*stride*.32;forearm.rotation.x=-.20-smash*.42;});
+    legs.forEach(({leg,side})=>{leg.rotation.x=Math.sin(t*3.0+side)*.018+side*stride*.45;});
     head.rotation.y=Math.sin(t*.7)*.075;head.rotation.x=smash*.10;
   };
   root.userData={modelRoot:model,modelReady:true,customRig:true,combatClass:'hulk',personality:'fierce',personalityRig:true,

@@ -1,0 +1,33 @@
+<!doctype html><meta charset="utf-8"><title>Golden Kick shoes review</title>
+<style>body{margin:0;background:#101821;color:#fff;font:16px system-ui;padding:16px}iframe{width:100%;height:78vh;border:0}select,button{font:inherit;padding:8px;margin:8px}pre{white-space:pre-wrap}</style>
+<label>Character <select id="fighter"></select></label><button id="toggle">Remove golden shoes</button><pre id="report">Checking Kick equipment on all 13 fighters…</pre><iframe src="../?preview=batman"></iframe>
+<script>
+const frame=document.querySelector('iframe'),report=document.querySelector('#report'),select=document.querySelector('select');
+let active=true,checked=false;
+frame.onload=async()=>{try{
+ const A=frame.contentWindow.BlastArena,g=A.Game._debug;
+ while(!g.preview?.mesh?.userData.modelReady)await new Promise(r=>setTimeout(r,50));
+ const show=()=>{A.updateKickShoes(g.preview.mesh,active,0);document.querySelector('#toggle').textContent=active?'Remove golden shoes':'Equip golden shoes';};
+ document.querySelector('#toggle').onclick=()=>{active=!active;show();};
+ if(!checked){
+  const failures=[];
+  for(const def of A.PLAYER_DEFS){
+   const p=new A.Player(0,def,true);await p.mesh.userData.modelPromise;
+   if(p.mesh.userData.kickShoes?.visible)failures.push(def.name+': shoes before pickup');
+   A.PowerUp.prototype.apply.call({id:A.PU.KICK,def:{label:'Kick'}},p);p.syncMesh();
+   const shoes=p.mesh.userData.kickShoes;
+   const expectedScale=[.2707520956097044,.425,.425];
+   if(shoes?.children.some(b=>b.scale.toArray().some((v,i)=>Math.abs(v-expectedScale[i])>1e-10)))failures.push(def.name+': boots not uniform half-Buzz size');
+   if(!p.kick||!shoes?.visible||shoes.children.length!==2||p.mesh.userData.kickStatus.visible)failures.push(def.name+': pickup visual failed');
+   A.Player.tickCosmetics(p.mesh,1);p.syncMesh();
+   if(shoes?.children.some(b=>![b.position.x,b.position.y,b.position.z].every(Number.isFinite)))failures.push(def.name+': invalid foot position');
+   p.reset();if(shoes?.visible)failures.push(def.name+': shoes survived reset');
+   A.World.scene.remove(p.mesh);
+  }
+  report.textContent=failures.length?JSON.stringify(failures):'PASS: all 13 fighters — identical boots at 50% of original Buzz dimensions; pickup equips two shoes, no floating Kick icon, animated positions finite, round reset removes shoes.';
+  checked=true;select.innerHTML=A.PLAYER_DEFS.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  select.onchange=()=>{active=true;frame.src='../?preview='+select.value;};
+ }
+ show();
+ }catch(e){report.textContent=e.stack;}};
+</script>

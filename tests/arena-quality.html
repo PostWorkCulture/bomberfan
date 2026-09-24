@@ -76,8 +76,15 @@ frame.addEventListener('load', async () => {
       if(seed%6===0) await new Promise(resolve=>setTimeout(resolve,0));
     }
     const b=level.bounds;
-    if(b)assert(b.x1-b.x0+1<=12&&b.y1-b.y0+1<=12,`${level.id}: oversized`);
-    rows.push({level:level.name,footprint:b?`${b.x1-b.x0+1}x${b.y1-b.y0+1}`:'custom platforms',seeds:24,minStartingArea:minPocket,minEscapeSteps:minEscape});
+    if(b){
+      assert(CFG.COLS===15&&CFG.ROWS===13,`${level.id}: backing grid must be 15x13`);
+      assert(b.x0===0&&b.y0===0&&b.x1===14&&b.y1===12,`${level.id}: total footprint must be 15x13 with 13x11 interior`);
+      for(let y=0;y<13;y++)for(let x=0;x<15;x++)if(x===0||x===14||y===0||y===12)
+        assert(World.cellAt(x,y)===CELL.HARD,`${level.id}: gap in perimeter at ${x},${y}`);
+      const spawns=[0,1,2,3].map(i=>World.spawnFor(i));
+      assert(spawns.every(s=>(s.x===1||s.x===13)&&(s.y===1||s.y===11)),`${level.id}: spawns not at interior corners`);
+    }
+    rows.push({level:level.name,footprint:b?`${b.x1-b.x0+1}x${b.y1-b.y0+1}`:'custom platforms',interior:b?'13x11':'custom platforms',seeds:24,minStartingArea:minPocket,minEscapeSteps:minEscape});
     report.textContent=JSON.stringify({status:'running',rows,failures},null,2);
   }
   // Actual input, pickup and detonation code, using a clear test arena.

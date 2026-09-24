@@ -1,0 +1,57 @@
+<!doctype html><meta charset="utf-8"><title>Movement and victory music review</title>
+<style>body{margin:0;background:#101821;color:#eee;font:15px system-ui;padding:14px}iframe{width:100%;height:76vh;border:0}button,select{padding:8px;font:inherit;margin:5px}pre{white-space:pre-wrap}</style>
+<select id="fighter" aria-label="Character"></select><button id="walk">Stop walking</button><button id="round">Play round victory music</button><button id="match">Play match victory music</button><pre id="report">Checking movement…</pre><iframe src="../?preview=batman"></iframe>
+<script>
+const frame=document.querySelector('iframe'),select=document.querySelector('select'),report=document.querySelector('#report');
+let walking=true,checked=false,epoch=0;
+frame.onload=async()=>{try{
+ const A=frame.contentWindow.BlastArena,g=A.Game._debug;
+ while(!g.preview?.mesh?.userData.modelReady)await new Promise(r=>setTimeout(r,50));
+ g.paused=true;
+ if(!checked){
+  const failures=[],rows=[];
+  A.World.buildArena(()=>.5,A.LEVELS[0]);
+  for(const def of A.PLAYER_DEFS){
+   const p=new A.Player(0,def,true);await p.mesh.userData.modelPromise;
+   p.gx=7;p.gy=5;for(let x=5;x<=10;x++)A.World.setCell(x,5,A.CELL.EMPTY);
+   A.Player.resetShowcase(p.mesh);p.update(.1,{x:1,y:0},false);
+   if(p.gx<=7||p.mesh.userData.locomotion.amount<=0)failures.push(def.name+': actual movement did not drive rig');
+   const nodes=[];p.mesh.userData.modelRoot.traverse(o=>{if(/^(Leg-?1|Arm-?1|Left leg|Right leg|Left arm|Right arm|UpperLeg[._]?[LR]|UpperArm[._]?[LR])$/.test(o.name))nodes.push(o);});
+   p.mesh.userData.locomotion={amount:0,phase:0,speed:1};
+   for(let i=0;i<10;i++)A.Player.tickCosmetics(p.mesh,i*.05);
+   const before=nodes.map(o=>o.quaternion.clone());
+   p.mesh.userData.locomotion={amount:1,phase:Math.PI/2,speed:1};
+   for(let i=10;i<20;i++)A.Player.tickCosmetics(p.mesh,i*.05);
+   const changed=nodes.filter((o,i)=>o.quaternion.angleTo(before[i])>.015).length;
+   if(nodes.length && changed!==nodes.length)failures.push(def.name+': stationary limbs '+changed+'/'+nodes.length);
+   if(!def.model.startsWith('procedural:')&&!/Walk|Run|Fast_Flying/.test(p.mesh.userData.locomotionClip))failures.push(def.name+': no movement clip');
+   if(def.id==='batman'){
+    const cape=p.mesh.userData.modelRoot.getObjectByName('Scalloped cape');
+    if(!cape||cape.rotation.x<.1||cape.position.y!==1.68)failures.push('Batman: cape not moving from shoulders');
+   }
+   p.update(.3,{x:0,y:0},false);
+   if(p.mesh.userData.locomotion.amount!==0)failures.push(def.name+': walking continues after stop');
+   rows.push({name:def.name,limbs:changed,clip:p.mesh.userData.locomotionClip||'articulated gait'});
+   A.World.scene.remove(p.mesh);
+  }
+  const audio=[];
+  for(const name of ['roundWin','matchWin']){
+   const ctx=new frame.contentWindow.OfflineAudioContext(2,44100*4,44100);
+   A.Audio3._renderInto(ctx,name);const buffer=await ctx.startRendering(),samples=buffer.getChannelData(0);
+   let peak=0,energy=0;for(const v of samples){peak=Math.max(peak,Math.abs(v));energy+=v*v;}
+   if(!Number.isFinite(peak)||peak>=1||energy===0)failures.push(name+': invalid or silent audio');
+   audio.push({name,peak,rms:Math.sqrt(energy/samples.length)});
+  }
+  report.textContent=JSON.stringify({status:failures.length?'FAIL':'PASS',rows,audio,failures});
+  select.innerHTML=A.PLAYER_DEFS.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  select.onchange=()=>{epoch++;frame.src='../?preview='+select.value;};checked=true;
+ }
+ const root=g.preview.mesh;A.Player.resetShowcase(root);root.userData.locomotion={amount:1,phase:0,speed:1};
+ document.querySelector('#walk').onclick=()=>{walking=!walking;document.querySelector('#walk').textContent=walking?'Stop walking':'Start walking';};
+ document.querySelector('#round').onclick=()=>A.Audio3.roundWin();
+ document.querySelector('#match').onclick=()=>A.Audio3.matchWin();
+ const current=++epoch;let last=0;
+ function animate(now){if(current!==epoch)return;const dt=last?Math.min(.05,(now-last)/1000):0;last=now;const m=root.userData.locomotion;m.amount=walking?1:0;m.phase+=dt*10*m.amount;A.Player.tickCosmetics(root,now/1000);A.Game._renderPreview();requestAnimationFrame(animate);}
+ requestAnimationFrame(animate);
+ }catch(e){report.textContent=e.stack;}};
+</script>

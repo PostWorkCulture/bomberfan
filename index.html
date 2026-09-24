@@ -14,7 +14,7 @@
 <!-- Which build is actually loaded. Stamped by build.js from a hash of the
      source, and shown in the pause panel, so "did my update land?" is a
      question anyone can answer on their phone in two taps. -->
-<meta name="build" content="reference-seven-20260924">
+<meta name="build" content="standard-arenas-review-20260924">
 <meta name="description" content="Bomber Fan — a 3D local-multiplayer bomber game. One human, three bots, six themed maps. Works offline.">
 <!-- Added to a phone's home screen it launches full-screen, with no browser
      chrome eating the landscape height the arena needs. -->
@@ -166,7 +166,7 @@
      a height. */
   @keyframes pulse { 50% { opacity: .45; } }
 
-  /* THE START COUNTDOWN. Big, rainbow, and the ONLY timer on screen while it
+  /* THE START COUNTDOWN. Dark crimson, and the ONLY timer on screen while it
      runs — the round clock is hidden underneath it (#hud.counting #clock), so
      there is one number to look at instead of two competing for the same
      second. The rainbow is a gradient clipped to the glyph and slid sideways,
@@ -186,17 +186,23 @@
        an element whose text is painted through background-clip renders the glyph
        away entirely in Chromium. The filter here has to stay static. */
     background-image: linear-gradient(96deg,
-      #ff2f4f, #ff8a1f, #ffe11a, #46e05a, #21c9ff, #7a5cff, #ff53d8,
-      #ff2f4f, #ff8a1f, #ffe11a, #46e05a, #21c9ff, #7a5cff, #ff53d8, #ff2f4f);
+      #070204, #650611, #bd182b, #39030a, #070204, #650611, #bd182b, #39030a, #070204);
     background-size: 200% 100%;
     -webkit-background-clip: text; background-clip: text;
     color: transparent; -webkit-text-fill-color: transparent;
     /* Two drop-shadows on the clipped glyph: one hard and dark so it separates
        from a pale arena, one soft and white so it glows on a dark one. */
-    filter: drop-shadow(0 5px 0 rgba(0,0,0,.6)) drop-shadow(0 0 30px rgba(255,255,255,.4));
+    -webkit-text-stroke: 1px #300008;
+    filter: drop-shadow(0 5px 0 #000) drop-shadow(0 0 22px rgba(150,0,20,.65));
     animation: cshift 1.6s linear infinite;
   }
   #count.hidden { display: none; }
+  #count::before {
+    content:attr(data-map-name);position:absolute;bottom:calc(100% + 24px);left:50%;transform:translateX(-50%);
+    font:900 clamp(15px,2.5vw,28px)/1.15 system-ui,sans-serif;letter-spacing:3px;
+    color:#d6a5a9;-webkit-text-fill-color:#d6a5a9;-webkit-text-stroke:0;
+    text-shadow:0 2px 5px #000,0 0 12px #000;max-width:90vw;white-space:normal;text-align:center;
+  }
   /* Re-triggered per number by removing and re-adding the class */
   #count.pop { animation: cshift 1.6s linear infinite, cpop .55s cubic-bezier(.2,1.5,.35,1); }
   @keyframes cshift { from { background-position: 0 0; } to { background-position: -100% 0; } }
@@ -2673,8 +2679,8 @@
     box-shadow: 0 28px 70px rgba(0,0,0,.58), inset 0 1px rgba(255,255,255,.07), -18px 0 70px rgba(255,98,12,.08) !important;
   }
   #menu .opts::before {
-    content: 'MATCH CONTROL  //  READY';
-    display: block;
+    content: none;
+    display: none;
     margin: 0 2px 3px;
     color: rgba(255,191,105,.58);
     font: 900 9px/1 system-ui, sans-serif;
@@ -2760,6 +2766,16 @@
   #select .sroster { grid-template-columns:repeat(3,minmax(0,1fr)) !important; grid-template-rows:repeat(5,minmax(0,1fr)) !important; height:100% !important; max-height:none !important; }
   #select .charpick { display:flex !important; flex-direction:column; justify-content:center; gap:4px; padding:6px; }
   #select .charface { width:52px; height:52px; }
+  /* The portrait owns its colour and glow; no extra card or side stripe. */
+  #select .charpick,
+  #select .charpick:hover,
+  #select .charpick.sel,
+  #select .charpick.selected { background:transparent; border-color:transparent; box-shadow:none; }
+  #select .charpick::before,
+  #select .charpick i { display:none; }
+  #select .charface { border-radius:0; border-color:var(--fighter); box-shadow:0 0 10px color-mix(in srgb,var(--fighter) 45%,transparent); }
+  #select .charpick:hover .charface,
+  #select .charpick:focus-visible .charface { box-shadow:0 0 16px color-mix(in srgb,var(--fighter) 70%,transparent); }
   #select .charcopy b { font-size:10px; }
   #select .charindex { display:none; }
   #spreview { min-height:0 !important; }
@@ -2787,8 +2803,8 @@
 <script type="module" src="assets/vendor/character-bootstrap.js"></script>
 <script type="module">
 import * as THREE from './assets/vendor/three.module.min.js';
-import { createHulk } from './assets/characters/hulk.js';
-import { createReferenceFighter, REFERENCE_FIGHTERS } from './assets/characters/reference-fighters.js';
+import { createHulk } from './assets/characters/hulk.js?v=movement-20260924';
+import { createReferenceFighter, REFERENCE_FIGHTERS } from './assets/characters/reference-fighters.js?v=movement-20260924';
 import { finishMaterial, addSignatureEffect } from './assets/characters/fighter-finish.js';
 (function () {
 'use strict';
@@ -3164,16 +3180,16 @@ const LEVELS = [
   },
 ];
 
-// Enclosed arenas share an odd-sized 11x11 footprint (including walls).
+// Standard arenas use the full 15x13 grid: a 13x11 interior plus border walls.
 // Odd dimensions keep symmetric corner spawns and a connected pillar lattice.
 // The multi-platform maps retain their purpose-built geometry.
 LEVELS.filter(level => !level.layout || level.layout === 'clockwork-maze').forEach(level => {
-  level.bounds = { x0: 2, y0: 1, x1: 12, y1: 11 };
-  level.spawns = [{ x: 3, y: 2 }, { x: 11, y: 10 }, { x: 11, y: 2 }, { x: 3, y: 10 }];
+  level.bounds = { x0: 0, y0: 0, x1: 14, y1: 12 };
+  level.spawns = [{ x: 1, y: 1 }, { x: 13, y: 11 }, { x: 13, y: 1 }, { x: 1, y: 11 }];
   level.propSpots = [
-    [2, 3, Math.PI / 2], [12, 3, -Math.PI / 2],
-    [2, 6, Math.PI / 2], [12, 6, -Math.PI / 2],
-    [5, 11, Math.PI], [9, 11, Math.PI],
+    [0, 3, Math.PI / 2], [14, 3, -Math.PI / 2],
+    [0, 6, Math.PI / 2], [14, 6, -Math.PI / 2],
+    [5, 12, Math.PI], [9, 12, Math.PI],
   ];
 });
 function arenaBounds(level) {
@@ -4286,22 +4302,10 @@ const Audio3 = (function () {
                        cut: 500, attack: 0.006, hold: 0.004, room: 0.2 });
     },
     roundWin(c, o, t) {
-      // A warm major arpeggio on sine bells, booked rather than timed.
-      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
-        voice(c, o, t + i * 0.115, { type: 'sine', freq: f, dur: 0.5, vol: 0.15,
-                                     cut: 2600, cutTo: 1000, attack: 0.010, hold: 0.04, room: 1.5 });
-        voice(c, o, t + i * 0.115, { type: 'triangle', freq: f * 0.5, dur: 0.3, vol: 0.05,
-                                     cut: 1400, cutTo: 600, attack: 0.010, hold: 0.02, room: 0.5 });
-      });
+      victoryCue(c,o,t,false);
     },
     matchWin(c, o, t) {
-      [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5].forEach((f, i) => {
-        voice(c, o, t + i * 0.135, { type: 'sine', freq: f, dur: 0.55, vol: 0.16,
-                                     cut: 2800, cutTo: 1100, attack: 0.010, hold: 0.04, room: 1.6 });
-        voice(c, o, t + i * 0.135, { type: 'triangle', freq: f * 0.5, dur: 0.34, vol: 0.055,
-                                     cut: 1500, cutTo: 600, attack: 0.010, hold: 0.02, room: 0.6 });
-      });
-      thump(c, o, t, { from: 130, to: 44, dur: 0.6, vol: 0.22, room: 0.6 });
+      victoryCue(c,o,t,true);
     },
     pause(c, o, t) {
       voice(c, o, t, { type: 'sine', freq: 330, to: 220, glide: 0.12, dur: 0.26,
@@ -4357,6 +4361,21 @@ const Audio3 = (function () {
   };
 
   const SFX_NAMES = Object.keys(SFX);
+
+  // A short, low A-minor synth phrase, sharing the menu's pulse and palette.
+  // No major-key bells; the final note decays before the next round begins.
+  function victoryCue(c,out,t,final) {
+    const level=MUSIC_STEPS[musicStepIdx].gain;
+    if(level<=0)return;
+    const gain=Math.min(1,level/.6),notes=[110,164.81,220,130.81,164.81,130.81,110,82.41];
+    for(let i=0;i<16;i++){
+      const at=t+i*.15,fade=1-i/24;
+      voice(c,out,at,{type:'sawtooth',freq:notes[i%8],dur:.30,vol:.085*gain*fade,cut:850,cutTo:240,attack:.012,hold:.025,room:.7});
+      if(i%4===0)thump(c,out,at,{from:100,to:38,dur:.25,vol:.16*gain*fade,room:.3});
+    }
+    voice(c,out,t,{type:'triangle',freq:55,dur:2.75,vol:.12*gain,cut:450,cutTo:120,attack:.08,hold:.2,room:1.0});
+    if(final)voice(c,out,t+.3,{type:'triangle',freq:82.41,dur:2.3,vol:.07*gain,cut:600,cutTo:160,attack:.06,hold:.1,room:.8});
+  }
 
   // Play a named sound into the live graph, now.
   function play(name, arg) {
@@ -6173,7 +6192,7 @@ const World = (function () {
   // where to expect is a hazard; one that moves every round is noise — the same
   // argument that fixed the snowman's corner.
   const RULE_LAYOUTS = {
-    // One complete loop fits the compact arena without intersecting itself or
+    // One complete loop follows odd-coordinate lanes without intersecting itself or
     // running through the protected corner routes.
     belts() {
       const out = [];
@@ -6183,7 +6202,7 @@ const World = (function () {
         for (let x = x1; x > x0; x--) out.push([x, y1, clockwise ? RULE.BELT_L : RULE.BELT_R]);
         for (let y = y1; y > y0; y--) out.push([x0, y, clockwise ? RULE.BELT_U : RULE.BELT_D]);
       };
-      loop(5, 4, 9, 8, true);
+      loop(5, 3, 9, 9, true);
       return out;
     },
     // Two pairs, on opposite diagonals, each a long way from its twin.
@@ -6291,8 +6310,8 @@ const World = (function () {
   // and vertical footprint before crates are dealt, so a turn can never reveal
   // a crate inside a wall or silently delete a hidden pickup.
   const CLOCKWORK_SECTIONS = [
-    { x: 5, y: 4 }, { x: 9, y: 4 },
-    { x: 5, y: 8 }, { x: 9, y: 8 },
+    { x: 4, y: 4 }, { x: 10, y: 4 },
+    { x: 4, y: 8 }, { x: 10, y: 8 },
   ];
   const clockworkCells = (section, vertical) => vertical
     ? [[section.x, section.y - 1], [section.x, section.y], [section.x, section.y + 1]]
@@ -6425,24 +6444,15 @@ const World = (function () {
     // round. Occupants delay a turn; crates must never be dealt there at all.
     if (state.clockwork) state.clockwork.cells.forEach(k => safe.add(k));
 
-    // Keep a continuous perimeter lane on compact arenas. All four starts
-    // have room to turn out of a two-tile blast, even at maximum crate density.
-    if (state.level.bounds) {
-      const { x0, y0, x1, y1 } = state.level.bounds;
-      for (let y = y0 + 1; y < y1; y++) {
-        for (let x = x0 + 1; x < x1; x++) {
-          if (x === x0 + 1 || x === x1 - 1 || y === y0 + 1 || y === y1 - 1) safe.add(key(x, y));
-        }
-      }
-    }
-
+    // Spawn pockets already guarantee escape; do not leave the entire edge
+    // empty. Fill more eligible tiles while keeping bridges and rules clear.
     // 3. Scatter crates
     const puBag = weightedBag(rng);
     for (let y = 1; y < CFG.ROWS - 1; y++) {
       for (let x = 1; x < CFG.COLS - 1; x++) {
         if (grid[idx(x, y)] !== CELL.EMPTY) continue;
         if (safe.has(key(x, y))) continue;
-        if (rng() < (state.level.softDensity || CFG.SOFT_DENSITY)) {
+        if (rng() < Math.min(0.92, (state.level.softDensity || CFG.SOFT_DENSITY) + 0.16)) {
           grid[idx(x, y)] = CELL.SOFT;
           if (rng() < CFG.POWERUP_CHANCE) state.hidden.set(key(x, y), puBag());
         }
@@ -8669,6 +8679,47 @@ function addPlayerStatusSprites(group) {
   group.userData.kickStatus = make(Icons.kickDecal());
 }
 
+// Wearable Kick equipment follows the animated feet, not the overhead HUD.
+function updateKickShoes(group, active, t = 0) {
+  let shoes = group.userData.kickShoes;
+  if (!shoes && active && group.userData.modelReady) {
+    shoes = new THREE.Group(); shoes.name = 'Golden Kick Shoes';
+    const gold = new THREE.MeshStandardMaterial({color:0xffc638,metalness:.65,roughness:.28,emissive:0x9b5700,emissiveIntensity:.22});
+    const sole = new THREE.MeshStandardMaterial({color:0xa86a12,metalness:.45,roughness:.4});
+    const lace = new THREE.MeshStandardMaterial({color:0xffefaa,metalness:.35,roughness:.3});
+    const feet = [];
+    group.userData.modelRoot?.traverse(o => { if (/^(KickFoot|Bare foot|Foot[._]?[LR])$/.test(o.name)) feet.push(o); });
+    group.updateMatrixWorld(true);
+    const p = new THREE.Vector3();
+    shoes.userData.feet = [-1,1].map((side,i) => {
+      const boot = new THREE.Group();
+      const part = (geometry,material,scale,pos) => {const m=new THREE.Mesh(geometry,material);m.scale.set(...scale);m.position.set(...pos);m.castShadow=true;boot.add(m);};
+      part(new THREE.SphereGeometry(1,16,10),gold,[.14,.09,.235],[0,.025,.055]);
+      part(new THREE.SphereGeometry(1,16,8),sole,[.145,.03,.24],[0,-.055,.055]);
+      part(new THREE.CylinderGeometry(.105,.12,.14,16),gold,[1,1,1],[0,.10,-.045]);
+      for(let j=0;j<3;j++)part(new THREE.BoxGeometry(1,1,1),lace,[.13,.018,.018],[0,.105,.025+j*.035]);
+      const anchor=feet[i]||null;
+      if(anchor){anchor.getWorldPosition(p);group.worldToLocal(p);boot.position.copy(p);}
+      else boot.position.set(side*.17,.08,.04);
+      // Half Buzz's original boot dimensions, shared by the entire roster.
+      // Only foot placement varies by character; footwear size never does.
+      boot.scale.set(.2707520956097044,.425,.425);
+      boot.position.y=Math.max(.075,boot.position.y);
+      shoes.add(boot);return {boot,anchor};
+    });
+    shoes.userData.gold=gold;shoes.userData.point=p;
+    group.add(shoes);group.userData.kickShoes=shoes;
+  }
+  if (!shoes) return;
+  shoes.visible=!!active;
+  if(!active)return;
+  group.updateMatrixWorld(true);
+  for(const {boot,anchor} of shoes.userData.feet){
+    if(anchor){anchor.getWorldPosition(shoes.userData.point);group.worldToLocal(shoes.userData.point);boot.position.copy(shoes.userData.point);boot.position.y=Math.max(.075,boot.position.y);}
+  }
+  shoes.userData.gold.emissiveIntensity=.22+(Math.sin(t*4)+1)*.08;
+}
+
 
 /* ==== 40-entities.js ============================================== */
 /* ============================================================================
@@ -8720,6 +8771,8 @@ const CharacterModels = (() => {
       return null;
     };
     const idle = find('Idle', 'Flying_Idle') || clips[0];
+    const walk = find('Walk', 'Fast_Flying', 'Run') || idle;
+    const run = find('Run', 'Fast_Flying') || walk;
     const expression = find(def.expression, 'Yes', 'Wave', 'Punch', 'Headbutt') || idle;
     const altExpression = find(def.altExpression, 'Weapon', 'Punch', 'Wave', 'Yes', 'Headbutt') || expression;
     let head = model.getObjectByName('Head');
@@ -8803,10 +8856,14 @@ const CharacterModels = (() => {
 
     play(idle, false);
     return {
-      update(t) {
+      update(t, movement) {
         const dt = lastT === null ? 0 : Math.min(0.05, Math.max(0, t - lastT));
         lastT = t;
         clearHeadActing();
+        if (showcaseEpoch === null) {
+          play(movement?.amount > .08 ? (movement.speed > 1.35 ? run : walk) : idle, false);
+          if(current)current.setEffectiveTimeScale(movement?.amount > .08 ? Math.max(.7,Math.min(1.8,movement.speed)) : 1);
+        }
         mixer.update(dt);
         applyHeadActing(t);
       },
@@ -8829,6 +8886,7 @@ const CharacterModels = (() => {
         play(idle, false);
       },
       hasExpressiveHead: !!head,
+      get clipName() { return currentClip?.name; },
     };
   }
 
@@ -9080,7 +9138,8 @@ const CharacterModels = (() => {
       const controller = animationController(RT, model, gltf.animations, def);
       if (controller) {
         group.userData.cosAnim = [t => {
-          controller.update(t);
+          controller.update(t, group.userData.locomotion);
+          group.userData.locomotionClip = controller.clipName;
           animateFighterDetails(model, def, t, false);
         }];
         group.userData.showcaseAnim = t => {
@@ -9160,6 +9219,7 @@ class Player {
     this.dir = { x: 0, y: 1 };                  // last facing, used by punch
     this.ignoreBombs = new Set();
     this.bob = 0;
+    this.mesh.userData.locomotion = {amount:0,phase:0,speed:1};
     this.kickT = 0;                             // phase for the gold boot pulse
     this.statusT = 0;                           // shared float/pulse clock
     this.deathT = 0;
@@ -9289,7 +9349,7 @@ class Player {
   }
 
   update(dt, dir, wantsBomb) {
-    if (!this.alive) { this.updateDeath(dt); return; }
+    if (!this.alive) { this.mesh.userData.locomotion.amount=0; this.updateDeath(dt); return; }
 
     // Timers
     if (this.invuln > 0) this.invuln -= dt;
@@ -9439,6 +9499,10 @@ class Player {
 
     if (wantsBomb) Game.tryAction(this);
 
+    const motion = this.mesh.userData.locomotion;
+    motion.amount = approach(motion.amount, moved ? 1 : 0, dt * 8);
+    motion.speed = this.effSpeed / CFG.BASE_SPEED;
+    motion.phase += dt * 10 * motion.speed * motion.amount;
     this.bob = moved ? this.bob + dt * 13 : approach(this.bob, 0, dt * 10);
     // The boot pulse runs whether you are moving or standing still — Kick is a
     // thing you HAVE, not a thing you are doing.
@@ -9468,8 +9532,8 @@ class Player {
     const hasKick = !!(this.alive && this.kick);
     if (heartStatus && kickStatus) {
       heartStatus.visible = hasHeart;
-      kickStatus.visible = hasKick;
-      const both = hasHeart && hasKick;
+      kickStatus.visible = false;
+      const both = false;
       const bob = Math.sin(this.statusT * 3.4) * 0.035;
       const pulse = 0.265 + Math.sin(this.statusT * 4.2) * 0.012;
       heartStatus.position.set(both ? -0.17 : 0, 1.30 + bob, 0);
@@ -9479,6 +9543,7 @@ class Player {
       // Keep the pair left-to-right in world space while the fighter turns.
       if (statusRoot) statusRoot.rotation.y = -this.mesh.rotation.y;
     }
+    updateKickShoes(this.mesh, hasKick, this.kickT);
     // Gold shoes mean Kick. Compared before writing so an unchanged pair costs a
     // boolean per frame rather than a material update.
     const sm = this.mesh.userData.shoeMat;
@@ -9629,6 +9694,7 @@ class Player {
   static tickCosmetics(mesh, t) {
     const list = mesh && mesh.userData && mesh.userData.cosAnim;
     if (list) for (let i = 0; i < list.length; i++) list[i](t);
+    if(mesh?.userData.kickShoes?.visible)updateKickShoes(mesh,true,t);
   }
 
   static tickShowcase(mesh, t) {
@@ -13744,6 +13810,7 @@ const UI = (function () {
       return;
     }
     el.textContent = String(text);
+    el.dataset.mapName = /^(READY|GO!|[123])$/.test(String(text)) ? (Game._debug.level?.name || '').toUpperCase() : '';
     el.classList.remove('hidden');
     el.classList.remove('pop');
     void el.offsetWidth;                  // reflow, so the animation restarts
@@ -15876,7 +15943,10 @@ const Game = (function () {
     if (!g.paused) {
       for (let i = 0; i < g.players.length; i++) {
         const p = g.players[i];
-        if (p && p.mesh) Player.tickCosmetics(p.mesh, t);
+        if (p && p.mesh) {
+          if(g.state!==STATE.PLAY && p.mesh.userData.locomotion)p.mesh.userData.locomotion.amount=0;
+          Player.tickCosmetics(p.mesh, t);
+        }
       }
       if (g.preview && g.preview.mesh) {
         Player.tickCosmetics(g.preview.mesh, t);
@@ -16128,7 +16198,7 @@ window.BlastArena = {
   SHOE_PULSE_RATE, SHOE_PULSE_LOW, SHOE_PULSE_HIGH,
   Locker, COSMETICS, COSMETIC_SLOTS, LOCKER_ITEMS, LOCKER_MAX, lockerItem,
   cosmeticItem, kitSpecial, prizePool, PRIZE_COUNT,
-  Player, Bomb, Blast, PowerUp, STATE,
+  Player, Bomb, Blast, PowerUp, STATE, updateKickShoes,
 };
 
 // Query-only release audit. It waits for all twenty external rigs, then proves

@@ -31,6 +31,14 @@ const DROP_BOMB := 0.1182
 const DROP_FIRE := 0.0567
 const DROP_SPEED := 0.0378
 
+# ---- Endgame (sudden death), from CFG in index.html
+const CRATES_CLEAR_GRACE := 5.0   # seconds after the last crate before the walls move
+const SD_WARNING := 5.0           # warning shown this long before the walls move
+const SD_RING_INTERVAL := 4.0     # seconds between shrinking rings
+const SD_MAX_RINGS := 4           # how far the arena is allowed to close in
+const SD_DRAW_AFTER := 20.0       # seconds after the final ring before calling a draw
+const SD_BLOCK_STAGGER := 0.035   # delay between blocks within one ring
+
 # ---- Match
 const ROUND_SECONDS := 120.0
 const WINS_NEEDED := 3

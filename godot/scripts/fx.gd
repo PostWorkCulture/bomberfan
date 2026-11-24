@@ -72,8 +72,8 @@ func _ready() -> void:
 	_fuse.height = 0.18
 	_fuse.radial_segments = 6
 	_spark_dot = SphereMesh.new()
-	_spark_dot.radius = 0.04
-	_spark_dot.height = 0.08
+	_spark_dot.radius = 0.022
+	_spark_dot.height = 0.044
 	_tip_mat = StandardMaterial3D.new()
 	_tip_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_tip_mat.albedo_color = Color(1.0, 0.75, 0.35)
@@ -209,11 +209,11 @@ func make_bomb(parent: Node3D, pos: Vector3) -> Node3D:
 		sp.position = tip.position
 		sp.direction = Vector3.UP
 		sp.spread = 70.0
-		sp.initial_velocity_min = 0.6
-		sp.initial_velocity_max = 1.4
+		sp.initial_velocity_min = 0.35
+		sp.initial_velocity_max = 0.8
 		sp.gravity = Vector3(0, -3.0, 0)
-		sp.scale_amount_min = 0.035
-		sp.scale_amount_max = 0.07
+		sp.scale_amount_min = 0.018
+		sp.scale_amount_max = 0.035
 		sp.color_ramp = _spark_ramp
 		sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		n.add_child(sp)
@@ -236,7 +236,7 @@ func animate_bomb(n: Node3D, age: float, fuse_left: float, time: float) -> void:
 		m.emission_energy_multiplier = pow(urgency, 2.2) * 3.0 * (0.6 + 0.4 * sin(age * rate))
 	var tip := n.get_node_or_null("Tip") as Node3D
 	if tip:
-		tip.scale = Vector3.ONE * (0.8 + 0.5 * absf(sin(time * 31.0 + age * 7.0)))
+		tip.scale = Vector3.ONE * (0.8 + 0.3 * absf(sin(time * 31.0 + age * 7.0)))
 
 
 # ---- Explosions ----------------------------------------------------------------------
@@ -382,6 +382,24 @@ func crate_break(pos: Vector3) -> void:
 	dust.gravity = Vector3(0, 0.3, 0)
 	dust.scale_amount_min = 0.6
 	dust.scale_amount_max = 1.0
+	dust.scale_amount_curve = _grow
+	dust.color_ramp = _dust_ramp
+	dust.emitting = true
+
+
+## Dust kicked up where a sudden-death block lands.
+func crate_dust(pos: Vector3) -> void:
+	if not enabled:
+		return
+	var dust := _emitter(pos + Vector3(0, 0.1, 0), _smoke_mat, 5, 0.9)
+	dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	dust.emission_sphere_radius = 0.45
+	dust.spread = 180.0
+	dust.initial_velocity_min = 0.6
+	dust.initial_velocity_max = 1.2
+	dust.gravity = Vector3(0, 0.2, 0)
+	dust.scale_amount_min = 0.5
+	dust.scale_amount_max = 0.9
 	dust.scale_amount_curve = _grow
 	dust.color_ramp = _dust_ramp
 	dust.emitting = true

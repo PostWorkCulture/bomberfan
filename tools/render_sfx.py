@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Render Bomber Fan's sound effects to WAV files for the Godot build.
 
-A faithful offline port of the browser build's WebAudio synth (SECTION 10 —
+Mostly a faithful offline port of the browser build's WebAudio synth (SECTION 10 —
 AUDIO in ../index.html): the same voice / hiss / thump recipes, the same small
 synthesised room (convolver send 0.16 through a 3.2 kHz lowpass), the same
 -6 dB high shelf at 7 kHz and tanh soft clipper on the master.
 
     python3 tools/render_sfx.py            # writes godot/assets/audio/*.wav
+
+Version-2 sounds (V2 below) replace the browser recipes where those sounded
+cheap: GO, countdown, explosions, round/match win, plus the sudden-death cues.
 
 Deterministic: fixed seeds, so re-running produces identical files.
 """
@@ -298,6 +301,240 @@ def write_wav(path, x):
         w.writeframes((x * 32767).astype('<i2').tobytes())
 
 
+
+# ---- Version 2 sounds: richer stereo designs for the cues that sounded cheap ----
+# (GO, countdown, explosions, wins, and the new sudden-death cues). Built from
+# the same voices plus impacts, metallic partials, debris crackle and a wider
+# stereo room. Target peak levels keep them balanced against the rest.
+
+class StereoMix:
+    def __init__(self, secs):
+        n = int(SR * secs)
+        self.l = np.zeros(n)
+        self.r = np.zeros(n)
+        self.send = np.zeros(n)
+
+    def add(self, t0, sig, room=0.6, pan=0.0):
+        i = int(t0 * SR)
+        j = min(len(self.l), i + len(sig))
+        a = (pan + 1) * np.pi / 4
+        self.l[i:j] += sig[:j - i] * np.cos(a) * np.sqrt(2)
+        self.r[i:j] += sig[:j - i] * np.sin(a) * np.sqrt(2)
+        self.send[i:j] += sig[:j - i] * room
+
+
+def env_ad(n, attack, decay_curve=4.0):
+    a = max(1, int(attack * SR))
+    e = np.ones(n)
+    e[:a] = np.linspace(0, 1, a)
+    t = np.arange(n - a) / max(1, n - a)
+    e[a:] = (1 - t) ** decay_curve
+    return e
+
+
+def sweep_tone(f0, f1, dur, glide, kind='sine'):
+    n = int(dur * SR)
+    return osc(kind, param_curve(n, f0, f1, glide), n)
+
+
+def noise_band(rng, dur, lo, hi, order=2):
+    from scipy.signal import butter, sosfilt
+    n = int(dur * SR)
+    sos = butter(order, [lo, min(hi, SR * 0.45)], btype='band', fs=SR, output='sos')
+    return sosfilt(sos, rng.standard_normal(n))
+
+
+def lowpass_sweep(x, f0, f1, dur, q=0.0):
+    return biquad_tv(x, 'lowpass', param_curve(len(x), f0, f1, dur), q)
+
+
+def sat(x, drive=2.0):
+    return np.tanh(drive * x) / np.tanh(drive)
+
+
+def metal_ping(m, t0, base, dur, vol, partials=(1.0, 2.76, 5.4, 8.93), pan=0.0, room=0.9):
+    n = int(dur * SR)
+    sig = np.zeros(n)
+    for k, ratio in enumerate(partials):
+        sig += osc('sine', np.full(n, base * ratio), n) * (0.6 ** k) * env_ad(n, 0.002, 3 + k * 1.5)
+    m.add(t0, sig * vol, room, pan)
+
+
+def crackle(m, rng, t0, dur, density, vol, lo=1500, hi=6000, room=0.7):
+    n = int(dur * SR)
+    sig = np.zeros(n)
+    count = int(density * dur)
+    for _ in range(count):
+        at = int(rng.random() ** 1.6 * (n - 600))
+        ln = rng.integers(60, 500)
+        burst = rng.standard_normal(ln) * np.exp(-np.arange(ln) / (ln * 0.25))
+        sig[at:at + ln] += burst * rng.uniform(0.3, 1.0) * (1 - at / n)
+    from scipy.signal import butter, sosfilt
+    sig = sosfilt(butter(2, [lo, hi], btype='band', fs=SR, output='sos'), sig)
+    for pan in (-0.6, 0.6):
+        m.add(t0, sig * vol * rng.uniform(0.7, 1.0), room, pan)
+
+
+def v2_go(m, r):
+    # A big "GO": sub impact, a bright snap, a metallic clang and a rising
+    # power-chord stab that opens up, over a wide room.
+    n = int(1.4 * SR)
+    sub = sweep_tone(95, 32, 1.4, 0.25) * env_ad(n, 0.004, 2.2)
+    m.add(0, sat(sub * 1.2, 1.6) * 0.55, 0.3)
+    snap = noise_band(r, 0.03, 2500, 12000) * env_ad(int(0.03 * SR), 0.0005, 3)
+    m.add(0, snap * 0.35, 0.5)
+    metal_ping(m, 0.0, 196, 1.1, 0.12, pan=-0.25)
+    metal_ping(m, 0.004, 293.7, 1.0, 0.09, pan=0.3)
+    stab_n = int(0.9 * SR)
+    stab = np.zeros(stab_n)
+    for f, det in [(110, 0), (110, 9), (110, -9), (164.81, 4), (164.81, -6), (220, 3)]:
+        stab += osc('sawtooth', np.full(stab_n, f), stab_n, det)
+    stab = lowpass_sweep(stab / 6, 500, 3200, 0.12)
+    stab = lowpass_sweep(stab, 3200, 400, 0.9)
+    stab *= env_ad(stab_n, 0.012, 2.4)
+    m.add(0.015, sat(stab, 1.8) * 0.32, 1.0, -0.15)
+    m.add(0.025, sat(stab, 1.8) * 0.32, 1.0, 0.15)
+    boom = lowpass_sweep(r.standard_normal(int(0.9 * SR)), 900, 90, 0.8) * env_ad(int(0.9 * SR), 0.003, 3)
+    m.add(0, boom * 0.4, 1.1)
+
+
+def v2_countdown(hi):
+    def f(m, r):
+        # A taiko-style drum: pitched skin with a stick click and a short ring.
+        base = 150 if hi else 112
+        dur = 0.7 if hi else 0.55
+        n = int(dur * SR)
+        body = sweep_tone(base * 1.9, base, dur, 0.05) * env_ad(n, 0.002, 3.2)
+        m.add(0, sat(body, 1.5) * 0.5, 0.8)
+        skin = lowpass_sweep(r.standard_normal(int(0.12 * SR)), 2600, 300, 0.12) * env_ad(int(0.12 * SR), 0.001, 4)
+        m.add(0, skin * 0.22, 0.7)
+        click = noise_band(r, 0.008, 3000, 9000) * env_ad(int(0.008 * SR), 0.0003, 2)
+        m.add(0, click * 0.2, 0.3)
+        metal_ping(m, 0.0, base * (4.0 if hi else 3.0), 0.5 if hi else 0.35, 0.05 if hi else 0.035)
+    return f
+
+
+def v2_explode(m, r):
+    # Body, crack, roar and falling debris.
+    n = int(1.1 * SR)
+    sub = sweep_tone(120, 30, 1.1, 0.3) * env_ad(n, 0.003, 2.5)
+    m.add(0, sat(sub, 1.8) * 0.6, 0.3)
+    crack = noise_band(r, 0.04, 1200, 9000) * env_ad(int(0.04 * SR), 0.0005, 2.5)
+    m.add(0, crack * 0.45, 0.6)
+    roar_n = int(0.8 * SR)
+    roar = lowpass_sweep(r.standard_normal(roar_n), 2200, 160, 0.7) * env_ad(roar_n, 0.006, 2.2)
+    m.add(0.005, sat(roar * 0.9, 1.4) * 0.42, 1.0, -0.2)
+    roar2 = lowpass_sweep(r.standard_normal(roar_n), 1900, 140, 0.75) * env_ad(roar_n, 0.008, 2.4)
+    m.add(0.012, sat(roar2 * 0.9, 1.4) * 0.42, 1.0, 0.2)
+    crackle(m, r, 0.06, 0.9, 70, 0.07)
+
+
+def v2_wall_slam(m, r):
+    n = int(0.6 * SR)
+    m.add(0, sat(sweep_tone(85, 38, 0.6, 0.12) * env_ad(n, 0.002, 3), 2.0) * 0.55, 0.4)
+    crunch = lowpass_sweep(r.standard_normal(int(0.25 * SR)), 1800, 250, 0.2) * env_ad(int(0.25 * SR), 0.001, 3)
+    m.add(0, crunch * 0.35, 0.6)
+    crackle(m, r, 0.02, 0.4, 50, 0.05, 800, 4000)
+
+
+def v2_sd_warning(m, r):
+    # Ominous two-note horn with a tremolo: the walls are about to move.
+    dur = 1.9
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    trem = 0.75 + 0.25 * np.sin(2 * np.pi * 7 * t)
+    for start, f in [(0.0, 73.42), (0.85, 69.3)]:
+        k = int((dur - start) * SR)
+        horn = np.zeros(k)
+        for det in (-8, 0, 7):
+            horn += osc('sawtooth', np.full(k, f), k, det) + 0.5 * osc('sawtooth', np.full(k, f * 2), k, det)
+        horn = lowpass_sweep(horn / 4.5, 300, 1400, 0.5)
+        horn = lowpass_sweep(horn, 1400, 500, dur - start)
+        horn *= env_ad(k, 0.08, 1.4) * trem[:k]
+        m.add(start, sat(horn, 1.5) * 0.26, 1.0)
+    m.add(0, sweep_tone(55, 50, dur, dur) * env_ad(n, 0.1, 1.2) * 0.3, 0.2)
+
+
+def v2_sd_start(m, r):
+    v2_wall_slam(m, r)
+    n = int(1.6 * SR)
+    chord = np.zeros(n)
+    for f, det in [(55, 0), (55, 12), (82.41, -7), (110, 5), (116.54, -4)]:
+        chord += osc('sawtooth', np.full(n, f), n, det)
+    chord = lowpass_sweep(chord / 5, 1600, 200, 1.5) * env_ad(n, 0.01, 1.8)
+    m.add(0.01, sat(chord, 2.0) * 0.3, 1.0, -0.2)
+    m.add(0.02, sat(chord, 2.0) * 0.3, 1.0, 0.2)
+    metal_ping(m, 0.0, 130.8, 1.4, 0.1)
+
+
+def v2_victory(final):
+    def f(m, r):
+        # Drum fill into a bright power-chord stab and a rising bell motif.
+        bpm = 132
+        beat = 60 / bpm
+        for i, (t, fr) in enumerate([(0, 140), (beat / 2, 120), (beat, 100), (beat * 1.5, 90)]):
+            n = int(0.4 * SR)
+            m.add(t, sat(sweep_tone(fr * 1.6, fr, 0.4, 0.05) * env_ad(n, 0.002, 3), 1.5) * 0.4, 0.8, -0.3 + i * 0.2)
+        hit = beat * 2
+        n = int(1.8 * SR)
+        chord = np.zeros(n)
+        notes = [110, 164.81, 220, 277.18] if final else [110, 164.81, 220]
+        for fr in notes:
+            for det in (-7, 0, 6):
+                chord += osc('sawtooth', np.full(n, fr), n, det)
+        chord = lowpass_sweep(chord / (len(notes) * 3), 3000, 600, 1.6) * env_ad(n, 0.01, 2.0)
+        m.add(hit, sat(chord, 1.6) * 0.32, 1.0)
+        m.add(hit, sweep_tone(110, 45, 0.8, 0.2) * env_ad(int(0.8 * SR), 0.003, 2.5) * 0.45, 0.3)
+        cym = noise_band(r, 1.6, 4000, 14000) * env_ad(int(1.6 * SR), 0.002, 3.5)
+        m.add(hit, cym * 0.08, 0.8, 0.3)
+        bells = [440, 554.37, 659.25, 880] if final else [440, 554.37, 659.25]
+        for i, fr in enumerate(bells):
+            metal_ping(m, hit + 0.12 + i * beat / 2, fr, 0.9, 0.07, partials=(1.0, 2.0, 3.01, 4.2), pan=-0.3 + i * 0.2)
+    return f
+
+
+V2 = {
+    'go': (v2_go, -2.0),
+    'countdown_lo': (v2_countdown(False), -9.0),
+    'countdown_hi': (v2_countdown(True), -7.0),
+    'explode_1': (v2_explode, -2.5), 'explode_2': (v2_explode, -2.5), 'explode_3': (v2_explode, -2.5),
+    'round_win': (v2_victory(False), -5.0),
+    'match_win': (v2_victory(True), -4.0),
+    'sd_warning': (v2_sd_warning, -5.0),
+    'sd_start': (v2_sd_start, -3.0),
+    'wall_slam': (v2_wall_slam, -8.0),
+}
+
+
+def render_v2(name, fn, peak_db, seed):
+    m = StereoMix(4.0)
+    r = np.random.default_rng(seed)
+    fn(m, r)
+    irl = room_impulse(np.random.default_rng(seed + 1), 1.4, 3.0)
+    irr = room_impulse(np.random.default_rng(seed + 2), 1.4, 3.0)
+    send = biquad_tv(m.send * 0.3, 'lowpass', np.full(len(m.send), 4500.0), 0.0)
+    l = highshelf(m.l + fftconvolve(send, irl)[:len(send)] * 1.6)
+    rr = highshelf(m.r + fftconvolve(send, irr)[:len(send)] * 1.6)
+    x = np.stack([l, rr], axis=1)
+    x = np.tanh(1.3 * x) / np.tanh(1.3)
+    mono = np.max(np.abs(x), axis=1)
+    thr = 10 ** (-70 / 20) * mono.max()
+    end = np.nonzero(mono > thr)[0][-1] + int(0.02 * SR)
+    x = x[:end]
+    fade = int(0.015 * SR)
+    x[-fade:] *= np.linspace(1, 0, fade)[:, None]
+    return x / np.max(np.abs(x)) * 10 ** (peak_db / 20)
+
+
+def write_wav_stereo(path, x):
+    x = np.clip(x, -1, 1)
+    with wave.open(path, 'wb') as w:
+        w.setnchannels(2)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes((x * 32767).astype('<i2').tobytes())
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     ir = room_impulse(np.random.default_rng(1))
@@ -314,6 +551,10 @@ def main():
     for name, x in rendered.items():
         write_wav(os.path.join(OUT, name + '.wav'), x * gain)
         print(f'{name:14s} {len(x) / SR:5.2f}s  peak {20 * np.log10(np.max(np.abs(x * gain)) + 1e-9):6.1f} dBFS')
+    for i, (name, (fn, peak)) in enumerate(V2.items()):
+        x = render_v2(name, fn, peak, 500 + i * 7)
+        write_wav_stereo(os.path.join(OUT, name + '.wav'), x)
+        print(f'{name:14s} {len(x) / SR:5.2f}s  peak {peak:6.1f} dBFS  (v2 stereo)')
     amb = ambience_forest(np.random.default_rng(9))
     write_wav(os.path.join(OUT, 'ambience_forest.wav'), amb)
     print(f'{"ambience_forest":14s} {len(amb) / SR:5.2f}s  (wind bed, own level)')

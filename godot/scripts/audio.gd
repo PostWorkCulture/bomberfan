@@ -6,6 +6,7 @@ extends Node
 const SFX := [
 	"place_bomb", "explode_1", "explode_2", "explode_3", "break_block_1", "break_block_2",
 	"pickup", "death", "countdown_lo", "countdown_hi", "go", "round_win", "match_win",
+	"sd_warning", "sd_start", "wall_slam",
 ]
 const VARIANTS := {"explode": 3, "break_block": 2}
 const POOL_SIZE := 16

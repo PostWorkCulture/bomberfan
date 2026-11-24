@@ -3,22 +3,22 @@ from pathlib import Path
 import json
 import re
 
-logo_path = Path('Main Logo.png')
+logo_path = Path('assets/branding/main-logo.png')
 if not logo_path.exists():
-    raise SystemExit('Main Logo.png not found')
+    raise SystemExit('assets/branding/main-logo.png not found')
 
 img = Image.open(logo_path).convert('RGBA')
 w, h = img.size
 side = min(w, h)
 img = img.crop(((w-side)//2, (h-side)//2, (w+side)//2, (h+side)//2))
 
-for size, name in [(192, 'icon-192.png'), (512, 'icon-512.png'), (180, 'apple-touch-icon.png')]:
+for size, name in [(192, 'assets/icons/icon-192.png'), (512, 'assets/icons/icon-512.png'), (180, 'assets/icons/apple-touch-icon.png')]:
     img.resize((size, size), Image.Resampling.LANCZOS).save(name, optimize=True)
 
 mask = Image.new('RGBA', (512, 512), (9, 10, 14, 255))
 inner = img.resize((410, 410), Image.Resampling.LANCZOS)
 mask.alpha_composite(inner, ((512-410)//2, (512-410)//2))
-mask.save('icon-maskable.png', optimize=True)
+mask.save('assets/icons/icon-maskable.png', optimize=True)
 
 manifest = {
     'name': 'Bomber Fan',
@@ -30,9 +30,9 @@ manifest = {
     'background_color': '#090a0d',
     'theme_color': '#f28a18',
     'icons': [
-        {'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
-        {'src': 'icon-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
-        {'src': 'icon-maskable.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'}
+        {'src': 'assets/icons/icon-192.png', 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
+        {'src': 'assets/icons/icon-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
+        {'src': 'assets/icons/icon-maskable.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'}
     ]
 }
 Path('manifest.webmanifest').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
@@ -41,8 +41,8 @@ p = Path('index.html')
 s = p.read_text(encoding='utf-8')
 
 # Replace whichever icon links are currently in the page.
-s = re.sub(r'<link rel="icon"[^>]*>', '<link rel="icon" type="image/png" href="icon-192.png">', s, count=1)
-s = re.sub(r'<link rel="apple-touch-icon"[^>]*>', '<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">', s, count=1)
+s = re.sub(r'<link rel="icon"[^>]*>', '<link rel="icon" type="image/png" href="assets/icons/icon-192.png">', s, count=1)
+s = re.sub(r'<link rel="apple-touch-icon"[^>]*>', '<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">', s, count=1)
 
 marker = '/* BOMBER FAN MAIN LOGO BRAND REFRESH V2 */'
 if marker not in s:
@@ -85,7 +85,7 @@ if marker not in s:
     flex: 0 0 auto !important;
     margin: -1vh 0 4px !important;
     padding: 0 !important;
-    background: url('Main Logo.png') center / contain no-repeat !important;
+    background: url('assets/branding/main-logo.png') center / contain no-repeat !important;
     font-size: 0 !important;
     line-height: 0 !important;
     letter-spacing: 0 !important;

@@ -1,15 +1,15 @@
 const params = new URL(self.location.href).searchParams;
 const BUILD = params.get('v') || 'dev';
 const DOC = params.get('doc') || new URL('./', self.registration.scope).href;
-const CACHE = `bomberfan-${BUILD}-v2`;
+const CACHE = `bomberfan-${BUILD}-v3`;
 const ASSETS = [
   DOC,
   new URL('./manifest.webmanifest', self.registration.scope).href,
-  new URL('./icon-192.png', self.registration.scope).href,
-  new URL('./icon-512.png', self.registration.scope).href,
-  new URL('./icon-maskable.png', self.registration.scope).href,
-  new URL('./apple-touch-icon.png', self.registration.scope).href,
-  new URL('./Main Logo.png', self.registration.scope).href,
+  new URL('./assets/icons/icon-192.png', self.registration.scope).href,
+  new URL('./assets/icons/icon-512.png', self.registration.scope).href,
+  new URL('./assets/icons/icon-maskable.png', self.registration.scope).href,
+  new URL('./assets/icons/apple-touch-icon.png', self.registration.scope).href,
+  new URL('./assets/branding/main-logo.png', self.registration.scope).href,
   new URL('./assets/vendor/character-bootstrap.js', self.registration.scope).href,
   new URL('./assets/characters/hulk.js', self.registration.scope).href,
   new URL('./assets/characters/fighter-finish.js', self.registration.scope).href,

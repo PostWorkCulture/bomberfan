@@ -3,6 +3,7 @@ extends Node3D
 ## Movement is a port of Player.update / slide / blockedAt in ../index.html.
 
 const Cfg := preload("res://scripts/config.gd")
+const Robot := preload("res://scripts/robot.gd")
 const R := Cfg.PLAYER_RADIUS
 const TARGET_HEIGHT := 1.25   # every fighter stands the same height (uniform-height rule); sized to read on a phone
 
@@ -28,6 +29,7 @@ var celebrating := false
 
 var model: Node3D = null
 var anim: AnimationPlayer = null
+var robot = null            # set when this fighter is one of the code-built bots
 var _anim_names := {}
 var _cur := ""
 var _death_t := 0.0
@@ -45,6 +47,14 @@ func setup(g, id_: int, info: Dictionary, bot: bool) -> void:
 
 
 func _build_model() -> void:
+	if char_id.begins_with("bot_"):
+		model = Node3D.new()
+		add_child(model)
+		robot = Robot.new()
+		robot.setup(char_id.substr(4), color)
+		model.add_child(robot)
+		_normalise_height()
+		return
 	var path := "res://assets/characters/%s.gltf" % char_id
 	var ps = load(path) if ResourceLoader.exists(path) else null
 	if ps is PackedScene:
@@ -130,6 +140,8 @@ func spawn_at(t: Vector2i) -> void:
 	_death_t = 0.0
 	_cur = ""
 	_play("idle")
+	if robot:
+		robot.revive()
 	update_visual(0.0)
 
 
@@ -147,10 +159,14 @@ func die() -> void:
 	moving = false
 	_death_t = 0.0
 	_play("death")
+	if robot:
+		robot.die()
 
 
 func celebrate() -> void:
 	celebrating = true
+	if robot:
+		robot.cheer()
 	if _anim_names.has("wave"):
 		_play("wave")
 	else:
@@ -248,6 +264,8 @@ func update_visual(delta: float) -> void:
 		rotation.y = lerp_angle(rotation.y, face_yaw, clampf(delta * 14.0, 0.0, 1.0))
 	else:
 		rotation.y = face_yaw
+	if robot:
+		robot.animate(delta, moving and alive, speed / Cfg.BASE_SPEED)
 	if not alive:
 		_death_t += delta
 		if _death_t > 2.0:

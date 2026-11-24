@@ -22,12 +22,22 @@ const SAFE := 999.0
 const DIRS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const SPAWNS := [Vector2i(1, 1), Vector2i(13, 11), Vector2i(13, 1), Vector2i(1, 11)]
 
-const ROSTER := [
+## The code-built bomber-bots (scripts/robot.gd). Pete asked for new
+## characters on 2026-11-24; these are the proposal, switched on with USE_BOTS.
+const USE_BOTS := true
+const BOT_ROSTER := [
+	{"id": "bot_bolt", "name": "BOLT", "color": Color(1.0, 0.298, 0.247)},
+	{"id": "bot_tank", "name": "TANK", "color": Color(0.302, 0.561, 1.0)},
+	{"id": "bot_pip", "name": "PIP", "color": Color(0.282, 0.863, 0.408)},
+	{"id": "bot_sparky", "name": "SPARKY", "color": Color(1.0, 0.835, 0.18)},
+]
+const OLD_ROSTER := [
 	{"id": "ninja", "name": "NINJA", "color": Color(1.0, 0.298, 0.247)},
 	{"id": "orc", "name": "ORC", "color": Color(0.302, 0.561, 1.0)},
 	{"id": "bunny", "name": "BUNNY", "color": Color(0.282, 0.863, 0.408)},
 	{"id": "dino", "name": "DINO", "color": Color(1.0, 0.835, 0.18)},
 ]
+var ROSTER: Array = BOT_ROSTER if USE_BOTS else OLD_ROSTER
 
 # Forest backdrop colour behind everything (LEVELS[0].sky in index.html)
 const SKY := Color(0.055, 0.102, 0.071)
@@ -1074,6 +1084,9 @@ func _setup_gallery() -> void:
 	pickups.clear()
 	for i in 3:
 		_spawn_pickup(Vector2i(6 + i, 7), ["bomb", "fire", "speed"][i])
+	# A freshly laid bomb, to judge the fuse at close range
+	var bn: Node3D = fx.make_bomb(round_root, tile_pos(9, 7))
+	bombs.append({"x": 9, "y": 7, "fuse": 1.5, "fire": 2, "owner": fighters[0], "alive": true, "age": 0.4, "node": bn})
 	phase = "gallery"
 	camera.position = tile_pos(7.0, 9.6) + Vector3(0, 2.4, 0)
 	camera.look_at(tile_pos(7.0, 6.0) + Vector3(0, 0.5, 0), Vector3.UP)

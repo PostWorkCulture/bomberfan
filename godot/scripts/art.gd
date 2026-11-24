@@ -3,6 +3,8 @@ extends RefCounted
 ## generated in code — no image files to import — so CI builds and checks it,
 ## and the web download stays small. Results are cached: call freely.
 
+const Cfg := preload("res://scripts/config.gd")
+
 static var _cache := {}
 
 
@@ -54,7 +56,7 @@ static func grass_normal() -> NoiseTexture2D:
 
 static func forest_floor_tex() -> NoiseTexture2D:
 	return noise_tex("floor", 21, 0.012,
-		PackedColorArray([Color("2a2116"), Color("3a3020"), Color("344a22"), Color("4a5a2a"), Color("5b4a2c")]),
+		PackedColorArray([Color("1c1610"), Color("2a2218"), Color("312e1b"), Color("3a3d21"), Color("473a24")]),
 		PackedFloat32Array([0.0, 0.3, 0.55, 0.78, 1.0]), 512, 6)
 
 
@@ -105,6 +107,7 @@ shader_type spatial;
 uniform sampler2D grass_tex : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D detail_tex : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D grass_nrm : hint_normal, filter_linear_mipmap, repeat_enable;
+uniform vec2 inner_half = vec2(6.5, 5.5);
 varying vec3 wpos;
 void vertex() { wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 void fragment() {
@@ -115,6 +118,9 @@ void fragment() {
 	col *= mix(1.0, 0.88, chk);
 	vec2 f = abs(fract(wpos.xz + 0.5) - 0.5);
 	col *= 1.0 - 0.22 * smoothstep(0.455, 0.5, max(f.x, f.y));
+	// Contact shadow where the floor meets the rock wall: marks the inside edge.
+	float d = min(inner_half.x - abs(wpos.x), inner_half.y - abs(wpos.z));
+	col *= mix(0.55, 1.0, smoothstep(0.0, 0.6, d));
 	ALBEDO = col;
 	ROUGHNESS = 0.93;
 	NORMAL_MAP = texture(grass_nrm, wpos.xz * 0.45).rgb;
@@ -201,7 +207,8 @@ static func _shader_mat(name_key: String, code: String, params := {}) -> ShaderM
 
 static func arena_floor_mat() -> ShaderMaterial:
 	return _shader_mat("floor_mat", ARENA_FLOOR_SHADER, {
-		"grass_tex": grass_tex(), "detail_tex": grass_detail_tex(), "grass_nrm": grass_normal()})
+		"grass_tex": grass_tex(), "detail_tex": grass_detail_tex(), "grass_nrm": grass_normal(),
+		"inner_half": Vector2((Cfg.COLS - 2) * 0.5, (Cfg.ROWS - 2) * 0.5)})
 
 
 static func stone_mat(key: String, tint: Color, moss: float, scale := 0.55) -> ShaderMaterial:
@@ -641,3 +648,190 @@ static func multimesh(mesh: Mesh, xforms: Array, colors: Array = [], shadows := 
 	if not shadows:
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mmi
+
+
+## The raised stone base the arena sits on: a visible ledge outside the rocks.
+static func plinth_mesh(size: Vector3) -> ArrayMesh:
+	if _cache.has("plinth"):
+		return _cache["plinth"]
+	var m := rounded_box(size, 0.07, 6, 0.0)
+	m.surface_set_material(0, stone_mat("plinth", Color(0.62, 0.6, 0.56), 0.35, 0.9))
+	_cache["plinth"] = m
+	return m
+
+
+# ---- Pick-ups: real items, floating over a coloured glow ------------------------------
+
+const PICKUP_TINT := {
+	"bomb": Color(0.3, 0.55, 1.0),
+	"fire": Color(1.0, 0.42, 0.12),
+	"speed": Color(0.3, 0.9, 0.45),
+}
+
+
+static func _part(parent: Node3D, mesh: Mesh, mat: Material, pos: Vector3, rot := Vector3.ZERO, scl := Vector3.ONE) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = mat
+	mi.position = pos
+	mi.rotation = rot
+	mi.scale = scl
+	parent.add_child(mi)
+	return mi
+
+
+static func _unshaded(c: Color, alpha := 1.0) -> StandardMaterial3D:
+	var key := "unshaded_%s_%s" % [c.to_html(), alpha]
+	if _cache.has(key):
+		return _cache[key]
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.vertex_color_use_as_albedo = true
+	m.albedo_color = Color(c.r, c.g, c.b, alpha)
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	if alpha < 1.0:
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_cache[key] = m
+	return m
+
+
+## A surface of revolution with vertex colours; `lick` adds flame-like twists.
+static func lathe(profile: Array, seg: int, bottom: Color, top: Color, lick := 0.0) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var h: float = profile[profile.size() - 1].y
+	var rings: Array = []
+	for p in profile:
+		var ring: Array = []
+		var t: float = p.y / h
+		for i in seg + 1:
+			var a := TAU * i / seg
+			var r: float = p.x * (1.0 + lick * t * sin(a * 3.0 + t * 7.0))
+			var tw := a + lick * t * 1.6
+			ring.append(Vector3(cos(tw) * r, p.y, sin(tw) * r))
+		rings.append([ring, bottom.lerp(top, t)])
+	for j in rings.size() - 1:
+		var r0: Array = rings[j][0]
+		var r1: Array = rings[j + 1][0]
+		var c0: Color = rings[j][1]
+		var c1: Color = rings[j + 1][1]
+		for i in seg:
+			for v in [[r0[i], c0], [r1[i], c1], [r1[i + 1], c1], [r0[i], c0], [r1[i + 1], c1], [r0[i + 1], c0]]:
+				st.set_color(v[1])
+				st.set_normal((Vector3(v[0].x, 0, v[0].z)).normalized() if Vector2(v[0].x, v[0].z).length() > 0.0001 else Vector3.UP)
+				st.add_vertex(v[0])
+	return st.commit()
+
+
+static func pickup_model(id: String) -> Node3D:
+	var root := Node3D.new()
+	var tint: Color = PICKUP_TINT.get(id, Color.WHITE)
+	var disc := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2(1.0, 1.0)
+	disc.mesh = q
+	var dkey := "pickup_disc_" + id
+	if not _cache.has(dkey):
+		var dm := StandardMaterial3D.new()
+		dm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		dm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		dm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		dm.albedo_texture = soft_dot()
+		dm.albedo_color = Color(tint.r, tint.g, tint.b, 0.75)
+		_cache[dkey] = dm
+	disc.material_override = _cache[dkey]
+	disc.rotation.x = -PI / 2.0
+	disc.position.y = 0.025
+	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	disc.name = "Glow"
+	root.add_child(disc)
+	var model := Node3D.new()
+	model.name = "Model"
+	model.position.y = 0.42
+	model.scale = Vector3.ONE * 1.35
+	root.add_child(model)
+	match id:
+		"bomb":
+			_bomb_item(model)
+		"fire":
+			_flame_item(model)
+		"speed":
+			_wing_shoe(model)
+	return root
+
+
+## Bomb Up: a little bomb with a lit fuse.
+static func _bomb_item(m: Node3D) -> void:
+	var body := SphereMesh.new()
+	body.radius = 0.2
+	body.height = 0.4
+	_part(m, body, flat_mat(Color(0.06, 0.065, 0.08), 0.4, 0.05), Vector3.ZERO)
+	var shine := SphereMesh.new()
+	shine.radius = 0.05
+	shine.height = 0.1
+	_part(m, shine, flat_mat(Color(0.55, 0.6, 0.7), 0.2, 0.0), Vector3(-0.09, 0.1, 0.11), Vector3.ZERO, Vector3(1, 0.6, 0.6))
+	var cap := CylinderMesh.new()
+	cap.top_radius = 0.065
+	cap.bottom_radius = 0.075
+	cap.height = 0.07
+	_part(m, cap, flat_mat(Color(0.6, 0.62, 0.66), 0.35, 0.8), Vector3(0, 0.205, 0))
+	var fuse := CylinderMesh.new()
+	fuse.top_radius = 0.018
+	fuse.bottom_radius = 0.022
+	fuse.height = 0.13
+	_part(m, fuse, flat_mat(Color(0.8, 0.7, 0.5)), Vector3(0.03, 0.28, 0), Vector3(0, 0, -0.5))
+	var spark := SphereMesh.new()
+	spark.radius = 0.03
+	spark.height = 0.06
+	_part(m, spark, _unshaded(Color(1.0, 0.78, 0.35)), Vector3(0.065, 0.335, 0))
+
+
+## Fire Up: a two-layer flame — a yellow core inside a see-through orange flame.
+static func _flame_item(m: Node3D) -> void:
+	if not _cache.has("flame_outer"):
+		var outer := [Vector2(0.0, 0.0), Vector2(0.11, 0.02), Vector2(0.18, 0.1), Vector2(0.2, 0.2),
+			Vector2(0.17, 0.32), Vector2(0.11, 0.45), Vector2(0.05, 0.57), Vector2(0.0, 0.66)]
+		var inner := [Vector2(0.0, 0.0), Vector2(0.07, 0.02), Vector2(0.11, 0.09), Vector2(0.12, 0.17),
+			Vector2(0.09, 0.27), Vector2(0.04, 0.37), Vector2(0.0, 0.44)]
+		_cache["flame_outer"] = lathe(outer, 16, Color(0.95, 0.22, 0.05), Color(1.0, 0.62, 0.12), 0.22)
+		_cache["flame_inner"] = lathe(inner, 12, Color(1.0, 0.85, 0.35), Color(1.0, 1.0, 0.85), 0.15)
+	var core := _part(m, _cache["flame_inner"], _unshaded(Color.WHITE), Vector3(0, -0.24, 0))
+	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var flame := _part(m, _cache["flame_outer"], _unshaded(Color.WHITE, 0.82), Vector3(0, -0.27, 0))
+	flame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	flame.name = "Flame"
+	for side in [-1.0, 1.0]:   # two smaller tongues licking up either side
+		var tongue := _part(flame, _cache["flame_outer"], _unshaded(Color.WHITE, 0.82),
+			Vector3(side * 0.1, 0.0, 0.02), Vector3(0, 0, -side * 0.38), Vector3(0.55, 0.62, 0.55))
+		tongue.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## Speed Up: a sneaker with white feathered wings at the heel.
+static func _wing_shoe(m: Node3D) -> void:
+	if not _cache.has("shoe_sole"):
+		_cache["shoe_sole"] = rounded_box(Vector3(0.42, 0.07, 0.18), 0.03, 2)
+		_cache["shoe_heel"] = rounded_box(Vector3(0.21, 0.21, 0.17), 0.06, 2)
+		_cache["shoe_toe"] = rounded_box(Vector3(0.24, 0.12, 0.165), 0.055, 2)
+		_cache["shoe_stripe"] = rounded_box(Vector3(0.2, 0.035, 0.175), 0.015, 1)
+		var f := SphereMesh.new()
+		f.radius = 0.05
+		f.height = 0.1
+		f.radial_segments = 10
+		f.rings = 5
+		_cache["feather"] = f
+	var y0 := -0.12
+	var upper := flat_mat(Color(0.18, 0.72, 0.4), 0.55)
+	_part(m, _cache["shoe_sole"], flat_mat(Color(0.95, 0.95, 0.92), 0.7), Vector3(0.02, y0 + 0.035, 0))
+	_part(m, _cache["shoe_heel"], upper, Vector3(-0.08, y0 + 0.17, 0))
+	_part(m, _cache["shoe_toe"], upper, Vector3(0.1, y0 + 0.11, 0))
+	_part(m, _cache["shoe_stripe"], flat_mat(Color(0.97, 0.97, 0.95), 0.6), Vector3(0.0, y0 + 0.13, 0), Vector3(0, 0, -0.35))
+	var white := flat_mat(Color(0.98, 0.98, 0.97), 0.65)
+	# Wings spread out sideways and up, so they read from the top-down camera.
+	for side in [-1.0, 1.0]:
+		for i in 4:
+			var sweep := deg_to_rad(-25.0 + i * 22.0)     # fanned from forward-ish to backward
+			var length := 0.26 - i * 0.03
+			var root := Vector3(-0.08, y0 + 0.21, side * 0.08)
+			var dir := Vector3(-sin(sweep), 0.45, side * cos(sweep)).normalized()
+			var feather := _part(m, _cache["feather"], white, root + dir * length * 0.5)
+			feather.basis = Basis.looking_at(dir, Vector3.UP) * Basis.from_scale(Vector3(0.75, 0.16, length / 0.1))

@@ -31,12 +31,8 @@ const ROSTER := [
 
 # Forest backdrop colour behind everything (LEVELS[0].sky in index.html)
 const SKY := Color(0.055, 0.102, 0.071)
+const GROUND_Y := -0.34   # the woods sit this far below the arena floor
 
-const PICKUP_LOOK := {
-	"bomb": {"color": Color(0.23, 0.42, 1.0), "letter": "B"},
-	"fire": {"color": Color(1.0, 0.35, 0.12), "letter": "F"},
-	"speed": {"color": Color(0.25, 0.82, 0.42), "letter": "S"},
-}
 
 var cells := PackedInt32Array()
 var bombs: Array = []
@@ -52,6 +48,21 @@ var round_t := 0.0
 var round_no := 0
 var wins := [0, 0, 0, 0]
 var end_check_t := -1.0
+# Sudden death: after the last crate (or when the clock runs out) rings of
+# rock drop in from the edge. Ported from updateEndgame() in index.html.
+var soft_count := 0
+var round_elapsed := 0.0
+var crates_cleared_at := -1.0
+var sd_warned := false
+var sudden_death := false
+var sd_ring := 0
+var sd_queue: Array = []
+var sd_stagger := 0.0
+var sd_timer := 0.0
+var sd_done := 0.0
+var sd_countdown := 0.0
+var _falling: Array = []
+var hud_sd: Label
 var msg_text := ""
 var msg_t := 0.0
 
@@ -60,7 +71,7 @@ var smoke := false
 var demo := false   # `-- --demo`: four bots, full visuals (attract mode / CI screenshots)
 var gallery := false   # `-- --gallery`: close-up of the fighters for CI checks
 var human_pid := 0
-var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0,
+var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0, "sudden_deaths": 0, "crushed": 0,
 	"bombs": 0, "crates": 0, "pickups": 0, "wins": [0, 0, 0, 0]}
 
 var static_root: Node3D
@@ -76,7 +87,6 @@ var _acc := 0.0
 var _time := 0.0
 var _want_bomb := false
 var _mats := {}
-var _pickup_mesh: Mesh
 var _crates: MultiMeshInstance3D   # every log pile in one draw call; broken ones are hidden
 var _crate_xf := {}                 # tile index -> its transform in the multimesh
 var fx = null
@@ -184,9 +194,35 @@ func compute_danger(extra: Dictionary) -> PackedFloat32Array:
 		for c in blast_cells(e["x"], e["y"], e["fire"]):
 			var k := idx(c.x, c.y)
 			danger[k] = minf(danger[k], e["t"])
+	for d in _doomed_tiles():
+		var t: Vector2i = d[0]
+		var k := idx(t.x, t.y)
+		danger[k] = minf(danger[k], d[1])
 	for k in flames.keys():
 		danger[k] = 0.0
 	return danger
+
+
+## Sudden death, as the bots see it: tiles the walls are about to land on, with
+## the seconds until they do — the same warning a human reads off the HUD.
+func _doomed_tiles() -> Array:
+	var out: Array = []
+	if not sudden_death:
+		if sd_warned:
+			for t in _ring_tiles(1):
+				if cell_at(t.x, t.y) != HARD:
+					out.append([t, sd_countdown])
+		return out
+	var i := 0
+	for t in sd_queue:
+		out.append([t, i * Cfg.SD_BLOCK_STAGGER])
+		i += 1
+	if sd_ring < Cfg.SD_MAX_RINGS:
+		var when := sd_queue.size() * Cfg.SD_BLOCK_STAGGER + sd_timer
+		for t in _ring_tiles(sd_ring + 1):
+			if cell_at(t.x, t.y) != HARD:
+				out.append([t, when])
+	return out
 
 
 # ---- Setup --------------------------------------------------------------------
@@ -248,7 +284,7 @@ func _mesh(parent: Node, mesh: Mesh, m: Material, pos: Vector3, shadows := true)
 
 
 func _build_meshes() -> void:
-	_pickup_mesh = Art.rounded_box(Vector3(0.6, 0.14, 0.6), 0.05, 2)
+	pass
 
 
 func _build_environment() -> void:
@@ -319,6 +355,10 @@ func _build_static_arena() -> void:
 	var floor_mesh := PlaneMesh.new()
 	floor_mesh.size = Vector2(Cfg.COLS, Cfg.ROWS)
 	_mesh(static_root, floor_mesh, Art.arena_floor_mat(), Vector3.ZERO, false)
+	# The arena stands on a stone base, one step above the woods, so the
+	# edge of the playing area reads clearly from outside the rocks.
+	var base := Vector3(Cfg.COLS + 0.36, -GROUND_Y + 0.02, Cfg.ROWS + 0.36)
+	_mesh(static_root, Art.plinth_mesh(base), null, Vector3(0, GROUND_Y * 0.5 - 0.012, 0))
 	var pillar_xf: Array = []
 	var boulder_xf := [[], [], []]
 	var r := RandomNumberGenerator.new()
@@ -344,7 +384,7 @@ func _build_static_arena() -> void:
 func _build_forest() -> void:
 	var big := PlaneMesh.new()
 	big.size = Vector2(80.0, 80.0)
-	_mesh(static_root, big, Art.floor_mat(), Vector3(0, -0.015, 0), false)
+	_mesh(static_root, big, Art.floor_mat(), Vector3(0, GROUND_Y, 0), false)
 	var r := RandomNumberGenerator.new()
 	r.seed = 4242
 	var placed: Array = []
@@ -389,7 +429,7 @@ func _build_forest() -> void:
 			elif kind == "broad":
 				s = r.randf_range(0.9, 1.3)
 			var b := Basis(Vector3.UP, r.randf() * TAU).scaled(Vector3.ONE * s)
-			xf[kind].append(Transform3D(b, Vector3(x, 0, z)))
+			xf[kind].append(Transform3D(b, Vector3(x, GROUND_Y, z)))
 			var tint := r.randf_range(0.82, 1.12)
 			col[kind].append(Color(tint, tint * r.randf_range(0.95, 1.05), tint * 0.95))
 	static_root.add_child(Art.multimesh(Art.pine_mesh(), xf["pine"], col["pine"]))
@@ -422,6 +462,11 @@ func _build_hud() -> void:
 	hud_round.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	hud_round.offset_top = 44.0
 	hud_round.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hud_sd = _label(30, Color(1.0, 0.35, 0.25))
+	layer.add_child(hud_sd)
+	hud_sd.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	hud_sd.offset_top = 74.0
+	hud_sd.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hud_msg = _label(72, Color(1.0, 0.92, 0.5))
 	layer.add_child(hud_msg)
 	hud_msg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -492,9 +537,19 @@ func start_round() -> void:
 	round_t = Cfg.ROUND_SECONDS
 	end_check_t = -1.0
 	msg_t = 0.0
+	round_elapsed = 0.0
+	crates_cleared_at = -1.0
+	sd_warned = false
+	sudden_death = false
+	sd_ring = 0
+	sd_queue.clear()
+	sd_done = 0.0
+	sd_countdown = 0.0
+	_falling.clear()
 
 
 func _generate_cells() -> void:
+	soft_count = 0
 	cells.resize(Cfg.COLS * Cfg.ROWS)
 	for y in Cfg.ROWS:
 		for x in Cfg.COLS:
@@ -513,6 +568,7 @@ func _generate_cells() -> void:
 			if cells[idx(x, y)] == EMPTY and not reserved.has(Vector2i(x, y)) \
 					and rng.randf() < Cfg.SOFT_DENSITY:
 				cells[idx(x, y)] = SOFT
+				soft_count += 1
 
 
 func _build_crates() -> void:
@@ -609,6 +665,7 @@ func sim_step(dt: float) -> void:
 			_step_flames(dt)
 			_step_pickups(dt)
 			_check_deaths()
+			_update_endgame(dt)
 			_check_round_end(dt)
 		"outro":
 			_step_flames(dt)
@@ -735,6 +792,7 @@ func _step_flames(dt: float) -> void:
 func _break_crate(c: Vector2i) -> void:
 	var ci := idx(c.x, c.y)
 	cells[ci] = EMPTY
+	soft_count -= 1
 	stats["crates"] += 1
 	if _crate_xf.has(ci) and is_instance_valid(_crates):
 		_crates.multimesh.set_instance_transform(_crate_xf[ci], Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0)))
@@ -753,27 +811,12 @@ func _break_crate(c: Vector2i) -> void:
 
 
 func _spawn_pickup(c: Vector2i, id: String) -> void:
-	var look: Dictionary = PICKUP_LOOK[id]
-	var n := Node3D.new()
+	var n := Art.pickup_model(id)
 	n.position = tile_pos(c.x, c.y)
+	n.scale = Vector3.ONE * 0.01
 	round_root.add_child(n)
-	var pm := StandardMaterial3D.new()
-	pm.albedo_color = look["color"]
-	pm.roughness = 0.35
-	pm.emission_enabled = true
-	pm.emission = look["color"]
-	pm.emission_energy_multiplier = 0.9
-	_mesh(n, _pickup_mesh, pm, Vector3(0, 0.1, 0))
-	var l := Label3D.new()
-	l.text = look["letter"]
-	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	l.font_size = 96
-	l.pixel_size = 0.005
-	l.outline_size = 20
-	l.position = Vector3(0, 0.45, 0)
-	n.add_child(l)
 	# The blast that revealed it cannot also destroy it
-	pickups[idx(c.x, c.y)] = {"id": id, "node": n, "shield": Cfg.BLAST_LIFE + 0.05}
+	pickups[idx(c.x, c.y)] = {"id": id, "node": n, "shield": Cfg.BLAST_LIFE + 0.05, "age": 0.0}
 
 
 func _remove_pickup(ci: int) -> void:
@@ -822,9 +865,6 @@ func _check_deaths() -> void:
 
 
 func _check_round_end(dt: float) -> void:
-	if round_t <= 0.0:
-		_end_round(null, "TIME UP - DRAW")
-		return
 	var alive: Array = fighters.filter(func(f): return f.alive)
 	if alive.size() > 1:
 		return
@@ -835,9 +875,142 @@ func _check_round_end(dt: float) -> void:
 		_end_round(alive[0] if alive.size() == 1 else null, "")
 
 
+# ---- Sudden death ---------------------------------------------------------------
+
+func _update_endgame(dt: float) -> void:
+	round_elapsed += dt
+	if crates_cleared_at < 0.0 and soft_count <= 0:
+		crates_cleared_at = round_elapsed
+	if not sudden_death:
+		var since := round_elapsed - crates_cleared_at if crates_cleared_at >= 0.0 else -1.0
+		if not sd_warned and since >= Cfg.CRATES_CLEAR_GRACE - Cfg.SD_WARNING:
+			sd_warned = true
+			audio.play("sd_warning")
+		if sd_warned:
+			sd_countdown = maxf(0.0, crates_cleared_at + Cfg.CRATES_CLEAR_GRACE - round_elapsed)
+		if since >= Cfg.CRATES_CLEAR_GRACE or round_t <= 0.0:
+			_start_sudden_death()
+		return
+	if not sd_queue.is_empty():
+		sd_stagger -= dt
+		while sd_stagger <= 0.0 and not sd_queue.is_empty():
+			_drop_block(sd_queue.pop_front())
+			sd_stagger += Cfg.SD_BLOCK_STAGGER
+		return
+	if sd_ring < Cfg.SD_MAX_RINGS:
+		sd_timer -= dt
+		if sd_timer <= 0.0:
+			sd_timer = Cfg.SD_RING_INTERVAL
+			_close_next_ring()
+		return
+	# As small as it gets: nobody has won, so call it a draw
+	sd_done += dt
+	if sd_done >= Cfg.SD_DRAW_AFTER:
+		_end_round(null, "DRAW")
+
+
+func _start_sudden_death() -> void:
+	if sudden_death:
+		return
+	sudden_death = true
+	sd_ring = 0
+	sd_done = 0.0
+	stats["sudden_deaths"] += 1
+	audio.play("sd_start")
+	_close_next_ring()   # the first ring falls the moment the countdown reads zero
+	sd_timer = Cfg.SD_RING_INTERVAL
+
+
+## The tiles forming one square ring, `inset` steps in from the outer wall.
+func _ring_tiles(inset: int) -> Array:
+	var x0 := inset
+	var x1 := Cfg.COLS - 1 - inset
+	var y0 := inset
+	var y1 := Cfg.ROWS - 1 - inset
+	var out: Array = []
+	if x0 > x1 or y0 > y1:
+		return out
+	for x in range(x0, x1 + 1):
+		out.append(Vector2i(x, y0))
+		if y1 != y0:
+			out.append(Vector2i(x, y1))
+	for y in range(y0 + 1, y1):
+		out.append(Vector2i(x0, y))
+		if x1 != x0:
+			out.append(Vector2i(x1, y))
+	return out
+
+
+func _close_next_ring() -> void:
+	while sd_ring < Cfg.SD_MAX_RINGS:
+		sd_ring += 1
+		sd_queue = _ring_tiles(sd_ring).filter(func(t): return cell_at(t.x, t.y) != HARD)
+		if not sd_queue.is_empty():
+			break
+	sd_stagger = 0.0
+	if not sd_queue.is_empty():
+		fx.shake = minf(0.45, fx.shake + 0.12)
+
+
+func _drop_block(t: Vector2i) -> void:
+	if cell_at(t.x, t.y) == HARD:
+		return
+	var ci := idx(t.x, t.y)
+	if cells[ci] == SOFT:
+		soft_count -= 1
+		if _crate_xf.has(ci) and is_instance_valid(_crates):
+			_crates.multimesh.set_instance_transform(_crate_xf[ci], Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0)))
+			_crate_xf.erase(ci)
+	cells[ci] = HARD
+	if pickups.has(ci):
+		_remove_pickup(ci)
+	if bomb_at.has(ci):
+		var b: Dictionary = bomb_at[ci]
+		b["alive"] = false
+		bomb_at.erase(ci)
+		b["owner"].active_bombs = maxi(0, b["owner"].active_bombs - 1)
+		var bn: Node3D = b["node"]
+		if is_instance_valid(bn):
+			bn.queue_free()
+	# Forced: anything standing there is crushed
+	for f in fighters:
+		if f.alive and f.tile() == t:
+			f.die()
+			fx.death_puff(f.position)
+			audio.play("death")
+			stats["deaths"] += 1
+			stats["crushed"] += 1
+	if not fx.enabled:
+		return
+	var m := MeshInstance3D.new()
+	m.mesh = Art.boulder_mesh(rng.randi_range(0, 2))
+	m.rotation.y = rng.randf() * TAU
+	m.position = tile_pos(t.x, t.y) + Vector3(0, 5.0, 0)
+	round_root.add_child(m)
+	_falling.append({"node": m, "y": 5.0, "vy": 0.0})
+
+
+func _update_falling(delta: float) -> void:
+	for b in _falling.duplicate():
+		var node: Node3D = b["node"]
+		if not is_instance_valid(node):
+			_falling.erase(b)
+			continue
+		b["vy"] += 34.0 * delta
+		b["y"] -= b["vy"] * delta
+		if b["y"] <= 0.5:
+			b["y"] = 0.5
+			fx.shake = minf(0.45, fx.shake + 0.04)
+			fx.crate_dust(node.position)
+			audio.play("wall_slam", -4.0, 0.08, 0.07)
+			_falling.erase(b)
+		node.position.y = b["y"]
+
+
 # ---- Presentation -----------------------------------------------------------------
 
 func _update_visuals(delta: float) -> void:
+	_update_falling(delta)
 	for f in fighters:
 		f.update_visual(delta)
 	for b in bombs:
@@ -845,9 +1018,21 @@ func _update_visuals(delta: float) -> void:
 		if is_instance_valid(node):
 			fx.animate_bomb(node, b["age"], b["fuse"], _time)
 	for k in pickups.keys():
-		var node: Node3D = pickups[k]["node"]
-		if is_instance_valid(node):
-			node.position.y = 0.04 + 0.04 * sin(_time * 4.0 + k)
+		var p: Dictionary = pickups[k]
+		var node: Node3D = p["node"]
+		if not is_instance_valid(node):
+			continue
+		p["age"] += delta
+		node.scale = Vector3.ONE * minf(1.0, 0.2 + p["age"] * 3.5)   # pops up out of the rubble
+		var model := node.get_node("Model") as Node3D
+		model.rotation.y += delta * 1.7
+		model.position.y = 0.42 + 0.06 * sin(_time * 3.2 + k)
+		var glow := node.get_node("Glow") as Node3D
+		glow.scale = Vector3.ONE * (0.92 + 0.08 * sin(_time * 3.2 + k))
+		if p["id"] == "fire":
+			var fl := model.get_node_or_null("Flame") as Node3D
+			if fl:
+				fl.scale = Vector3(1.0 + 0.05 * sin(_time * 17.0 + k), 1.0 + 0.1 * sin(_time * 13.0 + k * 2.0), 1.0)
 
 
 func _update_hud() -> void:
@@ -859,6 +1044,12 @@ func _update_hud() -> void:
 		lab.modulate = Color(1, 1, 1, 1.0 if f.alive else 0.45)
 	var secs := maxi(0, ceili(round_t))
 	hud_round.text = "ROUND %d     %d:%02d     FIRST TO %d" % [round_no, floori(secs / 60.0), secs % 60, Cfg.WINS_NEEDED]
+	if phase == "play" and sudden_death:
+		hud_sd.text = "SUDDEN DEATH"
+	elif phase == "play" and sd_warned:
+		hud_sd.text = "WALLS CLOSING IN  %d" % ceili(sd_countdown)
+	else:
+		hud_sd.text = ""
 	if phase == "intro":
 		var n := ceili(phase_t - 0.35)
 		hud_msg.text = str(n) if n >= 1 else "GO!"
@@ -880,6 +1071,9 @@ func _setup_gallery() -> void:
 		f.face_yaw = 0.0
 		f.moving = k >= 2
 		f.update_visual(0.0)
+	pickups.clear()
+	for i in 3:
+		_spawn_pickup(Vector2i(6 + i, 7), ["bomb", "fire", "speed"][i])
 	phase = "gallery"
 	camera.position = tile_pos(7.0, 9.6) + Vector3(0, 2.4, 0)
 	camera.look_at(tile_pos(7.0, 6.0) + Vector3(0, 0.5, 0), Vector3.UP)
@@ -936,7 +1130,7 @@ func _run_smoke() -> void:
 		t += Cfg.FIXED_DT
 	var decided: int = stats["rounds"] - stats["draws"]
 	var ok: bool = stats["rounds"] >= 3 and decided >= 1 and stats["bombs"] > 0 and stats["crates"] > 0
-	print("SMOKE %s rounds=%d decided=%d draws=%d wins=%s deaths=%d self_kills=%d bombs=%d crates=%d pickups=%d sim_seconds=%d" % [
-		"OK" if ok else "FAIL", stats["rounds"], decided, stats["draws"], str(stats["wins"]),
+	print("SMOKE %s rounds=%d decided=%d draws=%d sudden_deaths=%d crushed=%d wins=%s deaths=%d self_kills=%d bombs=%d crates=%d pickups=%d sim_seconds=%d" % [
+		"OK" if ok else "FAIL", stats["rounds"], decided, stats["draws"], stats["sudden_deaths"], stats["crushed"], str(stats["wins"]),
 		stats["deaths"], stats["self_kills"], stats["bombs"], stats["crates"], stats["pickups"], int(t)])
 	get_tree().quit(0 if ok else 1)

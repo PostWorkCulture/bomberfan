@@ -97,21 +97,6 @@ func _normalise_height() -> void:
 
 
 func _build_marker() -> void:
-	var disc := MeshInstance3D.new()
-	var cm := CylinderMesh.new()
-	cm.top_radius = 0.42
-	cm.bottom_radius = 0.42
-	cm.height = 0.02
-	cm.radial_segments = 24
-	disc.mesh = cm
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = Color(color.r, color.g, color.b, 0.7)
-	disc.material_override = m
-	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	disc.position.y = 0.015
-	add_child(disc)
 	if not is_bot:
 		var tag := Label3D.new()
 		tag.text = "YOU"

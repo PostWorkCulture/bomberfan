@@ -72,7 +72,7 @@ Bomber Fan is a 3D bomber-arena game (Bomberman-style: grid arena, crates, bombs
 - Local working copy: `Documents\AI\Claude\Projects\Games\Bman` on the "bakes" PC (a git clone; open `Bman\godot\project.godot` in Godot 4.7.2). Run it with the Godot MCP `run_project` and check `get_debug_output` for zero errors/warnings before pushing. Commit the `.import` and `.uid` files Godot generates. Command-line modes: `-- --smoke`, `-- --demo` (four bots), `-- --gallery` (fighter close-up).
 - Build the game in code (scripts) rather than hand-written `.tscn` files where possible, so CI can check it. Art is procedural too (`scripts/art.gd`); add image files only when procedural can't do the job.
 - Visual check on the PC: set `"enabled": true` in `godot/autotest.json` (git-ignored), run with `run_project`, then read `godot/.godot/autotest/shot_*.png` and `stats.txt`. **Set it back to `false` afterwards**, or the game quits itself.
-- Sounds: edit recipes in `tools/render_sfx.py` (a port of the browser synth), run it, and commit the WAVs. Don't hand-edit WAVs.
+- Sounds: edit recipes in `tools/render_sfx.py` (a port of the browser synth plus `V2` upgraded designs), run it, and commit the WAVs. Don't hand-edit WAVs. Music: `tools/render_music.py preview` makes MP3 previews in `build/` (git-ignored); `tools/render_music.py <name>` writes a seamless loop to `godot/assets/audio/music_<name>.wav`.
 - When copying files to the PC with `device_commit_files`, wait about 20 s after writing them, then compare checksums. The file store can serve a stale copy.
 
 ## Daily upkeep

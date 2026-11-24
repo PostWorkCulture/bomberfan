@@ -116,6 +116,8 @@ Kick (and the other power-ups), the other 7 levels and their rules, character se
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
 ### 2026-11-24 (night)
+- **Fuse made subtle** (Pete: still too big and bright): no spark particles any more, just a tiny ember on the fuse tip, plus a faint red warning glow on the shell in the last stretch of the fuse.
+- **Bomber-bot roster proposal** (`godot/scripts/robot.gd`): Bolt, Tank, Pip and Sparky, built and animated in code. It's off (`USE_BOTS = false` in `game.gd`) until Pete approves the designs. The autotest `"lineup"` mode shows them side by side.
 - **Round music: Arcade Drive** (Pete's pick from four options). It's a 128 bpm four-on-the-floor beat with octave bass, a 16th-note arpeggio and a pad, in A minor. It's an 8-bar seamless loop (`godot/assets/audio/music_arcade_drive.wav`, with a loop point embedded so Godot loops it without a gap). It plays through the countdown and the round at −9 dB under the effects, fades out for the win sting, and replaces the forest bass pulse (`bass_forest.wav` removed). The wind bed is lowered to −11 dB to sit under it.
 - Files: `godot/scripts/audio.gd`, `game.gd`; `tools/render_music.py` (loop chunk), `tools/render_sfx.py`.
 

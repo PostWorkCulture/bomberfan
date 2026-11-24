@@ -22,12 +22,22 @@ const SAFE := 999.0
 const DIRS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const SPAWNS := [Vector2i(1, 1), Vector2i(13, 11), Vector2i(13, 1), Vector2i(1, 11)]
 
-const ROSTER := [
+## The code-built bomber-bots (scripts/robot.gd). Pete asked for new
+## characters on 2026-11-24; these are the proposal, switched on with USE_BOTS.
+const USE_BOTS := false
+const BOT_ROSTER := [
+	{"id": "bot_bolt", "name": "BOLT", "color": Color(1.0, 0.298, 0.247)},
+	{"id": "bot_tank", "name": "TANK", "color": Color(0.302, 0.561, 1.0)},
+	{"id": "bot_pip", "name": "PIP", "color": Color(0.282, 0.863, 0.408)},
+	{"id": "bot_sparky", "name": "SPARKY", "color": Color(1.0, 0.835, 0.18)},
+]
+const OLD_ROSTER := [
 	{"id": "ninja", "name": "NINJA", "color": Color(1.0, 0.298, 0.247)},
 	{"id": "orc", "name": "ORC", "color": Color(0.302, 0.561, 1.0)},
 	{"id": "bunny", "name": "BUNNY", "color": Color(0.282, 0.863, 0.408)},
 	{"id": "dino", "name": "DINO", "color": Color(1.0, 0.835, 0.18)},
 ]
+var ROSTER: Array = BOT_ROSTER if USE_BOTS else OLD_ROSTER
 
 # Forest backdrop colour behind everything (LEVELS[0].sky in index.html)
 const SKY := Color(0.055, 0.102, 0.071)
@@ -70,6 +80,7 @@ var rng := RandomNumberGenerator.new()
 var smoke := false
 var demo := false   # `-- --demo`: four bots, full visuals (attract mode / CI screenshots)
 var gallery := false   # `-- --gallery`: close-up of the fighters for CI checks
+var lineup := false    # autotest "lineup": the roster side by side on plain ground
 var human_pid := 0
 var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0, "sudden_deaths": 0, "crushed": 0,
 	"bombs": 0, "crates": 0, "pickups": 0, "wins": [0, 0, 0, 0]}
@@ -122,6 +133,8 @@ func _ready() -> void:
 	start_round()
 	if smoke:
 		_run_smoke()
+	elif lineup:
+		_setup_lineup()
 	elif gallery:
 		_setup_gallery()
 	else:
@@ -1059,6 +1072,37 @@ func _update_hud() -> void:
 		hud_msg.text = ""
 
 
+# ---- Character line-up: plain ground, soft light, the four fighters side by
+# side facing the camera. They stand for 2.5 s, then run on the spot.
+
+func _setup_lineup() -> void:
+	for c in round_root.get_children():
+		c.queue_free()
+	static_root.visible = false
+	var ground := PlaneMesh.new()
+	ground.size = Vector2(12, 8)
+	var gm := StandardMaterial3D.new()
+	gm.albedo_color = Color(0.34, 0.37, 0.33)
+	gm.roughness = 0.9
+	_mesh(self, ground, gm, Vector3.ZERO, false)
+	for k in fighters.size():
+		var f = fighters[k]
+		f.gx = (Cfg.COLS - 1) * 0.5 - 2.1 + k * 1.4
+		f.gy = (Cfg.ROWS - 1) * 0.5
+		f.face_yaw = 0.0
+		f.moving = false
+		f.update_visual(0.0)
+	phase = "gallery"
+	camera.position = Vector3(0, 1.35, 3.6)
+	camera.look_at(Vector3(0, 0.55, 0), Vector3.UP)
+	get_tree().create_timer(2.5).timeout.connect(_lineup_run)
+
+
+func _lineup_run() -> void:
+	for f in fighters:
+		f.moving = true
+
+
 # ---- CI gallery: the four fighters up close, two idling and two running
 
 func _setup_gallery() -> void:
@@ -1074,6 +1118,9 @@ func _setup_gallery() -> void:
 	pickups.clear()
 	for i in 3:
 		_spawn_pickup(Vector2i(6 + i, 7), ["bomb", "fire", "speed"][i])
+	# A freshly laid bomb, to judge the fuse at close range
+	var bn: Node3D = fx.make_bomb(round_root, tile_pos(9, 7))
+	bombs.append({"x": 9, "y": 7, "fuse": 1.5, "fire": 2, "owner": fighters[0], "alive": true, "age": 0.4, "node": bn})
 	phase = "gallery"
 	camera.position = tile_pos(7.0, 9.6) + Vector3(0, 2.4, 0)
 	camera.look_at(tile_pos(7.0, 6.0) + Vector3(0, 0.5, 0), Vector3.UP)
@@ -1092,7 +1139,8 @@ func _load_autotest() -> void:
 		return
 	var mode: String = data.get("mode", "demo")
 	demo = mode == "demo"
-	gallery = mode == "gallery"
+	gallery = mode == "gallery" or mode == "lineup"
+	lineup = mode == "lineup"
 	_shots = data.get("shots", [5.0, 9.0, 14.0])
 	_shots.sort()
 	_shot_dir = ProjectSettings.globalize_path("res://.godot/autotest")

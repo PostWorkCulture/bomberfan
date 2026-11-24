@@ -69,7 +69,7 @@ Bomber Fan is a 3D bomber-arena game (Bomberman-style: grid arena, crates, bombs
 - Every push touching `godot/` runs `godot-build.yml` on real Godot 4.7.2: import → headless smoke test (`-- --smoke`, bots-only, fails on script errors or if rounds don't finish) → web export → screenshots.
 - Check results: `gh api repos/PostWorkCulture/bomberfan/actions/runs?branch=<branch>`; the smoke summary is a `::notice` annotation on the job's check run. Screenshots land on the `ci-screenshots` branch (`git fetch origin ci-screenshots`).
 - Work on a branch until CI is green, then merge to `main`; CI then publishes `play/`.
-- Locally: open `godot/project.godot` in Godot 4.7. Command-line modes: `-- --smoke`, `-- --demo` (four bots), `-- --gallery` (fighter close-up).
+- Local working copy: `Documents\AI\Claude\Projects\Games\Bman` on the "bakes" PC (a git clone; open `Bman\godot\project.godot` in Godot 4.7.2). Run it with the Godot MCP `run_project` and check `get_debug_output` for zero errors/warnings before pushing. Commit the `.import` and `.uid` files Godot generates. Command-line modes: `-- --smoke`, `-- --demo` (four bots), `-- --gallery` (fighter close-up).
 - Build the game in code (scripts) rather than hand-written `.tscn` files where possible, so CI can check it.
 
 ## Daily upkeep

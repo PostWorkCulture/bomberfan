@@ -4,7 +4,7 @@ extends Node3D
 
 const Cfg := preload("res://scripts/config.gd")
 const R := Cfg.PLAYER_RADIUS
-const TARGET_HEIGHT := 0.95   # every fighter stands the same height (uniform-height rule)
+const TARGET_HEIGHT := 1.25   # every fighter stands the same height (uniform-height rule); sized to read on a phone
 
 var game = null
 var pid := 0
@@ -121,7 +121,7 @@ func _build_marker() -> void:
 		tag.outline_size = 16
 		tag.modulate = color
 		tag.no_depth_test = true
-		tag.position.y = 1.35
+		tag.position.y = 1.7
 		add_child(tag)
 
 

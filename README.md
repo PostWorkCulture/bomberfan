@@ -6,6 +6,8 @@ Browser-based 3D bomber arena game.
 
 https://postworkculture.github.io/bomberfan/
 
+Godot rebuild (work in progress): https://postworkculture.github.io/bomberfan/play/
+
 ## Hosting
 
 The game is hosted with GitHub Pages from the `main` branch. `index.html` is the game. The manifest, service worker, and icon files provide installable/offline PWA support for the hosted version.
@@ -18,4 +20,4 @@ The 20 animated fighters use the [Ultimate Monsters](https://quaternius.com/pack
 
 - `CLAUDE.md` — working rules, repo layout and naming conventions.
 - `DESIGN.md` — design spec and dated change log (updated daily).
-- `godot/` — the Godot 4 rebuild.
+- `godot/` — the Godot 4.7 rebuild; built and published to `play/` by `.github/workflows/godot-build.yml`.

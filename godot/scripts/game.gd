@@ -592,7 +592,7 @@ func _end_round(winner, why: String) -> void:
 	phase = "outro"
 	phase_t = Cfg.ROUND_OUTRO
 	stats["rounds"] += 1
-	audio.bass(false)
+	audio.music(false)
 	if winner == null:
 		stats["draws"] += 1
 		_show_msg(why if why != "" else "DRAW", Cfg.ROUND_OUTRO)
@@ -649,7 +649,7 @@ func sim_step(dt: float) -> void:
 		"intro":
 			phase_t -= dt
 			_want_bomb = false
-			audio.bass(true)
+			audio.music(true)
 			var n := ceili(phase_t - 0.35)
 			if n != _last_count and n >= 1 and n <= 3:
 				_last_count = n

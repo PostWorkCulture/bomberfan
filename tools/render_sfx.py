@@ -543,7 +543,7 @@ def main():
         m = Mix(4.5)
         fn(m, np.random.default_rng(100 + i))
         rendered[name] = trim(master(m, ir))
-    rendered['bass_forest'] = bass_forest()
+    # (bass_forest() is kept for reference; the round music is now tools/render_music.py)
     # One gain for everything, so the browser's balance between sounds is kept:
     # the loudest effect peaks at -1 dBFS.
     peak = max(np.max(np.abs(v)) for k, v in rendered.items())

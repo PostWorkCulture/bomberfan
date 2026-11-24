@@ -360,6 +360,21 @@ def write_wav(path, x):
         w.writeframes((np.clip(x, -1, 1) * 32767).astype('<i2').tobytes())
 
 
+def add_loop_chunk(path):
+    """Append a RIFF 'smpl' chunk looping the whole file, so Godot's importer
+    ("Detect From WAV") plays it as a gapless forward loop."""
+    import struct
+    with open(path, 'rb') as f:
+        data = bytearray(f.read())
+    frames = (len(data) - 44) // 4
+    smpl = struct.pack('<9I', 0, 0, int(1e9 / SR), 60, 0, 0, 0, 1, 0)
+    smpl += struct.pack('<6I', 0, 0, 0, frames - 1, 0, 0)
+    data += b'smpl' + struct.pack('<I', len(smpl)) + smpl
+    struct.pack_into('<I', data, 4, len(data) - 8)
+    with open(path, 'wb') as f:
+        f.write(data)
+
+
 def main():
     what = sys.argv[1] if len(sys.argv) > 1 else 'preview'
     if what == 'preview':
@@ -375,6 +390,7 @@ def main():
     else:
         path = os.path.join(ROOT, 'godot', 'assets', 'audio', f'music_{what}.wav')
         write_wav(path, render(what, 8, True))
+        add_loop_chunk(path)
         print(path)
 
 

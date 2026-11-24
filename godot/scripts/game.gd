@@ -80,6 +80,7 @@ var rng := RandomNumberGenerator.new()
 var smoke := false
 var demo := false   # `-- --demo`: four bots, full visuals (attract mode / CI screenshots)
 var gallery := false   # `-- --gallery`: close-up of the fighters for CI checks
+var lineup := false    # autotest "lineup": the roster side by side on plain ground
 var human_pid := 0
 var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0, "sudden_deaths": 0, "crushed": 0,
 	"bombs": 0, "crates": 0, "pickups": 0, "wins": [0, 0, 0, 0]}
@@ -132,6 +133,8 @@ func _ready() -> void:
 	start_round()
 	if smoke:
 		_run_smoke()
+	elif lineup:
+		_setup_lineup()
 	elif gallery:
 		_setup_gallery()
 	else:
@@ -1069,6 +1072,37 @@ func _update_hud() -> void:
 		hud_msg.text = ""
 
 
+# ---- Character line-up: plain ground, soft light, the four fighters side by
+# side facing the camera. They stand for 2.5 s, then run on the spot.
+
+func _setup_lineup() -> void:
+	for c in round_root.get_children():
+		c.queue_free()
+	static_root.visible = false
+	var ground := PlaneMesh.new()
+	ground.size = Vector2(12, 8)
+	var gm := StandardMaterial3D.new()
+	gm.albedo_color = Color(0.34, 0.37, 0.33)
+	gm.roughness = 0.9
+	_mesh(self, ground, gm, Vector3.ZERO, false)
+	for k in fighters.size():
+		var f = fighters[k]
+		f.gx = (Cfg.COLS - 1) * 0.5 - 2.1 + k * 1.4
+		f.gy = (Cfg.ROWS - 1) * 0.5
+		f.face_yaw = 0.0
+		f.moving = false
+		f.update_visual(0.0)
+	phase = "gallery"
+	camera.position = Vector3(0, 1.35, 3.6)
+	camera.look_at(Vector3(0, 0.55, 0), Vector3.UP)
+	get_tree().create_timer(2.5).timeout.connect(_lineup_run)
+
+
+func _lineup_run() -> void:
+	for f in fighters:
+		f.moving = true
+
+
 # ---- CI gallery: the four fighters up close, two idling and two running
 
 func _setup_gallery() -> void:
@@ -1105,7 +1139,8 @@ func _load_autotest() -> void:
 		return
 	var mode: String = data.get("mode", "demo")
 	demo = mode == "demo"
-	gallery = mode == "gallery"
+	gallery = mode == "gallery" or mode == "lineup"
+	lineup = mode == "lineup"
 	_shots = data.get("shots", [5.0, 9.0, 14.0])
 	_shots.sort()
 	_shot_dir = ProjectSettings.globalize_path("res://.godot/autotest")

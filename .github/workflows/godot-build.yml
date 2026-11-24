@@ -88,6 +88,10 @@ jobs:
           xvfb-run -s "-screen 0 1280x720x24" ~/godot-bin/godot --path godot --rendering-driver opengl3 \
             --resolution 1280x720 --fixed-fps 30 --write-movie "$GITHUB_WORKSPACE/shots/frame.png" --quit-after 330 -- --demo 2>&1 | tail -15
           for n in 00000060 00000150 00000240 00000320; do cp "shots/frame$n.png" pick/ 2>/dev/null || true; done
+          mkdir -p gal
+          xvfb-run -s "-screen 0 1280x720x24" ~/godot-bin/godot --path godot --rendering-driver opengl3 \
+            --resolution 1280x720 --fixed-fps 30 --write-movie "$GITHUB_WORKSPACE/gal/g.png" --quit-after 40 -- --gallery 2>&1 | tail -3
+          cp gal/g00000038.png pick/gallery.png 2>/dev/null || true
           ls pick
 
       - name: Push screenshots to ci-screenshots branch

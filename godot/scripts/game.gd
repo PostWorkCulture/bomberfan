@@ -64,6 +64,7 @@ var msg_t := 0.0
 var rng := RandomNumberGenerator.new()
 var smoke := false
 var demo := false   # `-- --demo`: four bots, full visuals (attract mode / CI screenshots)
+var gallery := false   # `-- --gallery`: close-up of the fighters for CI checks
 var human_pid := 0
 var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0,
 	"bombs": 0, "crates": 0, "pickups": 0, "wins": [0, 0, 0, 0]}
@@ -93,6 +94,7 @@ var _pickup_mesh: BoxMesh
 func _ready() -> void:
 	smoke = "--smoke" in OS.get_cmdline_user_args()
 	demo = "--demo" in OS.get_cmdline_user_args()
+	gallery = "--gallery" in OS.get_cmdline_user_args()
 	rng.randomize()
 	if smoke:
 		rng.seed = 20261124
@@ -105,6 +107,8 @@ func _ready() -> void:
 	start_round()
 	if smoke:
 		_run_smoke()
+	elif gallery:
+		_setup_gallery()
 
 
 # ---- Grid helpers ---------------------------------------------------------------
@@ -262,21 +266,21 @@ func _build_environment() -> void:
 	env.background_color = SKY
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.78, 0.84, 0.8)
-	env.ambient_light_energy = 0.55
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.ambient_light_energy = 0.38
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-58.0, -32.0, 0.0)
-	sun.light_energy = 1.25
+	sun.light_energy = 0.78
 	sun.shadow_enabled = true
 	add_child(sun)
 	camera = Camera3D.new()
-	camera.fov = 46.0
+	camera.fov = 44.0
 	add_child(camera)
-	camera.position = Vector3(0.0, 13.2, 8.6)
-	camera.look_at(Vector3(0.0, 0.0, 0.7), Vector3.UP)
+	camera.position = Vector3(0.0, 15.2, 6.6)
+	camera.look_at(Vector3(0.0, 0.0, 0.55), Vector3.UP)
 	camera.current = true
 
 
@@ -372,7 +376,7 @@ func _label(font_size: int, c: Color) -> Label:
 
 
 func _create_fighters() -> void:
-	human_pid = -1 if smoke or demo else 0
+	human_pid = -1 if smoke or demo or gallery else 0
 	for k in Cfg.MAX_PLAYERS:
 		var f = Fighter.new()
 		add_child(f)
@@ -758,6 +762,23 @@ func _update_hud() -> void:
 		hud_msg.text = msg_text
 	else:
 		hud_msg.text = ""
+
+
+# ---- CI gallery: the four fighters up close, two idling and two running
+
+func _setup_gallery() -> void:
+	for c in round_root.get_children():
+		c.queue_free()
+	for k in fighters.size():
+		var f = fighters[k]
+		f.gx = 5.5 + k
+		f.gy = 6.0
+		f.face_yaw = 0.0
+		f.moving = k >= 2
+		f.update_visual(0.0)
+	phase = "gallery"
+	camera.position = tile_pos(7.0, 9.6) + Vector3(0, 2.4, 0)
+	camera.look_at(tile_pos(7.0, 6.0) + Vector3(0, 0.5, 0), Vector3.UP)
 
 
 # ---- Headless smoke test ---------------------------------------------------------

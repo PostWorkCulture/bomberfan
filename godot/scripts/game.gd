@@ -754,7 +754,7 @@ func _update_hud() -> void:
 		lab.text = "%s  %d" % [nm, wins[k]]
 		lab.modulate = Color(1, 1, 1, 1.0 if f.alive else 0.45)
 	var secs := maxi(0, ceili(round_t))
-	hud_round.text = "ROUND %d     %d:%02d     FIRST TO %d" % [round_no, secs / 60, secs % 60, Cfg.WINS_NEEDED]
+	hud_round.text = "ROUND %d     %d:%02d     FIRST TO %d" % [round_no, floori(secs / 60.0), secs % 60, Cfg.WINS_NEEDED]
 	if phase == "intro":
 		var n := ceili(phase_t - 0.35)
 		hud_msg.text = str(n) if n >= 1 else "GO!"

@@ -216,9 +216,7 @@ func _choose_goal(here: Vector2i, danger: PackedFloat32Array) -> void:
 				target = t
 
 	# b) come looking for someone
-	# Once the walls are closing there is nothing left to farm: go and fight.
-	var hunt := 0.92 if game.sudden_death else HUNT
-	if target.x < 0 and rng.randf() < hunt:
+	if target.x < 0 and rng.randf() < HUNT:
 		var best_score := 1e9
 		for t in dist.keys():
 			for f in game.fighters:

@@ -800,6 +800,10 @@ static func _flame_item(m: Node3D) -> void:
 	var flame := _part(m, _cache["flame_outer"], _unshaded(Color.WHITE, 0.82), Vector3(0, -0.27, 0))
 	flame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	flame.name = "Flame"
+	for side in [-1.0, 1.0]:   # two smaller tongues licking up either side
+		var tongue := _part(flame, _cache["flame_outer"], _unshaded(Color.WHITE, 0.82),
+			Vector3(side * 0.1, 0.0, 0.02), Vector3(0, 0, -side * 0.38), Vector3(0.55, 0.62, 0.55))
+		tongue.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 ## Speed Up: a sneaker with white feathered wings at the heel.

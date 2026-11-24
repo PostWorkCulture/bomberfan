@@ -194,9 +194,35 @@ func compute_danger(extra: Dictionary) -> PackedFloat32Array:
 		for c in blast_cells(e["x"], e["y"], e["fire"]):
 			var k := idx(c.x, c.y)
 			danger[k] = minf(danger[k], e["t"])
+	for d in _doomed_tiles():
+		var t: Vector2i = d[0]
+		var k := idx(t.x, t.y)
+		danger[k] = minf(danger[k], d[1])
 	for k in flames.keys():
 		danger[k] = 0.0
 	return danger
+
+
+## Sudden death, as the bots see it: tiles the walls are about to land on, with
+## the seconds until they do — the same warning a human reads off the HUD.
+func _doomed_tiles() -> Array:
+	var out: Array = []
+	if not sudden_death:
+		if sd_warned:
+			for t in _ring_tiles(1):
+				if cell_at(t.x, t.y) != HARD:
+					out.append([t, sd_countdown])
+		return out
+	var i := 0
+	for t in sd_queue:
+		out.append([t, i * Cfg.SD_BLOCK_STAGGER])
+		i += 1
+	if sd_ring < Cfg.SD_MAX_RINGS:
+		var when := sd_queue.size() * Cfg.SD_BLOCK_STAGGER + sd_timer
+		for t in _ring_tiles(sd_ring + 1):
+			if cell_at(t.x, t.y) != HARD:
+				out.append([t, when])
+	return out
 
 
 # ---- Setup --------------------------------------------------------------------

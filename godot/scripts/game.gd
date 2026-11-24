@@ -11,6 +11,9 @@ const Cfg := preload("res://scripts/config.gd")
 const Fighter := preload("res://scripts/fighter.gd")
 const BotBrain := preload("res://scripts/bot_brain.gd")
 const TouchControls := preload("res://scripts/touch_controls.gd")
+const Art := preload("res://scripts/art.gd")
+const Fx := preload("res://scripts/fx.gd")
+const AudioScript := preload("res://scripts/audio.gd")
 
 const EMPTY := 0
 const HARD := 1
@@ -26,16 +29,8 @@ const ROSTER := [
 	{"id": "dino", "name": "DINO", "color": Color(1.0, 0.835, 0.18)},
 ]
 
-# Forest palette (LEVELS[0] in index.html)
+# Forest backdrop colour behind everything (LEVELS[0].sky in index.html)
 const SKY := Color(0.055, 0.102, 0.071)
-const GROUND := Color(0.227, 0.502, 0.188)
-const GROUND_ALT := Color(0.205, 0.46, 0.17)
-const CRATE := Color(0.788, 0.529, 0.247)
-const CRATE_BAND := Color(0.659, 0.416, 0.149)
-const HARD_COL := Color(0.604, 0.639, 0.678)
-const HARD_TOP := Color(0.824, 0.851, 0.875)
-const BORDER := Color(0.361, 0.4, 0.447)
-const BOMB_COL := Color(0.063, 0.075, 0.094)
 
 const PICKUP_LOOK := {
 	"bomb": {"color": Color(0.23, 0.42, 1.0), "letter": "B"},
@@ -44,7 +39,6 @@ const PICKUP_LOOK := {
 }
 
 var cells := PackedInt32Array()
-var crate_nodes := {}
 var bombs: Array = []
 var bomb_at := {}
 var flames := {}
@@ -82,26 +76,36 @@ var _acc := 0.0
 var _time := 0.0
 var _want_bomb := false
 var _mats := {}
-var _crate_mesh: BoxMesh
-var _band_mesh: BoxMesh
-var _bomb_mesh: SphereMesh
-var _fuse_mesh: CylinderMesh
-var _spark_mesh: SphereMesh
-var _flame_mesh: BoxMesh
-var _pickup_mesh: BoxMesh
+var _pickup_mesh: Mesh
+var _crates: MultiMeshInstance3D   # every log pile in one draw call; broken ones are hidden
+var _crate_xf := {}                 # tile index -> its transform in the multimesh
+var fx = null
+var audio = null
+var _last_count := 0
+var _shots: Array = []      # autotest: seconds at which to save a screenshot
+var _shot_dir := ""
+var _quit_at := -1.0
 
 
 func _ready() -> void:
 	smoke = "--smoke" in OS.get_cmdline_user_args()
 	demo = "--demo" in OS.get_cmdline_user_args()
 	gallery = "--gallery" in OS.get_cmdline_user_args()
+	_load_autotest()
 	rng.randomize()
 	if smoke:
 		rng.seed = 20261124
 	_setup_input()
+	fx = Fx.new()
+	fx.enabled = not smoke
+	add_child(fx)
+	audio = AudioScript.new()
+	audio.enabled = not smoke and not gallery
+	add_child(audio)
 	_build_meshes()
 	_build_environment()
 	_build_static_arena()
+	_build_forest()
 	_build_hud()
 	_create_fighters()
 	start_round()
@@ -109,6 +113,8 @@ func _ready() -> void:
 		_run_smoke()
 	elif gallery:
 		_setup_gallery()
+	else:
+		audio.start_ambience()
 
 
 # ---- Grid helpers ---------------------------------------------------------------
@@ -240,41 +246,57 @@ func _mesh(parent: Node, mesh: Mesh, m: Material, pos: Vector3, shadows := true)
 
 
 func _build_meshes() -> void:
-	_crate_mesh = BoxMesh.new()
-	_crate_mesh.size = Vector3(0.86, 0.8, 0.86)
-	_band_mesh = BoxMesh.new()
-	_band_mesh.size = Vector3(0.88, 0.12, 0.88)
-	_bomb_mesh = SphereMesh.new()
-	_bomb_mesh.radius = 0.34
-	_bomb_mesh.height = 0.68
-	_fuse_mesh = CylinderMesh.new()
-	_fuse_mesh.top_radius = 0.04
-	_fuse_mesh.bottom_radius = 0.05
-	_fuse_mesh.height = 0.16
-	_spark_mesh = SphereMesh.new()
-	_spark_mesh.radius = 0.07
-	_spark_mesh.height = 0.14
-	_flame_mesh = BoxMesh.new()
-	_flame_mesh.size = Vector3(0.94, 0.5, 0.94)
-	_pickup_mesh = BoxMesh.new()
-	_pickup_mesh.size = Vector3(0.62, 0.12, 0.62)
+	_pickup_mesh = Art.rounded_box(Vector3(0.6, 0.14, 0.6), 0.05, 2)
 
 
 func _build_environment() -> void:
+	var sky_mat := ProceduralSkyMaterial.new()
+	sky_mat.sky_top_color = Color(0.36, 0.5, 0.62)
+	sky_mat.sky_horizon_color = Color(0.72, 0.74, 0.64)
+	sky_mat.ground_horizon_color = Color(0.45, 0.5, 0.38)
+	sky_mat.ground_bottom_color = Color(0.14, 0.18, 0.11)
+	var sky := Sky.new()
+	sky.sky_material = sky_mat
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = SKY
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.78, 0.84, 0.8)
-	env.ambient_light_energy = 0.38
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	env.sky = sky
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_energy = 0.62
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.tonemap_exposure = 1.08
+	env.glow_enabled = true
+	env.glow_intensity = 0.6
+	env.glow_bloom = 0.03
+	env.glow_hdr_threshold = 1.1
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.16, 0.24, 0.18)
+	if env.get("fog_mode") != null:
+		# Depth fog (Godot 4.3+): the arena stays crisp, the far forest melts away.
+		env.set("fog_mode", 1)
+		env.set("fog_depth_begin", 17.0)
+		env.set("fog_depth_end", 36.0)
+		env.fog_density = 0.9
+	else:
+		env.fog_density = 0.008
+	env.adjustment_enabled = true
+	env.adjustment_saturation = 1.12
+	env.adjustment_contrast = 1.05
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
+	# Warm low sun from the top-left so walls and trees throw long shadows
+	# across the board.
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-58.0, -32.0, 0.0)
-	sun.light_energy = 0.78
+	sun.rotation_degrees = Vector3(-50.0, -38.0, 0.0)
+	sun.light_color = Color(1.0, 0.92, 0.78)
+	sun.light_energy = 1.3
 	sun.shadow_enabled = true
+	sun.shadow_blur = 1.6
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_max_distance = 42.0
 	add_child(sun)
 	camera = Camera3D.new()
 	camera.fov = 44.0
@@ -289,47 +311,95 @@ func _build_static_arena() -> void:
 	add_child(static_root)
 	round_root = Node3D.new()
 	add_child(round_root)
-	var tile_mesh := PlaneMesh.new()
-	tile_mesh.size = Vector2(1.0, 1.0)
-	var hard_mesh := BoxMesh.new()
-	hard_mesh.size = Vector3(0.96, 0.9, 0.96)
-	var cap_mesh := BoxMesh.new()
-	cap_mesh.size = Vector3(0.8, 0.06, 0.8)
+	var floor_mesh := PlaneMesh.new()
+	floor_mesh.size = Vector2(Cfg.COLS, Cfg.ROWS)
+	_mesh(static_root, floor_mesh, Art.arena_floor_mat(), Vector3.ZERO, false)
+	var pillar_xf: Array = []
+	var boulder_xf := [[], [], []]
+	var r := RandomNumberGenerator.new()
+	r.seed = 1234
 	for y in Cfg.ROWS:
 		for x in Cfg.COLS:
 			var p := tile_pos(x, y)
 			var border: bool = x == 0 or y == 0 or x == Cfg.COLS - 1 or y == Cfg.ROWS - 1
 			var pillar: bool = not border and x % 2 == 0 and y % 2 == 0
-			if border or pillar:
-				_mesh(static_root, hard_mesh, _mat(BORDER if border else HARD_COL), p + Vector3(0, 0.45, 0))
-				if pillar:
-					_mesh(static_root, cap_mesh, _mat(HARD_TOP), p + Vector3(0, 0.93, 0))
-			else:
-				_mesh(static_root, tile_mesh, _mat(GROUND if (x + y) % 2 == 0 else GROUND_ALT), p, false)
-	var base := BoxMesh.new()
-	base.size = Vector3(Cfg.COLS + 0.6, 0.4, Cfg.ROWS + 0.6)
-	_mesh(static_root, base, _mat(BORDER.darkened(0.4)), Vector3(0, -0.21, 0), false)
-	# A ring of pines and toadstools beyond the walls
-	var trunk := CylinderMesh.new()
-	trunk.top_radius = 0.08
-	trunk.bottom_radius = 0.1
-	trunk.height = 0.4
-	var crown := CylinderMesh.new()
-	crown.top_radius = 0.0
-	crown.bottom_radius = 0.5
-	crown.height = 1.3
-	var pine_rng := RandomNumberGenerator.new()
-	pine_rng.seed = 7
-	for i in 26:
-		var a := TAU * i / 26.0
-		var p := Vector3(cos(a) * 10.2, 0.0, sin(a) * 8.6)
-		var s := pine_rng.randf_range(0.8, 1.35)
-		var pine := Node3D.new()
-		pine.position = p
-		pine.scale = Vector3.ONE * s
-		static_root.add_child(pine)
-		_mesh(pine, trunk, _mat(Color(0.36, 0.24, 0.14)), Vector3(0, 0.2, 0))
-		_mesh(pine, crown, _mat(Color(0.12, 0.33, 0.17)), Vector3(0, 1.0, 0))
+			if pillar:
+				var b := Basis(Vector3.UP, r.randi_range(0, 3) * PI / 2.0)
+				pillar_xf.append(Transform3D(b, p + Vector3(0, 0.49, 0)))
+			elif border:
+				var b := Basis(Vector3.UP, r.randf() * TAU).scaled(Vector3(1.0, r.randf_range(0.92, 1.18), 1.0))
+				boulder_xf[r.randi_range(0, 2)].append(Transform3D(b, p + Vector3(0, 0.5, 0)))
+	static_root.add_child(Art.multimesh(Art.pillar_mesh(), pillar_xf))
+	for v in 3:
+		static_root.add_child(Art.multimesh(Art.boulder_mesh(v), boulder_xf[v]))
+
+
+## The woods around the arena: forest floor, pines, broadleaf trees, bushes,
+## rocks, toadstools, grass and a few fallen logs. Static, built once.
+func _build_forest() -> void:
+	var big := PlaneMesh.new()
+	big.size = Vector2(80.0, 80.0)
+	_mesh(static_root, big, Art.floor_mat(), Vector3(0, -0.015, 0), false)
+	var r := RandomNumberGenerator.new()
+	r.seed = 4242
+	var placed: Array = []
+	var hx := Cfg.COLS * 0.5
+	var hz := Cfg.ROWS * 0.5
+	# kind: [count, keep-out margin beyond the walls, spacing, max distance out]
+	var kinds := {
+		"pine": [46, 0.75, 1.15, 9.0], "broad": [16, 1.0, 1.6, 9.5], "bush": [34, 0.45, 0.8, 6.0],
+		"rock": [22, 0.35, 0.7, 7.0], "toad": [26, 0.25, 0.45, 5.0], "tuft": [320, 0.15, 0.22, 7.0],
+		"log": [3, 1.3, 2.6, 5.0],
+	}
+	var xf := {}
+	var col := {}
+	for kind in kinds:
+		xf[kind] = []
+		col[kind] = []
+		var spec: Array = kinds[kind]
+		var tries := 0
+		while xf[kind].size() < spec[0] and tries < spec[0] * 60:
+			tries += 1
+			var x := r.randf_range(-hx - spec[3], hx + spec[3])
+			var z := r.randf_range(-hz - spec[3], hz + 1.2)
+			if absf(x) < hx + spec[1] and absf(z) < hz + spec[1]:
+				continue
+			var ok := true
+			for q in placed:
+				var d := Vector2(x, z).distance_to(q[0])
+				if kind == "tuft":
+					if d < 0.35:
+						ok = false
+						break
+				elif d < maxf(spec[2], q[1]):
+					ok = false
+					break
+			if not ok:
+				continue
+			if kind != "tuft":   # tufts only keep clear of solid things, not of each other
+				placed.append([Vector2(x, z), spec[2], kind])
+			var s := r.randf_range(0.8, 1.3)
+			if kind == "pine":
+				s = r.randf_range(0.85, 1.55)
+			elif kind == "broad":
+				s = r.randf_range(0.9, 1.3)
+			var b := Basis(Vector3.UP, r.randf() * TAU).scaled(Vector3.ONE * s)
+			xf[kind].append(Transform3D(b, Vector3(x, 0, z)))
+			var tint := r.randf_range(0.82, 1.12)
+			col[kind].append(Color(tint, tint * r.randf_range(0.95, 1.05), tint * 0.95))
+	static_root.add_child(Art.multimesh(Art.pine_mesh(), xf["pine"], col["pine"]))
+	var broad_split := [[], []]
+	var broad_cols := [[], []]
+	for i in xf["broad"].size():
+		broad_split[i % 2].append(xf["broad"][i])
+		broad_cols[i % 2].append(col["broad"][i])
+	for v in 2:
+		static_root.add_child(Art.multimesh(Art.broadleaf_mesh(v), broad_split[v], broad_cols[v]))
+	static_root.add_child(Art.multimesh(Art.bush_mesh(), xf["bush"], col["bush"]))
+	static_root.add_child(Art.multimesh(Art.rock_mesh(r.randi_range(0, 2)), xf["rock"]))
+	static_root.add_child(Art.multimesh(Art.toadstool_mesh(), xf["toad"], [], false))
+	static_root.add_child(Art.multimesh(Art.grass_tuft_mesh(), xf["tuft"], [], false))
+	static_root.add_child(Art.multimesh(Art.fallen_log_mesh(), xf["log"]))
 
 
 func _build_hud() -> void:
@@ -400,11 +470,12 @@ func start_round() -> void:
 		round_no += 1
 	for c in round_root.get_children():
 		c.queue_free()
+	fx.clear()
+	_last_count = 0
 	bombs.clear()
 	bomb_at.clear()
 	flames.clear()
 	pickups.clear()
-	crate_nodes.clear()
 	_generate_cells()
 	_build_crates()
 	for k in fighters.size():
@@ -440,22 +511,27 @@ func _generate_cells() -> void:
 
 
 func _build_crates() -> void:
+	var xforms: Array = []
+	var r := RandomNumberGenerator.new()
+	r.seed = rng.randi()
+	_crate_xf.clear()
 	for y in Cfg.ROWS:
 		for x in Cfg.COLS:
 			if cells[idx(x, y)] != SOFT:
 				continue
-			var n := Node3D.new()
-			n.position = tile_pos(x, y)
-			round_root.add_child(n)
-			_mesh(n, _crate_mesh, _mat(CRATE), Vector3(0, 0.4, 0))
-			_mesh(n, _band_mesh, _mat(CRATE_BAND), Vector3(0, 0.4, 0))
-			crate_nodes[idx(x, y)] = n
+			var b := Basis(Vector3.UP, r.randi_range(0, 3) * PI / 2.0 + r.randf_range(-0.06, 0.06))
+			b = b.scaled(Vector3(1.0, r.randf_range(0.96, 1.04), 1.0))
+			_crate_xf[idx(x, y)] = xforms.size()
+			xforms.append(Transform3D(b, tile_pos(x, y)))
+	_crates = Art.multimesh(Art.log_pile_mesh(), xforms)
+	round_root.add_child(_crates)
 
 
 func _end_round(winner, why: String) -> void:
 	phase = "outro"
 	phase_t = Cfg.ROUND_OUTRO
 	stats["rounds"] += 1
+	audio.bass(false)
 	if winner == null:
 		stats["draws"] += 1
 		_show_msg(why if why != "" else "DRAW", Cfg.ROUND_OUTRO)
@@ -466,8 +542,10 @@ func _end_round(winner, why: String) -> void:
 	var who: String = "YOU" if winner.pid == human_pid else winner.display_name
 	if wins[winner.pid] >= Cfg.WINS_NEEDED:
 		_show_msg("%s WIN%s THE MATCH!" % [who, "" if who == "YOU" else "S"], Cfg.ROUND_OUTRO)
+		audio.play("match_win")
 	else:
 		_show_msg("%s WIN%s THE ROUND" % [who, "" if who == "YOU" else "S"], Cfg.ROUND_OUTRO)
+		audio.play("round_win")
 
 
 func _show_msg(text: String, secs: float) -> void:
@@ -494,6 +572,13 @@ func _process(delta: float) -> void:
 		_acc -= Cfg.FIXED_DT
 	_update_visuals(delta)
 	_update_hud()
+	_autotest_tick()
+	if fx.shake > 0.001:
+		camera.h_offset = randf_range(-1.0, 1.0) * fx.shake * 0.35
+		camera.v_offset = randf_range(-1.0, 1.0) * fx.shake * 0.35
+	else:
+		camera.h_offset = 0.0
+		camera.v_offset = 0.0
 
 
 func sim_step(dt: float) -> void:
@@ -503,9 +588,15 @@ func sim_step(dt: float) -> void:
 		"intro":
 			phase_t -= dt
 			_want_bomb = false
+			audio.bass(true)
+			var n := ceili(phase_t - 0.35)
+			if n != _last_count and n >= 1 and n <= 3:
+				_last_count = n
+				audio.play("countdown_hi" if n == 1 else "countdown_lo")
 			if phase_t <= 0.0:
 				phase = "play"
 				_show_msg("GO!", 0.7)
+				audio.play("go")
 		"play":
 			round_t -= dt
 			_step_fighters(dt)
@@ -558,7 +649,7 @@ func try_place_bomb(f) -> bool:
 	if bomb_at.has(i) or f.active_bombs >= f.max_bombs:
 		return false
 	var b := {"x": t.x, "y": t.y, "fuse": Cfg.BOMB_FUSE, "fire": f.fire, "owner": f,
-		"alive": true, "age": 0.0, "node": _make_bomb_node(t)}
+		"alive": true, "age": 0.0, "node": fx.make_bomb(round_root, tile_pos(t.x, t.y))}
 	bombs.append(b)
 	bomb_at[i] = b
 	f.active_bombs += 1
@@ -566,17 +657,9 @@ func try_place_bomb(f) -> bool:
 		if o.alive and o.overlaps_tile(t):
 			o.ignore_bombs[i] = true
 	stats["bombs"] += 1
+	audio.play("place_bomb", -2.0, 0.05)
 	return true
 
-
-func _make_bomb_node(t: Vector2i) -> Node3D:
-	var n := Node3D.new()
-	n.position = tile_pos(t.x, t.y)
-	round_root.add_child(n)
-	_mesh(n, _bomb_mesh, _mat(BOMB_COL, 0.35), Vector3(0, 0.36, 0))
-	_mesh(n, _fuse_mesh, _mat(Color(0.82, 0.72, 0.52)), Vector3(0, 0.75, 0))
-	_mesh(n, _spark_mesh, _mat(Color(1.0, 0.78, 0.25), 1.0, true), Vector3(0, 0.85, 0), false)
-	return n
 
 
 func _step_bombs(dt: float) -> void:
@@ -599,26 +682,35 @@ func _explode(b: Dictionary) -> void:
 	if is_instance_valid(node):
 		node.queue_free()
 	var centre := Vector2i(b["x"], b["y"])
+	var world_cells: Array = []
+	var broke := false
 	for c in blast_cells(b["x"], b["y"], b["fire"]):
 		var ci := idx(c.x, c.y)
-		_add_flame(c, bomber.pid, c == centre)
+		world_cells.append(tile_pos(c.x, c.y))
+		_add_flame(c, bomber.pid)
 		if cells[ci] == SOFT:
 			_break_crate(c)
+			broke = true
 		elif pickups.has(ci) and pickups[ci]["shield"] <= 0.0:
 			_remove_pickup(ci)
 		if bomb_at.has(ci):
 			var o: Dictionary = bomb_at[ci]
 			o["fuse"] = minf(o["fuse"], Cfg.CHAIN_DELAY)
+	# Bigger bomb counts shake harder (SHAKE_PER_BOMBUP in the browser build)
+	var strength := minf(pow(1.36759, maxi(0, bomber.max_bombs - 1)) * 0.6, 1.6)
+	fx.explosion(tile_pos(centre.x, centre.y), world_cells, strength)
+	audio.play("explode", 0.0, 0.06, 0.05)
+	if broke:
+		audio.play("break_block", -3.0, 0.08, 0.05)
 
 
-func _add_flame(c: Vector2i, pid: int, centre: bool) -> void:
+func _add_flame(c: Vector2i, pid: int) -> void:
 	var ci := idx(c.x, c.y)
 	if flames.has(ci):
 		flames[ci]["t"] = Cfg.BLAST_LIFE
 		flames[ci]["pid"] = pid
 		return
-	var col := Color(1.0, 0.85, 0.35) if centre else Color(1.0, 0.5, 0.12)
-	var n := _mesh(round_root, _flame_mesh, _mat(col, 1.0, true), tile_pos(c.x, c.y) + Vector3(0, 0.25, 0), false)
+	var n: Node3D = fx.flame_glow(round_root, tile_pos(c.x, c.y)) if fx.enabled else null
 	flames[ci] = {"t": Cfg.BLAST_LIFE, "pid": pid, "node": n}
 
 
@@ -626,24 +718,23 @@ func _step_flames(dt: float) -> void:
 	for k in flames.keys():
 		var fl: Dictionary = flames[k]
 		fl["t"] -= dt
-		var node: Node3D = fl["node"]
+		var node = fl["node"]
 		if fl["t"] <= 0.0:
-			if is_instance_valid(node):
+			if node != null and is_instance_valid(node):
 				node.queue_free()
 			flames.erase(k)
-		elif is_instance_valid(node):
-			node.scale = Vector3(1.0, maxf(0.15, fl["t"] / Cfg.BLAST_LIFE), 1.0)
+		elif node != null and is_instance_valid(node):
+			node.scale = Vector3.ONE * (0.6 + 0.65 * fl["t"] / Cfg.BLAST_LIFE)
 
 
 func _break_crate(c: Vector2i) -> void:
 	var ci := idx(c.x, c.y)
 	cells[ci] = EMPTY
 	stats["crates"] += 1
-	if crate_nodes.has(ci):
-		var n: Node3D = crate_nodes[ci]
-		if is_instance_valid(n):
-			n.queue_free()
-		crate_nodes.erase(ci)
+	if _crate_xf.has(ci) and is_instance_valid(_crates):
+		_crates.multimesh.set_instance_transform(_crate_xf[ci], Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0)))
+		_crate_xf.erase(ci)
+	fx.crate_break(tile_pos(c.x, c.y))
 	var r := rng.randf()
 	var id := ""
 	if r < Cfg.DROP_BOMB:
@@ -661,7 +752,13 @@ func _spawn_pickup(c: Vector2i, id: String) -> void:
 	var n := Node3D.new()
 	n.position = tile_pos(c.x, c.y)
 	round_root.add_child(n)
-	_mesh(n, _pickup_mesh, _mat(look["color"], 0.5), Vector3(0, 0.08, 0))
+	var pm := StandardMaterial3D.new()
+	pm.albedo_color = look["color"]
+	pm.roughness = 0.35
+	pm.emission_enabled = true
+	pm.emission = look["color"]
+	pm.emission_energy_multiplier = 0.9
+	_mesh(n, _pickup_mesh, pm, Vector3(0, 0.1, 0))
 	var l := Label3D.new()
 	l.text = look["letter"]
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -701,6 +798,7 @@ func _step_pickups(dt: float) -> void:
 				f.speed_t = Cfg.SPEED_DURATION
 		stats["pickups"] += 1
 		_remove_pickup(ci)
+		audio.play("pickup", 4.0)
 
 
 func _check_deaths() -> void:
@@ -711,6 +809,8 @@ func _check_deaths() -> void:
 		var ci := idx(t.x, t.y)
 		if flames.has(ci):
 			f.die()
+			fx.death_puff(f.position)
+			audio.play("death")
 			stats["deaths"] += 1
 			if flames[ci]["pid"] == f.pid:
 				stats["self_kills"] += 1
@@ -738,8 +838,7 @@ func _update_visuals(delta: float) -> void:
 	for b in bombs:
 		var node: Node3D = b["node"]
 		if is_instance_valid(node):
-			var rate: float = 10.0 + (Cfg.BOMB_FUSE - b["fuse"]) * 8.0
-			node.scale = Vector3.ONE * (1.0 + 0.07 * sin(b["age"] * rate))
+			fx.animate_bomb(node, b["age"], b["fuse"], _time)
 	for k in pickups.keys():
 		var node: Node3D = pickups[k]["node"]
 		if is_instance_valid(node):
@@ -779,6 +878,38 @@ func _setup_gallery() -> void:
 	phase = "gallery"
 	camera.position = tile_pos(7.0, 9.6) + Vector3(0, 2.4, 0)
 	camera.look_at(tile_pos(7.0, 6.0) + Vector3(0, 0.5, 0), Vector3.UP)
+
+
+# ---- Local autotest: res://autotest.json (git-ignored) runs a demo, saves
+# screenshots to .godot/autotest/ and quits. {"enabled": true, "mode": "demo",
+# "shots": [5, 9, 14]} — "mode" may also be "gallery" or "play".
+
+func _load_autotest() -> void:
+	var path := "res://autotest.json"
+	if not FileAccess.file_exists(path):
+		return
+	var data = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(data) != TYPE_DICTIONARY or not data.get("enabled", false):
+		return
+	var mode: String = data.get("mode", "demo")
+	demo = mode == "demo"
+	gallery = mode == "gallery"
+	_shots = data.get("shots", [5.0, 9.0, 14.0])
+	_shots.sort()
+	_shot_dir = ProjectSettings.globalize_path("res://.godot/autotest")
+	DirAccess.make_dir_recursive_absolute(_shot_dir)
+	_quit_at = (float(_shots.back()) if not _shots.is_empty() else 10.0) + 0.6
+
+
+func _autotest_tick() -> void:
+	if _quit_at < 0.0:
+		return
+	if not _shots.is_empty() and _time >= float(_shots[0]):
+		var img := get_viewport().get_texture().get_image()
+		img.save_png("%s/shot_%02d.png" % [_shot_dir, int(float(_shots[0]))])
+		_shots.pop_front()
+	if _time >= _quit_at:
+		get_tree().quit()
 
 
 # ---- Headless smoke test ---------------------------------------------------------

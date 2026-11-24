@@ -82,7 +82,7 @@ Bots: Normal-tier port of the browser AI — danger map with chain timing, never
 - **Bombs:** matte black shell, metal cap, lit fuse with small sparks. The shell glows red as the fuse runs down, and the bomb squashes in when laid.
 - **Explosions:** orange fireballs down every arm (mixed blend, so they never sum to white), a small hot flash, smoke, sparks, a brief orange light (at most 2 at once), scorch marks that fade after 7 s, and camera shake that grows with the bomber's bomb count. Crates burst into splinters and sawdust. Effect shaders are compiled during the first countdown, so the first blast doesn't hitch.
 - **Music:** Arcade Drive during rounds (from `tools/render_music.py arcade_drive`).
-- **Sound** is rendered by `tools/render_sfx.py`. Most sounds are a direct port of the browser build's WebAudio synth (same recipes, room reverb, high shelf and soft clipper). Sounds: bomb drop, explosion (3 variants), wood break, pick-up, death, countdown, GO, round and match win, the and a quiet wind bed (new in Godot). Master bus has a hard limiter.
+- **Sound** is rendered by `tools/render_sfx.py`. Most sounds are a direct port of the browser build's WebAudio synth (same recipes, room reverb, high shelf and soft clipper). Sounds: bomb drop, explosion (3 variants), wood break, pick-up, death, countdown, GO, round and match win, sudden-death warning/start/wall slam, and a quiet wind bed (new in Godot). Master bus has a hard limiter.
 - Local check: `godot/autotest.json` (git-ignored) runs a bots-only demo on the PC, saves screenshots and FPS/draw-call stats to `godot/.godot/autotest/`, then quits.
 
 ### Pick-ups (Godot)
@@ -101,10 +101,13 @@ Ported from the browser build (`updateEndgame`, tuning in `config.gd`):
 - Then rings of rock drop in from the outside, one ring every 4 s and at most 4 rings. Blocks fall one at a time, 0.035 s apart.
 - A falling block crushes anything on its tile: fighters, bombs and pick-ups.
 - If nobody has won 20 s after the last ring, the round is a draw.
+- Bots treat tiles the walls are about to land on as danger, timed like a bomb blast (the same warning a human reads off the HUD), so they step off them in time. Bots do **not** hunt harder during sudden death: that was tried and reverted because it caused more draws, not fewer.
 - Sounds: an ominous horn for the warning, an impact chord when it starts, and a stone slam for each block landing.
 
 ### Fighters
 No coloured circles under fighters. The human player keeps the "YOU" tag.
+
+**Bomber-bot roster (proposal, not approved):** Bolt, Tank, Pip and Sparky, built and animated in code (`godot/scripts/robot.gd`), switched off with `USE_BOTS = false` in `game.gd` until Pete approves the designs. Separately, eight higher-detail concepts (Sparky Mk II, Fuse, Boomer, Volt, Rivet, Pixel, Mortar, Nova) are modelled by a Blender script on the `art/bot-concepts` branch (not merged).
 
 ### Not yet ported
 Kick (and the other power-ups), the other 7 levels and their rules, character select / Loadout / Prize Locker, menus and options (difficulty, rounds, music volume), menu music, the rest of the roster.
@@ -119,6 +122,7 @@ Newest first. One dated heading per day; bullets say what changed, why, and wher
 - **Fuse made subtle** (Pete: still too big and bright): no spark particles any more, just a tiny ember on the fuse tip, plus a faint red warning glow on the shell in the last stretch of the fuse.
 - **Bomber-bot roster proposal** (`godot/scripts/robot.gd`): Bolt, Tank, Pip and Sparky, built and animated in code. It's off (`USE_BOTS = false` in `game.gd`) until Pete approves the designs. The autotest `"lineup"` mode shows them side by side.
 - **Round music: Arcade Drive** (Pete's pick from four options). It's a 128 bpm four-on-the-floor beat with octave bass, a 16th-note arpeggio and a pad, in A minor. It's an 8-bar seamless loop (`godot/assets/audio/music_arcade_drive.wav`, with a loop point embedded so Godot loops it without a gap). It plays through the countdown and the round at −9 dB under the effects, fades out for the win sting, and replaces the forest bass pulse (`bass_forest.wav` removed). The wind bed is lowered to −11 dB to sit under it.
+- **Bot concepts in Blender** (branch `art/bot-concepts`, not merged): `tools/blender/bomber_bots.py` models, lights and renders eight bomber-bot concepts (Sparky Mk II, Fuse, Boomer, Volt, Rivet, Pixel, Mortar, Nova) in Blender 5.x, each parented to a `Bot_<name>` empty ready for glTF export to Godot. Awaiting Pete's pick.
 - Files: `godot/scripts/audio.gd`, `game.gd`; `tools/render_music.py` (loop chunk), `tools/render_sfx.py`.
 
 ### 2026-11-24 (late evening)
@@ -126,6 +130,7 @@ Newest first. One dated heading per day; bullets say what changed, why, and wher
 - **Arena edge defined:** raised stone base, the woods one step lower, a contact shadow inside the wall, and a darker forest floor.
 - **Sudden death / walls closing in** ported from the browser rules (see "Sudden death"). The time-up draw is replaced by sudden death.
 - **Sound v2:** GO, countdown, explosions, and round and match win redesigned as richer stereo sounds (impact, metallic partials, debris crackle, wider room), because the browser versions sounded cheap. New: sudden-death warning, start and wall slam. Recipes are in `V2` in `tools/render_sfx.py`.
+- **Bots read the closing walls as danger** (`game.gd` `_doomed_tiles`): warned and queued wall tiles feed the danger map with their landing times. A sudden-death "hunt harder" boost for bots was tried and reverted (more draws, not fewer).
 - Fuse spark and tip shine reduced by about half. Coloured circles under fighters removed.
 - **Music options** rendered for Pete to choose from (`tools/render_music.py preview`): Dark Trap, Arcade Drive, Forest Stomp, Tension Pulse. In-round music stays the Forest bass pulse until one is picked.
 - Files: `godot/scripts/art.gd`, `fx.gd`, `game.gd`, `fighter.gd`, `audio.gd`, `config.gd`; `godot/assets/audio/*`; `tools/render_sfx.py`, `tools/render_music.py`.

@@ -1045,6 +1045,9 @@ func _setup_gallery() -> void:
 		f.face_yaw = 0.0
 		f.moving = k >= 2
 		f.update_visual(0.0)
+	pickups.clear()
+	for i in 3:
+		_spawn_pickup(Vector2i(6 + i, 8), ["bomb", "fire", "speed"][i])
 	phase = "gallery"
 	camera.position = tile_pos(7.0, 9.6) + Vector3(0, 2.4, 0)
 	camera.look_at(tile_pos(7.0, 6.0) + Vector3(0, 0.5, 0), Vector3.UP)

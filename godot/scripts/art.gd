@@ -748,6 +748,7 @@ static func pickup_model(id: String) -> Node3D:
 	var model := Node3D.new()
 	model.name = "Model"
 	model.position.y = 0.42
+	model.scale = Vector3.ONE * 1.35
 	root.add_child(model)
 	match id:
 		"bomb":
@@ -821,11 +822,12 @@ static func _wing_shoe(m: Node3D) -> void:
 	_part(m, _cache["shoe_toe"], upper, Vector3(0.1, y0 + 0.11, 0))
 	_part(m, _cache["shoe_stripe"], flat_mat(Color(0.97, 0.97, 0.95), 0.6), Vector3(0.0, y0 + 0.13, 0), Vector3(0, 0, -0.35))
 	var white := flat_mat(Color(0.98, 0.98, 0.97), 0.65)
+	# Wings spread out sideways and up, so they read from the top-down camera.
 	for side in [-1.0, 1.0]:
 		for i in 4:
-			var ang := deg_to_rad(18.0 + i * 17.0)
-			var length := 0.2 - i * 0.025
-			var root := Vector3(-0.1, y0 + 0.21, side * 0.1)
-			var dir := Vector3(-cos(ang), sin(ang), side * 0.25).normalized()
+			var sweep := deg_to_rad(-25.0 + i * 22.0)     # fanned from forward-ish to backward
+			var length := 0.26 - i * 0.03
+			var root := Vector3(-0.08, y0 + 0.21, side * 0.08)
+			var dir := Vector3(-sin(sweep), 0.45, side * cos(sweep)).normalized()
 			var feather := _part(m, _cache["feather"], white, root + dir * length * 0.5)
-			feather.basis = Basis.looking_at(dir, Vector3(0, 0, side)) * Basis.from_scale(Vector3(0.35, 0.12, length / 0.1))
+			feather.basis = Basis.looking_at(dir, Vector3.UP) * Basis.from_scale(Vector3(0.75, 0.16, length / 0.1))

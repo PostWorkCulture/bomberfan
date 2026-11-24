@@ -74,14 +74,29 @@ Forest arena (15×13, 70% crates), you vs 3 bots (Ninja, Orc, Bunny, Dino), bomb
 
 Bots: Normal-tier port of the browser AI — danger map with chain timing, never bomb without a timed escape (escape slack 0.52 s, +0.35 s on the opening bomb), greed 0.34 / range 4, hunt 0.48, bomb gap 0.6 s.
 
+### Look and sound (Godot)
+- **All art is generated in code** (`godot/scripts/art.gd`): noise textures, meshes and shaders, with no image files. CI can then build and check it, and the web download stays small. Fighters are the only imported models.
+- **Forest arena:** grass floor with a subtle checker and tile lines. Pillars are bevelled cut stone with patchy moss on top; moss is kept light so the pillars read as grey stone from the top-down camera, not as green blocks. The border is chunky mossy boulders. Crates are **log piles** (three crossed layers, bark plus end-grain rings), drawn as one multimesh.
+- **Woods around the arena:** forest floor, ~46 pines, ~16 broadleaf trees, bushes, rocks, red toadstools, swaying grass tufts and fallen logs. All multimeshed (about 10 draw calls).
+- **Lighting:** one warm low sun with soft shadows (no second light; the Compatibility renderer draws each light as an extra pass, which costs phones). Sky-lit ambient, Filmic tonemap, depth fog for the far woods. Glow is tight and high-threshold, so only real hot spots bloom.
+- **Bombs:** matte black shell, metal cap, lit fuse with small sparks. The shell glows red as the fuse runs down, and the bomb squashes in when laid.
+- **Explosions:** orange fireballs down every arm (mixed blend, so they never sum to white), a small hot flash, smoke, sparks, a brief orange light (at most 2 at once), scorch marks that fade after 7 s, and camera shake that grows with the bomber's bomb count. Crates burst into splinters and sawdust. Effect shaders are compiled during the first countdown, so the first blast doesn't hitch.
+- **Sound** is rendered by `tools/render_sfx.py`, a direct port of the browser build's WebAudio synth (same recipes, room reverb, high shelf and soft clipper). Sounds: bomb drop, explosion (3 variants), wood break, pick-up, death, countdown, GO, round and match win, the Forest bass pulse during rounds, and a quiet wind bed (new in Godot). Master bus has a hard limiter.
+- Local check: `godot/autotest.json` (git-ignored) runs a bots-only demo on the PC, saves screenshots and FPS/draw-call stats to `godot/.godot/autotest/`, then quits.
+
 ### Not yet ported
-Kick (and the other power-ups), sudden death / shrinking arena, the other 7 levels and their rules, character select / Loadout / Prize Locker, menus and options (difficulty, rounds), audio, screen shake, the rest of the roster.
+Kick (and the other power-ups), sudden death / shrinking arena, the other 7 levels and their rules, character select / Loadout / Prize Locker, menus and options (difficulty, rounds, music volume), menu music, the rest of the roster.
 
 ---
 
 ## Change log
 
 Newest first. One dated heading per day; bullets say what changed, why, and where.
+
+### 2026-11-24 (evening)
+- **Godot art, effects and sound pass** for a fair comparison with the browser build. Forest look as described under "Look and sound": procedural textures, log-pile crates, stone pillars, boulder border, trees and props, sun and shadows, fog, glow. Explosions with fireballs, smoke, sparks, debris, scorch marks, flash light and camera shake. Bombs with a lit fuse and red warning glow. All sounds ported from the browser synth.
+- Checked on the "bakes" PC (RTX 5060): no errors, ~800 fps, ~230 draw calls, ~310k primitives a frame. Tuned from screenshots: less moss, no white-out on explosions or bomb sparks (spark brightness capped, glow kept tight, sun removed from sky reflections).
+- Files: `godot/scripts/art.gd`, `fx.gd`, `audio.gd`, `game.gd`; `godot/assets/audio/*.wav`; `tools/render_sfx.py`.
 
 ### 2026-11-24
 - **Godot vertical slice added** (`godot/`): Forest arena, you vs 3 bots, bombs + chain blasts, Bomb/Fire/Speed pick-ups, first-to-3 rounds, touch + keyboard + gamepad. Tuning copied from `CFG`; bots ported from the Normal tier.

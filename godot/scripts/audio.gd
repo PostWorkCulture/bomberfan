@@ -53,20 +53,20 @@ func start_ambience() -> void:
 		_ambience.play()
 
 
-## name may be a family ("explode") that picks one of its rendered variants.
-func play(name: String, volume_db := 0.0, pitch_var := 0.0, min_gap := 0.03) -> void:
+## sound may be a family ("explode") that picks one of its rendered variants.
+func play(sound: String, volume_db := 0.0, pitch_var := 0.0, min_gap := 0.03) -> void:
 	if not enabled:
 		return
-	var key := name
-	if VARIANTS.has(name):
-		key = "%s_%d" % [name, randi_range(1, VARIANTS[name])]
+	var key := sound
+	if VARIANTS.has(sound):
+		key = "%s_%d" % [sound, randi_range(1, VARIANTS[sound])]
 	var stream = _streams.get(key)
 	if stream == null:
 		return
 	var now := Time.get_ticks_msec() / 1000.0
-	if now - float(_last.get(name, -10.0)) < min_gap:
+	if now - float(_last.get(sound, -10.0)) < min_gap:
 		return
-	_last[name] = now
+	_last[sound] = now
 	for p in _pool:
 		if not p.playing:
 			p.stream = stream

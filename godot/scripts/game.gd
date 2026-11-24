@@ -85,6 +85,7 @@ var _last_count := 0
 var _shots: Array = []      # autotest: seconds at which to save a screenshot
 var _shot_dir := ""
 var _quit_at := -1.0
+var _perf := {"frames": 0, "worst": 0.0, "draws": 0, "prims": 0}
 
 
 func _ready() -> void:
@@ -115,6 +116,7 @@ func _ready() -> void:
 		_setup_gallery()
 	else:
 		audio.start_ambience()
+		fx.prewarm(round_root)
 
 
 # ---- Grid helpers ---------------------------------------------------------------
@@ -262,14 +264,16 @@ func _build_environment() -> void:
 	env.background_color = SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.62
+	env.ambient_light_energy = 0.5
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_exposure = 1.08
+	env.tonemap_exposure = 1.0
 	env.glow_enabled = true
-	env.glow_intensity = 0.6
-	env.glow_bloom = 0.03
-	env.glow_hdr_threshold = 1.1
+	env.glow_intensity = 0.35
+	env.glow_bloom = 0.0
+	env.glow_hdr_threshold = 1.5
+	for lvl in [4, 5, 6, 7]:   # keep the glow tight: no wide halos round small bright things
+		env.set("glow_levels/%d" % lvl, 0.0)
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.16, 0.24, 0.18)
@@ -282,7 +286,7 @@ func _build_environment() -> void:
 	else:
 		env.fog_density = 0.008
 	env.adjustment_enabled = true
-	env.adjustment_saturation = 1.12
+	env.adjustment_saturation = 1.0
 	env.adjustment_contrast = 1.05
 	var we := WorldEnvironment.new()
 	we.environment = env
@@ -292,11 +296,12 @@ func _build_environment() -> void:
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-50.0, -38.0, 0.0)
 	sun.light_color = Color(1.0, 0.92, 0.78)
-	sun.light_energy = 1.3
+	sun.light_energy = 1.15
 	sun.shadow_enabled = true
 	sun.shadow_blur = 1.6
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 42.0
+	sun.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY   # no sun disc to reflect and bloom
 	add_child(sun)
 	camera = Camera3D.new()
 	camera.fov = 44.0
@@ -904,11 +909,21 @@ func _load_autotest() -> void:
 func _autotest_tick() -> void:
 	if _quit_at < 0.0:
 		return
+	if _time > 2.0:
+		_perf["frames"] += 1
+		_perf["worst"] = maxf(_perf["worst"], get_process_delta_time())
+		_perf["draws"] = maxi(_perf["draws"], int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)))
+		_perf["prims"] = maxi(_perf["prims"], int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)))
 	if not _shots.is_empty() and _time >= float(_shots[0]):
 		var img := get_viewport().get_texture().get_image()
 		img.save_png("%s/shot_%02d.png" % [_shot_dir, int(float(_shots[0]))])
 		_shots.pop_front()
 	if _time >= _quit_at:
+		var f := FileAccess.open(_shot_dir + "/stats.txt", FileAccess.WRITE)
+		if f:
+			f.store_line("avg_fps=%.1f worst_frame_ms=%.1f max_draw_calls=%d max_primitives=%d" % [
+				_perf["frames"] / maxf(_time - 2.0, 0.001), _perf["worst"] * 1000.0, _perf["draws"], _perf["prims"]])
+			f.close()
 		get_tree().quit()
 
 

@@ -38,7 +38,7 @@ static func noise_tex(key: String, seed_value: int, freq: float, colors: PackedC
 
 static func grass_tex() -> NoiseTexture2D:
 	return noise_tex("grass", 11, 0.018,
-		PackedColorArray([Color("2b4a1c"), Color("3d6b25"), Color("4f8530"), Color("6d9a3a")]),
+		PackedColorArray([Color("2a4419"), Color("38601f"), Color("487528"), Color("5f8433")]),
 		PackedFloat32Array([0.0, 0.38, 0.66, 1.0]), 256, 6)
 
 
@@ -60,13 +60,13 @@ static func forest_floor_tex() -> NoiseTexture2D:
 
 static func stone_tex() -> NoiseTexture2D:
 	return noise_tex("stone", 31, 0.03,
-		PackedColorArray([Color("6d716c"), Color("8e938c"), Color("a7aba2"), Color("7e8479")]),
+		PackedColorArray([Color("5f5b55"), Color("7f7a71"), Color("9b958a"), Color("6e6a62")]),
 		PackedFloat32Array([0.0, 0.4, 0.7, 1.0]), 256, 6)
 
 
 static func moss_tex() -> NoiseTexture2D:
 	return noise_tex("moss", 41, 0.045,
-		PackedColorArray([Color("2f4a1d"), Color("46702a"), Color("5f8a34")]),
+		PackedColorArray([Color("26391a"), Color("37541f"), Color("4a6a2a")]),
 		PackedFloat32Array([0.0, 0.5, 1.0]), 256, 5)
 
 
@@ -141,8 +141,8 @@ void fragment() {
 	vec3 s = texture(stone_tex, wpos.zy * scale).rgb * b.x
 		+ texture(stone_tex, wpos.xz * scale).rgb * b.y
 		+ texture(stone_tex, wpos.xy * scale).rgb * b.z;
-	float m = smoothstep(0.35, 0.85, wnrm.y) * moss_amount;
-	m *= smoothstep(0.25, 0.65, texture(moss_tex, wpos.xz * 0.7).g * 1.6);
+	float m = smoothstep(0.62, 0.97, wnrm.y) * moss_amount;
+	m *= smoothstep(0.42, 0.62, texture(moss_tex, wpos.xz * 0.55).g * 2.2);
 	vec3 moss = texture(moss_tex, wpos.xz * 1.4).rgb;
 	ALBEDO = mix(s * tint, moss, clamp(m, 0.0, 1.0));
 	ROUGHNESS = mix(0.82, 0.95, m);
@@ -185,7 +185,8 @@ void fragment() {
 """
 
 
-static func _shader_mat(key: String, code: String, params := {}) -> ShaderMaterial:
+static func _shader_mat(name_key: String, code: String, params := {}) -> ShaderMaterial:
+	var key := "shader_mat:" + name_key
 	if _cache.has(key):
 		return _cache[key]
 	var sh := Shader.new()
@@ -375,8 +376,8 @@ static func merge(parts: Array) -> ArrayMesh:
 static func pillar_mesh() -> ArrayMesh:
 	if _cache.has("pillar"):
 		return _cache["pillar"]
-	var m := rounded_box(Vector3(0.94, 0.98, 0.94), 0.09, 5, 0.025, 3)
-	m.surface_set_material(0, stone_mat("pillar", Color(0.92, 0.95, 0.9), 0.85))
+	var m := rounded_box(Vector3(0.94, 0.98, 0.94), 0.09, 3, 0.025, 3)
+	m.surface_set_material(0, stone_mat("pillar", Color(1.0, 1.0, 1.0), 0.32))
 	_cache["pillar"] = m
 	return m
 
@@ -386,8 +387,8 @@ static func boulder_mesh(variant: int) -> ArrayMesh:
 	var key := "boulder_%d" % variant
 	if _cache.has(key):
 		return _cache[key]
-	var m := rounded_box(Vector3(1.04, 1.1, 1.04), 0.28, 6, 0.09, 100 + variant * 17)
-	m.surface_set_material(0, stone_mat("border", Color(0.78, 0.8, 0.76), 0.95))
+	var m := rounded_box(Vector3(1.04, 1.1, 1.04), 0.28, 4, 0.09, 100 + variant * 17)
+	m.surface_set_material(0, stone_mat("border", Color(0.82, 0.82, 0.8), 0.6))
 	_cache[key] = m
 	return m
 
@@ -413,7 +414,7 @@ static func log_pile_mesh() -> ArrayMesh:
 			var ln := length * rng.randf_range(0.94, 1.02)
 			var centre := Vector3(0.0, y, off) if along_x else Vector3(off, y, 0.0)
 			var axis := Vector3.RIGHT if along_x else Vector3.BACK
-			_add_log(side, ends, centre, axis, rr, ln, 12)
+			_add_log(side, ends, centre, axis, rr, ln, 10)
 	var mesh := ArrayMesh.new()
 	side.commit(mesh)
 	ends.commit(mesh)
@@ -536,8 +537,8 @@ static func broadleaf_mesh(variant: int) -> ArrayMesh:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 300 + variant
 	var parts: Array = []
-	var top := Color("6fa344") if variant % 2 == 0 else Color("8aa83e")
-	var bottom := Color("24461c")
+	var top := Color("5b8a36") if variant % 2 == 0 else Color("6f8a34")
+	var bottom := Color("1d3616")
 	var centres := [Vector3(0, 1.75, 0), Vector3(0.42, 1.55, 0.1), Vector3(-0.38, 1.6, -0.15),
 		Vector3(0.05, 1.5, 0.42), Vector3(-0.1, 2.15, -0.05)]
 	for i in centres.size():
@@ -571,7 +572,7 @@ static func bush_mesh() -> ArrayMesh:
 	var parts: Array = []
 	var offs := [Vector3(0, 0.28, 0), Vector3(0.3, 0.22, 0.08), Vector3(-0.26, 0.2, -0.1), Vector3(0.05, 0.2, -0.3)]
 	for i in offs.size():
-		parts.append([blob(0.32, 600 + i, 0.07, Color("5c9438"), Color("1f3d18"), 0.8, 6, 10), Transform3D(Basis(), offs[i])])
+		parts.append([blob(0.32, 600 + i, 0.07, Color("4f7d31"), Color("1a3315"), 0.8, 6, 10), Transform3D(Basis(), offs[i])])
 	var m := merge(parts)
 	m.surface_set_material(0, vcol_mat("foliage"))
 	_cache["bush"] = m
@@ -583,7 +584,7 @@ static func rock_mesh(variant: int) -> ArrayMesh:
 	if _cache.has(key):
 		return _cache[key]
 	var m := rounded_box(Vector3(0.7, 0.45, 0.55), 0.2, 4, 0.08, 700 + variant * 13)
-	m.surface_set_material(0, stone_mat("rock", Color(0.85, 0.86, 0.82), 0.7))
+	m.surface_set_material(0, stone_mat("rock", Color(0.85, 0.86, 0.82), 0.5))
 	_cache[key] = m
 	return m
 

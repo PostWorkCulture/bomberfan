@@ -30,15 +30,18 @@ var _bomb_cap: CylinderMesh
 var _fuse: CylinderMesh
 var _spark_dot: SphereMesh
 var _scorches: Array = []
+var _tip_mat: StandardMaterial3D
+var _add_mat: StandardMaterial3D
 
 
 func _ready() -> void:
 	_quad = QuadMesh.new()
 	_quad.size = Vector2.ONE
-	_fire_mat = _particle_mat(true)
+	_fire_mat = _particle_mat(false)
+	_add_mat = _particle_mat(true)
 	_smoke_mat = _particle_mat(false)
 	_glow_mat = _particle_mat(true, false)
-	_glow_mat.albedo_color = Color(1.0, 0.55, 0.18, 0.9)
+	_glow_mat.albedo_color = Color(1.0, 0.45, 0.12, 0.6)
 	_scorch_mat = StandardMaterial3D.new()
 	_scorch_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_scorch_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -47,10 +50,10 @@ func _ready() -> void:
 	_debris_mesh = BoxMesh.new()
 	_debris_mesh.size = Vector3(0.09, 0.07, 0.2)
 	_debris_mesh.material = Art.bark_mat()
-	_fire_ramp = _ramp([0.0, 0.12, 0.35, 0.7, 1.0], [Color(4.0, 3.4, 2.2, 1.0), Color(3.2, 1.7, 0.5, 1.0),
-		Color(1.6, 0.45, 0.08, 0.85), Color(0.45, 0.08, 0.02, 0.45), Color(0.1, 0.03, 0.02, 0.0)])
-	_flash_ramp = _ramp([0.0, 0.4, 1.0], [Color(6, 5.5, 4.5, 1.0), Color(3, 1.8, 0.7, 0.6), Color(1, 0.4, 0.1, 0.0)])
-	_spark_ramp = _ramp([0.0, 0.5, 1.0], [Color(5, 3.6, 1.6, 1.0), Color(2.4, 0.9, 0.2, 1.0), Color(0.8, 0.2, 0.05, 0.0)])
+	_fire_ramp = _ramp([0.0, 0.1, 0.3, 0.62, 1.0], [Color(1.15, 0.92, 0.5, 1.0), Color(1.0, 0.62, 0.18, 1.0),
+		Color(0.95, 0.36, 0.06, 0.95), Color(0.32, 0.1, 0.04, 0.7), Color(0.12, 0.08, 0.06, 0.0)])
+	_flash_ramp = _ramp([0.0, 0.4, 1.0], [Color(1.2, 0.9, 0.5, 0.35), Color(1.0, 0.5, 0.15, 0.2), Color(1, 0.4, 0.1, 0.0)])
+	_spark_ramp = _ramp([0.0, 0.5, 1.0], [Color(1.25, 1.0, 0.6, 1.0), Color(1.0, 0.5, 0.12, 0.9), Color(0.8, 0.2, 0.05, 0.0)])
 	_smoke_ramp = _ramp([0.0, 0.18, 0.6, 1.0], [Color(0.3, 0.28, 0.25, 0.0), Color(0.22, 0.21, 0.2, 0.6),
 		Color(0.17, 0.17, 0.17, 0.35), Color(0.15, 0.15, 0.15, 0.0)])
 	_dust_ramp = _ramp([0.0, 0.2, 1.0], [Color(0.55, 0.42, 0.28, 0.0), Color(0.5, 0.38, 0.25, 0.55), Color(0.45, 0.36, 0.26, 0.0)])
@@ -69,8 +72,11 @@ func _ready() -> void:
 	_fuse.height = 0.18
 	_fuse.radial_segments = 6
 	_spark_dot = SphereMesh.new()
-	_spark_dot.radius = 0.06
-	_spark_dot.height = 0.12
+	_spark_dot.radius = 0.04
+	_spark_dot.height = 0.08
+	_tip_mat = StandardMaterial3D.new()
+	_tip_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_tip_mat.albedo_color = Color(1.0, 0.75, 0.35)
 
 
 func _particle_mat(additive: bool, billboard := true) -> StandardMaterial3D:
@@ -99,6 +105,21 @@ func _curve(points: Array) -> Curve:
 	for p in points:
 		c.add_point(p)
 	return c
+
+
+## Compile every effect's shaders during the countdown, off-screen, so the
+## first explosion of the session doesn't hitch.
+func prewarm(parent: Node3D) -> void:
+	if not enabled:
+		return
+	var at := Vector3(0, -40, 0)
+	var b := make_bomb(parent, at)
+	explosion(at, [at, at + Vector3(1, 0, 0)], 0.0)
+	crate_break(at)
+	death_puff(at)
+	flame_glow(parent, at).queue_free()
+	b.queue_free()
+	shake = 0.0
 
 
 func clear() -> void:
@@ -150,8 +171,9 @@ func make_bomb(parent: Node3D, pos: Vector3) -> Node3D:
 	body.mesh = _bomb_body
 	var m := StandardMaterial3D.new()
 	m.albedo_color = Color(0.05, 0.055, 0.07)
-	m.roughness = 0.22
-	m.metallic = 0.35
+	m.roughness = 0.45
+	m.metallic = 0.05
+	m.metallic_specular = 0.35
 	m.emission_enabled = true
 	m.emission = Color(1.0, 0.12, 0.05)
 	m.emission_energy_multiplier = 0.0
@@ -172,7 +194,7 @@ func make_bomb(parent: Node3D, pos: Vector3) -> Node3D:
 	n.add_child(fuse)
 	var tip := MeshInstance3D.new()
 	tip.mesh = _spark_dot
-	tip.material_override = _glow_mat
+	tip.material_override = _tip_mat
 	tip.position = Vector3(0.065, 0.9, 0.0)
 	tip.name = "Tip"
 	tip.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -180,9 +202,9 @@ func make_bomb(parent: Node3D, pos: Vector3) -> Node3D:
 	if enabled:
 		var sp := CPUParticles3D.new()
 		sp.mesh = _quad
-		sp.material_override = _fire_mat
-		sp.amount = 10
-		sp.lifetime = 0.35
+		sp.material_override = _add_mat
+		sp.amount = 6
+		sp.lifetime = 0.3
 		sp.local_coords = false
 		sp.position = tip.position
 		sp.direction = Vector3.UP
@@ -190,8 +212,8 @@ func make_bomb(parent: Node3D, pos: Vector3) -> Node3D:
 		sp.initial_velocity_min = 0.6
 		sp.initial_velocity_max = 1.4
 		sp.gravity = Vector3(0, -3.0, 0)
-		sp.scale_amount_min = 0.05
-		sp.scale_amount_max = 0.1
+		sp.scale_amount_min = 0.035
+		sp.scale_amount_max = 0.07
 		sp.color_ramp = _spark_ramp
 		sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		n.add_child(sp)
@@ -224,15 +246,15 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	if not enabled:
 		return
 	shake = minf(0.45, shake + 0.11 * strength)
-	var flash := _emitter(centre + Vector3(0, 0.5, 0), _fire_mat, 1, 0.22)
+	var flash := _emitter(centre + Vector3(0, 0.5, 0), _add_mat, 1, 0.14)
 	flash.color_ramp = _flash_ramp
-	flash.scale_amount_min = 2.6
-	flash.scale_amount_max = 2.6
+	flash.scale_amount_min = 1.2
+	flash.scale_amount_max = 1.2
 	flash.emitting = true
 	for c in cells:
 		var p: Vector3 = c
 		var is_centre := p.distance_to(centre) < 0.1
-		var f := _emitter(p + Vector3(0, 0.35, 0), _fire_mat, 7 if is_centre else 5, 0.62)
+		var f := _emitter(p + Vector3(0, 0.35, 0), _fire_mat, 5 if is_centre else 4, 0.6)
 		f.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 		f.emission_sphere_radius = 0.28
 		f.direction = Vector3.UP
@@ -263,7 +285,7 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 		s.color_ramp = _smoke_ramp
 		s.emitting = true
 		scorch(p, 0.95 if is_centre else 0.7)
-	var sp := _emitter(centre + Vector3(0, 0.4, 0), _fire_mat, 26, 0.9)
+	var sp := _emitter(centre + Vector3(0, 0.4, 0), _add_mat, 22, 0.9)
 	sp.direction = Vector3.UP
 	sp.spread = 75.0
 	sp.initial_velocity_min = 3.5

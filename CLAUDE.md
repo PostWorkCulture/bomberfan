@@ -70,7 +70,10 @@ Bomber Fan is a 3D bomber-arena game (Bomberman-style: grid arena, crates, bombs
 - Check results: `gh api repos/PostWorkCulture/bomberfan/actions/runs?branch=<branch>`; the smoke summary is a `::notice` annotation on the job's check run. Screenshots land on the `ci-screenshots` branch (`git fetch origin ci-screenshots`).
 - Work on a branch until CI is green, then merge to `main`; CI then publishes `play/`.
 - Local working copy: `Documents\AI\Claude\Projects\Games\Bman` on the "bakes" PC (a git clone; open `Bman\godot\project.godot` in Godot 4.7.2). Run it with the Godot MCP `run_project` and check `get_debug_output` for zero errors/warnings before pushing. Commit the `.import` and `.uid` files Godot generates. Command-line modes: `-- --smoke`, `-- --demo` (four bots), `-- --gallery` (fighter close-up).
-- Build the game in code (scripts) rather than hand-written `.tscn` files where possible, so CI can check it.
+- Build the game in code (scripts) rather than hand-written `.tscn` files where possible, so CI can check it. Art is procedural too (`scripts/art.gd`); add image files only when procedural can't do the job.
+- Visual check on the PC: set `"enabled": true` in `godot/autotest.json` (git-ignored), run with `run_project`, then read `godot/.godot/autotest/shot_*.png` and `stats.txt`. **Set it back to `false` afterwards**, or the game quits itself.
+- Sounds: edit recipes in `tools/render_sfx.py` (a port of the browser synth), run it, and commit the WAVs. Don't hand-edit WAVs.
+- When copying files to the PC with `device_commit_files`, wait about 20 s after writing them, then compare checksums. The file store can serve a stale copy.
 
 ## Daily upkeep
 
@@ -79,5 +82,5 @@ A scheduled task runs each evening (UK time). It reviews that day's commits, rec
 ## Current state
 
 - Browser build: playable, live on Pages (build `standard-arenas-review-20260924`).
-- Godot rebuild: vertical slice playable (Forest, you vs 3 bots, Bomb/Fire/Speed) at https://postworkculture.github.io/bomberfan/play/ — see DESIGN.md "Not yet ported" for what's next.
+- Godot rebuild: vertical slice playable (Forest, you vs 3 bots, Bomb/Fire/Speed) with the full Forest art, effects and sound pass, at https://postworkculture.github.io/bomberfan/play/. See DESIGN.md "Not yet ported" for what's next.
 - 2026-11-24: repo tidied (see `DESIGN.md` change log).

@@ -81,7 +81,8 @@ Bots: Normal-tier port of the browser AI — danger map with chain timing, never
 - **Lighting:** one warm low sun with soft shadows (no second light; the Compatibility renderer draws each light as an extra pass, which costs phones). Sky-lit ambient, Filmic tonemap, depth fog for the far woods. Glow is tight and high-threshold, so only real hot spots bloom.
 - **Bombs:** matte black shell, metal cap, lit fuse with small sparks. The shell glows red as the fuse runs down, and the bomb squashes in when laid.
 - **Explosions:** orange fireballs down every arm (mixed blend, so they never sum to white), a small hot flash, smoke, sparks, a brief orange light (at most 2 at once), scorch marks that fade after 7 s, and camera shake that grows with the bomber's bomb count. Crates burst into splinters and sawdust. Effect shaders are compiled during the first countdown, so the first blast doesn't hitch.
-- **Sound** is rendered by `tools/render_sfx.py`. Most sounds are a direct port of the browser build's WebAudio synth (same recipes, room reverb, high shelf and soft clipper). Sounds: bomb drop, explosion (3 variants), wood break, pick-up, death, countdown, GO, round and match win, the Forest bass pulse during rounds, and a quiet wind bed (new in Godot). Master bus has a hard limiter.
+- **Music:** Arcade Drive during rounds (from `tools/render_music.py arcade_drive`).
+- **Sound** is rendered by `tools/render_sfx.py`. Most sounds are a direct port of the browser build's WebAudio synth (same recipes, room reverb, high shelf and soft clipper). Sounds: bomb drop, explosion (3 variants), wood break, pick-up, death, countdown, GO, round and match win, the and a quiet wind bed (new in Godot). Master bus has a hard limiter.
 - Local check: `godot/autotest.json` (git-ignored) runs a bots-only demo on the PC, saves screenshots and FPS/draw-call stats to `godot/.godot/autotest/`, then quits.
 
 ### Pick-ups (Godot)
@@ -113,6 +114,10 @@ Kick (and the other power-ups), the other 7 levels and their rules, character se
 ## Change log
 
 Newest first. One dated heading per day; bullets say what changed, why, and where.
+
+### 2026-11-24 (night)
+- **Round music: Arcade Drive** (Pete's pick from four options). It's a 128 bpm four-on-the-floor beat with octave bass, a 16th-note arpeggio and a pad, in A minor. It's an 8-bar seamless loop (`godot/assets/audio/music_arcade_drive.wav`, with a loop point embedded so Godot loops it without a gap). It plays through the countdown and the round at −9 dB under the effects, fades out for the win sting, and replaces the forest bass pulse (`bass_forest.wav` removed). The wind bed is lowered to −11 dB to sit under it.
+- Files: `godot/scripts/audio.gd`, `game.gd`; `tools/render_music.py` (loop chunk), `tools/render_sfx.py`.
 
 ### 2026-11-24 (late evening)
 - **Pick-ups are now 3D items** (mini bomb, flame, winged sneaker), floating over coloured glows instead of lettered tiles.

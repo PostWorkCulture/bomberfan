@@ -39,6 +39,9 @@ func _ready() -> void:
 	_music.volume_db = MUSIC_DB
 	_music.finished.connect(_on_music_finished)   # backup if the loop point is ever lost
 	add_child(_music)
+	var ms = _music.stream
+	if ms is AudioStreamWAV and ms.loop_mode == AudioStreamWAV.LOOP_DISABLED:
+		push_warning("Round music has no loop point: falling back to restart-on-finish")
 	_ambience = AudioStreamPlayer.new()
 	_ambience.stream = _streams.get("ambience_forest")
 	_ambience.volume_db = -11.0

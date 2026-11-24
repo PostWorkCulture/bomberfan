@@ -90,14 +90,17 @@ jobs:
           for n in 00000060 00000150 00000240 00000320; do cp "shots/frame$n.png" pick/ 2>/dev/null || true; done
           ls pick
 
-      - name: Upload screenshots
+      - name: Push screenshots to ci-screenshots branch
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots
-          path: pick/
-          if-no-files-found: ignore
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          [ -n "$(ls pick 2>/dev/null)" ] || exit 0
+          cd pick
+          git init -q && git checkout -q -b ci-screenshots
+          git add . && git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Screenshots for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-screenshots
 
       - name: Publish to play/ on main
         if: github.ref == 'refs/heads/main'

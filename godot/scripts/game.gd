@@ -24,7 +24,7 @@ const SPAWNS := [Vector2i(1, 1), Vector2i(13, 11), Vector2i(13, 1), Vector2i(1, 
 
 ## The code-built bomber-bots (scripts/robot.gd). Pete asked for new
 ## characters on 2026-11-24; these are the proposal, switched on with USE_BOTS.
-const USE_BOTS := true
+const USE_BOTS := false
 const BOT_ROSTER := [
 	{"id": "bot_bolt", "name": "BOLT", "color": Color(1.0, 0.298, 0.247)},
 	{"id": "bot_tank", "name": "TANK", "color": Color(0.302, 0.561, 1.0)},

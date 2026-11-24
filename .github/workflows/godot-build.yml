@@ -80,6 +80,25 @@ jobs:
           ls -la build/play
           echo "::notice title=Web export::$(du -sh build/play | cut -f1) total"
 
+      - name: Screenshots (software rendering, bots-only demo)
+        continue-on-error: true
+        run: |
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
+          mkdir -p shots pick
+          xvfb-run -s "-screen 0 1280x720x24" ~/godot-bin/godot --path godot --rendering-driver opengl3 \
+            --resolution 1280x720 --fixed-fps 30 --write-movie shots/frame.png --quit-after 420 -- --demo 2>&1 | tail -15
+          for n in 00000060 00000150 00000300 00000410; do cp "shots/frame$n.png" pick/ 2>/dev/null || true; done
+          ls pick
+
+      - name: Upload screenshots
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: pick/
+          if-no-files-found: ignore
+
       - name: Publish to play/ on main
         if: github.ref == 'refs/heads/main'
         run: |

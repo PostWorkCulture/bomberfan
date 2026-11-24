@@ -63,6 +63,7 @@ var msg_t := 0.0
 
 var rng := RandomNumberGenerator.new()
 var smoke := false
+var demo := false   # `-- --demo`: four bots, full visuals (attract mode / CI screenshots)
 var human_pid := 0
 var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0,
 	"bombs": 0, "crates": 0, "pickups": 0, "wins": [0, 0, 0, 0]}
@@ -91,6 +92,7 @@ var _pickup_mesh: BoxMesh
 
 func _ready() -> void:
 	smoke = "--smoke" in OS.get_cmdline_user_args()
+	demo = "--demo" in OS.get_cmdline_user_args()
 	rng.randomize()
 	if smoke:
 		rng.seed = 20261124
@@ -370,7 +372,7 @@ func _label(font_size: int, c: Color) -> Label:
 
 
 func _create_fighters() -> void:
-	human_pid = -1 if smoke else 0
+	human_pid = -1 if smoke or demo else 0
 	for k in Cfg.MAX_PLAYERS:
 		var f = Fighter.new()
 		add_child(f)

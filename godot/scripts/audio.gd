@@ -1,6 +1,6 @@
 extends Node
-## Sound: one-shot effects from a small voice pool, the round's forest bass
-## pulse and a wind bed. The WAVs are rendered by ../tools/render_sfx.py from
+## Sound: one-shot effects from a small voice pool, the round's music
+## (Arcade Drive, picked by Pete 2026-11-24) and a wind bed. The WAVs are rendered by ../tools/render_sfx.py from
 ## the browser build's own synth recipes, so the two builds sound the same.
 
 const SFX := [
@@ -10,18 +10,21 @@ const SFX := [
 ]
 const VARIANTS := {"explode": 3, "break_block": 2}
 const POOL_SIZE := 16
+const MUSIC := "music_arcade_drive"
+const MUSIC_DB := -9.0   # the loop is mastered hot; sit it under the effects
 
 var enabled := true
 var _streams := {}
 var _pool: Array = []
 var _last := {}
-var _bass: AudioStreamPlayer
+var _music: AudioStreamPlayer
+var _music_tween: Tween
 var _ambience: AudioStreamPlayer
-var _bass_on := false
+var _music_on := false
 
 
 func _ready() -> void:
-	for n in SFX + ["bass_forest", "ambience_forest"]:
+	for n in SFX + [MUSIC, "ambience_forest"]:
 		var path := "res://assets/audio/%s.wav" % n
 		if ResourceLoader.exists(path):
 			_streams[n] = load(path)
@@ -31,14 +34,17 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		_pool.append(p)
-	_bass = AudioStreamPlayer.new()
-	_bass.stream = _streams.get("bass_forest")
-	_bass.volume_db = -2.0
-	_bass.finished.connect(_on_bass_finished)
-	add_child(_bass)
+	_music = AudioStreamPlayer.new()
+	_music.stream = _streams.get(MUSIC)
+	_music.volume_db = MUSIC_DB
+	_music.finished.connect(_on_music_finished)   # backup if the loop point is ever lost
+	add_child(_music)
+	var ms = _music.stream
+	if ms is AudioStreamWAV and ms.loop_mode == AudioStreamWAV.LOOP_DISABLED:
+		push_warning("Round music has no loop point: falling back to restart-on-finish")
 	_ambience = AudioStreamPlayer.new()
 	_ambience.stream = _streams.get("ambience_forest")
-	_ambience.volume_db = -6.0
+	_ambience.volume_db = -11.0
 	_ambience.finished.connect(_ambience.play)
 	add_child(_ambience)
 	# Soft ceiling on the master bus, like the browser's soft clipper: four
@@ -77,14 +83,25 @@ func play(sound: String, volume_db := 0.0, pitch_var := 0.0, min_gap := 0.03) ->
 			return
 
 
-func bass(on: bool) -> void:
-	_bass_on = on and enabled
-	if _bass_on and not _bass.playing and _bass.stream:
-		_bass.play()
-	elif not _bass_on and _bass.playing:
-		_bass.stop()
+## Music runs through the countdown and the round, and fades out for the
+## win sting.
+func music(on: bool) -> void:
+	var want := on and enabled
+	if want == _music_on:
+		return
+	_music_on = want
+	if _music_tween:
+		_music_tween.kill()
+	if _music_on and _music.stream:
+		_music.volume_db = MUSIC_DB
+		if not _music.playing:
+			_music.play()
+	elif _music.playing:
+		_music_tween = create_tween()
+		_music_tween.tween_property(_music, "volume_db", -40.0, 0.7)
+		_music_tween.tween_callback(_music.stop)
 
 
-func _on_bass_finished() -> void:
-	if _bass_on:
-		_bass.play()
+func _on_music_finished() -> void:
+	if _music_on:
+		_music.play()

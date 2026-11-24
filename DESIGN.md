@@ -61,9 +61,21 @@ Bomb Up, Fire Up, Full Fire, Speed, Kick, Punch, Glove (pick up & throw), Remote
 
 ## Godot rebuild
 
-- Target: **Godot 4**, project in `godot/`.
+- Target: **Godot 4.7.2** (matches the local install), project in `godot/`, main scene `scenes/main.tscn`.
 - Principle: port behaviour and tuning 1:1 from the browser build first; improvements come after parity and are logged here.
-- Decisions so far: none recorded yet.
+- Renderer: **GL Compatibility** (required for web, best for phones).
+- Web build: single-threaded export (GitHub Pages can't send the headers threads need), published to **/play/** — https://postworkculture.github.io/bomberfan/play/
+- Tuning lives in `godot/scripts/config.gd`, copied from `CFG`.
+- Controls: WASD/arrows + Space (R restarts), gamepad d-pad/stick + A; on touchscreens a floating thumbstick (left half) and BOMB button (right half).
+- Fighters are normalised to one height (1.25 tiles, larger than the browser build so they read on a phone).
+
+### Vertical slice (2026-11-24) — what's in
+Forest arena (15×13, 70% crates), you vs 3 bots (Ninja, Orc, Bunny, Dino), bombs with chain reactions, Bomb Up / Fire Up / Speed (temporary) at the browser drop rates, rounds to first-to-3, round intro/outro, HUD, keyboard + gamepad + touch.
+
+Bots: Normal-tier port of the browser AI — danger map with chain timing, never bomb without a timed escape (escape slack 0.52 s, +0.35 s on the opening bomb), greed 0.34 / range 4, hunt 0.48, bomb gap 0.6 s.
+
+### Not yet ported
+Kick (and the other power-ups), sudden death / shrinking arena, the other 7 levels and their rules, character select / Loadout / Prize Locker, menus and options (difficulty, rounds), audio, screen shake, the rest of the roster.
 
 ---
 
@@ -72,6 +84,10 @@ Bomb Up, Fire Up, Full Fire, Speed, Kick, Punch, Glove (pick up & throw), Remote
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
 ### 2026-11-24
+- **Godot vertical slice added** (`godot/`): Forest arena, you vs 3 bots, bombs + chain blasts, Bomb/Fire/Speed pick-ups, first-to-3 rounds, touch + keyboard + gamepad. Tuning copied from `CFG`; bots ported from the Normal tier.
+- Godot decisions: 4.7.2, GL Compatibility renderer, single-threaded web export to `/play/`.
+- Fighters 1.25 tiles tall in Godot (up from the browser size) so they read on a phone. Lighting: sun 0.78, ambient 0.38, linear tonemap; camera 44° FOV, steep (~67°) angle.
+- Added `.github/workflows/godot-build.yml`: installs Godot 4.7.2, imports, runs a headless bots-only smoke test (8 rounds), exports Web, records screenshots to the `ci-screenshots` branch, and on `main` publishes `play/`. First smoke run: 8 rounds, 7 decided, 5 self-kills in 23 deaths.
 - Repo restructured to stop drift: added `CLAUDE.md` (working rules) and `DESIGN.md` (this file).
 - Logo `Main Logo.png` → `assets/branding/main-logo.png`; `bf-icon.svg` → `assets/branding/`.
 - PWA icons moved from root → `assets/icons/`; `index.html`, `manifest.webmanifest`, `sw.js` paths updated; service-worker cache bumped to `v3`.

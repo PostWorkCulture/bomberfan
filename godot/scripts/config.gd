@@ -1,0 +1,42 @@
+extends RefCounted
+## Tuning copied 1:1 from the browser build's `CFG` in ../index.html.
+## Change a number here only with a DESIGN.md change-log entry.
+
+# ---- Arena
+const COLS := 15             # total columns including the outer wall
+const ROWS := 13             # total rows including the outer wall
+const SOFT_DENSITY := 0.70   # share of free interior tiles that get a crate
+
+# ---- Players
+const MAX_PLAYERS := 4
+const BASE_SPEED := 3.9      # tiles per second
+const SPEED_STEP := 3.9      # one Speed Up doubles base speed
+const MAX_SPEED := 9.0
+const SPEED_DURATION := 4.0  # Speed Up is temporary; a fresh one resets the clock
+const PLAYER_RADIUS := 0.36
+const TURN_SNAP := 2.8       # how fast you re-centre on the perpendicular axis
+const START_BOMBS := 1
+const START_FIRE := 2
+const MAX_BOMBS := 8
+const MAX_FIRE := 9
+
+# ---- Bombs
+const BOMB_FUSE := 1.8
+const BLAST_LIFE := 0.52
+const CHAIN_DELAY := 0.06
+
+# ---- Pick-ups: per-crate drop rates from PU_DROPS (POWERUP_CHANCE 0.26004,
+# weights Bomb 50 / Fire 24 / Speed 16 / Kick 20). Kick is not in the slice yet.
+const DROP_BOMB := 0.1182
+const DROP_FIRE := 0.0567
+const DROP_SPEED := 0.0378
+
+# ---- Match
+const ROUND_SECONDS := 120.0
+const WINS_NEEDED := 3
+const ROUND_INTRO := 3.35    # 3 - 2 - 1, then GO!
+const ROUND_OUTRO := 3.0
+
+# ---- Simulation
+const FIXED_DT := 1.0 / 60.0
+const MAX_FRAME_DT := 0.25

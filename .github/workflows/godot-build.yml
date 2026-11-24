@@ -1,0 +1,121 @@
+name: Godot build
+
+# Checks the Godot rebuild with real Godot on every push that touches godot/,
+# and on main publishes the web build to play/ (https://postworkculture.github.io/bomberfan/play/).
+# This is the one workflow allowed to commit: it only ever writes play/.
+
+on:
+  push:
+    paths:
+      - 'godot/**'
+      - '.github/workflows/godot-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: godot-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.2
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot and web templates
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot-bin
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-web
+
+      - name: Install Godot ${{ env.GODOT_VERSION }}
+        run: |
+          set -e
+          if [ ! -x ~/godot-bin/godot ]; then
+            base=https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable
+            mkdir -p ~/godot-bin
+            curl -fsSL -o /tmp/godot.zip "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+            unzip -q /tmp/godot.zip -d ~/godot-bin
+            mv ~/godot-bin/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot-bin/godot
+            curl -fsSL -o /tmp/templates.tpz "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+            unzip -q /tmp/templates.tpz 'templates/web*' 'templates/version.txt' -d /tmp/tpl
+            dest=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+            mkdir -p "$dest"
+            mv /tmp/tpl/templates/* "$dest/"
+          fi
+          ~/godot-bin/godot --version
+
+      - name: Import assets
+        run: |
+          ~/godot-bin/godot --headless --path godot --import 2>&1 | tee import.log || true
+
+      - name: Smoke test (bots-only rounds, headless)
+        run: |
+          set +e
+          timeout 300 ~/godot-bin/godot --headless --path godot -- --smoke 2>&1 | tee smoke.log
+          code=${PIPESTATUS[0]}
+          bad=$(grep -hE "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script|Invalid (call|access|get|set|assignment|operands)|Nonexistent function|Identifier .* not declared|previously freed" import.log smoke.log | head -25)
+          if [ -n "$bad" ]; then
+            echo "$bad" | while IFS= read -r line; do echo "::error title=Godot script error::$line"; done
+            exit 1
+          fi
+          summary=$(grep -h "^SMOKE" smoke.log | tail -1)
+          echo "::notice title=Smoke test::${summary:-no summary printed}"
+          echo "$summary" | grep -q "^SMOKE OK" || exit 1
+          [ "$code" = "0" ] || { echo "::error title=Smoke test::Godot exited with $code"; exit 1; }
+
+      - name: Export web build
+        run: |
+          set -e
+          mkdir -p build/play
+          ~/godot-bin/godot --headless --path godot --export-release "Web" "$GITHUB_WORKSPACE/build/play/index.html" 2>&1 | tee export.log
+          test -f build/play/index.html && test -f build/play/index.wasm && test -f build/play/index.pck
+          ls -la build/play
+          echo "::notice title=Web export::$(du -sh build/play | cut -f1) total"
+
+      - name: Screenshots (software rendering, bots-only demo)
+        continue-on-error: true
+        run: |
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
+          mkdir -p shots pick
+          xvfb-run -s "-screen 0 1280x720x24" ~/godot-bin/godot --path godot --rendering-driver opengl3 \
+            --resolution 1280x720 --fixed-fps 30 --write-movie "$GITHUB_WORKSPACE/shots/frame.png" --quit-after 330 -- --demo 2>&1 | tail -15
+          for n in 00000060 00000150 00000240 00000320; do cp "shots/frame$n.png" pick/ 2>/dev/null || true; done
+          mkdir -p gal
+          xvfb-run -s "-screen 0 1280x720x24" ~/godot-bin/godot --path godot --rendering-driver opengl3 \
+            --resolution 1280x720 --fixed-fps 30 --write-movie "$GITHUB_WORKSPACE/gal/g.png" --quit-after 40 -- --gallery 2>&1 | tail -3
+          cp gal/g00000038.png pick/gallery.png 2>/dev/null || true
+          ls pick
+
+      - name: Push screenshots to ci-screenshots branch
+        if: always()
+        continue-on-error: true
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          [ -n "$(ls pick 2>/dev/null)" ] || exit 0
+          cd pick
+          git init -q && git checkout -q -b ci-screenshots
+          git add . && git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Screenshots for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-screenshots
+
+      - name: Publish to play/ on main
+        if: github.ref == 'refs/heads/main'
+        run: |
+          set -e
+          rm -rf play
+          cp -r build/play play
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A play
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Build Godot web preview"
+          for i in 1 2 3; do git pull --rebase origin main && git push && exit 0; sleep 5; done
+          exit 1

@@ -58,11 +58,11 @@ static func build(root: Node3D, level: Dictionary, hard: PackedByteArray, voids:
 	if shaped:
 		match level["layout"]:
 			"twin-islands":
-				_glacier_base(root, voids)
+				_glacier_base(root)
 			"pirate-fleet":
-				_pirate_base(root, voids)
+				_pirate_base(root)
 			"haunted-train":
-				_train_base(root, voids)
+				_train_base(root)
 	else:
 		var th: Dictionary = LA.theme(id)
 		var base := Vector3(Cfg.COLS + 0.36, -GROUND_Y + 0.02, Cfg.ROWS + 0.36)
@@ -251,7 +251,7 @@ static func _starfish() -> Mesh:
 
 # ---- Glacier ---------------------------------------------------------------------------
 
-static func _glacier_base(root: Node3D, voids: PackedByteArray) -> void:
+static func _glacier_base(root: Node3D) -> void:
 	var cliff := LA.block_mat("glacier_cliff", {"style": 4, "side": Color("8fc0e4"), "top": Color("e8f4ff"), "rough": 0.2, "scale": 0.4})
 	for rect in Levels.SHAPES["twin-islands"]["floors"]:
 		var w: float = rect[2] - rect[0] + 1
@@ -411,7 +411,7 @@ void fragment() {
 """
 
 
-static func _train_base(root: Node3D, voids: PackedByteArray) -> void:
+static func _train_base(root: Node3D) -> void:
 	var body := LA.block_mat("train_body", {"style": 2, "side": Color("1d2832"), "top": Color("425464"), "rough": 0.5, "metal": 0.7})
 	var red := LA.block_mat("train_trim", {"style": 2, "side": Color("5a1414"), "top": Color("8a2020"), "rough": 0.5, "metal": 0.5})
 	var wheel := LA.build([[LA.cyl(0.3, 0.3, 0.12, 16), LA.xf(Vector3.ZERO, Vector3(PI / 2.0, 0, 0)), LA.metal(Color("2a2e33"))],
@@ -537,7 +537,7 @@ static func _chip() -> Mesh:
 
 # ---- Pirate Fleet ------------------------------------------------------------------
 
-static func _pirate_base(root: Node3D, voids: PackedByteArray) -> void:
+static func _pirate_base(root: Node3D) -> void:
 	var hull := LA.block_mat("hull", {"style": 6, "side": Color("4a2412"), "top": Color("6b3a1c"), "rough": 0.75})
 	var trim := LA.block_mat("hull_trim", {"style": 6, "side": Color("c8a050"), "top": Color("e0c070"), "rough": 0.5, "metal": 0.4})
 	var rails: Array = []
@@ -546,7 +546,7 @@ static func _pirate_base(root: Node3D, voids: PackedByteArray) -> void:
 		var h: float = rect[3] - rect[1] + 1
 		var c := (tile_pos(rect[0], rect[1]) + tile_pos(rect[2], rect[3])) * 0.5
 		var m := Art.rounded_box(Vector3(w + 0.4, 1.8, h + 0.4), 0.3, 6)
-		_taper_hull(m, h)
+		_taper_hull(m)
 		m.surface_set_material(0, hull)
 		_mi(root, m, c + Vector3(0, -0.91, 0))
 		var bow := Art.rounded_box(Vector3(w * 0.7, 1.4, 2.0), 0.3, 5)
@@ -583,7 +583,7 @@ static func _pirate_base(root: Node3D, voids: PackedByteArray) -> void:
 
 
 ## Pull the bottom of a hull box in so it reads as a boat, not a crate.
-static func _taper_hull(m: ArrayMesh, length: float) -> void:
+static func _taper_hull(m: ArrayMesh) -> void:
 	var arr := m.surface_get_arrays(0)
 	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
 	for i in verts.size():

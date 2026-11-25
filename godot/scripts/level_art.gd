@@ -455,14 +455,14 @@ static func block_mat(key: String, spec: Dictionary) -> ShaderMaterial:
 	return m
 
 
-static func vmat(key: String, rough := 0.7, metal := 0.0, grain := 0.22, glow := 2.5) -> ShaderMaterial:
+static func vmat(key: String, rough := 0.7, metalness := 0.0, grain := 0.22, glow := 2.5) -> ShaderMaterial:
 	var ck := "vmat:%s" % key
 	if _cache.has(ck):
 		return _cache[ck]
 	var m := ShaderMaterial.new()
 	m.shader = _shader("vcol", VCOL_SHADER)
 	m.set_shader_parameter("rough", rough)
-	m.set_shader_parameter("metal", metal)
+	m.set_shader_parameter("metal", metalness)
 	m.set_shader_parameter("grain", grain)
 	m.set_shader_parameter("glow", glow)
 	m.set_shader_parameter("noise_tex", noise_tex())
@@ -533,7 +533,7 @@ static func build(parts: Array, mat: Material) -> ArrayMesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for p in parts:
 		var src: Mesh = p[0]
-		var xf: Transform3D = p[1]
+		var tfm: Transform3D = p[1]
 		var arr := src.surface_get_arrays(0)
 		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
 		var norms: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
@@ -541,7 +541,7 @@ static func build(parts: Array, mat: Material) -> ArrayMesh:
 		var keep: bool = p[2] == null and own != null and own.size() == verts.size()
 		var c: Color = Color.WHITE if p[2] == null else p[2]
 		var idxs = arr[Mesh.ARRAY_INDEX]
-		var nb := xf.basis.inverse().transposed()
+		var nb := tfm.basis.inverse().transposed()
 		var order: Array = []
 		if idxs != null and idxs.size() > 0:
 			order = Array(idxs)
@@ -550,7 +550,7 @@ static func build(parts: Array, mat: Material) -> ArrayMesh:
 		for i in order:
 			st.set_color(own[i] if keep else c)
 			st.set_normal((nb * norms[i]).normalized())
-			st.add_vertex(xf * verts[i])
+			st.add_vertex(tfm * verts[i])
 	var m := st.commit()
 	m.surface_set_material(0, mat)
 	return m

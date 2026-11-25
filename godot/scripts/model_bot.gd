@@ -11,9 +11,46 @@ var _cheer_t := -1.0
 var _step := 0.0
 
 
+static var _merged := {}   # scene path -> one ArrayMesh, built once per bot
+
+
 func setup(scene: PackedScene) -> void:
-	_body = scene.instantiate()
+	# The Blender export is ~40 separate parts; drawing them one by one costs
+	# a draw call each. Fold them into one mesh with a surface per material.
+	var key := scene.resource_path
+	if not _merged.has(key):
+		_merged[key] = _merge(scene.instantiate())
+	_body = MeshInstance3D.new()
+	(_body as MeshInstance3D).mesh = _merged[key]
 	add_child(_body)
+
+
+static func _merge(root: Node3D) -> ArrayMesh:
+	var tools := {}   # material -> SurfaceTool
+	var stack: Array = [[root, Transform3D.IDENTITY]]
+	while not stack.is_empty():
+		var item: Array = stack.pop_back()
+		var node: Node3D = item[0]
+		var xf: Transform3D = item[1]
+		for c in node.get_children():
+			if c is Node3D:
+				stack.append([c, xf * (c as Node3D).transform])
+		var mi := node as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		for si in mi.mesh.get_surface_count():
+			var mat: Material = mi.get_active_material(si)
+			if not tools.has(mat):
+				var st := SurfaceTool.new()
+				st.begin(Mesh.PRIMITIVE_TRIANGLES)
+				st.set_material(mat)
+				tools[mat] = st
+			tools[mat].append_from(mi.mesh, si, xf)
+	var out := ArrayMesh.new()
+	for mat in tools:
+		tools[mat].commit(out)
+	root.free()
+	return out
 
 
 func die() -> void:

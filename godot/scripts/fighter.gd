@@ -37,6 +37,8 @@ var robot = null            # set for the Blender bomber-bots, which animate in 
 var _anim_names := {}
 var _cur := ""
 var _death_t := 0.0
+var _yaw := 0.0
+const CAMERA_LEAN := 0.22
 var _model_base_y := 0.0
 
 
@@ -46,6 +48,7 @@ func setup(g, id_: int, info: Dictionary, bot: bool) -> void:
 	char_id = info["id"]
 	display_name = info["name"]
 	color = info["color"]
+	dark_body = info.get("dark", false)
 	is_bot = bot
 	_build_model()
 	_apply_outline()
@@ -174,16 +177,41 @@ func _apply_outline() -> void:
 
 
 var _dark_arena := false
+var dark_body := false   # Razor, Tick: a dark model needs a light line on any floor
 
 
+## Outline and rim by body and floor (AAA review round 2): a dark body always
+## gets a light line in its colour; light bodies get a dark line on light
+## floors and a line in their own colour on dark ones. Your own fighter gets
+## an extra lift so you find yourself first.
 func set_outline(dark_arena: bool) -> void:
 	_dark_arena = dark_arena
 	if _outline_mat == null:
 		return
-	_outline_mat.set_shader_parameter("line_col", color.lightened(0.1) if dark_arena else color.darkened(0.75))
-	_outline_mat.set_shader_parameter("thick", 0.022 if dark_arena else 0.026)
-	_rim_mat.set_shader_parameter("strength", 0.85 if dark_arena else 0.45)
-	_rim_mat.set_shader_parameter("lift", 0.1 if dark_arena else 0.0)
+	var line: Color
+	var thick := 0.022
+	var rim := 0.5
+	var lift := 0.0
+	if dark_body:
+		line = color.lightened(0.35)
+		thick = 0.03
+		rim = 0.75
+		lift = 0.08
+	elif dark_arena:
+		line = color
+		rim = 0.6
+		lift = 0.1
+	else:
+		line = color.darkened(0.75)
+		thick = 0.026
+		rim = 0.45
+	if not is_bot:
+		lift += 0.15
+		rim = maxf(rim, 0.7)
+	_outline_mat.set_shader_parameter("line_col", line)
+	_outline_mat.set_shader_parameter("thick", thick)
+	_rim_mat.set_shader_parameter("strength", rim)
+	_rim_mat.set_shader_parameter("lift", lift)
 
 
 func _build_marker() -> void:
@@ -241,6 +269,7 @@ func spawn_at(t: Vector2i) -> void:
 	moving = false
 	celebrating = false
 	face_yaw = 0.0
+	_yaw = 0.0
 	rotation.y = 0.0
 	_death_t = 0.0
 	if model:
@@ -384,9 +413,11 @@ func _release_bombs() -> void:
 func update_visual(delta: float) -> void:
 	position = game.tile_pos(gx, gy)
 	if delta > 0.0:
-		rotation.y = lerp_angle(rotation.y, face_yaw, clampf(delta * 14.0, 0.0, 1.0))
+		_yaw = lerp_angle(_yaw, face_yaw, clampf(delta * 14.0, 0.0, 1.0))
 	else:
-		rotation.y = face_yaw
+		_yaw = face_yaw
+	# A small lean towards the camera so faces and fronts show from above.
+	basis = Basis(Vector3.RIGHT, CAMERA_LEAN) * Basis(Vector3.UP, _yaw)
 	if robot:
 		robot.animate(delta, moving and alive, speed / Cfg.BASE_SPEED)
 	# Tall grass (Forest): a bot in it is hidden from you, unless you are close

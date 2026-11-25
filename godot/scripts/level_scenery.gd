@@ -165,6 +165,31 @@ static func _beach(root: Node3D) -> void:
 	var r := RandomNumberGenerator.new()
 	r.seed = 7
 	var placed: Array = []
+	# Mid-distance landmarks where the camera looks: a lifeguard tower on the
+	# left, a boardwalk running off to the right.
+	var bhx := Cfg.COLS * 0.5
+	_mi(root, _cached("lifeguard", _lifeguard), Vector3(-bhx - 3.0, GROUND_Y, 0.5), null, Vector3(0, PI / 2.0, 0), Vector3.ONE, true)
+	placed.append([Vector2(-bhx - 3.0, 0.5), 2.4])
+	var planks: Array = []
+	var px := bhx + 1.6
+	while px < bhx + 12.0:
+		planks.append(Transform3D(Basis(Vector3.UP, 0.0).scaled(Vector3(1, 1, 1)), Vector3(px, GROUND_Y + 0.12, -2.0 + sin(px * 3.1) * 0.02)))
+		px += 0.32
+	var plank := LA.build([[LA.box(Vector3(0.28, 0.06, 1.5), 0.01), LA.xf(Vector3.ZERO), Color("9a7a52")]], LA.vmat("plank", 0.85, 0.0, 0.4))
+	root.add_child(Art.multimesh(plank, planks))
+	var posts: Array = []
+	px = bhx + 1.8
+	while px < bhx + 12.0:
+		for side in [-0.8, 0.8]:
+			posts.append(Transform3D(Basis(), Vector3(px, GROUND_Y, -2.0 + side)))
+		px += 1.6
+	var post := LA.build([[LA.cyl(0.07, 0.08, 0.5, 8), LA.xf(Vector3(0, 0.25, 0)), Color("6e5638")],
+		[LA.box(Vector3(0.05, 0.5, 0.05)), LA.xf(Vector3(0, 0.6, 0)), Color("7a6040")]], LA.vmat("bwpost", 0.9, 0.0, 0.3))
+	root.add_child(Art.multimesh(post, posts))
+	for zz in [-2.0, -1.0, 0.0, -3.0]:
+		placed.append([Vector2(bhx + 3.0, zz), 1.0])
+		placed.append([Vector2(bhx + 5.0, zz), 1.0])
+		placed.append([Vector2(bhx + 7.0, zz), 1.0])
 	_mm(root, _cached("palm", _palm_mesh), _scatter(r, 16, 1.2, 8.0, 1.8, placed, false, true), r, GROUND_Y, 0.85, 1.25)
 	var P := load("res://scripts/level_props.gd")
 	for pt in _scatter(r, 5, 0.8, 4.5, 1.6, placed, false, true):
@@ -285,12 +310,18 @@ static func _haunted(root: Node3D) -> void:
 	_mi(root, _cached("mansion", _mansion), Vector3(0.5, GROUND_Y, -hz - 6.0), null, Vector3.ZERO, Vector3.ONE, true)
 	var rows: Array = []
 	for s in [-1.0, 1.0]:
-		for col in 2:
-			var gx: float = s * (hx + 2.6 + col * 1.3)
-			var gz := -hz + 0.4
+		for col in 3:
+			var gx: float = s * (hx + 2.4 + col * 1.1)
+			var gz := -hz + 0.4 + col * 0.4
 			while gz < hz - 0.6:
-				rows.append(Transform3D(Basis(Vector3.UP, r.randf_range(-0.12, 0.12)).scaled(Vector3.ONE * r.randf_range(0.85, 1.05)), Vector3(gx, GROUND_Y, gz)))
-				gz += 1.5
+				var skip: bool = (s < 0.0 and gz > -4.6 and gz < -0.4) or (s > 0.0 and gz > -0.4 and gz < 4.6)
+				if not skip:
+					rows.append(Transform3D(Basis(Vector3.UP, r.randf_range(-0.12, 0.12)).scaled(Vector3.ONE * r.randf_range(0.85, 1.05)), Vector3(gx, GROUND_Y, gz)))
+				gz += 1.2
+	# Architecture where the camera looks during play: a mausoleum on the left,
+	# a broken wall with an arched gate and a lantern on the right.
+	_mi(root, _cached("mausoleum", _mausoleum), Vector3(-hx - 2.6, GROUND_Y, -2.5), null, Vector3(0, PI / 2.0, 0), Vector3.ONE, true)
+	_mi(root, _cached("gate", _gate), Vector3(hx + 2.5, GROUND_Y, 2.0), null, Vector3(0, -PI / 2.0, 0), Vector3.ONE, true)
 	root.add_child(Art.multimesh(P.gravestone_mesh(), rows))
 	# low mist
 	var mist := StandardMaterial3D.new()
@@ -380,7 +411,7 @@ static func _factory(root: Node3D) -> void:
 		z += 3.0
 	root.add_child(Art.multimesh(beam, cols))
 	# Machines in a row each side, facing the arena, on painted bays.
-	var mxs: Array = []
+	var mxs: Array = [[], [], []]
 	var bay := StandardMaterial3D.new()
 	bay.albedo_color = Color(0.17, 0.19, 0.22)
 	bay.roughness = 0.75
@@ -390,13 +421,17 @@ static func _factory(root: Node3D) -> void:
 	for s in [-1.0, 1.0]:
 		var mx: float = s * (hx + 2.2)
 		var zz := -hz + 0.6
+		var mi := 0 if s < 0.0 else 1
 		while zz < hz + 0.5:
-			mxs.append(Transform3D(Basis(Vector3.UP, -s * PI / 2.0), Vector3(mx, GROUND_Y, zz)))
+			mxs[mi % 3].append(Transform3D(Basis(Vector3.UP, -s * PI / 2.0), Vector3(mx, GROUND_Y, zz)))
+			mi += 1
 			zz += 2.3
 		_mi(root, _plane(Vector2(2.2, Cfg.ROWS + 3.0)), Vector3(mx, GROUND_Y + 0.004, 0), bay, Vector3.ZERO, Vector3.ONE, false)
 		for e in [-1.0, 1.0]:
 			_mi(root, _plane(Vector2(0.1, Cfg.ROWS + 3.0)), Vector3(mx + e * 1.1, GROUND_Y + 0.006, 0), line, Vector3.ZERO, Vector3.ONE, false)
-	_mm_fixed(root, _cached("machine", _machine), mxs)
+	for v in 3:
+		if not mxs[v].is_empty():
+			_mm_fixed(root, _cached("machine%d" % v, func(): return _machine_v(v)), mxs[v])
 	# Pallet racks against the walls, stocked with the arena's crates.
 	var racks: Array = []
 	var stock: Array = []
@@ -464,6 +499,67 @@ static func _mansion() -> Mesh:
 	return LA.build(parts, LA.vmat("mansion", 0.9, 0.0, 0.3, 3.0))
 
 
+static func _mausoleum() -> Mesh:
+	var stone := Color("767080")
+	var dark := Color("4a4652")
+	var parts: Array = [
+		[LA.box(Vector3(2.6, 0.2, 2.4)), LA.xf(Vector3(0, 0.1, 0)), dark],
+		[LA.box(Vector3(2.2, 1.9, 1.8), 0.03), LA.xf(Vector3(0, 1.15, -0.1)), stone],
+		[LA.box(Vector3(2.5, 0.18, 2.2)), LA.xf(Vector3(0, 2.15, 0)), dark],
+		[LA.box(Vector3(2.5, 1.2, 1.2)), LA.xf(Vector3(0, 2.3, 0), Vector3(0, 0, 0), Vector3(1, 0.6, 1)), stone.darkened(0.2)],
+		[LA.box(Vector3(0.8, 1.3, 0.06)), LA.xf(Vector3(0, 0.85, 0.82)), Color("120e14")],
+		[LA.box(Vector3(1.8, 0.12, 0.5)), LA.xf(Vector3(0, 0.26, 1.15)), dark],
+		[LA.box(Vector3(0.12, 0.5, 0.06)), LA.xf(Vector3(0, 2.85, 0.6)), Color("6a6470")],
+		[LA.box(Vector3(0.36, 0.1, 0.06)), LA.xf(Vector3(0, 2.95, 0.6)), Color("6a6470")],
+	]
+	for x in [-0.85, 0.85]:
+		parts.append([LA.cyl(0.13, 0.15, 1.9, 10), LA.xf(Vector3(x, 1.15, 0.95)), stone.lightened(0.08)])
+	return LA.build(parts, LA.vmat("mausoleum", 0.9, 0.0, 0.4))
+
+
+static func _gate() -> Mesh:
+	var stone := Color("6e6878")
+	var iron := Color("1c1a20")
+	var parts: Array = [
+		[LA.box(Vector3(0.7, 2.6, 0.7), 0.03), LA.xf(Vector3(-1.1, 1.3, 0)), stone],
+		[LA.box(Vector3(0.7, 2.6, 0.7), 0.03), LA.xf(Vector3(1.1, 1.3, 0)), stone],
+		[LA.box(Vector3(0.8, 0.15, 0.8)), LA.xf(Vector3(-1.1, 2.68, 0)), stone.darkened(0.2)],
+		[LA.box(Vector3(0.8, 0.15, 0.8)), LA.xf(Vector3(1.1, 2.68, 0)), stone.darkened(0.2)],
+		[LA.box(Vector3(2.3, 0.3, 0.4)), LA.xf(Vector3(0, 2.4, 0)), stone.darkened(0.1)],
+		[LA.box(Vector3(2.2, 1.0, 0.45), 0.02), LA.xf(Vector3(-2.6, 0.5, 0.0), Vector3(0, 0, 0.05)), stone],
+		[LA.box(Vector3(1.4, 0.6, 0.45), 0.02), LA.xf(Vector3(2.4, 0.3, 0.0)), stone],
+		[LA.box(Vector3(0.3, 0.35, 0.3)), LA.xf(Vector3(1.1, 3.0, 0.0)), Color("2a2620")],
+		[LA.box(Vector3(0.2, 0.25, 0.2)), LA.xf(Vector3(1.1, 3.0, 0.0)), LA.lit(Color("ffb050"))],
+	]
+	for k in 7:
+		var x := -0.65 + k * 0.22
+		parts.append([LA.box(Vector3(0.04, 2.0, 0.04)), LA.xf(Vector3(x, 1.0, 0.05), Vector3(0, 0, 0.0 if k % 3 else 0.06)), iron])
+	parts.append([LA.box(Vector3(1.5, 0.05, 0.05)), LA.xf(Vector3(0, 1.7, 0.05)), iron])
+	parts.append([LA.box(Vector3(1.5, 0.05, 0.05)), LA.xf(Vector3(0, 0.4, 0.05)), iron])
+	return LA.build(parts, LA.vmat("gate", 0.9, 0.0, 0.4, 3.0))
+
+
+static func _lifeguard() -> Mesh:
+	var wood := Color("e8e2d6")
+	var red := Color("d8402e")
+	var parts: Array = []
+	for x in [-0.6, 0.6]:
+		for z in [-0.6, 0.6]:
+			parts.append([LA.box(Vector3(0.1, 2.0, 0.1)), LA.xf(Vector3(x, 1.0, z), Vector3(z * -0.08, 0, x * 0.08)), wood])
+	parts.append_array([
+		[LA.box(Vector3(1.6, 0.1, 1.6)), LA.xf(Vector3(0, 2.0, 0)), wood.darkened(0.15)],
+		[LA.box(Vector3(1.2, 0.9, 1.2), 0.02), LA.xf(Vector3(0, 2.5, 0)), red],
+		[LA.box(Vector3(1.24, 0.25, 1.24)), LA.xf(Vector3(0, 2.6, 0)), wood],
+		[LA.box(Vector3(1.6, 0.08, 1.6)), LA.xf(Vector3(0, 3.0, 0), Vector3(0.12, 0, 0)), red.darkened(0.1)],
+		[LA.box(Vector3(0.6, 0.4, 0.04)), LA.xf(Vector3(0, 2.6, 0.63)), Color("2a3a48")],
+		[LA.box(Vector3(0.04, 1.2, 0.04)), LA.xf(Vector3(0.75, 3.6, -0.6)), wood],
+		[LA.box(Vector3(0.5, 0.3, 0.02)), LA.xf(Vector3(1.0, 4.05, -0.6)), red],
+	])
+	for k in 6:
+		parts.append([LA.box(Vector3(0.5, 0.05, 0.08)), LA.xf(Vector3(0, 0.25 + k * 0.3, 1.0), Vector3(-0.4, 0, 0)), wood.darkened(0.1)])
+	return LA.build(parts, LA.vmat("lifeguard", 0.8, 0.0, 0.3))
+
+
 static func _rack() -> Mesh:
 	var up := Color("d0641c")
 	var beam := Color("2c5a9a")
@@ -516,6 +612,37 @@ static func _frond(a: float, length: float) -> ArrayMesh:
 						st.set_normal(nrm if face == 0 else -nrm)
 						st.add_vertex(v)
 	return st.commit()
+
+
+## Three kinds of machine so the hall isn't one model cloned: the original
+## press (0), a long lathe (1) and a tall control cabinet (2).
+static func _machine_v(v: int) -> Mesh:
+	if v == 0:
+		return _machine()
+	var body := Color("4c5562")
+	var parts: Array = [[LA.box(Vector3(1.5, 0.08, 1.0), 0.02), LA.xf(Vector3(0, 0.04, 0)), Color("ffcc1a")]]
+	if v == 1:
+		parts.append_array([
+			[LA.box(Vector3(1.6, 0.7, 0.6), 0.05), LA.xf(Vector3(0, 0.35, -0.1)), Color("3d6b5a")],
+			[LA.box(Vector3(1.5, 0.12, 0.5)), LA.xf(Vector3(0, 0.78, -0.1)), LA.metal(Color("9aa2ac"))],
+			[LA.cyl(0.2, 0.2, 0.3, 14), LA.xf(Vector3(-0.55, 0.98, -0.1), Vector3(0, 0, PI / 2.0)), LA.metal(Color("b0b6bf"))],
+			[LA.cyl(0.05, 0.05, 0.9, 8), LA.xf(Vector3(0.0, 0.98, -0.1), Vector3(0, 0, PI / 2.0)), LA.metal(Color("c9ced6"))],
+			[LA.box(Vector3(0.18, 0.25, 0.25), 0.02), LA.xf(Vector3(0.45, 0.98, -0.1)), Color("2a2e36")],
+			[LA.box(Vector3(0.3, 0.3, 0.05), 0.02), LA.xf(Vector3(0.6, 0.6, 0.22)), Color("23272e")],
+			[LA.box(Vector3(0.1, 0.06, 0.06)), LA.xf(Vector3(0.55, 0.65, 0.25)), LA.lit(Color("3df2a0"))],
+		])
+	else:
+		parts.append_array([
+			[LA.box(Vector3(0.9, 1.9, 0.6), 0.04), LA.xf(Vector3(0, 0.95, -0.1)), body.darkened(0.1)],
+			[LA.box(Vector3(0.7, 0.45, 0.04), 0.02), LA.xf(Vector3(0, 1.45, 0.21)), LA.lit(Color("2f8fd8"))],
+			[LA.box(Vector3(0.7, 0.05, 0.05)), LA.xf(Vector3(0, 1.1, 0.22)), Color("1a1d22")],
+			[LA.box(Vector3(0.12, 0.08, 0.04)), LA.xf(Vector3(-0.2, 0.95, 0.22)), LA.lit(Color("ff4040"))],
+			[LA.box(Vector3(0.12, 0.08, 0.04)), LA.xf(Vector3(0.0, 0.95, 0.22)), LA.lit(Color("ffb020"))],
+			[LA.box(Vector3(0.12, 0.08, 0.04)), LA.xf(Vector3(0.2, 0.95, 0.22)), LA.lit(Color("3df2a0"))],
+			[LA.box(Vector3(0.5, 0.6, 0.5), 0.04), LA.xf(Vector3(0.75, 0.3, -0.1)), Color("2f5a8a")],
+			[LA.cyl(0.08, 0.08, 1.2, 8), LA.xf(Vector3(-0.6, 0.6, -0.25)), LA.metal(Color("8a9099"))],
+		])
+	return LA.build(parts, LA.vmat("machine%d" % v, 0.55, 0.3, 0.25, 2.5))
 
 
 static func _machine() -> Mesh:

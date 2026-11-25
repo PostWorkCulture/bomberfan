@@ -19,7 +19,7 @@ const THEMES := {
 	"forest": {
 		# Golden hour: warm low sun, cool sky in the shadows.
 		"sky": Color(0.05, 0.09, 0.065), "fog": Color(0.2, 0.24, 0.16), "fog_begin": 17.0, "fog_end": 36.0,
-		"sun": Color(1.0, 0.84, 0.62), "sun_energy": 1.4, "sun_rot": Vector3(-40, -46, 0), "ambient": 0.42,
+		"sun": Color(1.0, 0.84, 0.62), "sun_energy": 1.4, "sun_rot": Vector3(-50, -46, 0), "ambient": 0.42,
 		"sky_top": Color(0.3, 0.44, 0.62), "sky_horizon": Color(0.74, 0.7, 0.56), "ground_horizon": Color(0.4, 0.44, 0.3),
 		"exposure": 0.98, "saturation": 1.04, "contrast": 1.1, "glow": 0.35,
 		"debris": Color(0, 0, 0, 0),
@@ -177,10 +177,12 @@ uniform sampler2D cell_tex : repeat_enable, filter_linear_mipmap;
 varying vec3 wpos;
 varying vec3 wnrm;
 varying vec3 lpos;
+varying vec3 centre;
 void vertex() {
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	wnrm = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	lpos = VERTEX;
+	centre = MODEL_MATRIX[3].xyz;
 }
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 void fragment() {
@@ -223,7 +225,12 @@ void fragment() {
 		// Steel with a hazard-striped rim round a dark tread-plate cap.
 		float stripe = step(0.5, fract((wpos.x + wpos.z) * 2.2));
 		vec3 haz = mix(top_col * 0.9, vec3(0.06), stripe);
-		float rim = smoothstep(0.36, 0.4, max(abs(lpos.x), abs(lpos.z)));
+		// One continuous band along the inside edge of the ring only (AAA
+		// review: a striped frame on every block was the noisiest thing on screen).
+		vec3 dl = wpos - centre;
+		float rx = step(6.9, abs(centre.x)) * smoothstep(0.32, 0.38, -dl.x * sign(centre.x));
+		float rz = step(5.9, abs(centre.z)) * smoothstep(0.32, 0.38, -dl.z * sign(centre.z));
+		float rim = max(rx, rz);
 		vec3 cap = side_col * (0.8 + 0.3 * n2);
 		col = mix(side_col * (0.85 + 0.3 * n2), mix(cap, haz, rim), top);
 		vec2 pf = fract(luv * 2.0 + 0.5);
@@ -603,7 +610,7 @@ static func drop_block_mesh(id: String) -> Mesh:
 static func clockwork_mesh() -> ArrayMesh:
 	if _cache.has("clockwork"):
 		return _cache["clockwork"]
-	var copper := Color("96582c")
+	var copper := Color("7c5a40")
 	var dark := Color("5a2c12")
 	var brass := metal(Color("e0a84a"))
 	var parts: Array = []

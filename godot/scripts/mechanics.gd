@@ -17,6 +17,7 @@ const Levels := preload("res://scripts/levels.gd")
 const LA := preload("res://scripts/level_art.gd")
 const Art := preload("res://scripts/art.gd")
 const Props := preload("res://scripts/level_props.gd")
+const Fighter := preload("res://scripts/fighter.gd")
 
 const EMPTY := 0
 const HARD := 1
@@ -312,11 +313,22 @@ func _visual_grass(t: float) -> void:
 			var k: int = game.idx(ft.x, ft.y)
 			if _grass_inst.has(k):
 				now[k] = f.moving
+	# Bombs and pick-ups in the grass flatten it so they always show.
+	for k in game.bomb_at.keys():
+		if _grass_inst.has(k):
+			now[k] = "flat"
+	for k in game.pickups.keys():
+		if _grass_inst.has(k):
+			now[k] = "flat"
 	for k in _rustling.keys():
 		if not now.has(k):
 			_set_tufts(k, 0.0, t)
 	for k in now.keys():
-		_set_tufts(k, 1.0 if now[k] else 0.35, t)
+		var v = now[k]
+		if v is String:
+			_set_tufts(k, -1.0, t)
+		else:
+			_set_tufts(k, 1.0 if v else 0.35, t)
 	_rustling = now
 
 
@@ -327,7 +339,9 @@ func _set_tufts(k: int, amt: float, t: float) -> void:
 	var i := 0
 	for inst in _grass_inst[k]:
 		var xf: Transform3D = _grass_base[inst]
-		if amt > 0.0:
+		if amt < 0.0:
+			xf.basis = xf.basis.scaled(Vector3(1.0, 0.22, 1.0))
+		elif amt > 0.0:
 			var lean := sin(t * 14.0 + i * 1.7) * 0.32 * amt
 			xf.basis = Basis(Vector3(1, 0, 0.3).normalized(), lean) * xf.basis
 		mm.set_instance_transform(inst, xf)
@@ -769,6 +783,47 @@ func _visual_witch(delta: float, t: float) -> void:
 		broom.mesh = _broom_mesh()
 		broom.position = Vector3(0, 0.22, 0)
 		n.add_child(broom)
+		# The hazard reads like a fighter: a red outline and rim, and a trail
+		# of green sparks off the broom.
+		var line := ShaderMaterial.new()
+		var ls := Shader.new()
+		ls.code = Fighter.OUTLINE_SHADER
+		line.shader = ls
+		line.set_shader_parameter("line_col", Color(1.0, 0.28, 0.2))
+		line.set_shader_parameter("thick", 0.03)
+		var rim := ShaderMaterial.new()
+		var rs := Shader.new()
+		rs.code = Fighter.RIM_SHADER
+		rim.shader = rs
+		rim.set_shader_parameter("rim_col", Color(1.0, 0.35, 0.25))
+		rim.set_shader_parameter("strength", 0.8)
+		line.next_pass = rim
+		for mi in n.find_children("*", "MeshInstance3D", true, false):
+			(mi as MeshInstance3D).material_overlay = line
+		var trail := CPUParticles3D.new()
+		trail.local_coords = false
+		trail.amount = 24
+		trail.lifetime = 0.8
+		trail.position = Vector3(0, 0.22, -0.8)
+		var tq := QuadMesh.new()
+		tq.size = Vector2(0.14, 0.14)
+		trail.mesh = tq
+		var tm := StandardMaterial3D.new()
+		tm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		tm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		tm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		tm.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		tm.vertex_color_use_as_albedo = true
+		tm.albedo_texture = Art.soft_dot()
+		trail.material_override = tm
+		trail.gravity = Vector3(0, -0.4, 0)
+		trail.initial_velocity_min = 0.0
+		trail.initial_velocity_max = 0.2
+		var g := Gradient.new()
+		g.colors = PackedColorArray([Color(0.6, 1.0, 0.6, 0.9), Color(0.3, 1.0, 0.5, 0.0)])
+		trail.color_ramp = g
+		trail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		n.add_child(trail)
 	# Her arc height uses this tile; keep it to the nearest one under her.
 	h["pos"] = Vector2i(clampi(roundi(p.x + (Cfg.COLS - 1) * 0.5), 0, Cfg.COLS - 1), clampi(roundi(p.z + (Cfg.ROWS - 1) * 0.5), 0, Cfg.ROWS - 1))
 

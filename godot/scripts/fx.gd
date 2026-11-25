@@ -65,7 +65,7 @@ func _ready() -> void:
 	_debris_mesh.size = Vector3(0.09, 0.07, 0.2)
 	_debris_mesh.material = Art.bark_mat()
 	_fire_ramp = _ramp([0.0, 0.1, 0.4, 0.75, 1.0], [Color(1.15, 0.92, 0.5, 1.0), Color(1.0, 0.66, 0.2, 1.0),
-		Color(1.0, 0.42, 0.08, 0.95), Color(0.7, 0.2, 0.05, 0.75), Color(0.2, 0.08, 0.05, 0.0)])
+		Color(1.0, 0.42, 0.08, 0.95), Color(0.36, 0.3, 0.27, 0.5), Color(0.2, 0.19, 0.18, 0.0)])
 	_flash_ramp = _ramp([0.0, 0.4, 1.0], [Color(1.2, 0.9, 0.5, 0.35), Color(1.0, 0.5, 0.15, 0.2), Color(1, 0.4, 0.1, 0.0)])
 	_spark_ramp = _ramp([0.0, 0.5, 1.0], [Color(1.25, 1.0, 0.6, 1.0), Color(1.0, 0.5, 0.12, 0.9), Color(0.8, 0.2, 0.05, 0.0)])
 	_smoke_ramp = _ramp([0.0, 0.18, 0.6, 1.0], [Color(0.3, 0.28, 0.25, 0.0), Color(0.22, 0.21, 0.2, 0.6),
@@ -74,8 +74,8 @@ func _ready() -> void:
 	_grow = _curve([Vector2(0, 0.45), Vector2(0.25, 1.0), Vector2(1, 0.75)])
 	_shrink = _curve([Vector2(0, 1.0), Vector2(1, 0.2)])
 	_bomb_body = SphereMesh.new()
-	_bomb_body.radius = 0.34
-	_bomb_body.height = 0.68
+	_bomb_body.radius = 0.29    # AAA review: bombs smaller than a fighter's footprint
+	_bomb_body.height = 0.58
 	_bomb_cap = CylinderMesh.new()
 	_bomb_cap.top_radius = 0.1
 	_bomb_cap.bottom_radius = 0.12
@@ -197,24 +197,24 @@ func make_bomb(parent: Node3D, pos: Vector3, hazard := false) -> Node3D:
 	m.emission = Color(1.0, 0.12, 0.05)
 	m.emission_energy_multiplier = 0.0
 	body.material_override = m
-	body.position.y = 0.36
+	body.position.y = 0.31
 	body.name = "Body"
 	n.add_child(body)
 	var cap := MeshInstance3D.new()
 	cap.mesh = _bomb_cap
 	cap.material_override = Art.flat_mat(Color(0.55, 0.57, 0.6), 0.35, 0.8)
-	cap.position.y = 0.71
+	cap.position.y = 0.61
 	n.add_child(cap)
 	var fuse := MeshInstance3D.new()
 	fuse.mesh = _fuse
 	fuse.material_override = Art.flat_mat(Color(0.78, 0.68, 0.48), 0.9)
-	fuse.position = Vector3(0.03, 0.82, 0.0)
+	fuse.position = Vector3(0.03, 0.72, 0.0)
 	fuse.rotation.z = -0.35
 	n.add_child(fuse)
 	var tip := MeshInstance3D.new()
 	tip.mesh = _spark_dot
 	tip.material_override = _tip_mat
-	tip.position = Vector3(0.065, 0.9, 0.0)
+	tip.position = Vector3(0.065, 0.8, 0.0)
 	tip.name = "Tip"
 	tip.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	n.add_child(tip)
@@ -236,7 +236,7 @@ func animate_bomb(n: Node3D, age: float, fuse_left: float, time: float) -> void:
 		var m := body.material_override as StandardMaterial3D
 		# A faint red warning only in the last stretch of the fuse.
 		var warn := clampf((urgency - 0.55) / 0.45, 0.0, 1.0)
-		m.emission_energy_multiplier = warn * warn * 0.9 * (0.7 + 0.3 * sin(age * rate))
+		m.emission_energy_multiplier = warn * warn * 0.9 * (0.2 + 0.8 * absf(sin(age * rate * 0.5)))
 	var tip := n.get_node_or_null("Tip") as Node3D
 	if tip:
 		tip.scale = Vector3.ONE * (0.85 + 0.2 * absf(sin(time * 23.0 + age * 7.0)))
@@ -257,7 +257,7 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	for c in cells:
 		var p: Vector3 = c
 		var is_centre := p.distance_to(centre) < 0.1
-		var f := _emitter(p + Vector3(0, 0.35, 0), _fire_mat, 8 if is_centre else 7, 0.6)
+		var f := _emitter(p + Vector3(0, 0.35, 0), _fire_mat, 8 if is_centre else 7, Cfg.BLAST_LIFE + 0.08)
 		f.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 		f.emission_sphere_radius = 0.28
 		f.direction = Vector3.UP
@@ -277,10 +277,10 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 		s.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 		s.emission_sphere_radius = 0.25
 		s.direction = Vector3.UP
-		s.spread = 40.0
-		s.initial_velocity_min = 0.4
-		s.initial_velocity_max = 0.9
-		s.gravity = Vector3(0, 0.5, 0)
+		s.spread = 25.0
+		s.initial_velocity_min = 0.3
+		s.initial_velocity_max = 0.7
+		s.gravity = Vector3(0, 0.3, 0)
 		s.angle_max = 360.0
 		s.scale_amount_min = 0.7
 		s.scale_amount_max = 1.2
@@ -598,10 +598,11 @@ void fragment() {
 const SHOCK_SHADER := """
 shader_type spatial;
 render_mode unshaded, blend_add, depth_draw_never, cull_disabled;
+uniform vec3 tint = vec3(1.0, 0.75, 0.4);
 void fragment() {
 	float d = length(UV * 2.0 - 1.0);
 	float ring = smoothstep(0.7, 0.9, d) * (1.0 - smoothstep(0.9, 1.0, d));
-	ALBEDO = vec3(1.0, 0.75, 0.4) * ring * 1.2;
+	ALBEDO = tint * ring * 1.2;
 }
 """
 
@@ -629,10 +630,12 @@ func _burst(pos: Vector3, c: Color, amount: int, speed: float, life: float) -> v
 func pickup_burst(pos: Vector3, c: Color, text: String) -> void:
 	if not enabled:
 		return
-	_burst(pos + Vector3(0, 0.6, 0), c, 14, 3.0, 0.5)
+	_burst(pos + Vector3(0, 0.6, 0), c, 12, 2.2, 0.45)
 	var ring := MeshInstance3D.new()
 	ring.mesh = _quad
-	ring.material_override = _shock_mat
+	var rm := _shock_mat.duplicate() as ShaderMaterial
+	rm.set_shader_parameter("tint", Vector3(c.r, c.g, c.b))
+	ring.material_override = rm
 	ring.rotation.x = -PI / 2.0
 	ring.position = pos + Vector3(0, 0.08, 0)
 	ring.scale = Vector3.ONE * 0.4
@@ -640,7 +643,7 @@ func pickup_burst(pos: Vector3, c: Color, text: String) -> void:
 	add_child(ring)
 	var tw := ring.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(ring, "scale", Vector3.ONE * 1.8, 0.3).set_ease(Tween.EASE_OUT)
+	tw.tween_property(ring, "scale", Vector3.ONE * 1.3, 0.3).set_ease(Tween.EASE_OUT)
 	tw.tween_property(ring, "transparency", 1.0, 0.3)
 	tw.chain().tween_callback(ring.queue_free)
 	var l := Label3D.new()
@@ -653,10 +656,13 @@ func pickup_burst(pos: Vector3, c: Color, text: String) -> void:
 	l.outline_modulate = Color(0.03, 0.03, 0.06)
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true
-	l.position = pos + Vector3(0, 1.5, 0)
+	# Near the top of the board the label would slide under the timer pill:
+	# put it below the fighter there.
+	var top_rows := pos.z < -(Cfg.ROWS * 0.5 - 2.6)
+	l.position = pos + (Vector3(0, 0.4, 1.1) if top_rows else Vector3(0, 1.5, 0))
 	add_child(l)
 	var lt := l.create_tween()
 	lt.set_parallel(true)
-	lt.tween_property(l, "position", l.position + Vector3(0, 0.9, 0), 0.7).set_ease(Tween.EASE_OUT)
+	lt.tween_property(l, "position", l.position + (Vector3(0, 0.3, 0.5) if top_rows else Vector3(0, 0.9, 0)), 0.7).set_ease(Tween.EASE_OUT)
 	lt.tween_property(l, "modulate:a", 0.0, 0.7).set_delay(0.25)
 	lt.chain().tween_callback(l.queue_free)

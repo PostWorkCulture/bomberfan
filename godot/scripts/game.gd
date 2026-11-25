@@ -38,7 +38,7 @@ const DIRS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 # Fighters. You are always Razor; each match the three bots are drawn at random
 # from the rest (`-- --cast sparky,snap,arcade` or autotest "cast" picks them).
 const ROSTER := [
-	{"id": "ninja", "name": "RAZOR", "color": Color(0.36, 0.6, 1.0)},
+	{"id": "ninja", "name": "RAZOR", "color": Color(0.36, 0.6, 1.0), "dark": true},   # dark body: light outline everywhere
 	{"id": "sparky", "name": "SPARKY", "color": Color(1.0, 0.78, 0.12)},
 	{"id": "rivet", "name": "RIVET", "color": Color(1.0, 0.34, 0.27)},
 	{"id": "pixel", "name": "PIXEL", "color": Color(0.33, 0.88, 0.45)},
@@ -46,7 +46,7 @@ const ROSTER := [
 	{"id": "gumball", "name": "GUMBALL", "color": Color(1.0, 0.46, 0.72)},
 	{"id": "snap", "name": "SNAP", "color": Color(0.92, 0.93, 0.96)},
 	{"id": "arcade", "name": "ARCADE", "color": Color(0.7, 0.52, 1.0)},
-	{"id": "tick", "name": "TICK", "color": Color(0.36, 0.86, 0.82)},
+	{"id": "tick", "name": "TICK", "color": Color(0.36, 0.86, 0.82), "dark": true},
 ]
 
 # Forest backdrop colour behind everything (LEVELS[0].sky in index.html)
@@ -595,7 +595,7 @@ func _apply_level(id: String) -> void:
 	_apply_env(id)
 	audio.set_arena(id)
 	for f in fighters:
-		f.set_outline(id == "haunted" or id == "factory")
+		f.set_outline(id == "haunted" or id == "factory" or id == "forest")
 	fx.debris_color = LA.theme(id).get("debris", Color(0, 0, 0, 0))
 	fx.theme = id
 	fx.pale_bombs = level.get("pale_bomb", false)
@@ -641,6 +641,10 @@ func _build_level_scene() -> void:
 		var spot: Array = spots[i]
 		var kind: String = kinds[i % kinds.size()]
 		var angry: bool = angry_at.has(i)
+		# Nothing on the near (camera-side) wall: from this camera a prop there
+		# sits over the bottom lane (AAA review). The hazard keeps its spot.
+		if spot[1] == Cfg.ROWS - 1 and not angry:
+			continue
 		var n: Node3D = Props.make(kind, angry)
 		var at := Vector2i(spot[0], spot[1])
 		n.position = tile_pos(at.x, at.y) + Vector3(0, 1.04, 0)   # on top of the outer wall
@@ -1898,7 +1902,7 @@ func _update_hud() -> void:
 		msg = msg_text
 	var dt := get_process_delta_time()
 	var sub := ""
-	if phase == "intro" and ceili(phase_t - 0.35) >= 1:
+	if phase == "intro" and ceili(phase_t - 0.35) > 3:
 		sub = ARENA_HINTS.get(level_id, "")
 	hud.set_frame(_fly >= 0.0, sub, round_no == 1 and (phase == "intro" or round_elapsed < 6.0), dt)
 	hud.update(dt, fighters, wins, human_pid, round_no, String(level.get("name", "")), secs, banner, msg)

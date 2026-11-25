@@ -121,7 +121,7 @@ func _build_time_pill() -> PanelContainer:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", -6)
 	_time_pill.add_child(v)
-	_round_lab = _label(12, Color(1, 0.95, 0.85, 0.85), 0)
+	_round_lab = _label(16, Color(1, 0.95, 0.85, 0.9), 3)
 	_round_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_round_lab)
 	_time_lab = _label(32, Color(1, 1, 1), 0)
@@ -137,24 +137,39 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 	sb.border_width_left = 7
 	panel.add_theme_stylebox_override("panel", sb)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.custom_minimum_size = Vector2(170, 0)
+	panel.custom_minimum_size = Vector2(212, 0)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	panel.add_child(h)
 	var badge := PanelContainer.new()
-	badge.add_theme_stylebox_override("panel", _box(col, 20, col.lightened(0.45), 2))
-	badge.custom_minimum_size = Vector2(38, 38)
+	var bsb := _box(col.darkened(0.45), 28, col.lightened(0.3), 3)
+	bsb.content_margin_left = 0
+	bsb.content_margin_right = 0
+	bsb.content_margin_top = 0
+	bsb.content_margin_bottom = 0
+	badge.add_theme_stylebox_override("panel", bsb)
+	badge.custom_minimum_size = Vector2(56, 56)
 	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var ini := _label(22, Color(1, 1, 1), 5)
-	ini.text = String(f.display_name).substr(0, 1)
-	ini.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	ini.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	badge.add_child(ini)
+	badge.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+	var tex := _portrait(f)
+	if tex != null:
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		tr.custom_minimum_size = Vector2(56, 56)
+		badge.add_child(tr)
+	else:
+		var ini := _label(26, Color(1, 1, 1), 5)
+		ini.text = String(f.display_name).substr(0, 1)
+		ini.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		ini.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		badge.add_child(ini)
 	h.add_child(badge)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", -2)
 	h.add_child(v)
-	var nm := _label(20, Color(1, 1, 1), 4)
+	var nm := _label(22, Color(1, 1, 1), 5)
 	v.add_child(nm)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 5)
@@ -162,8 +177,8 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 	var pips: Array = []
 	for i in wins_needed:
 		var p := Panel.new()
-		p.custom_minimum_size = Vector2(14, 14)
-		p.add_theme_stylebox_override("panel", _box(Color(1, 1, 1, 0.12), 7, Color(1, 1, 1, 0.35), 1))
+		p.custom_minimum_size = Vector2(18, 18)
+		p.add_theme_stylebox_override("panel", _box(Color(1, 1, 1, 0.3), 9, Color(1, 1, 1, 0.6), 2))
 		row.add_child(p)
 		pips.append(p)
 	var ko := _label(16, Color(1.0, 0.4, 0.32), 4)
@@ -185,7 +200,7 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 		csb.content_margin_bottom = 0
 		csb.shadow_size = 0
 		chip.add_theme_stylebox_override("panel", csb)
-		var cl := _label(13, tint.lightened(0.5), 0)
+		var cl := _label(17, tint.lightened(0.5), 3)
 		chip.add_child(cl)
 		chips_row.add_child(chip)
 		chips[id] = [chip, cl]
@@ -236,8 +251,8 @@ func update(delta: float, fighters: Array, wins: Array, human_pid: int, round_no
 			var i := 0
 			for p in c["pips"]:
 				var on: bool = i < wins[k]
-				(p as Panel).add_theme_stylebox_override("panel", _box(c["color"] if on else Color(1, 1, 1, 0.12), 7,
-					Color(1, 1, 1, 0.9) if on else Color(1, 1, 1, 0.35), 2 if on else 1))
+				(p as Panel).add_theme_stylebox_override("panel", _box(c["color"] if on else Color(1, 1, 1, 0.3), 9,
+					Color(1, 1, 1, 0.95) if on else Color(1, 1, 1, 0.6), 2))
 				i += 1
 			if wins[k] > 0:
 				_pop(panel, 1.12)
@@ -264,6 +279,48 @@ func update(delta: float, fighters: Array, wins: Array, human_pid: int, round_no
 		_msg_holder.pivot_offset = _msg_holder.size * 0.5
 		_msg_holder.scale = Vector2(s, s)
 		_msg.modulate.a = clampf(_msg_age / 0.1, 0.0, 1.0)
+
+
+## A head-and-shoulders portrait of the fighter's own model, rendered once
+## into a small viewport with a key and rim light.
+func _portrait(f) -> Texture2D:
+	if f.model == null or game.smoke:
+		return null
+	var vp := SubViewport.new()
+	vp.size = Vector2i(128, 128)
+	vp.own_world_3d = true
+	vp.transparent_bg = true
+	vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+	add_child(vp)
+	var copy: Node3D = f.model.duplicate()
+	copy.position = Vector3(0, copy.position.y, 0)
+	copy.rotation = Vector3(0, 0.35, 0)
+	vp.add_child(copy)
+	var cam := Camera3D.new()
+	cam.fov = 34.0
+	var head: float = f.TARGET_HEIGHT * 0.74
+	cam.position = Vector3(0.0, head + 0.12, 1.35)
+	vp.add_child(cam)
+	cam.look_at(Vector3(0, head, 0), Vector3.UP)
+	var key := DirectionalLight3D.new()
+	key.rotation_degrees = Vector3(-30, 30, 0)
+	key.light_energy = 1.3
+	vp.add_child(key)
+	var rim := DirectionalLight3D.new()
+	rim.rotation_degrees = Vector3(-20, 200, 0)
+	rim.light_energy = 1.1
+	rim.light_color = f.color
+	vp.add_child(rim)
+	var env := WorldEnvironment.new()
+	var e := Environment.new()
+	e.background_mode = Environment.BG_CLEAR_COLOR
+	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	e.ambient_light_color = Color(0.55, 0.55, 0.6)
+	e.ambient_light_energy = 0.8
+	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.environment = e
+	vp.add_child(env)
+	return vp.get_texture()
 
 
 func _pop(c: Control, s: float) -> void:

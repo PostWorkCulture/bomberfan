@@ -7,7 +7,14 @@ const SFX := [
 	"place_bomb", "explode_1", "explode_2", "explode_3", "break_block_1", "break_block_2",
 	"pickup", "death", "countdown_lo", "countdown_hi", "go", "round_win", "match_win",
 	"sd_warning", "sd_start", "wall_slam",
+	"tide", "fizz", "press", "lever", "shield_pop", "ghost", "thunder", "whoosh", "build",
 ]
+## Round music and ambience bed per arena (2026-11-25). Forest keeps Pete's
+## pick, Arcade Drive.
+const ARENA_MUSIC := {"forest": "music_arcade_drive", "beach": "music_tide_pop",
+	"haunted": "music_graveyard_swing", "factory": "music_tension_pulse"}
+const ARENA_AMBIENCE := {"forest": "ambience_forest", "beach": "ambience_beach",
+	"haunted": "ambience_haunted", "factory": "ambience_factory"}
 const VARIANTS := {"explode": 3, "break_block": 2}
 const POOL_SIZE := 16
 const MUSIC := "music_arcade_drive"
@@ -24,7 +31,7 @@ var _music_on := false
 
 
 func _ready() -> void:
-	for n in SFX + [MUSIC, "ambience_forest"]:
+	for n in SFX + ARENA_MUSIC.values() + ARENA_AMBIENCE.values():
 		var path := "res://assets/audio/%s.wav" % n
 		if ResourceLoader.exists(path):
 			_streams[n] = load(path)
@@ -100,6 +107,22 @@ func music(on: bool) -> void:
 		_music_tween = create_tween()
 		_music_tween.tween_property(_music, "volume_db", -40.0, 0.7)
 		_music_tween.tween_callback(_music.stop)
+
+
+## Switch music and ambience to this arena's. Takes effect from the next
+## music(true); the bed crossfades straight away.
+func set_arena(id: String) -> void:
+	var m = _streams.get(ARENA_MUSIC.get(id, MUSIC))
+	if m != null and _music.stream != m:
+		_music.stop()
+		_music_on = false
+		_music.stream = m
+	var a = _streams.get(ARENA_AMBIENCE.get(id, "ambience_forest"))
+	if a != null and _ambience.stream != a:
+		var was := _ambience.playing
+		_ambience.stream = a
+		if was:
+			_ambience.play()
 
 
 func _on_music_finished() -> void:

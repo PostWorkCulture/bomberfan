@@ -27,6 +27,9 @@ var ignore_bombs := {}     # bomb tiles we are allowed to walk off
 var face_yaw := 0.0
 var moving := false
 var celebrating := false
+var shield := false       # Shield pick-up: soaks one blast
+var invuln_t := 0.0       # after the shield pops: a moment to get clear
+var _bubble: MeshInstance3D = null
 
 var model: Node3D = null
 var anim: AnimationPlayer = null
@@ -45,6 +48,7 @@ func setup(g, id_: int, info: Dictionary, bot: bool) -> void:
 	is_bot = bot
 	_build_model()
 	_build_marker()
+	_build_bubble()
 
 
 func _build_model() -> void:
@@ -123,6 +127,29 @@ func _build_marker() -> void:
 		add_child(tag)
 
 
+## The Shield pick-up's bubble: a soft violet glass sphere round the fighter.
+func _build_bubble() -> void:
+	_bubble = MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 0.62
+	sm.height = 1.24
+	sm.radial_segments = 24
+	sm.rings = 12
+	_bubble.mesh = sm
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.albedo_color = Color(0.55, 0.4, 1.0, 0.16)
+	m.rim_enabled = false
+	m.cull_mode = BaseMaterial3D.CULL_BACK
+	_bubble.material_override = m
+	_bubble.position.y = 0.62
+	_bubble.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_bubble.visible = false
+	add_child(_bubble)
+
+
 # ---- Round state ------------------------------------------------------------
 
 func spawn_at(t: Vector2i) -> void:
@@ -135,6 +162,8 @@ func spawn_at(t: Vector2i) -> void:
 	max_bombs = Cfg.START_BOMBS
 	fire = Cfg.START_FIRE
 	active_bombs = 0
+	shield = false
+	invuln_t = 0.0
 	ignore_bombs.clear()
 	moving = false
 	celebrating = false
@@ -217,7 +246,7 @@ func _slide(axis_x: bool, delta: float) -> bool:
 
 
 func _move(d: Vector2i, dt: float) -> bool:
-	var stp := speed * dt
+	var stp: float = speed * dt * game.move_mult(tile())
 	if d.x != 0:
 		face_yaw = PI / 2.0 if d.x > 0 else -PI / 2.0
 		gy = move_toward(gy, float(roundi(gy)), stp * Cfg.TURN_SNAP)
@@ -232,6 +261,7 @@ func _move(d: Vector2i, dt: float) -> bool:
 func step(dt: float, dir: Vector2i, alt: Vector2i, want_bomb: bool) -> void:
 	if not alive:
 		return
+	invuln_t = maxf(0.0, invuln_t - dt)
 	if speed_t > 0.0:
 		speed_t -= dt
 		if speed_t <= 0.0:
@@ -280,6 +310,15 @@ func update_visual(delta: float) -> void:
 		rotation.y = face_yaw
 	if robot:
 		robot.animate(delta, moving and alive, speed / Cfg.BASE_SPEED)
+	# Tall grass (Forest) hides a bot from view; you can still see yourself.
+	if model:
+		model.visible = not (is_bot and alive and game.mech.hidden(self))
+		if invuln_t > 0.0 and alive:
+			model.visible = model.visible and fmod(invuln_t * 14.0, 1.0) < 0.6
+	if _bubble:
+		_bubble.visible = shield and alive and (model == null or model.visible or not is_bot)
+		if _bubble.visible:
+			_bubble.scale = Vector3.ONE * (1.0 + 0.03 * sin(Time.get_ticks_msec() * 0.006))
 	if not alive:
 		_death_t += delta
 		if _death_t > 2.0:

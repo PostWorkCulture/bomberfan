@@ -21,6 +21,9 @@ const Levels := preload("res://scripts/levels.gd")
 const LA := preload("res://scripts/level_art.gd")
 const Scenery := preload("res://scripts/level_scenery.gd")
 const Props := preload("res://scripts/level_props.gd")
+const Ambient := preload("res://scripts/ambient.gd")
+const Mechanics := preload("res://scripts/mechanics.gd")
+const CRATE_SPARES := 8   # hidden crate instances per variant, for crates that appear mid-round
 
 const EMPTY := 0
 const HARD := 1
@@ -96,11 +99,19 @@ var _hazard_mark: MeshInstance3D
 var tour := false
 var _tour_t := 0.0
 var _tour_i := 0
+var tour_secs := 2.0
+# Arrival flyover: the camera swings in over a new arena before the countdown.
+const FLY_TIME := 2.3
+const CAM_POS := Vector3(0.0, 15.2, 6.6)
+const CAM_TARGET := Vector3(0.0, 0.0, 0.55)
+var _fly := -1.0
+var _hitstop := 0.0   # `-- --tour-secs 0.6`: a quicker tour for local previews
 var _smoke_levels: Array = []
 var level_root: Node3D          # everything static that belongs to the arena
 var env: Environment
 var sun: DirectionalLight3D
 var sky_mat: ProceduralSkyMaterial
+var sun_base_energy := 1.0
 var hud_sd: Label
 var msg_text := ""
 var msg_t := 0.0
@@ -113,7 +124,7 @@ var forced_cast: Array = []   # bot ids from autotest "cast"
 var lineup := false    # autotest "lineup": the roster side by side on plain ground
 var human_pid := 0
 var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0, "sudden_deaths": 0, "crushed": 0,
-	"bombs": 0, "crates": 0, "pickups": 0, "wins": [0, 0, 0, 0]}
+	"bombs": 0, "crates": 0, "pickups": 0, "shields": 0, "doused": 0, "wins": [0, 0, 0, 0]}
 
 var static_root: Node3D
 var round_root: Node3D
@@ -132,10 +143,17 @@ var _crates: Array = []            # one multimesh per crate variant; broken one
 var _crate_xf := {}                 # tile index -> [variant, instance]
 var fx = null
 var audio = null
+var ambient = null   # birds, bats, lightning, steam: presentation only
+var mech = null      # per-arena mechanics: grass, beaver, tide, crabs, ghosts, presses, lever
+var _crate_spare: Array = []        # per variant: free hidden instance indices
+var _crate_anims: Array = []        # crates sliding (ghost shove) or popping up (beaver)
 var _last_count := 0
 var _shots: Array = []      # autotest: seconds at which to save a screenshot
 var _shot_dir := ""
 var _quit_at := -1.0
+var occ_img: Image             # one texel per tile: walls and crates, for floor contact shadow
+var occ_tex: ImageTexture
+var _occ_dirty := false
 var _perf := {"frames": 0, "worst": 0.0, "draws": 0, "prims": 0}
 
 
@@ -148,6 +166,9 @@ func _ready() -> void:
 	var li := args.find("--level")
 	if li >= 0 and li + 1 < args.size() and Levels.index_of(args[li + 1]) >= 0:
 		forced_level = args[li + 1]
+	var ts := args.find("--tour-secs")
+	if ts >= 0 and ts + 1 < args.size():
+		tour_secs = float(args[ts + 1])
 	if tour:
 		demo = true
 	_load_autotest()
@@ -164,11 +185,20 @@ func _ready() -> void:
 	audio.enabled = not smoke and not gallery
 	add_child(audio)
 	_build_environment()
+	occ_img = Image.create(Cfg.COLS, Cfg.ROWS, false, Image.FORMAT_L8)
+	occ_tex = ImageTexture.create_from_image(occ_img)
+	Art.occ_texture = occ_tex
 	static_root = Node3D.new()
 	add_child(static_root)
+	if not smoke:
+		ambient = Ambient.new()
+		ambient.setup(self)
+		add_child(ambient)
 	round_root = Node3D.new()
 	add_child(round_root)
 	_build_hud()
+	mech = Mechanics.new()
+	mech.setup(self)
 	_create_fighters()
 	start_round()
 	if tour:
@@ -292,7 +322,7 @@ func _belt_drift(b: Dictionary) -> Vector2i:
 ## Sudden death, as the bots see it: tiles the walls are about to land on, with
 ## the seconds until they do — the same warning a human reads off the HUD.
 func _doomed_tiles() -> Array:
-	var out: Array = []
+	var out: Array = mech.doomed()
 	if not sudden_death:
 		if sd_warned:
 			for t in _ring_tiles(1):
@@ -424,8 +454,8 @@ func _build_environment() -> void:
 	camera = Camera3D.new()
 	camera.fov = 44.0
 	add_child(camera)
-	camera.position = Vector3(0.0, 15.2, 6.6)
-	camera.look_at(Vector3(0.0, 0.0, 0.55), Vector3.UP)
+	camera.position = CAM_POS
+	camera.look_at(CAM_TARGET, Vector3.UP)
 	camera.current = true
 
 
@@ -549,7 +579,9 @@ func _apply_level(id: String) -> void:
 	_props.clear()
 	hazards.clear()
 	_apply_env(id)
-	fx.debris_color = LA.theme(id).get("debris", Color(0.55, 0.36, 0.2)) if id != "forest" else Color(0, 0, 0, 0)
+	audio.set_arena(id)
+	fx.debris_color = LA.theme(id).get("debris", Color(0, 0, 0, 0))
+	fx.theme = id
 	fx.pale_bombs = level.get("pale_bomb", false)
 	# The hazards are rules, not scenery: work out where they stand even headless.
 	var kinds: Array = level.get("props", [])
@@ -566,6 +598,8 @@ func _apply_level(id: String) -> void:
 
 func _build_level_scene() -> void:
 	# Built after the first round's cells exist, because the walls follow them.
+	if ambient != null and not gallery:
+		ambient.build(level_id)
 	if level_id == "forest":
 		_build_forest_arena()
 		_build_forest()
@@ -602,29 +636,22 @@ func _build_level_scene() -> void:
 
 
 func _apply_env(id: String) -> void:
-	if id == "forest":
-		sky_mat.sky_top_color = Color(0.36, 0.5, 0.62)
-		sky_mat.sky_horizon_color = Color(0.72, 0.74, 0.64)
-		sky_mat.ground_horizon_color = Color(0.45, 0.5, 0.38)
-		env.background_color = SKY
-		env.ambient_light_energy = 0.5
-		env.fog_light_color = Color(0.16, 0.24, 0.18)
-		_set_fog(17.0, 36.0)
-		sun.rotation_degrees = Vector3(-50.0, -38.0, 0.0)
-		sun.light_color = Color(1.0, 0.92, 0.78)
-		sun.light_energy = 1.15
-		return
 	var th: Dictionary = LA.theme(id)
 	sky_mat.sky_top_color = th["sky_top"]
 	sky_mat.sky_horizon_color = th["sky_horizon"]
-	sky_mat.ground_horizon_color = th["sky_horizon"].darkened(0.4)
+	sky_mat.ground_horizon_color = th.get("ground_horizon", th["sky_horizon"].darkened(0.4))
 	env.background_color = th["sky"]
 	env.ambient_light_energy = th["ambient"]
 	env.fog_light_color = th["fog"]
 	_set_fog(th["fog_begin"], th["fog_end"])
+	env.tonemap_exposure = th.get("exposure", 1.0)
+	env.adjustment_saturation = th.get("saturation", 1.0)
+	env.adjustment_contrast = th.get("contrast", 1.05)
+	env.glow_intensity = th.get("glow", 0.35)
 	sun.rotation_degrees = th["sun_rot"]
 	sun.light_color = th["sun"]
 	sun.light_energy = th["sun_energy"]
+	sun_base_energy = th["sun_energy"]
 
 
 func _set_fog(begin: float, end: float) -> void:
@@ -750,6 +777,7 @@ func start_round() -> void:
 			Props.wind_up(h["node"], -1.0)
 	_build_crates()
 	_build_round_dressing()
+	mech.start_round(level_id)
 	var sp: Array = Levels.spawns(level)
 	for k in fighters.size():
 		fighters[k].spawn_at(sp[k][0])
@@ -757,6 +785,10 @@ func start_round() -> void:
 			brains[k].reset()
 	phase = "intro"
 	phase_t = Cfg.ROUND_INTRO
+	if fresh and not (smoke or tour or gallery or lineup or _quit_at >= 0.0):
+		_fly = 0.0
+		phase_t += FLY_TIME
+		audio.play("whoosh")
 	round_t = Cfg.ROUND_SECONDS
 	end_check_t = -1.0
 	msg_t = 0.0
@@ -812,6 +844,9 @@ func _generate_cells() -> void:
 					continue
 				seen[nb] = true
 				q.append([nb, dist + 1])
+	# Tiles the arena's mechanics need open (grass meadows, press beds).
+	for t in mech.reserved(level_id):
+		safe[t] = true
 	# A turning wall's destination stays empty all round.
 	if not clock.is_empty():
 		for c in clock["cells"]:
@@ -835,6 +870,19 @@ func _generate_cells() -> void:
 			if safe.has(t):
 				continue   # a spawn keeps plain floor: no being carried off before GO
 			rules[idx(t.x, t.y)] = e[1]
+	_occ_dirty = true
+
+
+## Floor contact shadow follows the grid: call after any change to cells.
+func _refresh_occ() -> void:
+	_occ_dirty = false
+	if smoke or occ_img == null:
+		return
+	for y in Cfg.ROWS:
+		for x in Cfg.COLS:
+			var c := cells[idx(x, y)]
+			occ_img.set_pixel(x, y, Color.WHITE if c == HARD else (Color(0.75, 0.75, 0.75) if c == SOFT else Color.BLACK))
+	occ_tex.update(occ_img)
 
 
 func belt_at(x: int, y: int) -> Vector2i:
@@ -848,7 +896,7 @@ func _build_crates() -> void:
 	r.seed = rng.randi()
 	_crate_xf.clear()
 	_crates.clear()
-	var meshes: Array = [Art.log_pile_mesh()] if level_id == "forest" else LA.crate_meshes(level_id)
+	var meshes: Array = LA.crate_meshes(level_id)
 	var xforms: Array = []
 	for m in meshes:
 		xforms.append([])
@@ -856,14 +904,25 @@ func _build_crates() -> void:
 		for x in Cfg.COLS:
 			if cells[idx(x, y)] != SOFT:
 				continue
-			var v := r.randi() % meshes.size() if meshes.size() > 1 and r.randf() < 0.4 else 0
+			# Half the crates are the arena's main kind; the rest share the variants.
+			var v := 0
+			if meshes.size() > 1 and r.randf() < 0.5:
+				v = 1 + r.randi() % (meshes.size() - 1)
 			var b := Basis(Vector3.UP, r.randi_range(0, 3) * PI / 2.0 + r.randf_range(-0.06, 0.06))
 			b = b.scaled(Vector3(1.0, r.randf_range(0.96, 1.04), 1.0))
 			_crate_xf[idx(x, y)] = [v, xforms[v].size()]
 			xforms[v].append(Transform3D(b, tile_pos(x, y)))
+	_crate_spare.clear()
+	_crate_anims.clear()
 	if smoke:
 		return
+	var hidden := Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0))
 	for v in meshes.size():
+		var spare: Array = []
+		for k in CRATE_SPARES:
+			spare.append(xforms[v].size())
+			xforms[v].append(hidden)
+		_crate_spare.append(spare)
 		var mm := Art.multimesh(meshes[v], xforms[v])
 		round_root.add_child(mm)
 		_crates.append(mm)
@@ -876,6 +935,118 @@ func _hide_crate(ci: int) -> void:
 	_crate_xf.erase(ci)
 	if e[0] < _crates.size() and is_instance_valid(_crates[e[0]]):
 		_crates[e[0]].multimesh.set_instance_transform(e[1], Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0)))
+
+
+## A crate that appears mid-round (the Forest beaver builds one). Takes a
+## spare hidden instance and pops it up.
+func add_crate(t: Vector2i) -> void:
+	var ci := idx(t.x, t.y)
+	cells[ci] = SOFT
+	soft_count += 1
+	_occ_dirty = true
+	if _crates.is_empty():
+		return
+	var v := rng.randi() % _crates.size()
+	for k in _crates.size():
+		var vv := (v + k) % _crates.size()
+		if not _crate_spare[vv].is_empty():
+			var inst: int = _crate_spare[vv].pop_back()
+			_crate_xf[ci] = [vv, inst]
+			var b := Basis(Vector3.UP, rng.randi_range(0, 3) * PI / 2.0)
+			_crate_anims.append({"v": vv, "i": inst, "basis": b, "from": tile_pos(t.x, t.y), "to": tile_pos(t.x, t.y), "t": 0.0, "dur": 0.35, "pop": true})
+			return
+
+
+## A crate shoved one tile (the Haunted House ghosts). The rules move at once;
+## the model slides over a quarter second.
+func move_crate(from: Vector2i, to: Vector2i) -> void:
+	var fi := idx(from.x, from.y)
+	var ti := idx(to.x, to.y)
+	cells[fi] = EMPTY
+	cells[ti] = SOFT
+	_occ_dirty = true
+	if not _crate_xf.has(fi):
+		return
+	var e: Array = _crate_xf[fi]
+	_crate_xf.erase(fi)
+	_crate_xf[ti] = e
+	if e[0] < _crates.size() and is_instance_valid(_crates[e[0]]):
+		var cur: Transform3D = _crates[e[0]].multimesh.get_instance_transform(e[1])
+		_crate_anims.append({"v": e[0], "i": e[1], "basis": cur.basis, "from": tile_pos(from.x, from.y), "to": tile_pos(to.x, to.y), "t": 0.0, "dur": 0.28, "pop": false})
+
+
+func _update_crate_anims(delta: float) -> void:
+	for a in _crate_anims.duplicate():
+		a["t"] += delta
+		var k: float = clampf(a["t"] / a["dur"], 0.0, 1.0)
+		var mm: MultiMeshInstance3D = _crates[a["v"]] if a["v"] < _crates.size() else null
+		if mm == null or not is_instance_valid(mm):
+			_crate_anims.erase(a)
+			continue
+		var e: float = k * k * (3.0 - 2.0 * k)
+		var b: Basis = a["basis"]
+		var p: Vector3 = a["from"].lerp(a["to"], e)
+		if a["pop"]:
+			var s := 0.2 + 0.8 * e + sin(k * PI) * 0.15
+			b = b.scaled(Vector3(s, s, s))
+		else:
+			p.y += sin(k * PI) * 0.08
+		mm.multimesh.set_instance_transform(a["i"], Transform3D(b, p))
+		if k >= 1.0:
+			_crate_anims.erase(a)
+
+
+## Water puts a bomb out (Beach tide): it fizzles and goes back to its owner.
+func douse_bomb(b: Dictionary) -> void:
+	if not b["alive"]:
+		return
+	b["alive"] = false
+	stats["doused"] += 1
+	bomb_at.erase(idx(b["x"], b["y"]))
+	if b["owner"] != null:
+		b["owner"].active_bombs = maxi(0, b["owner"].active_bombs - 1)
+	var node: Node3D = b["node"]
+	if is_instance_valid(node):
+		fx.steam_puff(node.position)
+		node.queue_free()
+	if not smoke:
+		audio.play("fizz", 0.0, 0.1)
+
+
+## Slide a bomb one tile (Beach crabs shove them). False if it cannot go.
+func push_bomb(b: Dictionary, d: Vector2i) -> bool:
+	var nx: int = b["x"] + d.x
+	var ny: int = b["y"] + d.y
+	if not bomb_can_enter(nx, ny, b):
+		return false
+	bomb_at.erase(idx(b["x"], b["y"]))
+	b["x"] = nx
+	b["y"] = ny
+	b.erase("fx")
+	b.erase("fy")
+	bomb_at[idx(nx, ny)] = b
+	var node: Node3D = b["node"]
+	if is_instance_valid(node):
+		var tw := node.create_tween()
+		tw.tween_property(node, "position", tile_pos(nx, ny), 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	return true
+
+
+## A fighter caught by something other than fire (a press, falling walls).
+func crush(f) -> void:
+	if not f.alive:
+		return
+	f.die()
+	_knockout_pause()
+	fx.death_puff(f.position)
+	audio.play("death")
+	stats["deaths"] += 1
+	stats["crushed"] += 1
+
+
+## Speed on this tile: the Beach tide slows wading.
+func move_mult(t: Vector2i) -> float:
+	return mech.move_mult(t)
 
 
 ## Per-round pieces of the arena: conveyor belts, the clockwork walls and the
@@ -936,6 +1107,9 @@ func _end_round(winner, why: String) -> void:
 	phase = "outro"
 	phase_t = Cfg.ROUND_OUTRO
 	stats["rounds"] += 1
+	if smoke:
+		print("ROUND %d %s %s %ds%s" % [stats["rounds"], level_id, "draw" if winner == null else winner.display_name,
+			int(round_elapsed), " sudden-death" if sudden_death else ""])
 	audio.music(false)
 	if winner == null:
 		stats["draws"] += 1
@@ -974,7 +1148,7 @@ func _process(delta: float) -> void:
 		start_round()
 	if tour:
 		_tour_t += delta
-		if _tour_t >= 2.0:
+		if _tour_t >= tour_secs:
 			_tour_t = 0.0
 			_tour_i += 1
 			start_round()
@@ -990,6 +1164,7 @@ func _process(delta: float) -> void:
 	_update_visuals(delta)
 	_update_hud()
 	_autotest_tick()
+	_update_camera(delta)
 	if fx.shake > 0.001:
 		camera.h_offset = randf_range(-1.0, 1.0) * fx.shake * 0.35
 		camera.v_offset = randf_range(-1.0, 1.0) * fx.shake * 0.35
@@ -1019,6 +1194,7 @@ func sim_step(dt: float) -> void:
 			_step_fighters(dt)
 			_update_clockwork(dt)
 			_step_hazard(dt)
+			mech.step(dt)
 			_step_flights(dt)
 			_step_bombs(dt)
 			_step_flames(dt)
@@ -1164,6 +1340,7 @@ func _explode(b: Dictionary) -> void:
 		if bomb_at.has(ci):
 			var o: Dictionary = bomb_at[ci]
 			o["fuse"] = minf(o["fuse"], Cfg.CHAIN_DELAY)
+	mech.on_blast(blast_cells(b["x"], b["y"], b["fire"]))
 	fx.explosion(tile_pos(centre.x, centre.y), world_cells, strength)
 	audio.play("explode", 0.0, 0.06, 0.05)
 	if broke:
@@ -1198,6 +1375,7 @@ func _break_crate(c: Vector2i) -> void:
 	cells[ci] = EMPTY
 	soft_count -= 1
 	stats["crates"] += 1
+	_occ_dirty = true
 	_hide_crate(ci)
 	fx.crate_break(tile_pos(c.x, c.y))
 	var r := rng.randf()
@@ -1208,6 +1386,8 @@ func _break_crate(c: Vector2i) -> void:
 		id = "fire"
 	elif r < Cfg.DROP_BOMB + Cfg.DROP_FIRE + Cfg.DROP_SPEED:
 		id = "speed"
+	elif r < Cfg.DROP_BOMB + Cfg.DROP_FIRE + Cfg.DROP_SPEED + Cfg.DROP_SHIELD:
+		id = "shield"
 	if id != "":
 		_spawn_pickup(c, id)
 
@@ -1246,6 +1426,8 @@ func _step_pickups(dt: float) -> void:
 			"speed":
 				f.speed = minf(f.speed + Cfg.SPEED_STEP, Cfg.MAX_SPEED)
 				f.speed_t = Cfg.SPEED_DURATION
+			"shield":
+				f.shield = true
 		stats["pickups"] += 1
 		_remove_pickup(ci)
 		audio.play("pickup", 4.0)
@@ -1258,7 +1440,18 @@ func _check_deaths() -> void:
 		var t: Vector2i = f.tile()
 		var ci := idx(t.x, t.y)
 		if flames.has(ci):
+			if f.invuln_t > 0.0:
+				continue
+			if f.shield:
+				# The Shield soaks this blast, then a moment's grace to get clear.
+				f.shield = false
+				f.invuln_t = Cfg.SHIELD_GRACE
+				stats["shields"] += 1
+				fx.shield_pop(f.position)
+				audio.play("shield_pop")
+				continue
 			f.die()
+			_knockout_pause()
 			fx.death_puff(f.position)
 			audio.play("death")
 			stats["deaths"] += 1
@@ -1344,6 +1537,7 @@ func _update_clockwork(dt: float) -> void:
 					cells[idx(c.x, c.y)] = HARD
 			clock["vertical"] = clock["target"]
 			clock["switched"] = true
+			_occ_dirty = true
 			if not smoke:
 				audio.play("wall_slam", -10.0, 0.1, 0.05)
 	clock["progress"] = nxt
@@ -1551,6 +1745,7 @@ func _drop_block(t: Vector2i) -> void:
 		soft_count -= 1
 		_hide_crate(ci)
 	cells[ci] = HARD
+	_occ_dirty = true
 	if pickups.has(ci):
 		_remove_pickup(ci)
 	if bomb_at.has(ci):
@@ -1600,7 +1795,11 @@ func _update_falling(delta: float) -> void:
 # ---- Presentation -----------------------------------------------------------------
 
 func _update_visuals(delta: float) -> void:
+	if _occ_dirty:
+		_refresh_occ()
 	_update_falling(delta)
+	_update_crate_anims(delta)
+	mech.visual(delta, _time)
 	for p in _props:
 		if is_instance_valid(p):
 			Props.animate(p, _time)
@@ -1646,6 +1845,35 @@ func _update_visuals(delta: float) -> void:
 				fl.scale = Vector3(1.0 + 0.05 * sin(_time * 17.0 + k), 1.0 + 0.1 * sin(_time * 13.0 + k * 2.0), 1.0)
 
 
+## The arrival flyover: from high and round to the side, swinging in to the
+## play camera. Eased, and only on a fresh arena.
+func _update_camera(delta: float) -> void:
+	if _fly < 0.0:
+		return
+	_fly += delta
+	var k := clampf(_fly / FLY_TIME, 0.0, 1.0)
+	var e := 1.0 - pow(1.0 - k, 3.0)
+	var off := CAM_POS - CAM_TARGET
+	var start := Vector3(0.0, 24.0, 15.0)
+	var yaw := lerpf(-1.25, 0.0, e)
+	var o := start.lerp(off, e)
+	var flat := Vector2(o.x, o.z).rotated(-yaw)
+	camera.position = CAM_TARGET + Vector3(flat.x, o.y, flat.y)
+	camera.look_at(CAM_TARGET, Vector3.UP)
+	if k >= 1.0:
+		_fly = -1.0
+		camera.position = CAM_POS
+		camera.look_at(CAM_TARGET, Vector3.UP)
+
+
+## A beat of slow motion when someone is caught: the hit lands.
+func _knockout_pause() -> void:
+	if smoke or not fx.enabled:
+		return
+	Engine.time_scale = 0.12
+	get_tree().create_timer(0.11, true, false, true).timeout.connect(func(): Engine.time_scale = 1.0)
+
+
 func _update_hud() -> void:
 	for k in fighters.size():
 		var f = fighters[k]
@@ -1664,7 +1892,10 @@ func _update_hud() -> void:
 		hud_sd.text = ""
 	if phase == "intro":
 		var n := ceili(phase_t - 0.35)
-		hud_msg.text = str(n) if n >= 1 else "GO!"
+		if n > 3:
+			hud_msg.text = String(level.get("name", "")).to_upper()
+		else:
+			hud_msg.text = str(n) if n >= 1 else "GO!"
 	elif msg_t > 0.0:
 		hud_msg.text = msg_text
 	else:
@@ -1715,8 +1946,8 @@ func _setup_gallery() -> void:
 		f.moving = k >= 2
 		f.update_visual(0.0)
 	pickups.clear()
-	for i in 3:
-		_spawn_pickup(Vector2i(6 + i, 7), ["bomb", "fire", "speed"][i])
+	for i in 4:
+		_spawn_pickup(Vector2i(5 + i, 7), ["bomb", "fire", "speed", "shield"][i])
 	# A freshly laid bomb, to judge the fuse at close range
 	var bn: Node3D = fx.make_bomb(round_root, tile_pos(9, 7))
 	bombs.append({"x": 9, "y": 7, "fuse": 1.5, "fire": 2, "owner": fighters[0], "alive": true, "age": 0.4, "node": bn})
@@ -1776,12 +2007,16 @@ func _autotest_tick() -> void:
 
 func _run_smoke() -> void:
 	var t := 0.0
-	while t < 1500.0 and stats["rounds"] < Levels.LIST.size() * 2:
+	var want := Levels.LIST.size() * 2
+	var ri := OS.get_cmdline_user_args().find("--smoke-rounds")
+	if ri >= 0 and ri + 1 < OS.get_cmdline_user_args().size():
+		want = int(OS.get_cmdline_user_args()[ri + 1])
+	while t < 200.0 * want and stats["rounds"] < want:
 		sim_step(Cfg.FIXED_DT)
 		t += Cfg.FIXED_DT
 	var decided: int = stats["rounds"] - stats["draws"]
 	var ok: bool = stats["rounds"] >= 3 and decided >= 1 and stats["bombs"] > 0 and stats["crates"] > 0
-	print("SMOKE %s levels=%s rounds=%d decided=%d draws=%d sudden_deaths=%d crushed=%d wins=%s deaths=%d self_kills=%d bombs=%d crates=%d pickups=%d sim_seconds=%d" % [
+	print("SMOKE %s levels=%s rounds=%d decided=%d draws=%d sudden_deaths=%d crushed=%d wins=%s deaths=%d self_kills=%d bombs=%d crates=%d pickups=%d shields=%d doused=%d sim_seconds=%d" % [
 		"OK" if ok else "FAIL", ",".join(PackedStringArray(_smoke_levels)), stats["rounds"], decided, stats["draws"], stats["sudden_deaths"], stats["crushed"], str(stats["wins"]),
-		stats["deaths"], stats["self_kills"], stats["bombs"], stats["crates"], stats["pickups"], int(t)])
+		stats["deaths"], stats["self_kills"], stats["bombs"], stats["crates"], stats["pickups"], stats["shields"], stats["doused"], int(t)])
 	get_tree().quit(0 if ok else 1)

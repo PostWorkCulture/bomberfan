@@ -30,6 +30,8 @@ const CHAIN_DELAY := 0.06
 const DROP_BOMB := 0.1182
 const DROP_FIRE := 0.0567
 const DROP_SPEED := 0.0378
+const DROP_SHIELD := 0.025     # Godot-only pick-up (2026-11-25): soaks one blast
+const SHIELD_GRACE := 1.0      # seconds of safety after a shield pops
 
 # ---- Endgame (sudden death), from CFG in index.html
 const CRATES_CLEAR_GRACE := 5.0   # seconds after the last crate before the walls move

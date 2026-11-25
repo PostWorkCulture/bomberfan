@@ -13,6 +13,7 @@ var enabled := true
 var shake := 0.0
 var debris_color := Color(0, 0, 0, 0)   # alpha 0: the Forest's bark splinters
 var pale_bombs := false                 # dark floors get a pale shell (BOMB_PALE)
+var theme := "forest"                   # the arena, for themed debris
 var _flash_lights := 0
 var _quad: QuadMesh
 var _fire_mat: StandardMaterial3D
@@ -336,7 +337,9 @@ func scorch(pos: Vector3, size: float) -> void:
 	_scorches.append({"node": s, "t": 0.0})
 
 
-## Splinters and sawdust from a log pile breaking.
+## A crate breaking, dressed for the arena: bark splinters and leaves in the
+## Forest, sand and driftwood on the Beach, a wisp of spirit from a Haunted
+## House casket, cardboard and sparks in the Factory.
 func crate_break(pos: Vector3) -> void:
 	if not enabled:
 		return
@@ -379,8 +382,92 @@ func crate_break(pos: Vector3) -> void:
 	dust.scale_amount_min = 0.6
 	dust.scale_amount_max = 1.0
 	dust.scale_amount_curve = _grow
-	dust.color_ramp = _dust_ramp
+	dust.color_ramp = _theme_dust()
 	dust.emitting = true
+	match theme:
+		"forest":
+			_bits(pos, Color(0.36, 0.55, 0.2), 6, Vector3(0.09, 0.01, 0.07), 2.2, -3.0)
+		"beach":
+			var sand := _emitter(pos + Vector3(0, 0.3, 0), _smoke_mat, 6, 0.8)
+			sand.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+			sand.emission_sphere_radius = 0.3
+			sand.direction = Vector3.UP
+			sand.spread = 70.0
+			sand.initial_velocity_min = 1.5
+			sand.initial_velocity_max = 2.6
+			sand.gravity = Vector3(0, -6.0, 0)
+			sand.scale_amount_min = 0.35
+			sand.scale_amount_max = 0.6
+			sand.color_ramp = _ramp([0.0, 0.2, 1.0], [Color(0.82, 0.7, 0.5, 0.0), Color(0.82, 0.7, 0.5, 0.8), Color(0.8, 0.68, 0.5, 0.0)])
+			sand.emitting = true
+		"haunted":
+			var wisp := _emitter(pos + Vector3(0, 0.5, 0), _add_mat, 4, 1.6)
+			wisp.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+			wisp.emission_sphere_radius = 0.2
+			wisp.direction = Vector3.UP
+			wisp.spread = 20.0
+			wisp.initial_velocity_min = 0.8
+			wisp.initial_velocity_max = 1.3
+			wisp.gravity = Vector3(0, 0.6, 0)
+			wisp.scale_amount_min = 0.35
+			wisp.scale_amount_max = 0.55
+			wisp.scale_amount_curve = _grow
+			wisp.color_ramp = _ramp([0.0, 0.25, 1.0], [Color(0.5, 1.0, 0.75, 0.0), Color(0.55, 1.0, 0.8, 0.7), Color(0.4, 0.7, 1.0, 0.0)])
+			wisp.emitting = true
+		"factory":
+			var sp := _emitter(pos + Vector3(0, 0.4, 0), _add_mat, 10, 0.5)
+			sp.direction = Vector3.UP
+			sp.spread = 80.0
+			sp.initial_velocity_min = 2.5
+			sp.initial_velocity_max = 4.5
+			sp.gravity = Vector3(0, -12.0, 0)
+			sp.scale_amount_min = 0.05
+			sp.scale_amount_max = 0.09
+			sp.color_ramp = _spark_ramp
+			sp.emitting = true
+
+
+## Small flat bits (leaves, chips) that flutter down.
+func _bits(pos: Vector3, c: Color, amount: int, size: Vector3, up: float, grav: float) -> void:
+	var p := CPUParticles3D.new()
+	var bm := BoxMesh.new()
+	bm.size = size
+	bm.material = Art.flat_mat(c, 0.8)
+	p.mesh = bm
+	p.amount = amount
+	p.lifetime = 1.4
+	p.one_shot = true
+	p.explosiveness = 0.9
+	p.local_coords = false
+	p.position = pos + Vector3(0, 0.6, 0)
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 0.3
+	p.direction = Vector3.UP
+	p.spread = 80.0
+	p.initial_velocity_min = up * 0.6
+	p.initial_velocity_max = up
+	p.gravity = Vector3(0, grav, 0)
+	p.damping_min = 1.5
+	p.damping_max = 2.5
+	p.angular_velocity_min = -360.0
+	p.angular_velocity_max = 360.0
+	p.angle_max = 360.0
+	p.scale_amount_curve = _shrink
+	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(p)
+	p.emitting = true
+	get_tree().create_timer(1.9, false).timeout.connect(p.queue_free)
+
+
+func _theme_dust() -> Gradient:
+	match theme:
+		"beach":
+			return _ramp([0.0, 0.2, 1.0], [Color(0.8, 0.7, 0.52, 0.0), Color(0.78, 0.68, 0.5, 0.5), Color(0.75, 0.66, 0.5, 0.0)])
+		"haunted":
+			return _ramp([0.0, 0.2, 1.0], [Color(0.4, 0.36, 0.45, 0.0), Color(0.38, 0.34, 0.44, 0.5), Color(0.3, 0.28, 0.36, 0.0)])
+		"factory":
+			return _ramp([0.0, 0.2, 1.0], [Color(0.5, 0.48, 0.45, 0.0), Color(0.46, 0.44, 0.42, 0.5), Color(0.4, 0.4, 0.4, 0.0)])
+	return _dust_ramp
 
 
 ## Dust kicked up where a sudden-death block lands.
@@ -399,6 +486,46 @@ func crate_dust(pos: Vector3) -> void:
 	dust.scale_amount_curve = _grow
 	dust.color_ramp = _dust_ramp
 	dust.emitting = true
+
+
+## A bomb put out by water: a hiss of steam.
+func steam_puff(pos: Vector3) -> void:
+	if not enabled:
+		return
+	var s := _emitter(pos + Vector3(0, 0.3, 0), _smoke_mat, 7, 1.2)
+	s.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	s.emission_sphere_radius = 0.2
+	s.direction = Vector3.UP
+	s.spread = 25.0
+	s.initial_velocity_min = 1.0
+	s.initial_velocity_max = 1.8
+	s.gravity = Vector3(0, 0.6, 0)
+	s.scale_amount_min = 0.4
+	s.scale_amount_max = 0.8
+	s.scale_amount_curve = _grow
+	s.color_ramp = _ramp([0.0, 0.15, 1.0], [Color(0.92, 0.95, 1.0, 0.0), Color(0.92, 0.95, 1.0, 0.7), Color(0.9, 0.92, 0.95, 0.0)])
+	s.emitting = true
+
+
+## The Shield bursting: a ring of violet light.
+func shield_pop(pos: Vector3) -> void:
+	if not enabled:
+		return
+	var p := _emitter(pos + Vector3(0, 0.6, 0), _add_mat, 18, 0.5)
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 0.5
+	p.direction = Vector3.UP
+	p.spread = 180.0
+	p.initial_velocity_min = 2.0
+	p.initial_velocity_max = 3.2
+	p.gravity = Vector3.ZERO
+	p.damping_min = 4.0
+	p.damping_max = 5.0
+	p.scale_amount_min = 0.12
+	p.scale_amount_max = 0.2
+	p.color_ramp = _ramp([0.0, 0.3, 1.0], [Color(0.8, 0.7, 1.2, 1.0), Color(0.6, 0.45, 1.0, 0.8), Color(0.4, 0.3, 1.0, 0.0)])
+	p.emitting = true
+	shake = minf(0.45, shake + 0.08)
 
 
 ## A puff when a fighter is caught.

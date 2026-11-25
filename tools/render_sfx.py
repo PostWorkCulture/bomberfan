@@ -14,6 +14,7 @@ cheap: GO, countdown, explosions, round/match win, plus the sudden-death cues.
 Deterministic: fixed seeds, so re-running produces identical files.
 """
 import os
+import sys
 import wave
 
 import numpy as np
@@ -493,6 +494,160 @@ def v2_victory(final):
     return f
 
 
+# ---- Arena sounds (2026-11-25 AAA pass): the mechanics and characters --------
+
+def v2_tide(m, r):
+    # Surf rolling in over sand: a swelling band of noise with a foamy top.
+    dur = 2.2
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    swell = np.sin(np.pi * np.clip(t / dur, 0, 1)) ** 1.5
+    body = lowpass_sweep(noise_band(r, dur, 120, 3000), 600, 2400, dur * 0.6) * swell
+    fizz = noise_band(r, dur, 3000, 9000) * swell ** 3 * 0.35
+    m.add(0, body * 0.5, 0.7, -0.3)
+    m.add(0.05, fizz, 0.8, 0.3)
+
+
+def v2_fizz(m, r):
+    n = int(0.7 * SR)
+    hiss = noise_band(r, 0.7, 2500, 9000) * env_ad(n, 0.004, 2.2)
+    m.add(0, hiss * 0.5, 0.4)
+    m.add(0, sweep_tone(420, 180, 0.25, 0.2) * env_ad(int(0.25 * SR), 0.002, 3) * 0.12, 0.2)
+
+
+def v2_press(m, r):
+    # Hydraulic hiss, then a heavy steel stamp with a ring.
+    n = int(0.25 * SR)
+    m.add(0, noise_band(r, 0.25, 1500, 6000) * env_ad(n, 0.05, 1.0) * 0.12, 0.3)
+    k = int(0.7 * SR)
+    m.add(0.22, sat(sweep_tone(95, 36, 0.7, 0.1) * env_ad(k, 0.001, 3.5), 2.5) * 0.6, 0.5)
+    m.add(0.22, lowpass_sweep(r.standard_normal(int(0.2 * SR)), 4000, 400, 0.15) * env_ad(int(0.2 * SR), 0.001, 3) * 0.3, 0.6)
+    metal_ping(m, 0.22, 196.0, 1.0, 0.09, pan=0.2)
+
+
+def v2_lever(m, r):
+    for i, t0 in enumerate([0.0, 0.06, 0.12]):
+        k = int(0.05 * SR)
+        m.add(t0, noise_band(r, 0.05, 1500, 5000) * env_ad(k, 0.001, 4) * 0.25, 0.3, -0.2 + i * 0.2)
+    metal_ping(m, 0.16, 330.0, 0.6, 0.12)
+    k = int(0.3 * SR)
+    m.add(0.16, sat(sweep_tone(140, 70, 0.3, 0.06) * env_ad(k, 0.001, 3), 2.0) * 0.35, 0.4)
+
+
+def v2_shield_pop(m, r):
+    # A glassy pop and a shimmer of bells: the shield soaks a blast.
+    k = int(0.15 * SR)
+    m.add(0, noise_band(r, 0.15, 2000, 10000) * env_ad(k, 0.001, 4) * 0.35, 0.6)
+    for i, fr in enumerate([1046.5, 1318.5, 1568.0, 2093.0]):
+        metal_ping(m, 0.02 + i * 0.035, fr, 0.7, 0.06, partials=(1.0, 2.0, 3.0), pan=-0.4 + i * 0.25)
+
+
+def v2_ghost(m, r):
+    # "Ooo-OOO": a breathy sine with vibrato, rising then sinking.
+    dur = 1.4
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    f = 330 + 140 * np.sin(np.pi * t / dur) + 9 * np.sin(2 * np.pi * 5.5 * t)
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    tone = (np.sin(ph) + 0.3 * np.sin(2 * ph)) * np.sin(np.pi * t / dur) ** 2
+    breath = noise_band(r, dur, 600, 2400) * np.sin(np.pi * t / dur) ** 2 * 0.25
+    m.add(0, tone * 0.16 + breath * 0.2, 1.0)
+
+
+def v2_thunder(m, r):
+    dur = 3.2
+    n = int(dur * SR)
+    crack = noise_band(r, 0.3, 800, 7000) * env_ad(int(0.3 * SR), 0.002, 3)
+    m.add(0, crack * 0.25, 0.8, 0.3)
+    rumble = lowpass_sweep(noise_band(r, dur, 25, 400), 400, 80, dur)
+    t = np.arange(n) / SR
+    roll = (0.6 + 0.4 * np.sin(2 * np.pi * 1.3 * t) * np.sin(2 * np.pi * 0.7 * t)) * env_ad(n, 0.05, 1.6)
+    m.add(0.05, sat(rumble * roll * 2.5, 1.5) * 0.5, 1.0, -0.2)
+
+
+def v2_whoosh(m, r):
+    dur = 1.8
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    shape = np.sin(np.pi * np.clip(t / dur, 0, 1) ** 0.7) ** 2
+    w = biquad_tv(r.standard_normal(n), 'bandpass', param_curve(n, 300, 2200, dur), 1.2) * shape
+    m.add(0, w * 0.4, 0.6, -0.4)
+    m.add(0.03, w * 0.4, 0.6, 0.4)
+
+
+def v2_build(m, r):
+    # The beaver: two quick wooden knocks and a thud as the logs land.
+    for i, t0 in enumerate([0.0, 0.12]):
+        k = int(0.08 * SR)
+        m.add(t0, noise_band(r, 0.08, 500, 2500) * env_ad(k, 0.001, 5) * 0.4, 0.3, -0.2 + 0.4 * i)
+        m.add(t0, sweep_tone(420, 260, 0.08, 0.03) * env_ad(k, 0.001, 4) * 0.2, 0.3)
+    k = int(0.3 * SR)
+    m.add(0.25, sat(sweep_tone(120, 60, 0.3, 0.05) * env_ad(k, 0.001, 3), 1.5) * 0.4, 0.4)
+
+
+V2_ARENA = {
+    'tide': (v2_tide, -6.0),
+    'fizz': (v2_fizz, -9.0),
+    'press': (v2_press, -4.0),
+    'lever': (v2_lever, -7.0),
+    'shield_pop': (v2_shield_pop, -6.0),
+    'ghost': (v2_ghost, -9.0),
+    'thunder': (v2_thunder, -6.0),
+    'whoosh': (v2_whoosh, -10.0),
+    'build': (v2_build, -8.0),
+}
+
+
+def ambience_beach(rng, secs=12.0, xfade=1.5):
+    # Waves breaking every few seconds on a bed of distant surf.
+    n = int(SR * (secs + xfade))
+    t = np.arange(n) / SR
+    bed = biquad_tv(rng.standard_normal(n), 'lowpass', np.full(n, 700.0), 0.0) * 0.25
+    waves = np.zeros(n)
+    for c in np.arange(0.5, secs + xfade, 3.1):
+        k = int(2.6 * SR)
+        i = int(c * SR)
+        j = min(n, i + k)
+        tt = np.arange(j - i) / SR
+        sh = np.sin(np.pi * np.clip(tt / 2.6, 0, 1)) ** 2
+        waves[i:j] += biquad_tv(rng.standard_normal(j - i), 'lowpass', np.full(j - i, 1800.0), 0.0) * sh
+    x = bed + waves * 0.6
+    k = int(xfade * SR)
+    body = x[:n - k].copy()
+    ramp = np.linspace(0, 1, k)
+    body[:k] = body[:k] * ramp + x[n - k:] * (1 - ramp)
+    return body / np.max(np.abs(body)) * 0.12
+
+
+def ambience_haunted(rng, secs=12.0, xfade=1.5):
+    # A low moaning wind and the odd creak.
+    x = ambience_forest(rng, secs, xfade) / 0.12
+    n = len(x)
+    t = np.arange(n) / SR
+    moan = np.sin(2 * np.pi * (110 + 15 * np.sin(2 * np.pi * t / 5.0)) * t) * (0.5 + 0.5 * np.sin(2 * np.pi * t / 6.0)) ** 3 * 0.12
+    x = x + moan
+    return x / np.max(np.abs(x)) * 0.12
+
+
+def ambience_factory(rng, secs=12.0, xfade=1.5):
+    # Mains hum, a thumping machine and air hissing from the vents.
+    n = int(SR * (secs + xfade))
+    t = np.arange(n) / SR
+    hum = (np.sin(2 * np.pi * 50 * t) + 0.5 * np.sin(2 * np.pi * 100 * t) + 0.2 * np.sin(2 * np.pi * 150 * t)) * 0.15
+    thump = np.zeros(n)
+    for c in np.arange(0.0, secs + xfade, 0.75):
+        i = int(c * SR)
+        k = min(n - i, int(0.2 * SR))
+        thump[i:i + k] += np.sin(2 * np.pi * 55 * np.arange(k) / SR) * np.exp(-np.arange(k) / SR * 22)
+    air = biquad_tv(rng.standard_normal(n), 'bandpass', np.full(n, 3500.0), 0.6) * 0.05
+    x = hum + thump * 0.35 + air
+    k = int(xfade * SR)
+    body = x[:n - k].copy()
+    ramp = np.linspace(0, 1, k)
+    body[:k] = body[:k] * ramp + x[n - k:] * (1 - ramp)
+    return body / np.max(np.abs(body)) * 0.1
+
+
 V2 = {
     'go': (v2_go, -2.0),
     'countdown_lo': (v2_countdown(False), -9.0),
@@ -535,7 +690,28 @@ def write_wav_stereo(path, x):
         w.writeframes((x * 32767).astype('<i2').tobytes())
 
 
+def render_arena(names):
+    """python3 tools/render_sfx.py arena [name ...]: only the arena sounds and
+    ambience beds, leaving every other WAV untouched."""
+    os.makedirs(OUT, exist_ok=True)
+    for i, (name, (fn, peak)) in enumerate(V2_ARENA.items()):
+        if names and name not in names:
+            continue
+        x = render_v2(name, fn, peak, 900 + i * 7)
+        write_wav_stereo(os.path.join(OUT, name + '.wav'), x)
+        print(f'{name:14s} {len(x) / SR:5.2f}s  peak {peak:6.1f} dBFS  (arena)')
+    for name, fn in (('ambience_beach', ambience_beach), ('ambience_haunted', ambience_haunted), ('ambience_factory', ambience_factory)):
+        if names and name not in names:
+            continue
+        amb = fn(np.random.default_rng(19))
+        write_wav(os.path.join(OUT, name + '.wav'), amb)
+        print(f'{name:14s} {len(amb) / SR:5.2f}s  (bed)')
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == 'arena':
+        render_arena(sys.argv[2:])
+        return
     os.makedirs(OUT, exist_ok=True)
     ir = room_impulse(np.random.default_rng(1))
     rendered = {}

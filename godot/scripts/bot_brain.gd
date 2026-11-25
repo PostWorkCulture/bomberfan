@@ -55,7 +55,7 @@ func reset() -> void:
 func _tile_time(cur: Vector2i, d: Vector2i) -> float:
 	var belt: Vector2i = game.belt_at(cur.x, cur.y)
 	var along: float = float(belt.x * d.x + belt.y * d.y)
-	return TRAVEL_FACTOR / maxf(0.6, me.speed + along * Levels.BELT_SPEED)
+	return TRAVEL_FACTOR / maxf(0.6, me.speed * game.move_mult(cur) + along * Levels.BELT_SPEED)
 
 
 func update(dt: float) -> Dictionary:
@@ -95,7 +95,7 @@ func _think() -> void:
 
 	# 2. Worth a bomb here, and a timed escape exists once it is down?
 	if bomb_cool <= 0.0 and me.active_bombs < me.max_bombs and _worth_bombing(here) \
-			and rng.randf() >= BLUNDER:
+			and not game.mech.is_flooded(here) and rng.randf() >= BLUNDER:
 		var extra := {"x": here.x, "y": here.y, "fire": me.fire, "fuse": Cfg.BOMB_FUSE}
 		var d2: PackedFloat32Array = game.compute_danger(extra)
 		var esc2 := _escape_path(here, d2, _slack())
@@ -120,6 +120,8 @@ func _passable(t: Vector2i, start: Vector2i) -> bool:
 	if t != start and game.bomb_at.has(k):
 		return false
 	if game.flames.has(k):
+		return false
+	if game.mech.blocked(t):
 		return false
 	return true
 
@@ -174,7 +176,7 @@ func _worth_bombing(here: Vector2i) -> bool:
 		if game.cell_at(c.x, c.y) == 2:
 			crate = true
 		for f in game.fighters:
-			if f != me and f.alive and f.tile() == c and rng.randf() < 0.7:
+			if f != me and f.alive and f.tile() == c and game.mech.can_see(me, f) and rng.randf() < 0.7:
 				return true
 	return crate
 
@@ -187,6 +189,8 @@ func _wants(id: String) -> bool:
 			return me.fire < Cfg.MAX_FIRE
 		"speed":
 			return me.speed_t <= 0.0 or me.speed < Cfg.MAX_SPEED
+		"shield":
+			return not me.shield
 	return true
 
 
@@ -227,7 +231,7 @@ func _choose_goal(here: Vector2i, danger: PackedFloat32Array) -> void:
 		var best_score := 1e9
 		for t in dist.keys():
 			for f in game.fighters:
-				if f == me or not f.alive:
+				if f == me or not f.alive or not game.mech.can_see(me, f):
 					continue
 				var ft: Vector2i = f.tile()
 				var md: int = absi(t.x - ft.x) + absi(t.y - ft.y)

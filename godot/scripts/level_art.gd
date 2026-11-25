@@ -13,32 +13,50 @@ static var _cache := {}
 # ---- Palettes (from LEVELS in index.html, deepened for real lighting) -------------
 
 const THEMES := {
+	# Each arena has its own light and grade. Colour order on every arena:
+	# floor quietest, walls next, crates stronger, fighters / bombs / hazards
+	# brightest. Hazard yellow and red are kept for danger only.
+	"forest": {
+		# Golden hour: warm low sun, cool sky in the shadows.
+		"sky": Color(0.05, 0.09, 0.065), "fog": Color(0.2, 0.24, 0.16), "fog_begin": 17.0, "fog_end": 36.0,
+		"sun": Color(1.0, 0.84, 0.62), "sun_energy": 1.4, "sun_rot": Vector3(-40, -46, 0), "ambient": 0.42,
+		"sky_top": Color(0.3, 0.44, 0.62), "sky_horizon": Color(0.74, 0.7, 0.56), "ground_horizon": Color(0.4, 0.44, 0.3),
+		"exposure": 0.98, "saturation": 1.04, "contrast": 1.1, "glow": 0.35,
+		"debris": Color(0, 0, 0, 0),
+	},
 	"beach": {
-		"sky": Color("07293f"), "fog": Color(0.42, 0.66, 0.78), "fog_begin": 22.0, "fog_end": 48.0,
-		"sun": Color(1.0, 0.95, 0.84), "sun_energy": 1.1, "sun_rot": Vector3(-56, -32, 0), "ambient": 0.5,
-		"sky_top": Color(0.3, 0.55, 0.85), "sky_horizon": Color(0.78, 0.86, 0.9),
-		"floor": {"pattern": 1, "a": Color("2a8cbd"), "b": Color("4cb0d6"), "line": Color(1, 1, 1), "line_alpha": 0.16, "rough": 0.12},
-		"block": {"style": 0, "side": Color("d9604c"), "top": Color("ff9c84"), "rough": 0.75, "scale": 0.9},
-		"border": {"style": 0, "side": Color("a8442f"), "top": Color("e07a63"), "rough": 0.8, "scale": 0.9},
-		"plinth": Color("e7cf9c"), "debris": Color("e8b84a"),
+		# High noon on a sandbar: bright, warm, a little haze off the water.
+		"sky": Color("0b3550"), "fog": Color(0.55, 0.72, 0.8), "fog_begin": 22.0, "fog_end": 50.0,
+		"sun": Color(1.0, 0.95, 0.86), "sun_energy": 1.0, "sun_rot": Vector3(-58, -30, 0), "ambient": 0.36,
+		"sky_top": Color(0.32, 0.58, 0.88), "sky_horizon": Color(0.8, 0.88, 0.92), "ground_horizon": Color(0.62, 0.56, 0.44),
+		"exposure": 0.8, "saturation": 1.06, "contrast": 1.1, "glow": 0.3,
+		"floor": {"pattern": 5, "a": Color("a3845a"), "b": Color("b8996a"), "line": Color("6a5030"), "line_alpha": 0.1, "rough": 0.95},
+		"block": {"style": 0, "side": Color("6f6256"), "top": Color("8a7a68"), "rough": 0.9, "scale": 0.9},
+		"border": {"style": 0, "side": Color("8a4a40"), "top": Color("a8665a"), "rough": 0.85, "scale": 0.9},
+		"plinth": Color("a88e62"), "debris": Color("b89c6e"),
 	},
 	"haunted": {
-		"sky": Color("0a0512"), "fog": Color(0.12, 0.06, 0.18), "fog_begin": 15.0, "fog_end": 34.0,
-		"sun": Color(0.82, 0.78, 1.0), "sun_energy": 0.85, "sun_rot": Vector3(-58, -150, 0), "ambient": 0.55,
-		"sky_top": Color(0.08, 0.05, 0.16), "sky_horizon": Color(0.3, 0.2, 0.38),
-		"floor": {"pattern": 3, "a": Color("1d1424"), "b": Color("2c2033"), "line": Color("a878ff"), "line_alpha": 0.13, "rough": 0.8, "plank": 0.25},
-		"block": {"style": 1, "side": Color("d06a14"), "top": Color("f0943a"), "rough": 0.85, "scale": 1.0},
-		"border": {"style": 1, "side": Color("8a460c"), "top": Color("c0701e"), "rough": 0.9, "scale": 1.0},
-		"plinth": Color("3a2c33"), "debris": Color("9a5cf0"),
+		# Moonlit: cold blue key from behind, warm candle pools on the boards.
+		"sky": Color("07040d"), "fog": Color(0.09, 0.06, 0.15), "fog_begin": 15.0, "fog_end": 32.0,
+		"sun": Color(0.8, 0.84, 1.0), "sun_energy": 0.8, "sun_rot": Vector3(-52, -152, 0), "ambient": 0.4,
+		"sky_top": Color(0.09, 0.08, 0.13), "sky_horizon": Color(0.21, 0.18, 0.26), "ground_horizon": Color(0.08, 0.07, 0.1),
+		"exposure": 1.06, "saturation": 0.92, "contrast": 1.14, "glow": 0.55,
+		"floor": {"pattern": 3, "a": Color("201819"), "b": Color("312628"), "line": Color("8a70c0"), "line_alpha": 0.05, "rough": 0.8, "plank": 0.25},
+		"block": {"style": 1, "side": Color("4e4852"), "top": Color("6a6470"), "rough": 0.9, "scale": 1.0},
+		"border": {"style": 1, "side": Color("302b35"), "top": Color("4a4450"), "rough": 0.92, "scale": 1.0},
+		"plinth": Color("2a2428"), "debris": Color("6a4a7c"),
 	},
 	"factory": {
-		"sky": Color("0f1116"), "fog": Color(0.1, 0.11, 0.13), "fog_begin": 18.0, "fog_end": 40.0,
-		"sun": Color(1.0, 0.95, 0.86), "sun_energy": 1.05, "sun_rot": Vector3(-62, -30, 0), "ambient": 0.55,
-		"sky_top": Color(0.16, 0.18, 0.22), "sky_horizon": Color(0.36, 0.37, 0.4),
-		"floor": {"pattern": 4, "a": Color("2a2e36"), "b": Color("363b45"), "line": Color("ffd60a"), "line_alpha": 0.18, "rough": 0.5, "metal": 0.55},
-		"block": {"style": 2, "side": Color("707d8f"), "top": Color("9aa5b5"), "rough": 0.42, "metal": 0.75, "scale": 1.0},
-		"border": {"style": 5, "side": Color("3a424e"), "top": Color("ffcc1a"), "rough": 0.5, "metal": 0.6, "scale": 1.0},
-		"plinth": Color("4a4f58"), "debris": Color("e08a1e"),
+		# Indoors: cool overhead strip light from almost straight above, warm
+		# furnace glow round the edges.
+		"sky": Color("0b0d11"), "fog": Color(0.08, 0.085, 0.1), "fog_begin": 17.0, "fog_end": 36.0,
+		"sun": Color(0.92, 0.96, 1.0), "sun_energy": 1.0, "sun_rot": Vector3(-74, -18, 0), "ambient": 0.42,
+		"sky_top": Color(0.16, 0.18, 0.22), "sky_horizon": Color(0.34, 0.33, 0.32), "ground_horizon": Color(0.12, 0.12, 0.13),
+		"exposure": 1.02, "saturation": 0.95, "contrast": 1.12, "glow": 0.45,
+		"floor": {"pattern": 4, "a": Color("272b32"), "b": Color("323741"), "line": Color("ffd60a"), "line_alpha": 0.06, "rough": 0.5, "metal": 0.55},
+		"block": {"style": 2, "side": Color("66717f"), "top": Color("8e98a6"), "rough": 0.42, "metal": 0.75, "scale": 1.0},
+		"border": {"style": 5, "side": Color("363c46"), "top": Color("ffc21a"), "rough": 0.5, "metal": 0.6, "scale": 1.0},
+		"plinth": Color("3e434c"), "debris": Color("b08a5a"),
 	},
 }
 
@@ -63,6 +81,9 @@ uniform float edge_shadow = 0.0;
 uniform vec2 inner_half = vec2(6.5, 5.5);
 uniform vec2 grid = vec2(15.0, 13.0);
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
+uniform sampler2D occ_tex : filter_linear, repeat_disable;
+uniform float has_occ = 0.0;
+uniform float occ_strength = 0.45;
 varying vec3 wpos;
 void vertex() { wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -115,7 +136,22 @@ void fragment() {
 		col *= 1.0 - 0.35 * smoothstep(0.44, 0.47, edge);
 		col = mix(col, line_col, line * line_alpha * 2.0);
 		r = mix(rough, 0.3, tread);
+	} else if (pattern == 5) {
+		// Sand: wind ripples, darker damp patches, a few shell flecks.
+		vec2 p = wpos.xz;
+		float rip = sin((p.x * 0.8 + p.y * 2.6) * 3.2 + n * 6.0) * 0.5 + 0.5;
+		col *= 0.93 + 0.1 * rip;
+		float damp = smoothstep(0.55, 0.78, texture(noise_tex, p * 0.09 + 0.3).r);
+		col = mix(col, col * vec3(0.8, 0.77, 0.74), damp * 0.6);
+		float fleck = step(0.986, hash(floor(p * 9.0)));
+		col = mix(col, vec3(0.97, 0.93, 0.86), fleck * 0.55);
+		col *= 1.0 - 0.035 * chk;
+		col = mix(col, line_col, line * line_alpha);
+		r = mix(rough, 0.55, damp);
 	}
+	// Contact shadow round every wall and crate, from the occupancy map.
+	float occ = has_occ * texture(occ_tex, g / grid).r;
+	col *= 1.0 - occ_strength * smoothstep(0.06, 0.5, occ);
 	if (edge_shadow > 0.0) {
 		float d = min(inner_half.x - abs(wpos.x), inner_half.y - abs(wpos.z));
 		col *= mix(1.0 - edge_shadow, 1.0, smoothstep(0.0, 0.6, d));
@@ -184,10 +220,12 @@ void fragment() {
 		col *= 0.88 + 0.12 * n2;
 		r = mix(rough, rough + 0.3, n2 * 0.6);
 	} else if (style == 5) {
-		// Steel with a hazard-striped cap.
+		// Steel with a hazard-striped rim round a dark tread-plate cap.
 		float stripe = step(0.5, fract((wpos.x + wpos.z) * 2.2));
-		vec3 haz = mix(top_col, vec3(0.06), stripe);
-		col = mix(side_col * (0.85 + 0.3 * n2), haz, top);
+		vec3 haz = mix(top_col * 0.9, vec3(0.06), stripe);
+		float rim = smoothstep(0.36, 0.4, max(abs(lpos.x), abs(lpos.z)));
+		vec3 cap = side_col * (0.8 + 0.3 * n2);
+		col = mix(side_col * (0.85 + 0.3 * n2), mix(cap, haz, rim), top);
 		vec2 pf = fract(luv * 2.0 + 0.5);
 		col *= 1.0 - 0.3 * smoothstep(0.46, 0.5, max(abs(pf.x - 0.5), abs(pf.y - 0.5))) * (1.0 - top);
 		m = mix(metal, 0.1, top);
@@ -257,9 +295,10 @@ shader_type spatial;
 uniform vec3 belt_col : source_color = vec3(0.09, 0.1, 0.12);
 uniform vec3 arrow_col : source_color = vec3(1.0, 0.8, 0.05);
 uniform float speed = 1.5;
+uniform float dir = 1.0;   // -1 when the Factory lever has reversed the loop
 void fragment() {
 	// UV.x runs along the direction of travel (the mesh is rotated per tile).
-	float u = UV.x - TIME * speed;
+	float u = UV.x * dir - TIME * speed;
 	float slat = smoothstep(0.42, 0.5, abs(fract(u * 6.0) - 0.5));
 	vec3 col = belt_col * (1.0 - 0.45 * slat);
 	float y = abs(UV.y - 0.5);
@@ -344,6 +383,9 @@ static func floor_mat(id: String, edge_shadow: float) -> ShaderMaterial:
 	m.set_shader_parameter("inner_half", Vector2((Cfg.COLS - 2) * 0.5, (Cfg.ROWS - 2) * 0.5))
 	m.set_shader_parameter("grid", Vector2(Cfg.COLS, Cfg.ROWS))
 	m.set_shader_parameter("noise_tex", noise_tex())
+	if Art.occ_texture != null:
+		m.set_shader_parameter("occ_tex", Art.occ_texture)
+		m.set_shader_parameter("has_occ", 1.0)
 	return m
 
 
@@ -602,12 +644,15 @@ static func crate_meshes(id: String) -> Array:
 		return _cache[key]
 	var out: Array = []
 	match id:
+		"forest":
+			out = [Art.log_pile_mesh(0), Art.log_pile_mesh(1), Art.log_pile_mesh(2)]
 		"beach":
-			out = [plank_crate("beach", Color("ffd35c"), Color("f0ad2b"), Color("c2810f"))]
+			# Sun-bleached driftwood crates and rope-bound barrels.
+			out = [plank_crate("beach", Color("cbb58f"), Color("a8916b"), Color("6c5a42")), barrel("beach")]
 		"haunted":
-			out = [casket()]
+			out = [casket(), trunk()]
 		"factory":
-			out = [pallet()]
+			out = [pallet(), drums(), banded_crate()]
 	_cache[key] = out
 	return out
 
@@ -643,10 +688,10 @@ static func plank_crate(key: String, light: Color, mid: Color, edge: Color) -> A
 
 ## A purple casket: panelled box, a stepped lid with a brass cross, brass corners.
 static func casket() -> ArrayMesh:
-	var purple := Color("9a4ae8")
-	var dark := Color("5a1fa8")
-	var light := Color("b47aff")
-	var brass := metal(Color("e0b860"))
+	var purple := Color("6e3448")
+	var dark := Color("3e1c2a")
+	var light := Color("8a4860")
+	var brass := metal(Color("b8955a"))
 	var parts: Array = [
 		[box(Vector3(0.8, 0.5, 0.84), 0.04), xf(Vector3(0, 0.29, 0)), purple],
 		[box(Vector3(0.86, 0.07, 0.9), 0.02), xf(Vector3(0, 0.04, 0)), dark],
@@ -667,9 +712,9 @@ static func casket() -> ArrayMesh:
 
 
 static func pallet() -> ArrayMesh:
-	var wood := Color("b58a52")
-	var box_c := Color("e08a1e")
-	var tape := Color("f2d28a")
+	var wood := Color("a8814e")
+	var box_c := Color("c39a62")
+	var tape := Color("e6d6b0")
 	var parts: Array = []
 	for k in 5:
 		parts.append([box(Vector3(0.88, 0.035, 0.15)), xf(Vector3(0, 0.12, -0.36 + k * 0.18)), wood])
@@ -680,7 +725,87 @@ static func pallet() -> ArrayMesh:
 	for a in [-1.0, 1.0]:
 		for b in [-1.0, 1.0]:
 			var hh := r.randf_range(0.6, 0.68)
-			var c := box_c.lerp(Color("b3651b"), r.randf() * 0.5)
+			var c := box_c.lerp(Color("9c7444"), r.randf() * 0.6)
 			parts.append([box(Vector3(0.4, hh, 0.4), 0.025), xf(Vector3(a * 0.21, 0.14 + hh * 0.5, b * 0.21)), c])
 			parts.append([box(Vector3(0.41, 0.03, 0.1)), xf(Vector3(a * 0.21, 0.14 + hh + 0.005, b * 0.21)), tape])
 	return build(parts, vmat("pallet", 0.8, 0.0, 0.3))
+
+
+## A barrel bound with rope hoops, for the Beach.
+static func barrel(key: String) -> ArrayMesh:
+	var wood := Color("b39a74")
+	var dark := Color("7a6446")
+	var rope := Color("d8c69a")
+	var parts: Array = [
+		[cyl(0.34, 0.34, 0.12, 16), xf(Vector3(0, 0.06, 0)), dark],
+		[cyl(0.38, 0.34, 0.32, 16), xf(Vector3(0, 0.27, 0)), wood],
+		[cyl(0.34, 0.38, 0.32, 16), xf(Vector3(0, 0.59, 0)), wood],
+		[cyl(0.33, 0.33, 0.04, 16), xf(Vector3(0, 0.76, 0)), dark],
+		[cyl(0.3, 0.3, 0.02, 16), xf(Vector3(0, 0.775, 0)), wood.lightened(0.15)],
+	]
+	for y in [0.16, 0.43, 0.7]:
+		parts.append([cyl(0.39 if y == 0.43 else 0.37, 0.39 if y == 0.43 else 0.37, 0.05, 16), xf(Vector3(0, y, 0)), rope])
+	for k in 10:
+		var a := TAU * k / 10.0
+		parts.append([box(Vector3(0.012, 0.66, 0.02)), xf(Vector3(cos(a), 0, sin(a)) * 0.375 + Vector3(0, 0.43, 0), Vector3(0, -a, 0)), dark])
+	return build(parts, vmat("barrel_" + key, 0.85, 0.0, 0.35))
+
+
+## An old travelling trunk: domed lid, iron straps, a lock plate.
+static func trunk() -> ArrayMesh:
+	var wood := Color("7a5236")
+	var lid := Color("8e6342")
+	var iron := metal(Color("8a8490"))
+	var brass := metal(Color("b8955a"))
+	var parts: Array = [
+		[box(Vector3(0.84, 0.48, 0.66), 0.03), xf(Vector3(0, 0.25, 0)), wood],
+		[cyl(0.33, 0.33, 0.84, 16), xf(Vector3(0, 0.49, 0), Vector3(0, 0, PI / 2.0), Vector3(1, 0.62, 1)), lid],
+		[box(Vector3(0.88, 0.05, 0.7), 0.01), xf(Vector3(0, 0.49, 0)), iron],
+		[box(Vector3(0.14, 0.16, 0.03), 0.01), xf(Vector3(0, 0.44, 0.34)), brass],
+	]
+	for x in [-0.3, 0.3]:
+		parts.append([box(Vector3(0.07, 0.5, 0.7), 0.01), xf(Vector3(x, 0.25, 0)), iron])
+		parts.append([cyl(0.345, 0.345, 0.07, 16), xf(Vector3(x, 0.49, 0), Vector3(0, 0, PI / 2.0), Vector3(1, 0.62, 1)), iron])
+	return build(parts, vmat("trunk", 0.7, 0.0, 0.35))
+
+
+## Four oil drums on a pallet, for the Factory.
+static func drums() -> ArrayMesh:
+	var wood := Color("a8814e")
+	var cols := [Color("a83a2e"), Color("2f5a8a"), Color("a83a2e"), Color("5a6470")]
+	var rim := metal(Color("8a9099"))
+	var parts: Array = []
+	for k in 5:
+		parts.append([box(Vector3(0.88, 0.035, 0.15)), xf(Vector3(0, 0.12, -0.36 + k * 0.18)), wood])
+	for k in 3:
+		parts.append([box(Vector3(0.12, 0.09, 0.86)), xf(Vector3(-0.36 + k * 0.36, 0.055, 0)), wood.darkened(0.15)])
+	var i := 0
+	for a in [-1.0, 1.0]:
+		for b in [-1.0, 1.0]:
+			var p := Vector3(a * 0.21, 0.14, b * 0.21)
+			parts.append([cyl(0.19, 0.19, 0.62, 14), xf(p + Vector3(0, 0.31, 0)), cols[i]])
+			parts.append([cyl(0.2, 0.2, 0.03, 14), xf(p + Vector3(0, 0.2, 0)), rim])
+			parts.append([cyl(0.2, 0.2, 0.03, 14), xf(p + Vector3(0, 0.44, 0)), rim])
+			parts.append([cyl(0.17, 0.17, 0.02, 14), xf(p + Vector3(0, 0.625, 0)), cols[i].darkened(0.3)])
+			parts.append([cyl(0.03, 0.03, 0.02, 8), xf(p + Vector3(0.08, 0.635, 0.05)), rim])
+			i += 1
+	return build(parts, vmat("drums", 0.55, 0.0, 0.25))
+
+
+## A wooden shipping crate with steel corner bands, for the Factory.
+static func banded_crate() -> ArrayMesh:
+	var wood := Color("9c7a4c")
+	var light := Color("b8956a")
+	var steel := metal(Color("7a828c"))
+	var parts: Array = [[box(Vector3(0.84, 0.8, 0.84), 0.02), xf(Vector3(0, 0.4, 0)), wood]]
+	for side in 4:
+		var yaw := side * PI / 2.0
+		var nrm := Vector3(sin(yaw), 0, cos(yaw))
+		for k in 4:
+			parts.append([box(Vector3(0.76, 0.17, 0.02), 0.005), Transform3D(Basis(Vector3.UP, yaw), nrm * 0.425 + Vector3(0, 0.12 + k * 0.19, 0)), light if (k + side) % 2 == 0 else wood])
+		parts.append([box(Vector3(0.6, 0.06, 0.02)), Transform3D(Basis(Vector3.UP, yaw), nrm * 0.437 + Vector3(0, 0.62, 0)), Color("2a2a2a")])
+	for a in [-1.0, 1.0]:
+		for b in [-1.0, 1.0]:
+			parts.append([box(Vector3(0.1, 0.82, 0.1), 0.01), xf(Vector3(a * 0.41, 0.41, b * 0.41)), steel])
+	parts.append([box(Vector3(0.86, 0.03, 0.86), 0.01), xf(Vector3(0, 0.805, 0)), light])
+	return build(parts, vmat("banded_crate", 0.75, 0.0, 0.35))

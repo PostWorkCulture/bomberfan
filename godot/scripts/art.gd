@@ -6,6 +6,9 @@ extends RefCounted
 const Cfg := preload("res://scripts/config.gd")
 
 static var _cache := {}
+## Which tiles are solid (R: 1 wall, 0.75 crate), one texel per tile. game.gd
+## owns and updates it; the arena floors sample it for contact shadow.
+static var occ_texture: Texture2D = null
 
 
 # ---- Textures -------------------------------------------------------------------
@@ -40,8 +43,14 @@ static func noise_tex(key: String, seed_value: int, freq: float, colors: PackedC
 
 static func grass_tex() -> NoiseTexture2D:
 	return noise_tex("grass", 11, 0.018,
-		PackedColorArray([Color("2a4419"), Color("38601f"), Color("487528"), Color("5f8433")]),
+		PackedColorArray([Color("223a17"), Color("2f521d"), Color("3e6824"), Color("56782e")]),
 		PackedFloat32Array([0.0, 0.38, 0.66, 1.0]), 256, 6)
+
+
+## Slow-drifting light through the canopy, for the Forest floor.
+static func dapple_tex() -> NoiseTexture2D:
+	return noise_tex("dapple", 61, 0.05, PackedColorArray([Color(0, 0, 0), Color(1, 1, 1)]),
+		PackedFloat32Array([0.0, 1.0]), 256, 3)
 
 
 static func grass_detail_tex() -> NoiseTexture2D:
@@ -107,7 +116,11 @@ shader_type spatial;
 uniform sampler2D grass_tex : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D detail_tex : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D grass_nrm : hint_normal, filter_linear_mipmap, repeat_enable;
+uniform sampler2D dapple_tex : filter_linear_mipmap, repeat_enable;
+uniform sampler2D occ_tex : filter_linear, repeat_disable;
+uniform float has_occ = 0.0;
 uniform vec2 inner_half = vec2(6.5, 5.5);
+uniform vec2 grid = vec2(15.0, 13.0);
 varying vec3 wpos;
 void vertex() { wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 void fragment() {
@@ -115,9 +128,17 @@ void fragment() {
 	float chk = mod(cell.x + cell.y, 2.0);
 	vec3 col = texture(grass_tex, wpos.xz * 0.21).rgb;
 	col *= texture(detail_tex, wpos.xz * 0.9).rgb;
-	col *= mix(1.0, 0.88, chk);
+	col *= mix(1.0, 0.9, chk);
 	vec2 f = abs(fract(wpos.xz + 0.5) - 0.5);
-	col *= 1.0 - 0.22 * smoothstep(0.455, 0.5, max(f.x, f.y));
+	col *= 1.0 - 0.18 * smoothstep(0.455, 0.5, max(f.x, f.y));
+	// Sun through the canopy: soft patches drifting slowly over the grass.
+	float dap = texture(dapple_tex, wpos.xz * 0.075 + vec2(TIME * 0.006, TIME * 0.004)).r;
+	dap = smoothstep(0.42, 0.72, dap);
+	col *= 0.84 + 0.3 * dap;
+	col = mix(col, col * vec3(1.06, 1.02, 0.86), dap * 0.5);
+	// Contact shadow round every wall and crate, from the occupancy map.
+	float occ = has_occ * texture(occ_tex, (wpos.xz + grid * 0.5) / grid).r;
+	col *= 1.0 - 0.42 * smoothstep(0.06, 0.5, occ);
 	// Contact shadow where the floor meets the rock wall: marks the inside edge.
 	float d = min(inner_half.x - abs(wpos.x), inner_half.y - abs(wpos.z));
 	col *= mix(0.55, 1.0, smoothstep(0.0, 0.6, d));
@@ -206,9 +227,14 @@ static func _shader_mat(name_key: String, code: String, params := {}) -> ShaderM
 
 
 static func arena_floor_mat() -> ShaderMaterial:
-	return _shader_mat("floor_mat", ARENA_FLOOR_SHADER, {
+	var m := _shader_mat("floor_mat", ARENA_FLOOR_SHADER, {
 		"grass_tex": grass_tex(), "detail_tex": grass_detail_tex(), "grass_nrm": grass_normal(),
+		"dapple_tex": dapple_tex(), "grid": Vector2(Cfg.COLS, Cfg.ROWS),
 		"inner_half": Vector2((Cfg.COLS - 2) * 0.5, (Cfg.ROWS - 2) * 0.5)})
+	if occ_texture != null:
+		m.set_shader_parameter("occ_tex", occ_texture)
+		m.set_shader_parameter("has_occ", 1.0)
+	return m
 
 
 static func stone_mat(key: String, tint: Color, moss: float, scale := 0.55) -> ShaderMaterial:
@@ -384,7 +410,7 @@ static func pillar_mesh() -> ArrayMesh:
 	if _cache.has("pillar"):
 		return _cache["pillar"]
 	var m := rounded_box(Vector3(0.94, 0.98, 0.94), 0.09, 3, 0.025, 3)
-	m.surface_set_material(0, stone_mat("pillar", Color(1.0, 1.0, 1.0), 0.32))
+	m.surface_set_material(0, stone_mat("pillar", Color(0.84, 0.83, 0.8), 0.4))
 	_cache["pillar"] = m
 	return m
 
@@ -400,10 +426,13 @@ static func boulder_mesh(variant: int) -> ArrayMesh:
 	return m
 
 
-## The destructible "crate": a stack of logs, three layers crossed.
-static func log_pile_mesh() -> ArrayMesh:
-	if _cache.has("logs"):
-		return _cache["logs"]
+## The destructible "crate": a stack of logs, three layers crossed. Three
+## variants so the board never reads as one tile repeated: the classic stack,
+## a lower pile with two logs on top, and a stack lashed with rope.
+static func log_pile_mesh(variant := 0) -> ArrayMesh:
+	var key := "logs_%d" % variant
+	if _cache.has(key):
+		return _cache[key]
 	var side := SurfaceTool.new()
 	side.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var ends := SurfaceTool.new()
@@ -411,15 +440,18 @@ static func log_pile_mesh() -> ArrayMesh:
 	var r := 0.135
 	var length := 0.86
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 5
+	rng.seed = 5 + variant * 31
 	for layer in 3:
 		var y := r + layer * (r * 1.96)
 		var along_x := layer % 2 == 0
-		for k in 3:
-			var off := (k - 1) * 0.29
-			var rr := r * rng.randf_range(0.9, 1.04)
-			var ln := length * rng.randf_range(0.94, 1.02)
-			var centre := Vector3(0.0, y, off) if along_x else Vector3(off, y, 0.0)
+		var offs := [-0.29, 0.0, 0.29]
+		if variant == 1 and layer == 2:
+			offs = [-0.15, 0.15]
+		for off in offs:
+			var rr := r * rng.randf_range(0.88, 1.06)
+			var ln := length * rng.randf_range(0.9, 1.03)
+			var shift := rng.randf_range(-0.04, 0.04)
+			var centre := Vector3(shift, y, off) if along_x else Vector3(off, y, shift)
 			var axis := Vector3.RIGHT if along_x else Vector3.BACK
 			_add_log(side, ends, centre, axis, rr, ln, 10)
 	var mesh := ArrayMesh.new()
@@ -427,7 +459,21 @@ static func log_pile_mesh() -> ArrayMesh:
 	ends.commit(mesh)
 	mesh.surface_set_material(0, bark_mat())
 	mesh.surface_set_material(1, log_end_mat())
-	_cache["logs"] = mesh
+	if variant == 2:
+		# Two rope lashings round the stack.
+		var rope := SurfaceTool.new()
+		rope.begin(Mesh.PRIMITIVE_TRIANGLES)
+		for zc in [-0.24, 0.24]:
+			for bar in [[Vector3(0.94, 0.045, 0.06), Vector3(0, 0.815, zc)],
+					[Vector3(0.045, 0.8, 0.06), Vector3(-0.455, 0.4, zc)],
+					[Vector3(0.045, 0.8, 0.06), Vector3(0.455, 0.4, zc)]]:
+				var bm := BoxMesh.new()
+				bm.size = bar[0]
+				rope.append_from(bm, 0, Transform3D(Basis(), bar[1]))
+		rope.generate_normals()
+		rope.commit(mesh)
+		mesh.surface_set_material(2, flat_mat(Color("9a8058"), 0.95))
+	_cache[key] = mesh
 	return mesh
 
 
@@ -666,6 +712,7 @@ const PICKUP_TINT := {
 	"bomb": Color(0.3, 0.55, 1.0),
 	"fire": Color(1.0, 0.42, 0.12),
 	"speed": Color(0.3, 0.9, 0.45),
+	"shield": Color(0.62, 0.45, 1.0),
 }
 
 
@@ -757,6 +804,8 @@ static func pickup_model(id: String) -> Node3D:
 			_flame_item(model)
 		"speed":
 			_wing_shoe(model)
+		"shield":
+			_shield_item(model)
 	return root
 
 
@@ -835,3 +884,26 @@ static func _wing_shoe(m: Node3D) -> void:
 			var dir := Vector3(-sin(sweep), 0.45, side * cos(sweep)).normalized()
 			var feather := _part(m, _cache["feather"], white, root + dir * length * 0.5)
 			feather.basis = Basis.looking_at(dir, Vector3.UP) * Basis.from_scale(Vector3(0.75, 0.16, length / 0.1))
+
+
+## Shield: a rounded heater shield, violet with a silver rim and a star boss.
+static func _shield_item(m: Node3D) -> void:
+	var face := flat_mat(Color(0.42, 0.26, 0.85), 0.35, 0.2)
+	var rim := flat_mat(Color(0.82, 0.84, 0.9), 0.25, 0.85)
+	var boss := flat_mat(Color(1.0, 0.85, 0.35), 0.3, 0.7)
+	var body := CylinderMesh.new()
+	body.top_radius = 0.2
+	body.bottom_radius = 0.2
+	body.height = 0.05
+	body.radial_segments = 20
+	_part(m, body, face, Vector3(0, 0.02, 0), Vector3(PI / 2.0, 0, 0), Vector3(1.0, 1.0, 1.15))
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.19
+	ring.outer_radius = 0.225
+	ring.rings = 20
+	ring.ring_segments = 8
+	_part(m, ring, rim, Vector3(0, 0.02, 0), Vector3(PI / 2.0, 0, 0), Vector3(1.0, 1.0, 1.15))
+	var star := SphereMesh.new()
+	star.radius = 0.06
+	star.height = 0.12
+	_part(m, star, boss, Vector3(0, 0.02, 0.04), Vector3.ZERO, Vector3(1.0, 1.0, 0.6))

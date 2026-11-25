@@ -147,11 +147,19 @@ static func _cached(key: String, fn: Callable) -> Mesh:
 
 static func _beach(root: Node3D) -> void:
 	# A sandbar island in open water.
-	var sand := LA.block_mat("sand", {"style": 0, "side": Color("b8955c"), "top": Color("cfb07a"), "rough": 0.95, "scale": 0.5})
+	var sand := LA.block_mat("sand", {"style": 9, "side": Color("8e7450"), "top": Color("a88a5e"), "rough": 0.95, "scale": 0.5})
 	var isl := Art.rounded_box(Vector3(25, 1.0, 20), 0.45, 8, 0.2, 5)
 	isl.surface_set_material(0, sand)
 	_mi(root, isl, Vector3(0, GROUND_Y - 0.5, -1.0), null, Vector3.ZERO, Vector3.ONE, false)
 	_mi(root, _plane(Vector2(160, 160), 40), Vector3(0, GROUND_Y - 0.3, 0), LA.water_mat(Color("06415e"), Color("1aa0c4"), 0.05), Vector3.ZERO, Vector3.ONE, false)
+	# Surf where the sandbar meets the water: a band of foam that laps in and out.
+	var foam := ShaderMaterial.new()
+	foam.shader = LA._shader("foam", FOAM_SHADER)
+	foam.set_shader_parameter("half", Vector2(12.5, 10.0))
+	foam.set_shader_parameter("centre", Vector2(0.0, -1.0))
+	foam.set_shader_parameter("radius", 0.45)
+	foam.set_shader_parameter("noise_tex", LA.noise_tex())
+	_mi(root, _plane(Vector2(31, 26)), Vector3(0, GROUND_Y - 0.26, -1.0), foam, Vector3.ZERO, Vector3.ONE, false)
 	var r := RandomNumberGenerator.new()
 	r.seed = 7
 	var placed: Array = []
@@ -189,20 +197,52 @@ static func _palm_mesh() -> Mesh:
 		var p := lean * t * t * 3.0 + Vector3(0, t * 2.7, 0)
 		parts.append([LA.cyl(0.11 - t * 0.04, 0.13 - t * 0.04, 0.34, 8), LA.xf(p + Vector3(0, 0.15, 0), Vector3(0, 0, -0.18 * t)), trunk_c.lerp(Color("b08a58"), (i % 2) * 0.4)])
 	var top := lean * 3.0 + Vector3(0, 2.85, 0)
-	for k in 8:
-		var a := TAU * k / 8.0 + (0.2 if k % 2 else 0.0)
+	# Fronds: tapering, arching blades made of short segments, with leaflets.
+	for k in 9:
+		var a := TAU * k / 9.0 + (0.17 if k % 2 else 0.0)
 		var dir := Vector3(cos(a), 0, sin(a))
 		var side := dir.cross(Vector3.UP).normalized()
-		var length := 0.95 if k % 2 == 0 else 0.8
-		# each frond: an inner rising half and an outer drooping half
-		for j in 2:
-			var tilt := 0.25 if j == 0 else -0.55
-			var bas := Basis(side, tilt) * Basis(Vector3.UP, -a + PI / 2.0)
-			var mid := top + dir * (length * (0.28 + j * 0.5)) + Vector3(0, 0.08 - j * 0.22, 0)
-			parts.append([LA.sphere(0.5, 12, 6), Transform3D(bas.scaled(Vector3(0.32, 0.05, length * 0.6)), mid), Color("3f8f3a").lerp(Color("6fbf4a"), 0.3 + j * 0.4)])
+		var length := 1.15 if k % 2 == 0 else 0.95
+		var p := top
+		var pitch := 0.55
+		for j in 5:
+			var seg := length / 5.0
+			var d := (dir * cos(pitch) + Vector3.UP * sin(pitch)).normalized()
+			var mid := p + d * seg * 0.5
+			var w := 0.36 * (1.0 - j * 0.16)
+			var bas := Basis(side, -pitch) * Basis(Vector3.UP, -a + PI / 2.0)
+			var col := Color("2f7a32").lerp(Color("74b84c"), 0.2 + j * 0.15)
+			parts.append([LA.box(Vector3(w, 0.018, seg * 1.05)), Transform3D(bas, mid), col])
+			parts.append([LA.box(Vector3(0.03, 0.03, seg * 1.05)), Transform3D(bas, mid + Vector3(0, 0.012, 0)), Color("5a8a3a")])
+			p += d * seg
+			pitch -= 0.38
 	for k in 3:
 		parts.append([LA.sphere(0.09, 8, 5), LA.xf(top + Vector3(cos(k * 2.1) * 0.12, -0.12, sin(k * 2.1) * 0.12)), Color("5a3a1a")])
 	return LA.build(parts, LA.vmat("palm", 0.8, 0.0, 0.3))
+
+
+const FOAM_SHADER := """
+shader_type spatial;
+render_mode unshaded, blend_mix, depth_draw_never, cull_disabled;
+uniform vec2 half = vec2(12.5, 10.0);
+uniform vec2 centre = vec2(0.0);
+uniform float radius = 0.45;
+uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
+varying vec3 wpos;
+void vertex() { wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
+void fragment() {
+	vec2 q = abs(wpos.xz - centre) - half + radius;
+	float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+	float n = texture(noise_tex, wpos.xz * 0.25 + vec2(TIME * 0.03, 0.0)).r;
+	float lap = 0.35 + 0.3 * sin(TIME * 0.9 + n * 4.0);
+	float band = 1.0 - smoothstep(0.0, lap + 0.25, d);
+	float edge = smoothstep(lap - 0.05, lap, d) * (1.0 - smoothstep(lap, lap + 0.12, d));
+	float a = band * 0.45 * smoothstep(0.35, 0.75, n + 0.2) + edge * 0.85;
+	a *= step(0.0, d);
+	ALBEDO = vec3(0.95, 0.98, 1.0);
+	ALPHA = clamp(a, 0.0, 0.9);
+}
+"""
 
 
 static func _towel(v: int) -> Mesh:

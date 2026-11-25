@@ -4,7 +4,10 @@
     python3 tools/render_music.py preview   # 16-bar previews -> build/music-options/*.mp3
     python3 tools/render_music.py <name>    # seamless 8-bar loop -> godot/assets/audio/music_<name>.wav
 
-Four styles, all in A minor: dark_trap, arcade_drive, forest_stomp, tension_pulse.
+Six styles, all in A minor: dark_trap, arcade_drive, forest_stomp, tension_pulse,
+tide_pop (Beach) and graveyard_swing (Haunted House).
+Per-arena round music (2026-11-25): Forest arcade_drive (Pete's pick), Beach
+tide_pop, Haunted House graveyard_swing, Factory tension_pulse.
 Everything is synthesised (808s, claps, hats, FM bells, Karplus-Strong plucks,
 detuned-saw pads) with kick side-chain ducking, a stereo room and a soft limiter.
 Deterministic: fixed seeds.
@@ -328,11 +331,79 @@ def tension_pulse(tr, rng):
             tr.add(tr.at(bar, 6), fm_bell(hz('E5'), 1.4, 2.76, 3.0), 'music', 0.1, 0.5, 1.0)
 
 
+def steel_pan(freq, dur):
+    """A steel-pan-ish note: FM with a near-octave partial and a fast decay."""
+    n = int(dur * SR)
+    tt = t_(n)
+    mod = np.sin(2 * np.pi * freq * 2.0 * tt) * 1.4 * np.exp(-tt * 9)
+    s = np.sin(2 * np.pi * freq * tt + mod) + 0.35 * np.sin(2 * np.pi * freq * 3.98 * tt) * np.exp(-tt * 14)
+    return s * env(n, 0.002, curve=3.0) * 0.5
+
+
+def tide_pop(tr, rng):
+    """116 bpm tropical house: soft four-on-the-floor, shakers, off-beat pluck
+    stabs, bouncy octave bass and a steel-pan hook. Am - F - C - G."""
+    chords = [['A3', 'C4', 'E4'], ['F3', 'A3', 'C4'], ['C4', 'E4', 'G4'], ['G3', 'B3', 'D4']]
+    roots = ['A1', 'F1', 'C2', 'G1']
+    hook = ['E5', 'C5', 'A4', 'C5', 'D5', 'C5', 'A4', 'G4', 'A4', 'C5', 'E5', 'G5', 'E5', 'D5', 'C5', 'D5']
+    for bar in range(tr.bars):
+        ch = chords[bar % 4]
+        for beat in range(4):
+            tr.kick(tr.at(bar, beat * 4), kick808(0.28, 120, 50, rng=rng), 0.7)
+        tr.add(tr.at(bar, 4), clap(rng), 'drums', 0.45, 0.0, 0.35)
+        tr.add(tr.at(bar, 12), clap(rng), 'drums', 0.45, 0.0, 0.35)
+        for st in range(16):
+            tr.add(tr.at(bar, st), shaker(rng), 'drums', 0.42 if st % 4 == 2 else 0.2, 0.45)
+        r = hz(roots[bar % 4])
+        for st in (0, 3, 6, 8, 11, 14):
+            f = r * (2 if st in (3, 11) else 1)
+            tr.add(tr.at(bar, st), sat(lead(f, tr.step * 1.6, 700) * 2.2, 1.4), 'bass', 0.42)
+        for st in (2, 6, 10, 14):
+            for k, nm in enumerate(ch):
+                tr.add(tr.at(bar, st), pluck(hz(nm), 0.35, rng, 0.8), 'music', 0.16, -0.3 + 0.3 * k, 0.3)
+        for k in range(8):
+            if (bar + k) % 7 == 6:
+                continue
+            note = hook[(bar % 2) * 8 + k]
+            tr.add(tr.at(bar, k * 2), steel_pan(hz(note), 0.6), 'music', 0.32, 0.25 * np.sin(k), 0.5)
+        if bar % 4 == 0:
+            tr.add(tr.at(bar, 0), pad([hz('A2'), hz('E3'), hz('C4')], tr.step * 64, 1300, 1.5), 'music', 0.14, 0.0, 0.5)
+
+
+def graveyard_swing(tr, rng):
+    """104 bpm spooky shuffle in A harmonic minor: a plucked walking bass,
+    tom-and-clap march with a big room, celesta melody, an organ drone."""
+    walk = ['A1', 'C2', 'E2', 'G#1', 'A1', 'C2', 'D2', 'E2']
+    tune = ['E5', 'D5', 'C5', 'B4', 'C5', 'A4', 'G#4', 'B4', 'E5', 'F5', 'E5', 'D5', 'C5', 'B4', 'A4', 'E4']
+    for bar in range(tr.bars):
+        tr.kick(tr.at(bar, 0), kick808(0.45, 100, 44, rng=rng), 0.8)
+        tr.kick(tr.at(bar, 10), kick808(0.4, 95, 44, rng=rng), 0.55)
+        tr.add(tr.at(bar, 4), clap(rng), 'drums', 0.5, -0.1, 0.7)
+        tr.add(tr.at(bar, 12), clap(rng), 'drums', 0.5, 0.1, 0.7)
+        if bar % 2 == 1:
+            tr.add(tr.at(bar, 13), tom(140, rng, 0.35), 'drums', 0.45, -0.4, 0.5)
+            tr.add(tr.at(bar, 15), tom(110, rng, 0.35), 'drums', 0.45, 0.4, 0.5)
+        for st in (0, 3, 4, 7, 8, 11, 12, 15):   # swung 8ths
+            tr.add(tr.at(bar, st), hat(rng), 'drums', 0.3 if st % 4 == 0 else 0.18, 0.4)
+        for k in range(4):
+            tr.add(tr.at(bar, k * 4), pluck(hz(walk[(bar * 4 + k) % len(walk)]), 0.5, rng, 0.4), 'bass', 0.75)
+        for k in range(8):
+            if (bar * 8 + k) % 6 == 5:
+                continue
+            st = k * 2 + (1 if k % 2 else 0)
+            tr.add(tr.at(bar, min(st, 15)), fm_bell(hz(tune[(bar % 2) * 8 + k]), 0.8, 3.5, 1.8), 'music', 0.17, -0.35 + 0.1 * k, 1.0)
+        if bar % 2 == 0:
+            ch = [['A2', 'C3', 'E3'], ['D2', 'F2', 'A2'], ['E2', 'G#2', 'B2'], ['A2', 'C3', 'E3']][(bar // 2) % 4]
+            tr.add(tr.at(bar, 0), pad([hz(n) for n in ch], tr.step * 32, 650, 1.0), 'music', 0.3, 0.0, 0.7)
+
+
 OPTIONS = {
     'dark_trap': (140, dark_trap),
     'arcade_drive': (128, arcade_drive),
     'forest_stomp': (112, forest_stomp),
     'tension_pulse': (100, tension_pulse),
+    'tide_pop': (116, tide_pop),
+    'graveyard_swing': (104, graveyard_swing),
 }
 
 

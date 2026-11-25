@@ -80,10 +80,21 @@ Bots: Normal-tier port of the browser AI — danger map with chain timing, never
 - **All art is generated in code** (`godot/scripts/art.gd`): noise textures, meshes and shaders, with no image files. CI can then build and check it, and the web download stays small. Fighters are the only imported models.
 - **Forest arena:** grass floor with a subtle checker and tile lines. Pillars are bevelled cut stone with patchy moss on top; moss is kept light so the pillars read as grey stone from the top-down camera, not as green blocks. The border is chunky mossy boulders. Crates are **log piles** (three crossed layers, bark plus end-grain rings), drawn as one multimesh.
 - **Woods around the arena:** forest floor, ~46 pines, ~16 broadleaf trees, bushes, rocks, red toadstools, swaying grass tufts and fallen logs. All multimeshed (about 10 draw calls).
-- **Lighting:** one warm low sun with soft shadows (no second light; the Compatibility renderer draws each light as an extra pass, which costs phones). Sky-lit ambient, Filmic tonemap, depth fog for the far woods. Glow is tight and high-threshold, so only real hot spots bloom.
+- **Lighting:** one sun with soft shadows (no second light; the Compatibility renderer draws each light as an extra pass, which costs phones). Candles, furnaces and welding flashes are additive glow pools on the ground, not lights. Sky-lit ambient, Filmic tonemap, depth fog. Glow is tight and high-threshold, so only real hot spots bloom. Each arena has its own sun, sky, fog and grade (exposure, saturation, contrast, glow) in `level_art.gd` `THEMES`:
+  - Forest: golden hour (warm low sun, cool sky in the shadows), sunlight dappling the grass.
+  - Beach: high noon, slightly hazy; exposure held down so the sand doesn't blow out.
+  - Haunted House: cold moonlight from behind, warm candle pools on the corners and sides, lightning every 8–15 s (two strobes and thunder).
+  - Factory: cool strip light from almost straight above, warm furnace and work-lamp pools round the edges.
+- **Colour order (all arenas):** floor quietest, walls next, crates stronger, fighters / bombs / hazards brightest. Hazard yellow-and-black and red are kept for danger (belts, crushers, warnings).
+- **Contact shadow:** an occupancy map (one texel per tile, `game.gd` `occ_tex`) darkens the floor round every wall and crate and updates as crates break, move or appear.
 - **Bombs:** matte black shell, metal cap, lit fuse with small sparks. The shell glows red as the fuse runs down, and the bomb squashes in when laid.
 - **Explosions:** orange fireballs down every arm (mixed blend, so they never sum to white), a small hot flash, smoke, sparks, a brief orange light (at most 2 at once), scorch marks that fade after 7 s, and camera shake that grows with the bomber's bomb count. Crates burst into splinters and sawdust. Effect shaders are compiled during the first countdown, so the first blast doesn't hitch.
-- **Music:** Arcade Drive during rounds (from `tools/render_music.py arcade_drive`).
+- **Music (per arena, 2026-11-25):** Forest keeps Arcade Drive (Pete's pick); Beach *Tide Pop* (116 bpm tropical house, steel-pan hook); Haunted House *Graveyard Swing* (104 bpm spooky shuffle, celesta and walking bass); Factory *Tension Pulse* (100 bpm, one of the original four options). All from `tools/render_music.py <name>`.
+- **Ambience beds per arena:** forest wind, beach surf, haunted moaning wind, factory hum and vents (`tools/render_sfx.py arena`).
+- **Surroundings move:** birds cross the Forest, pollen drifts in the low sun; gulls circle the Beach and the water glints; bats flit round the Haunted House with will-o'-the-wisps in the graveyard; steam vents puff and a welding cell sparks in the Factory (`ambient.gd`, presentation only).
+- **Arrival flyover:** a new arena opens with a 2.3 s camera swing from high and to the side down to the play camera, with the arena's name and a whoosh, before the countdown. Same-arena rounds skip it.
+- **Knockouts:** a beat of slow motion (0.11 s at 12% speed) when someone is caught.
+- **Crate breaks are themed:** bark and leaves (Forest), sand and driftwood (Beach), a spirit wisp from the casket (Haunted House), cardboard and sparks (Factory).
 - **Sound** is rendered by `tools/render_sfx.py`. Most sounds are a direct port of the browser build's WebAudio synth (same recipes, room reverb, high shelf and soft clipper). Sounds: bomb drop, explosion (3 variants), wood break, pick-up, death, countdown, GO, round and match win, sudden-death warning/start/wall slam, and a quiet wind bed (new in Godot). Master bus has a hard limiter.
 - Local check: `godot/autotest.json` (git-ignored) runs a bots-only demo on the PC, saves screenshots and FPS/draw-call stats to `godot/.godot/autotest/`, then quits.
 
@@ -92,6 +103,7 @@ Real items, not lettered tiles. Each floats and spins over a soft glow in its co
 - **Bomb Up:** a mini bomb with a lit fuse (blue glow).
 - **Fire Up:** a flickering flame with a yellow core and two side tongues (orange glow).
 - **Speed Up:** a green sneaker with white feathered wings, spread so they read from above (green glow).
+- **Shield (Godot, 2026-11-25):** a violet heater shield (violet glow). Soaks one blast, then 1 s of grace (the fighter flickers) to get clear. Drops at 2.5% per crate. The holder wears a faint violet bubble. Crushing (sudden death, Factory crushers) ignores it. Bots want one when they have none.
 
 ### Arena edge (Godot)
 The arena stands on a raised stone base, one step (0.34) above the woods. A contact shadow runs along the inside of the rock wall, and the forest floor outside is darker and browner. Together these show clearly what's inside the rocks and what's outside.
@@ -127,10 +139,20 @@ Code: `godot/scripts/levels.gd` holds layouts and rules; `level_art.gd`, `level_
 - **Bots** know the rules: belts change their escape timing, and the danger map includes where a belt will carry a bomb, thrown bombs in the air and the witch's marked target.
 - **Spawns:** every tile within three steps of a spawn, plus the default clear pattern, stays crate-free. Crate density is the level's density +0.16 (max 0.92), as in the browser.
 - **Bomb colour:** pale shell on the dark floors (Haunted House, Factory), like `bombColourFor`.
-- **Looks:**
-  - Beach: shallow water with caustics, coral rock, sun-bleached crates, a sandbar with palms, parasols, towels and beach balls.
-  - Haunted House: dark boards, pumpkin brick, purple caskets with brass crosses, copper clockwork, dead trees, graves, iron fence, mist.
-  - Factory: diamond plate, girders with hazard tops, pallets, machines and pipes.
+- **Looks (AAA pass, 2026-11-25):**
+  - Forest: grass under dappled sun; three log-pile variants (classic stack, low pile, rope-lashed).
+  - Beach: sand floor with wind ripples and damp patches, sandstone pillars, dusty coral border; driftwood crates and rope-bound barrels; a foam line laps round the sandbar; palms with arching segmented fronds.
+  - Haunted House: dark boards, grey stone brick, wine-red caskets with dull brass, old travelling trunks, copper clockwork, candelabras, dead trees, graves, iron fence, mist.
+  - Factory: diamond plate, steel pillars, a dark tread-plate border with a thin hazard-striped rim (stripes no longer on every block); cardboard pallets, oil drums and steel-banded crates.
+- **Mechanics and characters (2026-11-25, `mechanics.gd`):** one of each per arena. All are telegraphed before they act, run headless (the smoke test plays them) and are known to the bots.
+  - **Forest, tall grass:** two 3×3 meadows (x 3–5 and 9–11, y 5–7) are kept crate-free. Bots can't see a fighter in the grass unless they are within 2 tiles (they won't hunt or bomb at what they can't see); bots in the grass are hidden from you. A blast burns the grass on its tiles away for the round.
+  - **Forest, the beaver:** from 10 s, every 14 s he pops up on an open tile holding a log for 1.4 s, then builds a crate there. He picks a tile nobody is within a tile of and that nothing is about to burn, preferring tiles with cover beside them. Stepping on it cancels. At most 4 per round, and none once fewer than 4 crates remain or the walls start closing. Bots treat his tile as blocked while he holds the log.
+  - **Beach, the tide:** from 15 s, the outer lane floods every 23 s: 1.6 s rising (the warning), 5 s high, 1.4 s ebbing. In the water fighters wade at 60% speed and bombs are put out (they fizzle and go back to their owner). Off during sudden death. Bots account for the slow wading and don't lay bombs in the water.
+  - **Beach, crabs:** two crabs scuttle sideways along the lanes at 1.3 tiles/s and shove any bomb in their way one tile on (if the next tile can take it). They're harmless to fighters. A blast flings them away for 6 s.
+  - **Haunted House, the witch flies:** she rides a broom round the house on an ellipse (8.7 × 7.4, 2.3 up) and stops to face her target during each wind-up. Her throw timing and fire are unchanged.
+  - **Haunted House, ghosts:** from 8 s, every 11 s a ghost drifts in behind a crate for 1.3 s (with a moan, and a green ring marking where it will go), then shoves it one tile into an open space. Never onto a clockwork tile, a bomb, a pick-up, a fighter or the witch's target. Bots treat the ring as blocked.
+  - **Factory, crushers:** three crushers at (7,6), (3,6) and (11,6), each two hydraulic jaws set in the pillars either side, so nothing hangs over the tile. The bed is striped. Every 8 s (first at 6 s, 8.7 s and 11.3 s): 1.8 s warning (red lamps, red ring, jaws straining), then the jaws slam. Anyone on the tile is crushed, a bomb there goes off, and a pick-up is destroyed. Off during sudden death. Bots treat the tile as dangerous for the last 2.6 s before it shuts.
+  - **Factory, the lever:** on the north wall at (7,0). A blast reaching (7,1) throws it and the conveyor loop runs the other way ("BELTS REVERSED"). 2 s cooldown. (7,1) is kept crate-free.
 - **CI screenshots:** `-- --tour` shows every arena for two seconds, and CI saves one frame of each as `arena-<id>.png` on the `ci-screenshots` branch. Locally, use autotest `"mode": "tour"`, or `"level": "<id>"` to play one arena.
 
 ### Not yet ported
@@ -143,6 +165,16 @@ Kick (and the other power-ups), character select / Loadout / Prize Locker, menus
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
 ### 2026-11-25
+- **AAA pass on all four arenas** (Pete: "work through the whole list and make decisions based on what adds the most style, playability and meets our AAA goals"). Branch `arena-aaa-pass`. See "Look and sound", "Pick-ups" and "Arenas (Godot)" for the spec. In short:
+  - Per-arena lighting and colour grade, a colour order on every arena (floor < walls < crates < fighters/hazards), and floor contact shadow from a live occupancy map. Files: `level_art.gd`, `art.gd`, `game.gd`.
+  - Crate variants: three log piles (Forest), driftwood crate + barrel (Beach), casket + trunk (Haunted House), cardboard pallet + oil drums + banded crate (Factory). Half the crates are the main kind. Beach sand floor (new floor pattern 5), sandstone pillars, toned-down coral; Haunted House stone brick and wine caskets; Factory hazard stripes only on the border rim. Files: `level_art.gd`, `art.gd`, `level_scenery.gd`.
+  - Moving surroundings (`ambient.gd`, new): birds, gulls, bats, pollen, glints, wisps, lightning, candles, steam, welding sparks. Glow pools instead of lights, keeping the one-sun rule. Beach foam line and new palms.
+  - Arrival flyover, knockout slow motion, themed crate breaks. Files: `game.gd`, `fx.gd`.
+  - Mechanics and characters (`mechanics.gd`, new): Forest tall grass + beaver, Beach tide + crabs, Haunted House flying witch + ghosts, Factory crushers + lever. Bots know them all (`bot_brain.gd`: passability, wading speed, can't see into grass, no bombs in water). Crates can now appear (spare multimesh instances) and slide.
+  - Shield pick-up (Godot-only; the browser has a Shield too). Files: `config.gd`, `game.gd`, `fighter.gd`, `art.gd`, `fx.gd`.
+  - Per-arena music (two new loops, Tide Pop and Graveyard Swing; Tension Pulse rendered for the Factory) and ambience beds; new sounds: tide, fizz, crusher, lever, shield pop, ghost, thunder, whoosh, beaver build. Files: `tools/render_music.py`, `tools/render_sfx.py` (new `arena` mode renders only these), `audio.gd`, `godot/assets/audio/`.
+  - Smoke test: prints one `ROUND` line per round (arena, winner, length) and counts shields and doused bombs. `-- --smoke-rounds N` plays more rounds locally; `-- --tour-secs S` shortens the tour.
+  - Balance check, 40 bot rounds against `main`: draws unchanged (9 in 40 on both). Rounds run longer on the Forest (70 → ~90 s) and the Haunted House (76 → ~93 s); the beaver was cut from 6 to 4 crates and the Shield drop rate from 3% to 2.5% because of this. Watch round length in play.
 - **Four more bots** (Pete: "1, 3, 7 and 8 can stay" from the round-2 set in the Sparky/Rivet/Pixel style). Boiler, Gumball, Snap and Arcade are added to the Godot roster. Each match the three bot slots are filled at random from the seven bots, and each fighter brings its own HUD colour. Files: `godot/scripts/game.gd` (`ROSTER`, `_pick_cast`, autotest `"cast"`), `godot/assets/characters/{boiler,gumball,snap,arcade}.glb`; `tools/blender/bomber_bots_2.py` (branch `art/bot-concepts`).
 - **Repo tidy** (Pete: "delete anything we don't need"): removed `archive/` (27 unreferenced legacy portraits), the retired patch workflows/scripts in `tools/legacy-patches/`, and the unused `assets/portraits/birb.webp` (Birb uses `bomber-og.webp`). `brand_refresh.py` moved to `tools/`. All still recoverable from git history. `.gitignore` now also covers `node_modules/`, `*.blend1` and `*.backup.*`. No runtime files changed. Files: `CLAUDE.md`, `.gitignore`.
 - **Down to four arenas** (Pete: keep Forest, Beach, Factory and Haunted House "which we can further work on. The rest can go"). Glacier, Haunted Train, Circuit and Pirate Fleet are removed from the Godot build, together with the code only they used: teleport pads (fighters and bots), shaped/void layouts, the snowman and cannon hazards, and their art. The smoke test plays each arena twice (8 rounds). Files: `levels.gd`, `level_art.gd`, `level_scenery.gd`, `level_props.gd`, `game.gd`, `fighter.gd`, `bot_brain.gd`, `godot-build.yml`.

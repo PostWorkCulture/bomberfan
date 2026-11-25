@@ -83,6 +83,7 @@ A scheduled task runs each evening (UK time). It reviews that day's commits, rec
 ## Current state
 
 - Browser build: playable, live on Pages (build `standard-arenas-review-20260924`).
-- Godot rebuild: vertical slice playable (Forest, you vs 3 bots, Bomb/Fire/Speed as 3D pick-ups) with the full Forest art, effects and v2 sound pass, raised arena edge, sudden death (walls closing in) and Arcade Drive round music, at https://postworkculture.github.io/bomberfan/play/. See DESIGN.md "Not yet ported" for what's next.
+- Godot rebuild: four arenas (Forest, Beach, Haunted House, Factory), you (Razor) vs 3 bots (Sparky, Rivet, Pixel), Bomb/Fire/Speed/Shield pick-ups, sudden death, at https://postworkculture.github.io/bomberfan/play/. AAA pass (2026-11-25): per-arena lighting, grade, crate variants, moving surroundings, arrival flyover, per-arena music and ambience, and one mechanic + one character per arena (`mechanics.gd`). See DESIGN.md "Arenas (Godot)" and "Not yet ported".
+- Local preview without the PC: `-- --tour --tour-secs 0.8` with `--write-movie` under xvfb renders all four arenas in about 2 minutes; `-- --smoke --smoke-rounds 40` (optionally `--level <id>`) gives per-round lines for balance checks.
 - Waiting on Pete: bomber-bot roster designs (in code behind `USE_BOTS = false`; eight Blender concepts on branch `art/bot-concepts`).
 - 2026-11-25: repo tidied again — `archive/` and retired patch scripts removed (still in git history; see `DESIGN.md` change log).

@@ -110,6 +110,8 @@ func _flyer(body_col: Color, wing_col: Color, size: float) -> Dictionary:
 		pivot.add_child(w)
 		wings.append(pivot)
 	root.scale = Vector3.ONE * size
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return {"node": root, "wings": wings, "ph": _rng.randf() * TAU}
 
 

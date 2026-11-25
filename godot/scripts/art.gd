@@ -47,6 +47,29 @@ static func grass_tex() -> NoiseTexture2D:
 		PackedFloat32Array([0.0, 0.38, 0.66, 1.0]), 256, 6)
 
 
+## A soft teardrop of flame for fire particles (narrow, hot tip at the top),
+## so explosions read as flames rather than round blobs.
+static func flame_tex() -> ImageTexture:
+	if _cache.has("flame_tex"):
+		return _cache["flame_tex"]
+	var n := 64
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	for y in n:
+		for x in n:
+			var u := (x + 0.5) / n * 2.0 - 1.0
+			var v := (y + 0.5) / n * 2.0 - 1.0   # -1 top .. 1 bottom
+			var w := lerpf(0.12, 0.62, clampf((v + 1.0) * 0.5, 0.0, 1.0) ** 0.7)
+			var d := absf(u) / w
+			var body := clampf(1.0 - d, 0.0, 1.0)
+			var bottom := clampf((1.0 - v) / 0.45, 0.0, 1.0)
+			var top := clampf((v + 0.98) / 0.25, 0.0, 1.0)
+			var a := pow(body, 0.8) * bottom * top
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	var t := ImageTexture.create_from_image(img)
+	_cache["flame_tex"] = t
+	return t
+
+
 ## Slow-drifting light through the canopy, for the Forest floor.
 static func dapple_tex() -> NoiseTexture2D:
 	return noise_tex("dapple", 61, 0.05, PackedColorArray([Color(0, 0, 0), Color(1, 1, 1)]),
@@ -158,9 +181,12 @@ uniform float moss_amount = 0.75;
 uniform float scale = 0.55;
 varying vec3 wpos;
 varying vec3 wnrm;
+varying float vary;
 void vertex() {
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	wnrm = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	vec3 c = MODEL_MATRIX[3].xyz;
+	vary = fract(sin(dot(c.xz, vec2(12.9898, 78.233))) * 43758.5453);
 }
 void fragment() {
 	vec3 b = pow(abs(wnrm), vec3(4.0));
@@ -171,7 +197,15 @@ void fragment() {
 	float m = smoothstep(0.62, 0.97, wnrm.y) * moss_amount;
 	m *= smoothstep(0.42, 0.62, texture(moss_tex, wpos.xz * 0.55).g * 2.2);
 	vec3 moss = texture(moss_tex, wpos.xz * 1.4).rgb;
-	ALBEDO = mix(s * tint, moss, clamp(m, 0.0, 1.0));
+	vec3 col = mix(s * tint, moss, clamp(m, 0.0, 1.0));
+	// Built, not noise cubes (AAA review round 3): worn, lighter bevels, a
+	// band of grime at the foot, and a little tint variation per block.
+	vec3 an = abs(wnrm);
+	float edge = smoothstep(0.06, 0.24, 1.0 - max(an.x, max(an.y, an.z)));
+	col *= 1.0 + 0.16 * edge;
+	col *= mix(0.72, 1.0, smoothstep(0.0, 0.16, wpos.y));
+	col *= 0.94 + 0.12 * vary;
+	ALBEDO = col;
 	ROUGHNESS = mix(0.82, 0.95, m);
 }
 """

@@ -49,8 +49,9 @@ const CRAB_RESPAWN := 6.0
 const GHOST_FIRST := 8.0
 const GHOST_EVERY := 16.0      # AAA review: the Haunted House was running three systems at once
 const GHOST_WARN := 1.3
-const WITCH_ORBIT := Vector2(8.7, 7.4)
-const WITCH_HEIGHT := 2.3
+const WITCH_ORBIT := Vector2(8.7, 6.4)
+const WITCH_CENTRE_Z := -1.2    # her circuit sits back from the near rows (AAA review round 3)
+const WITCH_HEIGHT := 3.0
 const WITCH_SPEED := 0.32       # rad/s round the house
 # ---- Factory
 const PRESS_TILES := [Vector2i(7, 6), Vector2i(3, 6), Vector2i(11, 6)]
@@ -765,9 +766,15 @@ func _visual_witch(delta: float, t: float) -> void:
 	if n == null or not is_instance_valid(n):
 		return
 	var winding: bool = game.hazard_target.x >= 0
-	if not winding:
+	if not winding and game.phase == "play":
 		_witch_angle += delta * WITCH_SPEED
-	var p := Vector3(cos(_witch_angle) * WITCH_ORBIT.x, WITCH_HEIGHT + sin(t * 1.7) * 0.15, sin(_witch_angle) * WITCH_ORBIT.y)
+	elif game.phase != "play":
+		_witch_angle = lerp_angle(_witch_angle, -PI / 2.0, clampf(delta * 2.0, 0.0, 1.0))   # waits at the far side
+	var p := Vector3(cos(_witch_angle) * WITCH_ORBIT.x, WITCH_HEIGHT + sin(t * 1.7) * 0.15, WITCH_CENTRE_Z + sin(_witch_angle) * WITCH_ORBIT.y)
+	# Over the near rows she fades to half, so she never hides a fighter.
+	var fade := clampf((p.z - 2.5) / 2.0, 0.0, 1.0) * 0.5
+	for mi in n.find_children("*", "MeshInstance3D", false, false):
+		(mi as MeshInstance3D).transparency = fade
 	n.position = p
 	var face: float
 	if winding:

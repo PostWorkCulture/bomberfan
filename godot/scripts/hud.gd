@@ -30,6 +30,17 @@ var _cine := 0.0
 
 func setup(g, fighters: Array, wins_needed: int, show_hint: bool) -> void:
 	game = g
+	# Vignette: darkens the corners so the arena is the brightest part of the
+	# frame and the cards don't compete with it.
+	var vig := ColorRect.new()
+	vig.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vm := ShaderMaterial.new()
+	var vs := Shader.new()
+	vs.code = "shader_type canvas_item;\nvoid fragment() {\n\tvec2 p = UV * 2.0 - 1.0;\n\tfloat d = length(p * vec2(0.9, 1.0));\n\tCOLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.75, 1.45, d) * 0.28);\n}\n"
+	vm.shader = vs
+	vig.material = vm
+	add_child(vig)
+	vig.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in 2:
 		var bar := ColorRect.new()
 		bar.color = Color(0, 0, 0, 1)
@@ -65,7 +76,7 @@ func setup(g, fighters: Array, wins_needed: int, show_hint: bool) -> void:
 	_top.add_child(pill)
 	pill.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	pill.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	pill.offset_top = 6.0
+	pill.offset_top = 2.0
 	# Sudden death / walls-closing banner, under the timer.
 	_banner = PanelContainer.new()
 	_banner.add_theme_stylebox_override("panel", _box(Color(0.55, 0.06, 0.04, 0.9), 12, Color(1.0, 0.45, 0.3), 2))
@@ -117,7 +128,7 @@ func _build_time_pill() -> PanelContainer:
 	_time_pill = PanelContainer.new()
 	_time_pill.add_theme_stylebox_override("panel", _box(PANEL_BG, 16, Color(1, 1, 1, 0.18), 2))
 	_time_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_time_pill.custom_minimum_size = Vector2(190, 0)
+	_time_pill.custom_minimum_size = Vector2(160, 0)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", -6)
 	_time_pill.add_child(v)
@@ -200,7 +211,9 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 		csb.content_margin_bottom = 0
 		csb.shadow_size = 0
 		chip.add_theme_stylebox_override("panel", csb)
-		var cl := _label(17, tint.lightened(0.5), 3)
+		var cl := _label(16, tint.lightened(0.5), 3)
+		cl.custom_minimum_size = Vector2(26, 0)
+		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		chip.add_child(cl)
 		chips_row.add_child(chip)
 		chips[id] = [chip, cl]
@@ -238,14 +251,15 @@ func update(delta: float, fighters: Array, wins: Array, human_pid: int, round_no
 		var panel: PanelContainer = c["panel"]
 		panel.modulate = Color(1, 1, 1, 1.0 if f.alive else 0.55)
 		(c["ko"] as Label).visible = not f.alive and game.phase == "play"
+		# Four fixed chips (they dim when empty), so a card never changes width.
 		var chips: Dictionary = c["chips"]
-		(chips["bomb"][1] as Label).text = "BOMB %d" % f.max_bombs
-		(chips["fire"][1] as Label).text = "FIRE %d" % f.fire
+		(chips["bomb"][1] as Label).text = "B%d" % f.max_bombs
+		(chips["fire"][1] as Label).text = "F%d" % f.fire
 		var spd := int(round((f.speed - Cfg.BASE_SPEED) / Cfg.SPEED_STEP))
-		(chips["speed"][0] as Control).visible = spd > 0
-		(chips["speed"][1] as Label).text = "SPD %d" % spd
-		(chips["shield"][0] as Control).visible = f.shield
-		(chips["shield"][1] as Label).text = "SHIELD"
+		(chips["speed"][1] as Label).text = "S%d" % spd
+		(chips["speed"][0] as Control).modulate.a = 1.0 if spd > 0 else 0.3
+		(chips["shield"][1] as Label).text = "SH"
+		(chips["shield"][0] as Control).modulate.a = 1.0 if f.shield else 0.3
 		if c["won"] != wins[k]:
 			c["won"] = wins[k]
 			var i := 0
@@ -256,6 +270,12 @@ func update(delta: float, fighters: Array, wins: Array, human_pid: int, round_no
 				i += 1
 			if wins[k] > 0:
 				_pop(panel, 1.12)
+	# Fade the timer while someone plays right under it.
+	var under := false
+	for f in fighters:
+		if f.alive and f.gy < 2.6 and absf(f.gx - (Cfg.COLS - 1) * 0.5) < 2.6:
+			under = true
+	_time_pill.modulate.a = move_toward(_time_pill.modulate.a, 0.4 if under else 1.0, delta * 4.0)
 	_round_lab.text = "ROUND %d  ·  %s" % [round_no, arena.to_upper()]
 	_time_lab.text = "%d:%02d" % [floori(secs / 60.0), secs % 60]
 	var low: bool = secs <= 10 and game.phase == "play"

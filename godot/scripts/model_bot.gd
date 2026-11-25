@@ -26,7 +26,12 @@ func setup(scene: PackedScene) -> void:
 
 
 static func _merge(root: Node3D) -> ArrayMesh:
-	var tools := {}   # material -> SurfaceTool
+	# Plain-coloured materials are baked into vertex colours and grouped by
+	# finish (metal / roughness), so a bot is a handful of surfaces instead of
+	# ~30. Each surface is a draw call, and the outline and shadow passes
+	# multiply it (AAA review round 3: fighters were ~380 of ~640 draw calls).
+	# Emissive or textured materials keep their own surface.
+	var groups := {}   # key -> [SurfaceTool, Material]
 	var stack: Array = [[root, Transform3D.IDENTITY]]
 	while not stack.is_empty():
 		var item: Array = stack.pop_back()
@@ -40,15 +45,47 @@ static func _merge(root: Node3D) -> ArrayMesh:
 			continue
 		for si in mi.mesh.get_surface_count():
 			var mat: Material = mi.get_active_material(si)
-			if not tools.has(mat):
+			var bm := mat as BaseMaterial3D
+			var plain: bool = bm != null and bm.albedo_texture == null and not bm.emission_enabled \
+				and bm.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED
+			var key: String
+			if plain:
+				key = "plain:%d:%d" % [int(bm.metallic > 0.4), int(clampf(bm.roughness, 0.0, 0.99) * 3.0)]
+			else:
+				key = "own:%d" % mat.get_instance_id() if mat != null else "own:none"
+			if not groups.has(key):
 				var st := SurfaceTool.new()
 				st.begin(Mesh.PRIMITIVE_TRIANGLES)
-				st.set_material(mat)
-				tools[mat] = st
-			tools[mat].append_from(mi.mesh, si, xf)
+				var gm: Material = mat
+				if plain:
+					var nm := StandardMaterial3D.new()
+					nm.vertex_color_use_as_albedo = true
+					nm.vertex_color_is_srgb = true
+					nm.metallic = bm.metallic
+					nm.roughness = bm.roughness
+					nm.metallic_specular = bm.metallic_specular
+					gm = nm
+				st.set_material(gm)
+				groups[key] = st
+			var st2: SurfaceTool = groups[key]
+			if not plain:
+				st2.append_from(mi.mesh, si, xf)
+				continue
+			var arr := mi.mesh.surface_get_arrays(si)
+			var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var norms = arr[Mesh.ARRAY_NORMAL]
+			var idxs = arr[Mesh.ARRAY_INDEX]
+			var nb := xf.basis.inverse().transposed()
+			var col := bm.albedo_color
+			var order: Array = Array(idxs) if idxs != null and idxs.size() > 0 else range(verts.size())
+			for i in order:
+				st2.set_color(col)
+				if norms != null and norms.size() == verts.size():
+					st2.set_normal((nb * norms[i]).normalized())
+				st2.add_vertex(xf * verts[i])
 	var out := ArrayMesh.new()
-	for mat in tools:
-		tools[mat].commit(out)
+	for key in groups:
+		(groups[key] as SurfaceTool).commit(out)
 	root.free()
 	return out
 

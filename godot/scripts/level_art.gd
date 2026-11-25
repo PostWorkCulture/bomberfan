@@ -178,11 +178,13 @@ varying vec3 wpos;
 varying vec3 wnrm;
 varying vec3 lpos;
 varying vec3 centre;
+varying float vary;
 void vertex() {
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	wnrm = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	lpos = VERTEX;
 	centre = MODEL_MATRIX[3].xyz;
+	vary = fract(sin(dot(centre.xz, vec2(12.9898, 78.233))) * 43758.5453);
 }
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 void fragment() {
@@ -238,6 +240,12 @@ void fragment() {
 		m = mix(metal, 0.1, top);
 		r = mix(rough, 0.6, top);
 	}
+	// Worn bevels, grime at the foot, per-block tint (AAA review round 3).
+	vec3 an = abs(wnrm);
+	float edge = smoothstep(0.06, 0.24, 1.0 - max(an.x, max(an.y, an.z)));
+	col *= 1.0 + 0.15 * edge;
+	col *= mix(0.74, 1.0, smoothstep(0.0, 0.16, wpos.y));
+	col *= 0.94 + 0.12 * vary;
 	ALBEDO = col;
 	ROUGHNESS = clamp(r, 0.04, 1.0);
 	METALLIC = m;

@@ -46,7 +46,7 @@ const ROSTER := [
 	{"id": "gumball", "name": "GUMBALL", "color": Color(1.0, 0.46, 0.72)},
 	{"id": "snap", "name": "SNAP", "color": Color(0.92, 0.93, 0.96)},
 	{"id": "arcade", "name": "ARCADE", "color": Color(0.7, 0.52, 1.0)},
-	{"id": "tick", "name": "TICK", "color": Color(0.36, 0.86, 0.82), "dark": true},
+	{"id": "tick", "name": "TICK", "color": Color(0.36, 0.86, 0.82), "dark": true, "lean": 0.45},   # top hat hides his face from above
 ]
 
 # Forest backdrop colour behind everything (LEVELS[0].sky in index.html)
@@ -462,7 +462,7 @@ func _build_environment() -> void:
 	sun.shadow_enabled = true
 	sun.shadow_blur = 1.6
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	sun.directional_shadow_max_distance = 42.0
+	sun.directional_shadow_max_distance = 26.0   # AAA review round 3: 42 put every far tree in the shadow pass
 	sun.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY   # no sun disc to reflect and bloom
 	add_child(sun)
 	camera = Camera3D.new()
@@ -1346,22 +1346,19 @@ func _add_flame(c: Vector2i, pid: int) -> void:
 		flames[ci]["t"] = Cfg.BLAST_LIFE
 		flames[ci]["pid"] = pid
 		return
-	var n: Node3D = fx.flame_glow(round_root, tile_pos(c.x, c.y)) if fx.enabled else null
-	flames[ci] = {"t": Cfg.BLAST_LIFE, "pid": pid, "node": n}
+	flames[ci] = {"t": Cfg.BLAST_LIFE, "pid": pid, "fi": fx.add_flame(tile_pos(c.x, c.y))}
 
 
 func _step_flames(dt: float) -> void:
 	for k in flames.keys():
 		var fl: Dictionary = flames[k]
 		fl["t"] -= dt
-		var node = fl["node"]
 		if fl["t"] <= 0.0:
-			if node != null and is_instance_valid(node):
-				node.queue_free()
+			fx.free_flame(fl["fi"])
 			flames.erase(k)
-		elif node != null and is_instance_valid(node):
+		elif fl["fi"] >= 0 and fl["t"] < 0.1:
 			# Full size for the lethal window, snapping shut in the last 0.1 s.
-			node.scale = Vector3.ONE * (1.12 * clampf(fl["t"] / 0.1, 0.25, 1.0))
+			fx.set_flame(fl["fi"], 1.12 * clampf(fl["t"] / 0.1, 0.25, 1.0))
 
 
 func _break_crate(c: Vector2i) -> void:

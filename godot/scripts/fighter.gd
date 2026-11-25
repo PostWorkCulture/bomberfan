@@ -39,6 +39,7 @@ var _cur := ""
 var _death_t := 0.0
 var _yaw := 0.0
 const CAMERA_LEAN := 0.22
+var lean := CAMERA_LEAN
 var _model_base_y := 0.0
 
 
@@ -49,6 +50,7 @@ func setup(g, id_: int, info: Dictionary, bot: bool) -> void:
 	display_name = info["name"]
 	color = info["color"]
 	dark_body = info.get("dark", false)
+	lean = info.get("lean", CAMERA_LEAN)
 	is_bot = bot
 	_build_model()
 	_apply_outline()
@@ -192,15 +194,17 @@ func set_outline(dark_arena: bool) -> void:
 	var thick := 0.022
 	var rim := 0.5
 	var lift := 0.0
+	# On dark floors: a softer rim and more body fill, so fighters read as
+	# solid figures rather than neon line drawings (AAA review round 3).
 	if dark_body:
-		line = color.lightened(0.35)
-		thick = 0.03
-		rim = 0.75
-		lift = 0.08
+		line = color.lightened(0.3)
+		thick = 0.024
+		rim = 0.5
+		lift = 0.18
 	elif dark_arena:
 		line = color
-		rim = 0.6
-		lift = 0.1
+		rim = 0.45
+		lift = 0.18
 	else:
 		line = color.darkened(0.75)
 		thick = 0.026
@@ -208,6 +212,9 @@ func set_outline(dark_arena: bool) -> void:
 	if not is_bot:
 		lift += 0.15
 		rim = maxf(rim, 0.7)
+	# The rim is a second pass per surface: only where it earns it (dark
+	# floors, dark bodies, your own fighter). AAA review round 3, draw calls.
+	_outline_mat.next_pass = _rim_mat if (dark_arena or dark_body or not is_bot) else null
 	_outline_mat.set_shader_parameter("line_col", line)
 	_outline_mat.set_shader_parameter("thick", thick)
 	_rim_mat.set_shader_parameter("strength", rim)
@@ -417,7 +424,7 @@ func update_visual(delta: float) -> void:
 	else:
 		_yaw = face_yaw
 	# A small lean towards the camera so faces and fronts show from above.
-	basis = Basis(Vector3.RIGHT, CAMERA_LEAN) * Basis(Vector3.UP, _yaw)
+	basis = Basis(Vector3.RIGHT, lean) * Basis(Vector3.UP, _yaw)
 	if robot:
 		robot.animate(delta, moving and alive, speed / Cfg.BASE_SPEED)
 	# Tall grass (Forest): a bot in it is hidden from you, unless you are close

@@ -168,8 +168,8 @@ static func _beach(root: Node3D) -> void:
 	# Mid-distance landmarks where the camera looks: a lifeguard tower on the
 	# left, a boardwalk running off to the right.
 	var bhx := Cfg.COLS * 0.5
-	_mi(root, _cached("lifeguard", _lifeguard), Vector3(-bhx - 3.0, GROUND_Y, 0.5), null, Vector3(0, PI / 2.0, 0), Vector3.ONE, true)
-	placed.append([Vector2(-bhx - 3.0, 0.5), 2.4])
+	_mi(root, _cached("lifeguard", _lifeguard), Vector3(-bhx - 2.1, GROUND_Y, -1.5), null, Vector3(0, PI / 2.0, 0), Vector3.ONE, true)
+	placed.append([Vector2(-bhx - 2.1, -1.5), 2.4])
 	var planks: Array = []
 	var px := bhx + 1.6
 	while px < bhx + 12.0:
@@ -511,6 +511,10 @@ static func _mausoleum() -> Mesh:
 		[LA.box(Vector3(1.8, 0.12, 0.5)), LA.xf(Vector3(0, 0.26, 1.15)), dark],
 		[LA.box(Vector3(0.12, 0.5, 0.06)), LA.xf(Vector3(0, 2.85, 0.6)), Color("6a6470")],
 		[LA.box(Vector3(0.36, 0.1, 0.06)), LA.xf(Vector3(0, 2.95, 0.6)), Color("6a6470")],
+		[LA.box(Vector3(0.7, 0.12, 0.04)), LA.xf(Vector3(0, 1.62, 0.84)), LA.lit(Color("7dffb0"))],
+		[LA.box(Vector3(0.08, 1.2, 0.04)), LA.xf(Vector3(-0.44, 0.85, 0.84)), LA.lit(Color("7dffb0"))],
+		[LA.box(Vector3(0.08, 1.2, 0.04)), LA.xf(Vector3(0.44, 0.85, 0.84)), LA.lit(Color("7dffb0"))],
+		[LA.box(Vector3(2.52, 0.04, 2.22)), LA.xf(Vector3(0, 2.25, 0)), Color("9aa8d8")],
 	]
 	for x in [-0.85, 0.85]:
 		parts.append([LA.cyl(0.13, 0.15, 1.9, 10), LA.xf(Vector3(x, 1.15, 0.95)), stone.lightened(0.08)])

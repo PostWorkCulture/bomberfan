@@ -6,7 +6,6 @@ extends Node3D
 const Art := preload("res://scripts/art.gd")
 const Cfg := preload("res://scripts/config.gd")
 
-const MAX_FLASH_LIGHTS := 2
 const SCORCH_LIFE := 3.5    # AAA review: 7 s left the lanes grimy
 
 var enabled := true
@@ -14,13 +13,22 @@ var shake := 0.0
 var debris_color := Color(0, 0, 0, 0)   # alpha 0: the Forest's bark splinters
 var pale_bombs := false                 # dark floors get a pale shell (BOMB_PALE)
 var theme := "forest"                   # the arena, for themed debris
-var _flash_lights := 0
 var _quad: QuadMesh
 var _fire_mat: StandardMaterial3D
 var _smoke_mat: StandardMaterial3D
 var _glow_mat: StandardMaterial3D
 var _scorch_mat: StandardMaterial3D
 var _flame_tile_mat: ShaderMaterial
+# Pooled flat quads (AAA review round 3, draw calls): every lethal-tile flame
+# sheet and every scorch mark is an instance in one MultiMesh, not a node.
+const FLAME_POOL := 128
+const SCORCH_POOL := 128
+var _pool_root: Node3D
+var _flame_mm: MultiMesh
+var _flame_free: Array = []
+var _scorch_mm: MultiMesh
+var _scorch_next := 0
+var _flame_pos := {}
 var _shock_mat: ShaderMaterial
 var _debris_mesh: BoxMesh
 var _fire_ramp: Gradient
@@ -61,15 +69,16 @@ func _ready() -> void:
 	_scorch_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_scorch_mat.albedo_texture = Art.soft_dot("scorch", 0.3)
 	_scorch_mat.albedo_color = Color(0.05, 0.04, 0.03, 0.35)
+	_scorch_mat.vertex_color_use_as_albedo = true
 	_debris_mesh = BoxMesh.new()
 	_debris_mesh.size = Vector3(0.09, 0.07, 0.2)
 	_debris_mesh.material = Art.bark_mat()
-	_fire_ramp = _ramp([0.0, 0.1, 0.4, 0.75, 1.0], [Color(1.15, 0.92, 0.5, 1.0), Color(1.0, 0.66, 0.2, 1.0),
-		Color(1.0, 0.42, 0.08, 0.95), Color(0.36, 0.3, 0.27, 0.5), Color(0.2, 0.19, 0.18, 0.0)])
+	_fire_ramp = _ramp([0.0, 0.1, 0.35, 0.6, 1.0], [Color(1.15, 0.95, 0.6, 1.0), Color(1.0, 0.7, 0.25, 1.0),
+		Color(1.0, 0.45, 0.1, 0.85), Color(0.35, 0.32, 0.3, 0.35), Color(0.25, 0.24, 0.23, 0.0)])
 	_flash_ramp = _ramp([0.0, 0.4, 1.0], [Color(1.2, 0.9, 0.5, 0.35), Color(1.0, 0.5, 0.15, 0.2), Color(1, 0.4, 0.1, 0.0)])
 	_spark_ramp = _ramp([0.0, 0.5, 1.0], [Color(1.25, 1.0, 0.6, 1.0), Color(1.0, 0.5, 0.12, 0.9), Color(0.8, 0.2, 0.05, 0.0)])
-	_smoke_ramp = _ramp([0.0, 0.18, 0.6, 1.0], [Color(0.3, 0.28, 0.25, 0.0), Color(0.22, 0.21, 0.2, 0.6),
-		Color(0.17, 0.17, 0.17, 0.35), Color(0.15, 0.15, 0.15, 0.0)])
+	_smoke_ramp = _ramp([0.0, 0.18, 0.6, 1.0], [Color(0.35, 0.34, 0.33, 0.0), Color(0.26, 0.26, 0.26, 0.5),
+		Color(0.2, 0.2, 0.2, 0.28), Color(0.18, 0.18, 0.18, 0.0)])
 	_dust_ramp = _ramp([0.0, 0.2, 1.0], [Color(0.55, 0.42, 0.28, 0.0), Color(0.5, 0.38, 0.25, 0.55), Color(0.45, 0.36, 0.26, 0.0)])
 	_grow = _curve([Vector2(0, 0.45), Vector2(0.25, 1.0), Vector2(1, 0.75)])
 	_shrink = _curve([Vector2(0, 1.0), Vector2(1, 0.2)])
@@ -91,6 +100,13 @@ func _ready() -> void:
 	_tip_mat = StandardMaterial3D.new()
 	_tip_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_tip_mat.albedo_color = Color(0.95, 0.55, 0.22)
+	_fire_mat.albedo_texture = Art.flame_tex()
+	_pool_root = Node3D.new()
+	add_child(_pool_root)
+	_flame_mm = _make_pool(_flame_tile_mat, FLAME_POOL)
+	for k in FLAME_POOL:
+		_flame_free.append(FLAME_POOL - 1 - k)
+	_scorch_mm = _make_pool(_scorch_mat, SCORCH_POOL)
 
 
 func _particle_mat(additive: bool, billboard := true) -> StandardMaterial3D:
@@ -131,30 +147,36 @@ func prewarm(parent: Node3D) -> void:
 	explosion(at, [at, at + Vector3(1, 0, 0)], 0.0)
 	crate_break(at)
 	death_puff(at)
-	flame_glow(parent, at).queue_free()
+	free_flame(add_flame(at))
 	b.queue_free()
 	shake = 0.0
 
 
 func clear() -> void:
 	for c in get_children():
-		c.queue_free()
+		if c != _pool_root:
+			c.queue_free()
 	_scorches.clear()
-	_flash_lights = 0
+	var hide := Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0))
+	_flame_free.clear()
+	for i in FLAME_POOL:
+		_flame_mm.set_instance_transform(i, hide)
+		_flame_free.append(FLAME_POOL - 1 - i)
+	for i in SCORCH_POOL:
+		_scorch_mm.set_instance_transform(i, hide)
 	shake = 0.0
 
 
 func _process(delta: float) -> void:
 	shake = maxf(0.0, shake - delta * 1.6 * maxf(shake, 0.25))
 	for s in _scorches.duplicate():
-		var node: MeshInstance3D = s["node"]
 		s["t"] += delta
-		if s["t"] >= SCORCH_LIFE or not is_instance_valid(node):
-			if is_instance_valid(node):
-				node.queue_free()
+		var i: int = s["i"]
+		if s["t"] >= SCORCH_LIFE:
+			_scorch_mm.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0)))
 			_scorches.erase(s)
 		elif s["t"] > SCORCH_LIFE - 1.5:
-			node.transparency = (s["t"] - (SCORCH_LIFE - 1.5)) / 1.5
+			_scorch_mm.set_instance_color(i, Color(1, 1, 1, 1.0 - (s["t"] - (SCORCH_LIFE - 1.5)) / 1.5))
 
 
 func _emitter(pos: Vector3, mat: Material, amount: int, lifetime: float) -> CPUParticles3D:
@@ -254,40 +276,49 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	flash.scale_amount_min = 1.2
 	flash.scale_amount_max = 1.2
 	flash.emitting = true
+	# One fire and one smoke emitter for the whole blast (points on every
+	# cell), not two nodes per cell: AAA review round 3, draw calls.
+	var fire_pts := PackedVector3Array()
+	var smoke_pts := PackedVector3Array()
 	for c in cells:
 		var p: Vector3 = c
-		var is_centre := p.distance_to(centre) < 0.1
-		var f := _emitter(p + Vector3(0, 0.35, 0), _fire_mat, 8 if is_centre else 7, Cfg.BLAST_LIFE + 0.08)
-		f.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-		f.emission_sphere_radius = 0.28
-		f.direction = Vector3.UP
-		f.spread = 180.0
-		f.initial_velocity_min = 0.3
-		f.initial_velocity_max = 1.4
-		f.gravity = Vector3(0, 1.6, 0)
-		f.damping_min = 2.0
-		f.damping_max = 3.0
-		f.angle_max = 360.0
-		f.scale_amount_min = 0.85 if is_centre else 0.7
-		f.scale_amount_max = 1.35 if is_centre else 1.1
-		f.scale_amount_curve = _grow
-		f.color_ramp = _fire_ramp
-		f.emitting = true
-		var s := _emitter(p + Vector3(0, 0.45, 0), _smoke_mat, 2, 1.5)
-		s.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-		s.emission_sphere_radius = 0.25
+		var jitter := Vector3(randf_range(-0.25, 0.25), 0.0, randf_range(-0.25, 0.25))
+		for k in 5:
+			fire_pts.append(p - centre + Vector3(randf_range(-0.28, 0.28), randf_range(0.0, 0.2), randf_range(-0.28, 0.28)))
+		# No smoke beside the outer wall: it drifted out over the surroundings.
+		if absf(p.x) < (Cfg.COLS - 3) * 0.5 + 0.1 and absf(p.z) < (Cfg.ROWS - 3) * 0.5 + 0.1:
+			smoke_pts.append(p - centre + jitter)
+		scorch(p, 0.95 if p.distance_to(centre) < 0.1 else 0.7)
+	var f := _emitter(centre + Vector3(0, 0.35, 0), _fire_mat, fire_pts.size(), Cfg.BLAST_LIFE + 0.08)
+	f.emission_shape = CPUParticles3D.EMISSION_SHAPE_POINTS
+	f.emission_points = fire_pts
+	f.direction = Vector3.UP
+	f.spread = 30.0
+	f.initial_velocity_min = 0.6
+	f.initial_velocity_max = 1.6
+	f.gravity = Vector3(0, 2.0, 0)
+	f.damping_min = 2.0
+	f.damping_max = 3.0
+	f.scale_amount_min = 0.5
+	f.scale_amount_max = 0.85
+	f.scale_amount_curve = _grow
+	f.color_ramp = _fire_ramp
+	f.emitting = true
+	if not smoke_pts.is_empty():
+		var s := _emitter(centre + Vector3(0, 0.45, 0), _smoke_mat, smoke_pts.size(), 1.1)
+		s.emission_shape = CPUParticles3D.EMISSION_SHAPE_POINTS
+		s.emission_points = smoke_pts
 		s.direction = Vector3.UP
 		s.spread = 25.0
 		s.initial_velocity_min = 0.3
-		s.initial_velocity_max = 0.7
-		s.gravity = Vector3(0, 0.3, 0)
+		s.initial_velocity_max = 0.6
+		s.gravity = Vector3(0, 0.2, 0)
 		s.angle_max = 360.0
-		s.scale_amount_min = 0.7
-		s.scale_amount_max = 1.2
+		s.scale_amount_min = 0.45
+		s.scale_amount_max = 0.7
 		s.scale_amount_curve = _grow
 		s.color_ramp = _smoke_ramp
 		s.emitting = true
-		scorch(p, 0.95 if is_centre else 0.7)
 	var sp := _emitter(centre + Vector3(0, 0.4, 0), _add_mat, 22, 0.9)
 	sp.direction = Vector3.UP
 	sp.spread = 75.0
@@ -298,7 +329,8 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	sp.scale_amount_max = 0.12
 	sp.color_ramp = _spark_ramp
 	sp.emitting = true
-	_flash_light(centre + Vector3(0, 0.8, 0))
+	# No flash light any more: each omni light redraws everything near it on
+	# phones (AAA review round 3). The flash quad and shockwave carry it.
 	# Shockwave: a bright ring racing out over the floor.
 	var ring := MeshInstance3D.new()
 	ring.mesh = _quad
@@ -310,59 +342,66 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	add_child(ring)
 	var tw := ring.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(ring, "scale", Vector3.ONE * 4.4, 0.28).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(ring, "scale", Vector3.ONE * 3.2, 0.24).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_property(ring, "transparency", 1.0, 0.28)
 	tw.chain().tween_callback(ring.queue_free)
 
 
-func _flash_light(pos: Vector3) -> void:
-	if _flash_lights >= MAX_FLASH_LIGHTS:
-		return
-	_flash_lights += 1
-	var l := OmniLight3D.new()
-	l.position = pos
-	l.light_color = Color(1.0, 0.62, 0.3)
-	l.light_energy = 6.0
-	l.omni_range = 4.5
-	l.shadow_enabled = false
-	add_child(l)
-	var tw := create_tween()
-	tw.tween_property(l, "light_energy", 0.0, 0.3).set_ease(Tween.EASE_OUT)
-	tw.tween_callback(_release_light.bind(l))
-
-
-func _release_light(l: OmniLight3D) -> void:
-	_flash_lights = maxi(0, _flash_lights - 1)
-	if is_instance_valid(l):
-		l.queue_free()
-
-
 ## A glowing floor patch that marks a tile as lethal while its flame is live.
-## The lethal tile: a sheet of flame that fills the tile edge to edge (so a
-## blast arm reads as one continuous band), white-hot in the middle, held at
-## full size for the whole lethal window.
-func flame_glow(parent: Node3D, pos: Vector3) -> MeshInstance3D:
-	var g := MeshInstance3D.new()
-	g.mesh = _quad
-	g.material_override = _flame_tile_mat
-	g.rotation.x = -PI / 2.0
-	g.position = pos + Vector3(0, 0.05 + randf() * 0.01, 0)
-	g.scale = Vector3.ONE * 1.12
-	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	parent.add_child(g)
-	return g
-
-
 func scorch(pos: Vector3, size: float) -> void:
-	var s := MeshInstance3D.new()
-	s.mesh = _quad
-	s.material_override = _scorch_mat
-	s.rotation = Vector3(-PI / 2.0, randf() * TAU, 0.0)
-	s.position = pos + Vector3(0, 0.012 + randf() * 0.004, 0)
-	s.scale = Vector3.ONE * size * randf_range(0.9, 1.15)
-	s.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(s)
-	_scorches.append({"node": s, "t": 0.0})
+	var i := _scorch_next
+	_scorch_next = (_scorch_next + 1) % SCORCH_POOL
+	for s in _scorches:
+		if s["i"] == i:
+			_scorches.erase(s)
+			break
+	var b := Basis(Vector3.UP, randf() * TAU) * Basis(Vector3.RIGHT, -PI / 2.0)
+	_scorch_mm.set_instance_transform(i, Transform3D(b.scaled(Vector3.ONE * size * randf_range(0.9, 1.15)), pos + Vector3(0, 0.012 + randf() * 0.004, 0)))
+	_scorch_mm.set_instance_color(i, Color(1, 1, 1, 1))
+	_scorches.append({"i": i, "t": 0.0})
+
+
+func _make_pool(mat: Material, count: int) -> MultiMesh:
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = _quad
+	mm.instance_count = count
+	var hide := Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0))
+	for i in count:
+		mm.set_instance_transform(i, hide)
+		mm.set_instance_color(i, Color(1, 1, 1, 1))
+	var mi := MultiMeshInstance3D.new()
+	mi.multimesh = mm
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.custom_aabb = AABB(Vector3(-30, -60, -30), Vector3(60, 70, 60))
+	_pool_root.add_child(mi)
+	return mm
+
+
+## Lethal-tile flame sheets from the pool: add returns a handle (or -1),
+## set_flame scales it, free_flame hides it.
+func add_flame(pos: Vector3) -> int:
+	if not enabled or _flame_free.is_empty():
+		return -1
+	var i: int = _flame_free.pop_back()
+	_flame_pos[i] = pos + Vector3(0, 0.05 + randf() * 0.01, 0)
+	set_flame(i, 1.12)
+	return i
+
+
+func set_flame(i: int, s: float) -> void:
+	if i < 0:
+		return
+	_flame_mm.set_instance_transform(i, Transform3D(Basis(Vector3.RIGHT, -PI / 2.0).scaled(Vector3.ONE * s), _flame_pos[i]))
+
+
+func free_flame(i: int) -> void:
+	if i < 0:
+		return
+	_flame_mm.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0)))
+	_flame_free.append(i)
 
 
 ## A crate breaking, dressed for the arena: bark splinters and leaves in the
@@ -591,7 +630,7 @@ void fragment() {
 	col = mix(col, vec3(1.0, 0.85, 0.42), smoothstep(0.55, 0.85, heat));
 	col = mix(col, vec3(1.0, 0.97, 0.82), smoothstep(0.88, 1.0, heat));
 	ALBEDO = col;
-	ALPHA = smoothstep(0.02, 0.22, heat) * 0.95;
+	ALPHA = smoothstep(0.02, 0.22, heat) * 0.95 * COLOR.a;
 }
 """
 
@@ -602,7 +641,7 @@ uniform vec3 tint = vec3(1.0, 0.75, 0.4);
 void fragment() {
 	float d = length(UV * 2.0 - 1.0);
 	float ring = smoothstep(0.7, 0.9, d) * (1.0 - smoothstep(0.9, 1.0, d));
-	ALBEDO = tint * ring * 1.2;
+	ALBEDO = tint * ring * 0.8;
 }
 """
 

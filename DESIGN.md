@@ -121,14 +121,14 @@ Ported from the browser build (`updateEndgame`, tuning in `config.gd`):
 ### Fighters
 No coloured circles under fighters. The human player keeps the "YOU" tag.
 
-**Godot roster (Pete, 2026-11-25): Razor, plus seven bots: Sparky Mk II, Rivet, Pixel, Boiler, Gumball, Snap and Arcade.**
+**Godot roster (Pete, 2026-11-25): Razor, plus eight bots: Sparky Mk II, Rivet, Pixel, Boiler, Gumball, Snap, Arcade and Tick.**
 - From the browser roster, only Razor (the ninja) and Bomberman are kept. The rest are dropped from the Godot build, and their models are removed from `godot/assets/characters` (the browser game still has them).
 - Bomberman is held back. Pete wants it "seriously upgraded", but it is Konami's character, so the plan is an original bomber hero for that slot.
 - New characters are concepts 1, 5 and 6 from the Blender set (`tools/blender/bomber_bots.py`, branch `art/bot-concepts`), exported as `sparky.glb`, `rivet.glb` and `pixel.glb`. They are rigid models; `godot/scripts/model_bot.gd` animates them in code (bob, waddle, lean, squash, hop-and-spin cheer, topple). The other five concepts are dropped.
 - The first-pass code bots (`robot.gd`: Bolt, Tank, Pip, Sparky) were rejected and deleted.
 - Round-2 bots (Pete picked 1, 3, 7 and 8 of eight: `tools/blender/bomber_bots_2.py`, branch `art/bot-concepts`): Boiler (copper steam boiler), Gumball (gumball machine), Snap (box camera) and Arcade (arcade cabinet), exported as `boiler/gumball/snap/arcade.glb` and animated by `model_bot.gd`. Dial, Crumb, Reel and Lumen are dropped.
-- Slots: you are always Razor (blue). Each match the three bots are drawn at random from the seven. Every fighter has its own HUD colour: Sparky yellow, Rivet red, Pixel green, Boiler orange, Gumball pink, Snap white, Arcade purple. `-- --cast id,id,id` or autotest `"cast"` picks them by hand.
-- Tick (from the darker set) is still awaiting Pete's call.
+- Slots: you are always Razor (blue). Each match the three bots are drawn at random from the eight. Every fighter has its own HUD colour: Sparky yellow, Rivet red, Pixel green, Boiler orange, Gumball pink, Snap white, Arcade purple, Tick teal. `-- --cast id,id,id` or autotest `"cast"` picks them by hand.
+- Tick (Pete, 2026-11-25): the clockwork gentleman from the darker set (`tools/blender/bombr_dark.py`, Tick v2, branch `art/bot-concepts`), exported as `tick.glb` and animated by `model_bot.gd`. The other dark concepts are dropped.
 
 ### Arenas (Godot)
 **Four arenas (Pete, 2026-11-25): Forest, Beach, Haunted House and Factory.** These are the ones to keep working on. Glacier, Haunted Train, Circuit and Pirate Fleet were ported, then dropped from the Godot build (teleport pads and shaped/void layouts went with them). They stay in the browser game, but don't bring them back to Godot unless Pete asks.
@@ -165,6 +165,7 @@ Kick (and the other power-ups), character select / Loadout / Prize Locker, menus
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
 ### 2026-11-25
+- **Tick joins the roster** as the eighth bot (Pete: "Yes" to adding him). He is the clockwork gentleman from the darker set, exported from `build/bombr/tick/tick.blend`, with a teal HUD colour, and goes into the random bot draw. Files: `godot/scripts/game.gd` (`ROSTER`), `godot/assets/characters/tick.glb`.
 - **AAA pass on all four arenas** (Pete: "work through the whole list and make decisions based on what adds the most style, playability and meets our AAA goals"). Branch `arena-aaa-pass`. See "Look and sound", "Pick-ups" and "Arenas (Godot)" for the spec. In short:
   - Per-arena lighting and colour grade, a colour order on every arena (floor < walls < crates < fighters/hazards), and floor contact shadow from a live occupancy map. Files: `level_art.gd`, `art.gd`, `game.gd`.
   - Crate variants: three log piles (Forest), driftwood crate + barrel (Beach), casket + trunk (Haunted House), cardboard pallet + oil drums + banded crate (Factory). Half the crates are the main kind. Beach sand floor (new floor pattern 5), sandstone pillars, toned-down coral; Haunted House stone brick and wine caskets; Factory hazard stripes only on the border rim. Files: `level_art.gd`, `art.gd`, `level_scenery.gd`.

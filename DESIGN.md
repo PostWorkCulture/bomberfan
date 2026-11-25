@@ -22,11 +22,13 @@ The design spec and the running record of every design change. Read with `CLAUDE
 | forest | Forest | standard |
 | beach | Beach | standard |
 | glacier | Glacier | twin-islands |
-| haunted | Haunted House | clockwork-maze |
-| haunted-train | Haunted Train | haunted-train |
-| factory | Factory | standard (belts) |
-| circuit | Circuit | standard |
-| pirate | Pirate Fleet | pirate-fleet |
+| haunted | Haunted House | clockwork-maze (witch hazard) |
+| haunted-train | Haunted Train | haunted-train (three carriages) |
+| factory | Factory | standard (conveyor belts) |
+| circuit | Circuit | standard (teleport pads) |
+| pirate | Pirate Fleet | pirate-fleet (4 cannon hazards) |
+
+Glacier is twin-islands with 2 snowman hazards.
 
 Random picks from all levels. Adding a level = one new object in `LEVELS`.
 
@@ -66,7 +68,7 @@ Bomb Up, Fire Up, Full Fire, Speed, Kick, Punch, Glove (pick up & throw), Remote
 - Renderer: **GL Compatibility** (required for web, best for phones).
 - Web build: single-threaded export (GitHub Pages can't send the headers threads need), published to **/play/** — https://postworkculture.github.io/bomberfan/play/
 - Tuning lives in `godot/scripts/config.gd`, copied from `CFG`.
-- Controls: WASD/arrows + Space (R restarts), gamepad d-pad/stick + A; on touchscreens a floating thumbstick (left half) and BOMB button (right half).
+- Controls: WASD/arrows + Space (R restarts, L skips to the next arena), gamepad d-pad/stick + A (Back = next arena); on touchscreens a floating thumbstick (left half) and BOMB button (right half).
 - Fighters are normalised to one height (1.25 tiles, larger than the browser build so they read on a phone).
 
 ### Vertical slice (2026-11-24) — what's in
@@ -109,14 +111,31 @@ No coloured circles under fighters. The human player keeps the "YOU" tag.
 
 **Bomber-bot roster (proposal, not approved):** Bolt, Tank, Pip and Sparky, built and animated in code (`godot/scripts/robot.gd`), switched off with `USE_BOTS = false` in `game.gd` until Pete approves the designs. Separately, eight higher-detail concepts (Sparky Mk II, Fuse, Boomer, Volt, Rivet, Pixel, Mortar, Nova) are modelled by a Blender script on the `art/bot-concepts` branch (not merged).
 
+### Arenas (Godot)
+All eight browser levels are in (`godot/scripts/levels.gd` for layouts and rules, `level_art.gd` / `level_scenery.gd` / `level_props.gd` for the look). Each round picks one at random, like the browser's default "Level: Random"; the HUD shows its name. Layouts, spawns, rules, hazards and prop spots are copied 1:1 from `LEVELS`, `TWIN_ISLANDS`, `PIRATE_FLEET`, `HAUNTED_TRAIN`, `CLOCKWORK_SECTIONS` and `RULE_LAYOUTS`.
+- **Rules:** Factory conveyor loop (5,3)–(9,9) carries fighters and bombs at 1.5 tiles/s; Circuit teleport pads (5,8)↔(9,4) and (5,4)↔(9,8), 0.9 s cooldown, the two pairs coloured cyan and magenta; Haunted House clockwork walls turn every 7.5 s over 1.15 s and wait while anything is in the way.
+- **Hazards:** snowmen (Glacier ×2), the witch (Haunted House) and red cannons (Pirate Fleet ×4) take turns throwing a red bomb every 11 s ÷ count: the target tile is marked at the start of a 1.5 s wind-up, then the bomb arcs over for 1.05 s with its fuse burning (fire 2). Hazards stop during sudden death.
+- **Shaped arenas:** void tiles are walls to the rules and are not drawn. Glacier's islands are ice slabs in a dark sea joined by a rope bridge; Pirate Fleet is two ship hulls with gangplanks, masts, cannons and crews; Haunted Train is three carriages on bogies over a track bed that streams past.
+- **Bots** know the rules: pads are edges in their pathfinding (they never stop on one), belts change their escape timing, and the danger map includes where a belt will carry a bomb, thrown bombs in the air and the hazard's marked target.
+- **Spawns:** every tile within three steps of a spawn plus the level's clear pattern stays crate-free, and crate density is the level's density +0.16 (max 0.92), as in the browser.
+- **Bomb colour:** pale shell on the dark floors (Haunted House, Haunted Train, Factory, Circuit, Pirate Fleet), like `bombColourFor`.
+- **Looks:** Beach (shallow water with caustics, coral rock, sun-bleached crates, sandbar with palms, parasols, towels and beach balls), Glacier (ice floor and blocks, ice-block crates, icebergs), Haunted House (dark boards, pumpkin brick, purple caskets with brass crosses, copper clockwork, dead trees, graves, iron fence, mist), Haunted Train (riveted iron, steamer trunks, spectral conductor and engine), Factory (diamond plate, girders with hazard tops, pallets, machines and pipes), Circuit (glowing traces, cyan tech blocks, magenta chip crates, PCB with chips and LEDs), Pirate Fleet (planked decks, crates and barrels, open sea and an island).
+- CI screenshots: `-- --tour` shows every arena for two seconds; CI saves one frame of each as `arena-<id>.png` on the `ci-screenshots` branch. Locally, autotest `"mode": "tour"`, or `"level": "<id>"` to play one arena.
+
 ### Not yet ported
-Kick (and the other power-ups), the other 7 levels and their rules, character select / Loadout / Prize Locker, menus and options (difficulty, rounds, music volume), menu music, the rest of the roster.
+Kick (and the other power-ups), character select / Loadout / Prize Locker, menus and options (level choice, difficulty, rounds, music volume), menu music, per-level music, the rest of the roster.
 
 ---
 
 ## Change log
 
 Newest first. One dated heading per day; bullets say what changed, why, and where.
+
+### 2026-11-25
+- **The other seven arenas are in the Godot build** (Pete: "let's get the rest of the maps in"): Beach, Glacier, Haunted House, Haunted Train, Factory, Circuit and Pirate Fleet, with their rules (belts, pads, clockwork walls), hazards (snowmen, witch, cannons) and shaped decks, ported from `LEVELS` and friends in `index.html`. A random arena each round; L skips to the next. See "Arenas (Godot)". Files: `godot/scripts/levels.gd`, `level_art.gd`, `level_scenery.gd`, `level_props.gd` (new); `game.gd`, `fighter.gd`, `bot_brain.gd`, `fx.gd`; `.github/workflows/godot-build.yml` (arena screenshots).
+- **Parity fix — spawn pockets and crate density:** Godot only kept each spawn and its four neighbours clear and dealt crates at 70%. It now matches the browser: everything within three steps of a spawn stays clear, and density is the level's + 0.16.
+- **Smoke test** now plays one round on each of the eight arenas.
+- **Bot concepts re-rendered** (branch `art/bot-concepts`): the Blender script now runs inside the live Blender (no operator calls that need a UI context), with a seamless studio backdrop and fixed faces for Sparky, Pixel and Nova. Eight renders and a contact sheet were sent to Pete for a pick.
 
 ### 2026-11-24 (night)
 - **Fuse made subtle** (Pete: still too big and bright): no spark particles any more, just a tiny ember on the fuse tip, plus a faint red warning glow on the shell in the last stretch of the fuse.

@@ -11,6 +11,8 @@ const SCORCH_LIFE := 7.0
 
 var enabled := true
 var shake := 0.0
+var debris_color := Color(0, 0, 0, 0)   # alpha 0: the Forest's bark splinters
+var pale_bombs := false                 # dark floors get a pale shell (BOMB_PALE)
 var _flash_lights := 0
 var _quad: QuadMesh
 var _fire_mat: StandardMaterial3D
@@ -162,8 +164,9 @@ func _emitter(pos: Vector3, mat: Material, amount: int, lifetime: float) -> CPUP
 
 # ---- Bombs -------------------------------------------------------------------------
 
-## A glossy black bomb with a lit, sparking fuse. Returns the node to keep.
-func make_bomb(parent: Node3D, pos: Vector3) -> Node3D:
+## A glossy black bomb with a lit fuse — pale on dark floors, red when a
+## hazard threw it. Returns the node to keep.
+func make_bomb(parent: Node3D, pos: Vector3, hazard := false) -> Node3D:
 	var n := Node3D.new()
 	n.position = pos
 	parent.add_child(n)
@@ -171,6 +174,10 @@ func make_bomb(parent: Node3D, pos: Vector3) -> Node3D:
 	body.mesh = _bomb_body
 	var m := StandardMaterial3D.new()
 	m.albedo_color = Color(0.05, 0.055, 0.07)
+	if pale_bombs:
+		m.albedo_color = Color(0.69, 0.72, 0.79)   # 0xd8dce6 in linear-ish terms
+	if hazard:
+		m.albedo_color = Color(0.75, 0.04, 0.03)
 	m.roughness = 0.45
 	m.metallic = 0.05
 	m.metallic_specular = 0.35
@@ -335,6 +342,11 @@ func crate_break(pos: Vector3) -> void:
 		return
 	var d := CPUParticles3D.new()
 	d.mesh = _debris_mesh
+	if debris_color.a > 0.0:
+		var tm := BoxMesh.new()
+		tm.size = Vector3(0.11, 0.08, 0.16)
+		tm.material = Art.flat_mat(debris_color, 0.7)
+		d.mesh = tm
 	d.amount = 9
 	d.lifetime = 1.1
 	d.one_shot = true

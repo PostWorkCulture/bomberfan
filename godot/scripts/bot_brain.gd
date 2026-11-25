@@ -5,6 +5,7 @@ extends RefCounted
 ## never from cutting the safety margin.
 
 const Cfg := preload("res://scripts/config.gd")
+const Levels := preload("res://scripts/levels.gd")
 
 const DIRS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const SAFE := 999.0
@@ -48,6 +49,37 @@ func reset() -> void:
 	bomb_cool = 0.4
 	bombs_laid = 0
 	_pending_bomb = false
+
+
+## Stepped on a pad: the plan was made on the other side of the board.
+func on_teleport() -> void:
+	path.clear()
+	goal = Vector2i(-1, -1)
+	timer = 0.0
+
+
+func _is_pad(t: Vector2i) -> bool:
+	return game.pad_target(t.x, t.y).x >= 0
+
+
+## Where one step from `cur` in direction d really leaves you: on a pad, its
+## twin. Returns [landing, pad tile or null], or [] if the step is blocked.
+func _step(cur: Vector2i, d: Vector2i, start: Vector2i) -> Array:
+	var n: Vector2i = cur + d
+	if not _passable(n, start):
+		return []
+	if me.pad_cool < 0.25:
+		var twin: Vector2i = game.pad_target(n.x, n.y)
+		if twin.x >= 0 and _passable(twin, start):
+			return [twin, n]
+	return [n, null]
+
+
+## Seconds to cross one tile from `cur` heading d: belts help or hinder.
+func _tile_time(cur: Vector2i, d: Vector2i) -> float:
+	var belt: Vector2i = game.belt_at(cur.x, cur.y)
+	var along: float = float(belt.x * d.x + belt.y * d.y)
+	return TRAVEL_FACTOR / maxf(0.6, me.speed + along * Levels.BELT_SPEED)
 
 
 func update(dt: float) -> Dictionary:
@@ -129,34 +161,38 @@ func _path_ok(danger: PackedFloat32Array) -> bool:
 ## at least `slack` seconds before it goes off.
 func _escape_path(start: Vector2i, danger: PackedFloat32Array, slack: float) -> Array:
 	var q: Array = [start]
-	var dist := {start: 0}
+	var when := {start: 0.0}
 	var prev := {}
+	var via := {}
 	var head := 0
 	while head < q.size():
 		var cur: Vector2i = q[head]
 		head += 1
 		var cur_d: float = danger[game.idx(cur.x, cur.y)]
-		if cur_d >= SAFE:
-			return _rebuild(prev, start, cur)
-		var nd: int = dist[cur] + 1
-		var arrive: float = nd * TRAVEL_FACTOR / me.speed
-		if arrive + slack > cur_d:
-			continue   # cannot get off this tile in time
+		if cur_d >= SAFE and (cur == start or not _is_pad(cur)):
+			return _rebuild(prev, start, cur, via)
 		for d in DIRS:
-			var n: Vector2i = cur + d
-			if dist.has(n) or not _passable(n, start):
+			var arrive: float = when[cur] + _tile_time(cur, d)
+			if arrive + slack > cur_d:
+				continue   # cannot get off this tile in time
+			var st := _step(cur, d, start)
+			if st.is_empty() or when.has(st[0]):
 				continue
-			dist[n] = nd
-			prev[n] = cur
-			q.append(n)
+			when[st[0]] = arrive
+			prev[st[0]] = cur
+			if st[1] != null:
+				via[st[0]] = st[1]
+			q.append(st[0])
 	return []
 
 
-func _rebuild(prev: Dictionary, start: Vector2i, end: Vector2i) -> Array:
+func _rebuild(prev: Dictionary, start: Vector2i, end: Vector2i, via := {}) -> Array:
 	var out: Array = []
 	var c := end
 	while c != start:
 		out.push_front(c)
+		if via.has(c):
+			out.push_front(via[c])   # walk onto the pad; it does the rest
 		c = prev[c]
 	return out
 
@@ -189,19 +225,29 @@ func _choose_goal(here: Vector2i, danger: PackedFloat32Array) -> void:
 	var q: Array = [here]
 	var dist := {here: 0}
 	var prev := {}
+	var via := {}
 	var head := 0
 	while head < q.size():
 		var cur: Vector2i = q[head]
 		head += 1
 		for d in DIRS:
-			var n: Vector2i = cur + d
-			if dist.has(n) or not _passable(n, here):
+			var st := _step(cur, d, here)
+			if st.is_empty() or dist.has(st[0]):
 				continue
+			var n: Vector2i = st[0]
 			if danger[game.idx(n.x, n.y)] < SAFE:
+				continue
+			if st[1] != null and danger[game.idx(st[1].x, st[1].y)] < SAFE:
 				continue
 			dist[n] = dist[cur] + 1
 			prev[n] = cur
+			if st[1] != null:
+				via[n] = st[1]
 			q.append(n)
+	# Never settle on a pad: it would send you straight back.
+	for t in dist.keys():
+		if t != here and _is_pad(t):
+			dist.erase(t)
 
 	var target := Vector2i(-1, -1)
 
@@ -256,7 +302,7 @@ func _choose_goal(here: Vector2i, danger: PackedFloat32Array) -> void:
 		path = []
 	else:
 		goal = target
-		path = _rebuild(prev, here, target)
+		path = _rebuild(prev, here, target, via)
 
 
 func _steer(bomb: bool) -> Dictionary:

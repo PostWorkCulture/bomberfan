@@ -258,7 +258,7 @@ static func gravestone_mesh() -> Mesh:
 
 
 static func _pumpkin() -> Mesh:
-	var orange := Color("e8761a")
+	var orange := Color("ff8f26")
 	var parts: Array = []
 	for i in 8:
 		var a := TAU * i / 8.0
@@ -412,9 +412,9 @@ static func _mast() -> Mesh:
 	var sail := Color("f2ead6")
 	var parts: Array = [
 		[LA.cyl(0.06, 0.08, 3.0, 10), LA.xf(Vector3(0, 1.5, 0)), wood],
-		[LA.cyl(0.035, 0.035, 1.5, 8), LA.xf(Vector3(0, 2.5, 0.05), Vector3(0, 0, PI / 2.0)), wood],
-		[LA.cyl(0.03, 0.03, 1.2, 8), LA.xf(Vector3(0, 1.4, 0.05), Vector3(0, 0, PI / 2.0)), wood],
-		[LA.box(Vector3(1.4, 1.05, 0.03)), LA.xf(Vector3(0, 1.95, 0.12), Vector3(0.12, 0, 0)), sail],
+		[LA.cyl(0.035, 0.035, 1.15, 8), LA.xf(Vector3(0, 2.45, 0.05), Vector3(0, 0, PI / 2.0)), wood],
+		[LA.cyl(0.03, 0.03, 0.95, 8), LA.xf(Vector3(0, 1.65, 0.05), Vector3(0, 0, PI / 2.0)), wood],
+		[LA.box(Vector3(1.0, 0.75, 0.03)), LA.xf(Vector3(0, 2.05, 0.12), Vector3(0.12, 0, 0)), sail],
 		[LA.cyl(0.12, 0.1, 0.12, 10), LA.xf(Vector3(0, 2.95, 0)), wood],
 		[LA.box(Vector3(0.4, 0.26, 0.01)), LA.xf(Vector3(0.22, 3.15, 0)), Color("111114")],
 		[LA.sphere(0.05, 8, 4), LA.xf(Vector3(0.22, 3.17, 0.01), Vector3.ZERO, Vector3(1, 1, 0.3)), Color("f2f2f2")],

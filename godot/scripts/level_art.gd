@@ -14,9 +14,9 @@ static var _cache := {}
 const THEMES := {
 	"beach": {
 		"sky": Color("07293f"), "fog": Color(0.42, 0.66, 0.78), "fog_begin": 22.0, "fog_end": 48.0,
-		"sun": Color(1.0, 0.95, 0.84), "sun_energy": 1.3, "sun_rot": Vector3(-56, -32, 0), "ambient": 0.62,
+		"sun": Color(1.0, 0.95, 0.84), "sun_energy": 1.1, "sun_rot": Vector3(-56, -32, 0), "ambient": 0.5,
 		"sky_top": Color(0.3, 0.55, 0.85), "sky_horizon": Color(0.78, 0.86, 0.9),
-		"floor": {"pattern": 1, "a": Color("2f9bd0"), "b": Color("57c1e6"), "line": Color(1, 1, 1), "line_alpha": 0.16, "rough": 0.12},
+		"floor": {"pattern": 1, "a": Color("2a8cbd"), "b": Color("4cb0d6"), "line": Color(1, 1, 1), "line_alpha": 0.16, "rough": 0.12},
 		"block": {"style": 0, "side": Color("d9604c"), "top": Color("ff9c84"), "rough": 0.75, "scale": 0.9},
 		"border": {"style": 0, "side": Color("a8442f"), "top": Color("e07a63"), "rough": 0.8, "scale": 0.9},
 		"plinth": Color("e7cf9c"), "debris": Color("e8b84a"),
@@ -32,20 +32,20 @@ const THEMES := {
 	},
 	"haunted": {
 		"sky": Color("0a0512"), "fog": Color(0.12, 0.06, 0.18), "fog_begin": 15.0, "fog_end": 34.0,
-		"sun": Color(0.62, 0.66, 1.0), "sun_energy": 0.72, "sun_rot": Vector3(-58, -150, 0), "ambient": 0.42,
+		"sun": Color(0.82, 0.78, 1.0), "sun_energy": 0.85, "sun_rot": Vector3(-58, -150, 0), "ambient": 0.55,
 		"sky_top": Color(0.08, 0.05, 0.16), "sky_horizon": Color(0.3, 0.2, 0.38),
 		"floor": {"pattern": 3, "a": Color("1d1424"), "b": Color("2c2033"), "line": Color("a878ff"), "line_alpha": 0.13, "rough": 0.8, "plank": 0.25},
-		"block": {"style": 1, "side": Color("b35f10"), "top": Color("d9812a"), "rough": 0.85, "scale": 1.0},
-		"border": {"style": 1, "side": Color("6b3709"), "top": Color("a65c16"), "rough": 0.9, "scale": 1.0},
+		"block": {"style": 1, "side": Color("d06a14"), "top": Color("f0943a"), "rough": 0.85, "scale": 1.0},
+		"border": {"style": 1, "side": Color("8a460c"), "top": Color("c0701e"), "rough": 0.9, "scale": 1.0},
 		"plinth": Color("3a2c33"), "debris": Color("9a5cf0"),
 	},
 	"haunted-train": {
 		"sky": Color("020409"), "fog": Color(0.05, 0.08, 0.12), "fog_begin": 16.0, "fog_end": 36.0,
-		"sun": Color(0.62, 0.78, 0.92), "sun_energy": 0.8, "sun_rot": Vector3(-55, -25, 0), "ambient": 0.45,
-		"sky_top": Color(0.03, 0.05, 0.1), "sky_horizon": Color(0.18, 0.25, 0.32),
-		"floor": {"pattern": 3, "a": Color("1a2028"), "b": Color("27303a"), "line": Color("84b0c2"), "line_alpha": 0.17, "rough": 0.7, "plank": 0.5, "metal": 0.25},
-		"block": {"style": 2, "side": Color("2a3846"), "top": Color("4a5e70"), "rough": 0.45, "metal": 0.7, "scale": 1.0},
-		"border": {"style": 2, "side": Color("101820"), "top": Color("2d3b48"), "rough": 0.5, "metal": 0.7, "scale": 1.0},
+		"sun": Color(0.75, 0.86, 0.96), "sun_energy": 1.0, "sun_rot": Vector3(-55, -25, 0), "ambient": 0.7,
+		"sky_top": Color(0.12, 0.16, 0.24), "sky_horizon": Color(0.3, 0.38, 0.46),
+		"floor": {"pattern": 3, "a": Color("2c3642"), "b": Color("3d4a58"), "line": Color("84b0c2"), "line_alpha": 0.17, "rough": 0.7, "plank": 0.5, "metal": 0.1},
+		"block": {"style": 2, "side": Color("3a4c5e"), "top": Color("62788c"), "rough": 0.5, "metal": 0.3, "scale": 1.0},
+		"border": {"style": 2, "side": Color("1c2630"), "top": Color("3a4b5a"), "rough": 0.5, "metal": 0.3, "scale": 1.0},
 		"plinth": Color("1b2129"), "debris": Color("607583"),
 	},
 	"factory": {
@@ -62,7 +62,7 @@ const THEMES := {
 		"sun": Color(0.85, 0.85, 1.0), "sun_energy": 0.85, "sun_rot": Vector3(-60, -35, 0), "ambient": 0.5,
 		"sky_top": Color(0.06, 0.04, 0.18), "sky_horizon": Color(0.2, 0.14, 0.4),
 		"floor": {"pattern": 5, "a": Color("181230"), "b": Color("221a42"), "line": Color("78f0ff"), "line_alpha": 0.3, "rough": 0.35, "metal": 0.3},
-		"block": {"style": 3, "side": Color("1d5a78"), "top": Color("2f8fb8"), "rough": 0.3, "metal": 0.4, "glow": Color("6ef0ff"), "scale": 1.0},
+		"block": {"style": 3, "side": Color("1d5a78"), "top": Color("2f8fb8"), "rough": 0.3, "metal": 0.2, "glow": Color("6ef0ff"), "scale": 1.0},
 		"border": {"style": 3, "side": Color("12344a"), "top": Color("1b4f66"), "rough": 0.35, "metal": 0.4, "glow": Color("6ef0ff"), "scale": 1.0},
 		"plinth": Color("120d26"), "debris": Color("ff3fa4"),
 	},
@@ -120,7 +120,7 @@ void fragment() {
 		vec2 p = wpos.xz;
 		float c1 = texture(noise_tex, p * 0.34 + vec2(TIME * 0.035, TIME * 0.02)).r;
 		float c2 = texture(noise_tex, p * 0.31 - vec2(TIME * 0.025, -TIME * 0.03)).r;
-		float caustic = pow(1.0 - abs(c1 - c2) * 2.2, 9.0);
+		float caustic = pow(clamp(1.0 - abs(c1 - c2) * 2.2, 0.0, 1.0), 9.0);
 		col *= 1.0 - 0.07 * chk;
 		col += vec3(0.55, 0.8, 0.85) * caustic * 0.45;
 		emit += vec3(0.2, 0.42, 0.5) * caustic * 0.2;
@@ -130,7 +130,7 @@ void fragment() {
 		float cr = texture(cell_tex, wpos.xz * 0.35).r;
 		float crack = 1.0 - smoothstep(0.0, 0.06, cr);
 		col *= 1.0 - 0.05 * chk;
-		col = mix(col, vec3(0.92, 0.97, 1.0), smoothstep(0.55, 0.9, texture(noise_tex, wpos.xz * 0.9).r) * 0.35);
+		col = mix(col, vec3(0.92, 0.97, 1.0), smoothstep(0.5, 1.0, texture(noise_tex, wpos.xz * 0.45).r) * 0.22);
 		col = mix(col, line_col, crack * 0.35);
 		col = mix(col, line_col, line * line_alpha);
 	} else if (pattern == 3) {
@@ -331,8 +331,8 @@ void fragment() {
 	float n1 = texture(noise_tex, wpos.xz * 0.07 + vec2(TIME * 0.01, 0.0)).r;
 	float n2 = texture(noise_tex, wpos.xz * 0.19 - vec2(0.0, TIME * 0.02)).r;
 	vec3 col = mix(deep, shallow, n1 * 0.7 + n2 * 0.3);
-	float crest = smoothstep(0.72, 0.8, n2 * 0.6 + n1 * 0.5);
-	col = mix(col, foam, crest * 0.35);
+	float crest = smoothstep(0.74, 0.9, n2 * 0.6 + n1 * 0.5);
+	col = mix(col, foam, crest * 0.18);
 	ALBEDO = col;
 	ROUGHNESS = 0.08;
 	SPECULAR = 0.8;
@@ -655,8 +655,8 @@ static func drop_block_mesh(id: String) -> Mesh:
 static func clockwork_mesh() -> ArrayMesh:
 	if _cache.has("clockwork"):
 		return _cache["clockwork"]
-	var copper := metal(Color("b8682e"))
-	var dark := Color("4a240e")
+	var copper := Color("c8763a")
+	var dark := Color("5a2c12")
 	var brass := metal(Color("e0a84a"))
 	var parts: Array = []
 	for i in 3:
@@ -703,7 +703,7 @@ static func crate_meshes(id: String) -> Array:
 		"haunted":
 			out = [casket()]
 		"haunted-train":
-			out = [trunk(Color("26323d"), Color("607583")), trunk(Color("3a2a22"), Color("8a6a40"))]
+			out = [trunk(Color("3c4c5c"), Color("9ab4c4")), trunk(Color("5a3c2a"), Color("c09a5a"))]
 		"factory":
 			out = [pallet()]
 		"circuit":
@@ -756,23 +756,28 @@ static func ice_block() -> ArrayMesh:
 	return out
 
 
+## A purple casket: panelled box, a stepped lid with a brass cross, brass corners.
 static func casket() -> ArrayMesh:
-	var purple := Color("7a37d6")
-	var dark := Color("4f1c96")
-	var light := Color("9a5cf0")
-	var brass := metal(Color("d8b25a"))
+	var purple := Color("9a4ae8")
+	var dark := Color("5a1fa8")
+	var light := Color("b47aff")
+	var brass := metal(Color("e0b860"))
 	var parts: Array = [
-		[box(Vector3(0.84, 0.52, 0.8), 0.04), xf(Vector3(0, 0.28, 0)), purple],
-		[box(Vector3(0.88, 0.06, 0.84), 0.02), xf(Vector3(0, 0.04, 0)), dark],
-		[box(Vector3(0.88, 0.07, 0.84), 0.02), xf(Vector3(0, 0.55, 0)), dark],
+		[box(Vector3(0.8, 0.5, 0.84), 0.04), xf(Vector3(0, 0.29, 0)), purple],
+		[box(Vector3(0.86, 0.07, 0.9), 0.02), xf(Vector3(0, 0.04, 0)), dark],
+		[box(Vector3(0.86, 0.1, 0.9), 0.03), xf(Vector3(0, 0.58, 0)), dark],
+		[box(Vector3(0.7, 0.1, 0.76), 0.04), xf(Vector3(0, 0.67, 0)), light],
+		[box(Vector3(0.1, 0.03, 0.56)), xf(Vector3(0, 0.73, 0.02)), brass],
+		[box(Vector3(0.36, 0.03, 0.1)), xf(Vector3(0, 0.73, -0.1)), brass],
 	]
-	# Domed lid: a half cylinder along x
-	parts.append([cyl(0.4, 0.4, 0.82, 16), Transform3D(Basis(Vector3.BACK, PI / 2.0).scaled(Vector3(1, 1, 0.55)), Vector3(0, 0.56, 0)), light])
-	for a in [-0.3, 0.0, 0.3]:
-		parts.append([cyl(0.425, 0.425, 0.05, 16), Transform3D(Basis(Vector3.BACK, PI / 2.0).scaled(Vector3(1, 1, 0.56)), Vector3(a, 0.56, 0)), brass])
-		parts.append([box(Vector3(0.05, 0.5, 0.82)), xf(Vector3(a, 0.3, 0)), brass])
-	parts.append([box(Vector3(0.12, 0.14, 0.04), 0.02), xf(Vector3(0, 0.46, 0.42)), brass])
-	parts.append([box(Vector3(0.04, 0.06, 0.03)), xf(Vector3(0, 0.44, 0.44)), Color(0.05, 0.03, 0.08)])
+	for a in [-1.0, 1.0]:
+		for b in [-1.0, 1.0]:
+			parts.append([box(Vector3(0.12, 0.12, 0.12), 0.02), xf(Vector3(a * 0.4, 0.06, b * 0.42)), brass])
+			parts.append([box(Vector3(0.1, 0.1, 0.1), 0.02), xf(Vector3(a * 0.4, 0.6, b * 0.42)), brass])
+		# side panels
+		parts.append([box(Vector3(0.6, 0.3, 0.02), 0.01), xf(Vector3(0, 0.3, a * 0.425)), dark])
+		parts.append([box(Vector3(0.02, 0.3, 0.64), 0.01), xf(Vector3(a * 0.405, 0.3, 0)), dark])
+	parts.append([box(Vector3(0.14, 0.06, 0.04), 0.01), xf(Vector3(0, 0.44, 0.44)), brass])
 	return build(parts, vmat("casket", 0.55, 0.0, 0.3))
 
 
@@ -826,10 +831,17 @@ static func chip_block() -> ArrayMesh:
 
 
 static func barrel() -> ArrayMesh:
-	var prof := [Vector2(0.3, 0.0), Vector2(0.35, 0.12), Vector2(0.38, 0.38), Vector2(0.35, 0.66), Vector2(0.3, 0.78), Vector2(0.0, 0.78)]
-	var parts: Array = [[Art.lathe(prof, 16, Color("8a4f22"), Color("b77a40")), xf(Vector3.ZERO), null]]
-	for y in [0.1, 0.66]:
-		parts.append([cyl(0.36, 0.36, 0.05, 16), xf(Vector3(0, y, 0)), metal(Color("3a3630"))])
-	parts.append([cyl(0.385, 0.385, 0.06, 16), xf(Vector3(0, 0.38, 0)), metal(Color("3a3630"))])
-	parts.append([cyl(0.29, 0.29, 0.02, 16), xf(Vector3(0, 0.78, 0)), Color("8a5226")])
+	var wood := Color("9a5a28")
+	var wood2 := Color("b77a40")
+	var hoop := metal(Color("4a4640"))
+	var parts: Array = [
+		[cyl(0.37, 0.31, 0.26, 16), xf(Vector3(0, 0.13, 0)), wood],
+		[cyl(0.37, 0.37, 0.26, 16), xf(Vector3(0, 0.39, 0)), wood2],
+		[cyl(0.31, 0.37, 0.26, 16), xf(Vector3(0, 0.65, 0)), wood],
+		[cyl(0.3, 0.3, 0.02, 16), xf(Vector3(0, 0.785, 0)), Color("c48a4e")],
+		[cyl(0.33, 0.33, 0.05, 16), xf(Vector3(0, 0.08, 0)), hoop],
+		[cyl(0.33, 0.33, 0.05, 16), xf(Vector3(0, 0.72, 0)), hoop],
+		[cyl(0.38, 0.38, 0.05, 16), xf(Vector3(0, 0.39, 0)), hoop],
+		[cyl(0.05, 0.05, 0.03, 8), xf(Vector3(0.15, 0.8, 0.05)), Color("3a2410")],
+	]
 	return build(parts, vmat("barrel", 0.8, 0.0, 0.35))

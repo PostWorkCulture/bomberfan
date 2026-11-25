@@ -176,9 +176,9 @@ static func _cached(key: String, fn: Callable) -> Mesh:
 static func _beach(root: Node3D) -> void:
 	# A sandbar island in open water.
 	var sand := LA.block_mat("sand", {"style": 0, "side": Color("d9bf86"), "top": Color("f0dcaa"), "rough": 0.95, "scale": 0.5})
-	var isl := Art.rounded_box(Vector3(40, 1.0, 30), 3.0, 6, 0.25, 5)
+	var isl := Art.rounded_box(Vector3(30, 1.0, 24), 0.45, 8, 0.2, 5)
 	isl.surface_set_material(0, sand)
-	_mi(root, isl, Vector3(0, GROUND_Y - 0.5, -2.0), null, Vector3.ZERO, Vector3.ONE, false)
+	_mi(root, isl, Vector3(0, GROUND_Y - 0.5, -1.0), null, Vector3.ZERO, Vector3.ONE, false)
 	_mi(root, _plane(Vector2(160, 160), 40), Vector3(0, GROUND_Y - 0.3, 0), LA.water_mat(Color("06415e"), Color("1aa0c4"), 0.05), Vector3.ZERO, Vector3.ONE, false)
 	var r := RandomNumberGenerator.new()
 	r.seed = 7
@@ -217,17 +217,17 @@ static func _palm_mesh() -> Mesh:
 		var p := lean * t * t * 3.0 + Vector3(0, t * 2.7, 0)
 		parts.append([LA.cyl(0.11 - t * 0.04, 0.13 - t * 0.04, 0.34, 8), LA.xf(p + Vector3(0, 0.15, 0), Vector3(0, 0, -0.18 * t)), trunk_c.lerp(Color("b08a58"), (i % 2) * 0.4)])
 	var top := lean * 3.0 + Vector3(0, 2.85, 0)
-	for k in 7:
-		var a := TAU * k / 7.0
+	for k in 8:
+		var a := TAU * k / 8.0 + (0.2 if k % 2 else 0.0)
 		var dir := Vector3(cos(a), 0, sin(a))
 		var side := dir.cross(Vector3.UP).normalized()
-		for j in 4:
-			var d := 0.22 + j * 0.3
-			var droop := -0.07 * j * j
-			var w := 0.34 - j * 0.06
-			# leaflets: long along `dir`, tipping down as they go out
-			var bas := Basis(side, -(0.15 + j * 0.25)) * Basis(Vector3.UP, -a + PI / 2.0)
-			parts.append([LA.box(Vector3(w, 0.03, 0.36)), Transform3D(bas, top + dir * d + Vector3(0, droop, 0)), Color("3f8f3a").lerp(Color("6fbf4a"), j * 0.25)])
+		var length := 0.95 if k % 2 == 0 else 0.8
+		# each frond: an inner rising half and an outer drooping half
+		for j in 2:
+			var tilt := 0.25 if j == 0 else -0.55
+			var bas := Basis(side, tilt) * Basis(Vector3.UP, -a + PI / 2.0)
+			var mid := top + dir * (length * (0.28 + j * 0.5)) + Vector3(0, 0.08 - j * 0.22, 0)
+			parts.append([LA.sphere(0.5, 12, 6), Transform3D(bas.scaled(Vector3(0.32, 0.05, length * 0.6)), mid), Color("3f8f3a").lerp(Color("6fbf4a"), 0.3 + j * 0.4)])
 	for k in 3:
 		parts.append([LA.sphere(0.09, 8, 5), LA.xf(top + Vector3(cos(k * 2.1) * 0.12, -0.12, sin(k * 2.1) * 0.12)), Color("5a3a1a")])
 	return LA.build(parts, LA.vmat("palm", 0.8, 0.0, 0.3))
@@ -404,11 +404,9 @@ void fragment() {
 		rail += 1.0 - smoothstep(0.05, 0.08, abs(abs(wpos.z) - abs(rz)) );
 	}
 	col = mix(col, vec3(0.55, 0.6, 0.65), clamp(rail, 0.0, 1.0));
-	float lamp = (1.0 - smoothstep(0.08, 0.14, abs(abs(wpos.z) - 4.6))) * step(0.85, fract(x * 0.12));
 	ALBEDO = col;
 	ROUGHNESS = mix(0.95, 0.25, clamp(rail, 0.0, 1.0));
 	METALLIC = clamp(rail, 0.0, 1.0) * 0.8;
-	EMISSION = vec3(0.4, 0.95, 0.9) * lamp * 1.5 + vec3(0.9, 0.15, 0.1) * lamp * step(0.5, fract(x * 0.06)) * 1.5;
 }
 """
 

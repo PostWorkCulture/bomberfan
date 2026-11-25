@@ -31,11 +31,17 @@ const DIRS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 ## The Godot roster (Pete, 2026-11-25): Razor (the ninja) and three
 ## Blender bomber-bots, Sparky Mk II, Rivet and Pixel. HUD colours follow
 ## each character's own paint.
+# Fighters. You are always Razor; each match the three bots are drawn at random
+# from the rest (`-- --cast sparky,snap,arcade` or autotest "cast" picks them).
 const ROSTER := [
 	{"id": "ninja", "name": "RAZOR", "color": Color(0.36, 0.6, 1.0)},
 	{"id": "sparky", "name": "SPARKY", "color": Color(1.0, 0.78, 0.12)},
 	{"id": "rivet", "name": "RIVET", "color": Color(1.0, 0.34, 0.27)},
 	{"id": "pixel", "name": "PIXEL", "color": Color(0.33, 0.88, 0.45)},
+	{"id": "boiler", "name": "BOILER", "color": Color(0.96, 0.56, 0.24)},
+	{"id": "gumball", "name": "GUMBALL", "color": Color(1.0, 0.46, 0.72)},
+	{"id": "snap", "name": "SNAP", "color": Color(0.92, 0.93, 0.96)},
+	{"id": "arcade", "name": "ARCADE", "color": Color(0.7, 0.52, 1.0)},
 ]
 
 # Forest backdrop colour behind everything (LEVELS[0].sky in index.html)
@@ -103,6 +109,7 @@ var rng := RandomNumberGenerator.new()
 var smoke := false
 var demo := false   # `-- --demo`: four bots, full visuals (attract mode / CI screenshots)
 var gallery := false   # `-- --gallery`: close-up of the fighters for CI checks
+var forced_cast: Array = []   # bot ids from autotest "cast"
 var lineup := false    # autotest "lineup": the roster side by side on plain ground
 var human_pid := 0
 var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0, "sudden_deaths": 0, "crushed": 0,
@@ -674,18 +681,37 @@ func _label(font_size: int, c: Color) -> Label:
 	return l
 
 
+func _pick_cast() -> Array:
+	var cast: Array = [ROSTER[0]]
+	var pool: Array = ROSTER.slice(1)
+	var ids: Array = forced_cast
+	var args := OS.get_cmdline_user_args()
+	var ci := args.find("--cast")
+	if ci >= 0 and ci + 1 < args.size():
+		ids = Array(args[ci + 1].split(","))
+	for id in ids:
+		for info in pool:
+			if info["id"] == id and not cast.has(info) and cast.size() < Cfg.MAX_PLAYERS:
+				cast.append(info)
+	while cast.size() < Cfg.MAX_PLAYERS:
+		var left := pool.filter(func(c): return not cast.has(c))
+		cast.append(left[rng.randi() % left.size()])
+	return cast
+
+
 func _create_fighters() -> void:
 	human_pid = -1 if smoke or demo or gallery else 0
+	var cast := _pick_cast()
 	for k in Cfg.MAX_PLAYERS:
 		var f = Fighter.new()
 		add_child(f)
-		f.setup(self, k, ROSTER[k], k != human_pid)
+		f.setup(self, k, cast[k], k != human_pid)
 		fighters.append(f)
 		if f.is_bot:
 			var b = BotBrain.new()
 			b.setup(self, f, 1000 + k * 7919 + (0 if smoke else rng.randi() % 100000))
 			brains[k] = b
-		var l := _label(22, ROSTER[k]["color"])
+		var l := _label(22, cast[k]["color"])
 		hud_scores_box.add_child(l)
 		hud_scores.append(l)
 
@@ -1717,6 +1743,7 @@ func _load_autotest() -> void:
 		forced_level = data["level"]
 	gallery = mode == "gallery" or mode == "lineup"
 	lineup = mode == "lineup"
+	forced_cast = data.get("cast", [])
 	_shots = data.get("shots", [5.0, 9.0, 14.0])
 	_shots.sort()
 	_shot_dir = ProjectSettings.globalize_path("res://.godot/autotest")

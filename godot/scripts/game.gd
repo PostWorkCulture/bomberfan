@@ -1,10 +1,9 @@
 extends Node3D
 ## Bomber Fan — Godot rebuild.
-## Eight arenas (a random one each round), you vs three bots, bombs, chain
+## Four arenas (a random one each round), you vs three bots, bombs, chain
 ## blasts, crates and the Bomb Up / Fire Up / Speed pick-ups, first to
-## Cfg.WINS_NEEDED rounds. Level rules: conveyor belts (Factory), teleport
-## pads (Circuit), turning clockwork walls (Haunted House) and bomb-throwing
-## hazards (Glacier, Haunted House, Pirate Fleet).
+## Cfg.WINS_NEEDED rounds. Level rules: conveyor belts (Factory), turning
+## clockwork walls and the bomb-throwing witch (Haunted House).
 ## Rules and tuning follow the browser build (../index.html); see ../DESIGN.md.
 ##
 ## Run with `-- --smoke` for a headless bots-only test that prints a summary
@@ -84,9 +83,7 @@ var _falling: Array = []
 var level: Dictionary = {}
 var level_id := ""
 var forced_level := ""          # `-- --level <id>`, autotest "level", or the L key
-var voids := PackedByteArray()  # chasm / sea tiles: HARD for the rules, not drawn
-var rules := PackedByteArray()  # belts and pads (Levels.RULE_*)
-var pad_twin := {}              # tile index -> the pad it sends you to
+var rules := PackedByteArray()  # conveyor belts (Levels.BELT_*)
 var clock := {}                 # Haunted House walls; empty on other levels
 var _clock_nodes: Array = []    # one pivot per wall section
 var _props: Array = []          # animated wall props
@@ -562,7 +559,7 @@ func _apply_level(id: String) -> void:
 		var limit: int = maxi(1, level.get("hazard_count", 1))
 		for i in spots.size():
 			var spot: Array = spots[i]
-			var kind: String = spot[3] if spot.size() > 3 else kinds[i % kinds.size()]
+			var kind: String = kinds[i % kinds.size()]
 			if kind == hazard_kind and hazards.size() < limit:
 				hazards.append({"pos": Vector2i(spot[0], spot[1]), "node": null, "spot": i})
 
@@ -581,7 +578,7 @@ func _build_level_scene() -> void:
 	if not clock.is_empty():
 		for k in clock["cells"]:
 			skip[k] = true
-	Scenery.build(level_root, level, hard, voids, skip)
+	Scenery.build(level_root, level, hard, skip)
 	# Props on the walls; the level's hazard gets a scowl and a bomb to throw.
 	var kinds: Array = level.get("props", [])
 	if kinds.is_empty():
@@ -592,17 +589,12 @@ func _build_level_scene() -> void:
 		angry_at[h["spot"]] = h
 	for i in spots.size():
 		var spot: Array = spots[i]
-		var kind: String = spot[3] if spot.size() > 3 else kinds[i % kinds.size()]
+		var kind: String = kinds[i % kinds.size()]
 		var angry: bool = angry_at.has(i)
 		var n: Node3D = Props.make(kind, angry)
 		var at := Vector2i(spot[0], spot[1])
-		var top := 1.04 if level.get("layout", "") in ["", "clockwork-maze"] and (at.x == 0 or at.y == 0 or at.x == Cfg.COLS - 1 or at.y == Cfg.ROWS - 1) else 0.98
-		n.position = tile_pos(at.x, at.y) + Vector3(0, top, 0)
-		var yaw: float = spot[2]
-		if kind != "cannon":
-			yaw += 0.25 if i % 2 == 1 else -0.2
-		n.rotation.y = yaw
-		n.scale = Vector3.ONE * (spot[4] if spot.size() > 4 else 1.0)
+		n.position = tile_pos(at.x, at.y) + Vector3(0, 1.04, 0)   # on top of the outer wall
+		n.rotation.y = spot[2] + (0.25 if i % 2 == 1 else -0.2)
 		level_root.add_child(n)
 		_props.append(n)
 		if angry:
@@ -764,36 +756,16 @@ func _generate_cells() -> void:
 	soft_count = 0
 	var n := Cfg.COLS * Cfg.ROWS
 	cells.resize(n)
-	voids.resize(n)
-	voids.fill(0)
 	rules.resize(n)
 	rules.fill(Levels.RULE_NONE)
-	pad_twin.clear()
 	clock = {}
-	# 1. Hard layout: a shaped deck, or the classic rectangle with its lattice.
-	var layout: String = level.get("layout", "")
-	if Levels.SHAPES.has(layout):
-		var shape: Dictionary = Levels.SHAPES[layout]
-		cells.fill(HARD)
-		voids.fill(1)
-		for rect in shape["floors"]:
-			for y in range(rect[1], rect[3] + 1):
-				for x in range(rect[0], rect[2] + 1):
-					cells[idx(x, y)] = EMPTY
-					voids[idx(x, y)] = 0
-		for p in shape["paths"]:
-			cells[idx(p[0], p[1])] = EMPTY
-			voids[idx(p[0], p[1])] = 0
-		for p in shape["pillars"]:
-			cells[idx(p[0], p[1])] = HARD
-			voids[idx(p[0], p[1])] = 0
-	else:
-		for y in Cfg.ROWS:
-			for x in Cfg.COLS:
-				var border: bool = x == 0 or y == 0 or x == Cfg.COLS - 1 or y == Cfg.ROWS - 1
-				cells[idx(x, y)] = HARD if border or (x % 2 == 0 and y % 2 == 0) else EMPTY
-		if layout == "clockwork-maze":
-			_init_clockwork()
+	# 1. Hard layout: the classic rectangle with its pillar lattice.
+	for y in Cfg.ROWS:
+		for x in Cfg.COLS:
+			var border: bool = x == 0 or y == 0 or x == Cfg.COLS - 1 or y == Cfg.ROWS - 1
+			cells[idx(x, y)] = HARD if border or (x % 2 == 0 and y % 2 == 0) else EMPTY
+	if level.get("layout", "") == "clockwork-maze":
+		_init_clockwork()
 	# 2. Spawn pockets: the level's clear pattern plus every tile within three
 	#    steps of the spawn, so nobody starts boxed in.
 	var safe := {}
@@ -821,10 +793,6 @@ func _generate_cells() -> void:
 					continue
 				seen[nb] = true
 				q.append([nb, dist + 1])
-	# Bridges and gangplanks are routes, never a crate lottery.
-	if Levels.SHAPES.has(layout):
-		for p in Levels.SHAPES[layout]["paths"]:
-			safe[Vector2i(p[0], p[1])] = true
 	# A turning wall's destination stays empty all round.
 	if not clock.is_empty():
 		for c in clock["cells"]:
@@ -837,11 +805,8 @@ func _generate_cells() -> void:
 				cells[idx(x, y)] = SOFT
 				soft_count += 1
 	# 4. The level's rule, laid after the crates so it can clear the tile it needs.
-	var rule: String = level.get("rule", "")
-	if rule != "":
-		var tiles: Array = Levels.belt_tiles() if rule == "belts" else Levels.pad_tiles()
-		var pads: Array = []
-		for e in tiles:
+	if level.get("rule", "") == "belts":
+		for e in Levels.belt_tiles():
 			var t: Vector2i = e[0]
 			if t.x < 1 or t.y < 1 or t.x > Cfg.COLS - 2 or t.y > Cfg.ROWS - 2 or cells[idx(t.x, t.y)] == HARD:
 				continue
@@ -851,27 +816,12 @@ func _generate_cells() -> void:
 			if safe.has(t):
 				continue   # a spawn keeps plain floor: no being carried off before GO
 			rules[idx(t.x, t.y)] = e[1]
-			if e[1] == Levels.PAD:
-				pads.append(t)
-		var i := 0
-		while i + 1 < pads.size():
-			pad_twin[idx(pads[i].x, pads[i].y)] = pads[i + 1]
-			pad_twin[idx(pads[i + 1].x, pads[i + 1].y)] = pads[i]
-			i += 2
 
 
 func belt_at(x: int, y: int) -> Vector2i:
 	if x < 0 or y < 0 or x >= Cfg.COLS or y >= Cfg.ROWS:
 		return Vector2i.ZERO
 	return Levels.BELT_DIR.get(rules[idx(x, y)], Vector2i.ZERO)
-
-
-## The pad a traveller on (x, y) is sent to, or (-1, -1). The overlay is the
-## truth; the pairing map only indexes it.
-func pad_target(x: int, y: int) -> Vector2i:
-	if x < 0 or y < 0 or x >= Cfg.COLS or y >= Cfg.ROWS or rules[idx(x, y)] != Levels.PAD:
-		return Vector2i(-1, -1)
-	return pad_twin.get(idx(x, y), Vector2i(-1, -1))
 
 
 func _build_crates() -> void:
@@ -909,8 +859,8 @@ func _hide_crate(ci: int) -> void:
 		_crates[e[0]].multimesh.set_instance_transform(e[1], Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0)))
 
 
-## Per-round pieces of the arena: conveyor belts, teleport pads, the clockwork
-## walls and the hazard's landing marker.
+## Per-round pieces of the arena: conveyor belts, the clockwork walls and the
+## hazard's landing marker.
 func _build_round_dressing() -> void:
 	_clock_nodes.clear()
 	_hazard_mark = null
@@ -929,27 +879,6 @@ func _build_round_dressing() -> void:
 		var mm := Art.multimesh(q, belts, [], false)
 		mm.material_override = LA.belt_mat()
 		round_root.add_child(mm)
-	var pair := 0
-	var done := {}
-	for k in pad_twin.keys():
-		if done.has(k):
-			continue
-		var twin: Vector2i = pad_twin[k]
-		done[k] = true
-		done[idx(twin.x, twin.y)] = true
-		var tint := Color("6ef0ff") if pair == 0 else Color("ff6ec0")
-		for t in [Vector2i(k % Cfg.COLS, k / Cfg.COLS), twin]:
-			var q := PlaneMesh.new()
-			q.size = Vector2(0.96, 0.96)
-			var mi := _mesh(round_root, q, LA.pad_mat(tint, pair * 1.7), tile_pos(t.x, t.y) + Vector3(0, 0.02, 0), false)
-			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			var base := CylinderMesh.new()
-			base.top_radius = 0.44
-			base.bottom_radius = 0.46
-			base.height = 0.03
-			base.radial_segments = 24
-			_mesh(round_root, base, Art.flat_mat(Color(0.08, 0.07, 0.14), 0.3, 0.6), tile_pos(t.x, t.y) + Vector3(0, 0.005, 0), false)
-		pair += 1
 	if not clock.is_empty():
 		for sec in Levels.CLOCKWORK_SECTIONS:
 			var pivot := Node3D.new()
@@ -978,7 +907,7 @@ func _build_round_dressing() -> void:
 		var hq := PlaneMesh.new()
 		hq.size = Vector2(0.95, 0.95)
 		_hazard_mark.mesh = hq
-		_hazard_mark.material_override = LA.pad_mat(Color(1.0, 0.2, 0.15), 0.0)
+		_hazard_mark.material_override = LA.ring_mat(Color(1.0, 0.2, 0.15), 0.0)
 		_hazard_mark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_hazard_mark.visible = false
 		round_root.add_child(_hazard_mark)
@@ -1112,16 +1041,6 @@ func _step_fighters(dt: float) -> void:
 			var bomb := _want_bomb
 			_want_bomb = false
 			f.step(dt, dirs[0], dirs[1], bomb)
-
-
-func on_teleport(f, from: Vector2i, to: Vector2i) -> void:
-	if brains.has(f.pid):
-		brains[f.pid].on_teleport()
-	if smoke:
-		return
-	fx.crate_dust(tile_pos(from.x, from.y))
-	fx.crate_dust(tile_pos(to.x, to.y))
-	audio.play("pickup", 0.0, 0.1)
 
 
 func try_place_bomb(f) -> bool:
@@ -1431,9 +1350,9 @@ func _settle_clockwork() -> void:
 	clock["timer"] = INF
 
 
-# ---- Hazards: the snowmen, the witch and the cannons --------------------------------
+# ---- Hazards: the Haunted House witch ----------------------------------------------
 # Port of hazardStep: each thrower throws once every HAZARD_EVERY seconds, taking
-# turns. The target is picked (and marked) at the start of the 1.5 s wind-up,
+# turns (the browser's Glacier and Pirate Fleet had several; here only the witch). The target is picked (and marked) at the start of the 1.5 s wind-up,
 # then the bomb arcs over for 1.05 s, its fuse burning all the way.
 
 func _free_hazard_tile() -> Vector2i:
@@ -1837,7 +1756,7 @@ func _autotest_tick() -> void:
 
 func _run_smoke() -> void:
 	var t := 0.0
-	while t < 1500.0 and stats["rounds"] < Levels.LIST.size():
+	while t < 1500.0 and stats["rounds"] < Levels.LIST.size() * 2:
 		sim_step(Cfg.FIXED_DT)
 		t += Cfg.FIXED_DT
 	var decided: int = stats["rounds"] - stats["draws"]

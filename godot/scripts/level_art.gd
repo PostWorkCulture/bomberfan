@@ -1,5 +1,6 @@
 extends RefCounted
-## Procedural art for the seven arenas beyond the Forest: floors, walls,
+## Procedural art for the arenas beyond the Forest (Beach, Haunted House,
+## Factory): floors, walls,
 ## crates, the ground outside and the bases under shaped decks. Everything
 ## is generated in code and cached, like art.gd. Props on the walls and the
 ## hazard throwers live in level_props.gd.
@@ -21,15 +22,6 @@ const THEMES := {
 		"border": {"style": 0, "side": Color("a8442f"), "top": Color("e07a63"), "rough": 0.8, "scale": 0.9},
 		"plinth": Color("e7cf9c"), "debris": Color("e8b84a"),
 	},
-	"glacier": {
-		"sky": Color("0d1b2e"), "fog": Color(0.16, 0.24, 0.36), "fog_begin": 18.0, "fog_end": 40.0,
-		"sun": Color(0.86, 0.92, 1.0), "sun_energy": 1.15, "sun_rot": Vector3(-48, -40, 0), "ambient": 0.6,
-		"sky_top": Color(0.2, 0.32, 0.5), "sky_horizon": Color(0.6, 0.72, 0.84),
-		"floor": {"pattern": 2, "a": Color("6fa4c9"), "b": Color("9cc6e2"), "line": Color("0f2d55"), "line_alpha": 0.24, "rough": 0.22},
-		"block": {"style": 4, "side": Color("1d3a63"), "top": Color("3f6ea8"), "rough": 0.12, "scale": 0.6},
-		"border": {"style": 4, "side": Color("122642"), "top": Color("36609e"), "rough": 0.15, "scale": 0.6},
-		"plinth": Color("dfeefa"), "debris": Color("dff0ff"),
-	},
 	"haunted": {
 		"sky": Color("0a0512"), "fog": Color(0.12, 0.06, 0.18), "fog_begin": 15.0, "fog_end": 34.0,
 		"sun": Color(0.82, 0.78, 1.0), "sun_energy": 0.85, "sun_rot": Vector3(-58, -150, 0), "ambient": 0.55,
@@ -39,15 +31,6 @@ const THEMES := {
 		"border": {"style": 1, "side": Color("8a460c"), "top": Color("c0701e"), "rough": 0.9, "scale": 1.0},
 		"plinth": Color("3a2c33"), "debris": Color("9a5cf0"),
 	},
-	"haunted-train": {
-		"sky": Color("020409"), "fog": Color(0.05, 0.08, 0.12), "fog_begin": 16.0, "fog_end": 36.0,
-		"sun": Color(0.75, 0.86, 0.96), "sun_energy": 1.0, "sun_rot": Vector3(-55, -25, 0), "ambient": 0.7,
-		"sky_top": Color(0.12, 0.16, 0.24), "sky_horizon": Color(0.3, 0.38, 0.46),
-		"floor": {"pattern": 3, "a": Color("2c3642"), "b": Color("3d4a58"), "line": Color("84b0c2"), "line_alpha": 0.17, "rough": 0.7, "plank": 0.5, "metal": 0.1},
-		"block": {"style": 2, "side": Color("3a4c5e"), "top": Color("62788c"), "rough": 0.5, "metal": 0.3, "scale": 1.0},
-		"border": {"style": 2, "side": Color("1c2630"), "top": Color("3a4b5a"), "rough": 0.5, "metal": 0.3, "scale": 1.0},
-		"plinth": Color("1b2129"), "debris": Color("607583"),
-	},
 	"factory": {
 		"sky": Color("0f1116"), "fog": Color(0.1, 0.11, 0.13), "fog_begin": 18.0, "fog_end": 40.0,
 		"sun": Color(1.0, 0.95, 0.86), "sun_energy": 1.05, "sun_rot": Vector3(-62, -30, 0), "ambient": 0.55,
@@ -56,24 +39,6 @@ const THEMES := {
 		"block": {"style": 2, "side": Color("707d8f"), "top": Color("9aa5b5"), "rough": 0.42, "metal": 0.75, "scale": 1.0},
 		"border": {"style": 5, "side": Color("3a424e"), "top": Color("ffcc1a"), "rough": 0.5, "metal": 0.6, "scale": 1.0},
 		"plinth": Color("4a4f58"), "debris": Color("e08a1e"),
-	},
-	"circuit": {
-		"sky": Color("090620"), "fog": Color(0.06, 0.04, 0.16), "fog_begin": 16.0, "fog_end": 38.0,
-		"sun": Color(0.85, 0.85, 1.0), "sun_energy": 0.85, "sun_rot": Vector3(-60, -35, 0), "ambient": 0.5,
-		"sky_top": Color(0.06, 0.04, 0.18), "sky_horizon": Color(0.2, 0.14, 0.4),
-		"floor": {"pattern": 5, "a": Color("181230"), "b": Color("221a42"), "line": Color("78f0ff"), "line_alpha": 0.3, "rough": 0.35, "metal": 0.3},
-		"block": {"style": 3, "side": Color("1d5a78"), "top": Color("2f8fb8"), "rough": 0.3, "metal": 0.2, "glow": Color("6ef0ff"), "scale": 1.0},
-		"border": {"style": 3, "side": Color("12344a"), "top": Color("1b4f66"), "rough": 0.35, "metal": 0.4, "glow": Color("6ef0ff"), "scale": 1.0},
-		"plinth": Color("120d26"), "debris": Color("ff3fa4"),
-	},
-	"pirate": {
-		"sky": Color("031b35"), "fog": Color(0.12, 0.28, 0.42), "fog_begin": 20.0, "fog_end": 46.0,
-		"sun": Color(1.0, 0.93, 0.8), "sun_energy": 1.25, "sun_rot": Vector3(-52, -36, 0), "ambient": 0.6,
-		"sky_top": Color(0.22, 0.42, 0.7), "sky_horizon": Color(0.7, 0.8, 0.86),
-		"floor": {"pattern": 3, "a": Color("8a5226"), "b": Color("a8683a"), "line": Color("ffd67e"), "line_alpha": 0.2, "rough": 0.75, "plank": 0.25},
-		"block": {"style": 6, "side": Color("254860"), "top": Color("4c8aa7"), "rough": 0.6, "scale": 1.0},
-		"border": {"style": 6, "side": Color("522713"), "top": Color("7d401c"), "rough": 0.7, "scale": 1.0},
-		"plinth": Color("3d1d10"), "debris": Color("d99a42"),
 	},
 }
 
@@ -98,14 +63,11 @@ uniform float edge_shadow = 0.0;
 uniform vec2 inner_half = vec2(6.5, 5.5);
 uniform vec2 grid = vec2(15.0, 13.0);
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
-uniform sampler2D cell_tex : repeat_enable, filter_linear_mipmap;
-uniform sampler2D mask_tex : filter_nearest;
 varying vec3 wpos;
 void vertex() { wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 void fragment() {
 	vec2 g = wpos.xz + grid * 0.5;
-	if (texture(mask_tex, g / grid).r < 0.5) discard;
 	vec2 cell = floor(g);
 	vec2 f = fract(g);
 	float n = texture(noise_tex, wpos.xz * 0.21).r;
@@ -124,14 +86,6 @@ void fragment() {
 		col *= 1.0 - 0.07 * chk;
 		col += vec3(0.55, 0.8, 0.85) * caustic * 0.45;
 		emit += vec3(0.2, 0.42, 0.5) * caustic * 0.2;
-		col = mix(col, line_col, line * line_alpha);
-	} else if (pattern == 2) {
-		// Glacial ice: pale sheet with cracks and frosted tile seams.
-		float cr = texture(cell_tex, wpos.xz * 0.35).r;
-		float crack = 1.0 - smoothstep(0.0, 0.06, cr);
-		col *= 1.0 - 0.05 * chk;
-		col = mix(col, vec3(0.92, 0.97, 1.0), smoothstep(0.5, 1.0, texture(noise_tex, wpos.xz * 0.45).r) * 0.22);
-		col = mix(col, line_col, crack * 0.35);
 		col = mix(col, line_col, line * line_alpha);
 	} else if (pattern == 3) {
 		// Planks running along x: per-board tint, staggered butt joints, grain.
@@ -161,19 +115,6 @@ void fragment() {
 		col *= 1.0 - 0.35 * smoothstep(0.44, 0.47, edge);
 		col = mix(col, line_col, line * line_alpha * 2.0);
 		r = mix(rough, 0.3, tread);
-	} else if (pattern == 5) {
-		// Circuit board: dark substrate, glowing traces and solder pads.
-		float h = hash(cell);
-		vec2 c = f - 0.5;
-		float tx = (1.0 - smoothstep(0.018, 0.03, abs(c.y - (h - 0.5) * 0.5))) * step(0.5, fract(h * 7.0));
-		float ty = (1.0 - smoothstep(0.018, 0.03, abs(c.x - (fract(h * 13.0) - 0.5) * 0.5))) * step(0.5, fract(h * 3.0));
-		float pad = 1.0 - smoothstep(0.045, 0.06, length(c - vec2((h - 0.5) * 0.5, (fract(h * 13.0) - 0.5) * 0.5)));
-		float trace = clamp(tx + ty + pad, 0.0, 1.0);
-		float pulse = 0.55 + 0.45 * sin(TIME * 1.8 + (cell.x + cell.y) * 0.7);
-		col *= 1.0 - 0.08 * chk;
-		col = mix(col, line_col * 0.35, trace * 0.6);
-		emit += line_col * (trace * 0.35 * pulse + line * line_alpha * 0.9);
-		col = mix(col, line_col, line * line_alpha);
 	}
 	if (edge_shadow > 0.0) {
 		float d = min(inner_half.x - abs(wpos.x), inner_half.y - abs(wpos.z));
@@ -192,7 +133,6 @@ shader_type spatial;
 uniform int style = 0;
 uniform vec3 side_col : source_color = vec3(0.5);
 uniform vec3 top_col : source_color = vec3(0.7);
-uniform vec3 glow_col : source_color = vec3(0.0);
 uniform float rough = 0.8;
 uniform float metal = 0.0;
 uniform float scale = 1.0;
@@ -219,9 +159,6 @@ void fragment() {
 	col *= 0.82 + 0.36 * n;
 	float r = rough;
 	float m = metal;
-	vec3 emit = vec3(0.0);
-	vec3 ap = abs(lpos);
-	float edges = step(0.38, ap.x) + step(0.38, ap.z) + step(0.38, abs(lpos.y));
 	if (style == 0) {
 		// Coral / porous rock: pitted with cells.
 		float c = texture(cell_tex, uv * 1.1 * scale).r;
@@ -246,22 +183,6 @@ void fragment() {
 		col = mix(col, top_col * 1.3, rivet * 0.8);
 		col *= 0.88 + 0.12 * n2;
 		r = mix(rough, rough + 0.3, n2 * 0.6);
-	} else if (style == 3) {
-		// Dark tech block with glowing edges.
-		float e = step(1.5, edges);
-		float pulse = 0.75 + 0.25 * sin(TIME * 2.0 + wpos.x * 0.6 + wpos.z * 0.4);
-		col = mix(col * 0.55, glow_col, e * 0.6);
-		emit = glow_col * e * 0.9 * pulse;
-		float grid = smoothstep(0.47, 0.5, abs(fract(luv.x * 4.0) - 0.5)) + smoothstep(0.47, 0.5, abs(fract(luv.y * 4.0) - 0.5));
-		emit += glow_col * clamp(grid, 0.0, 1.0) * 0.12 * top;
-	} else if (style == 4) {
-		// Ice: glassy, with frosted cracks and a cold rim.
-		float c = texture(cell_tex, uv * 0.9 * scale).r;
-		float crack = 1.0 - smoothstep(0.0, 0.05, c);
-		col = mix(col, vec3(0.75, 0.9, 1.0), crack * 0.5 + top * 0.15);
-		float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
-		emit = mix(side_col, vec3(0.6, 0.85, 1.0), 0.6) * fres * 0.45;
-		r = rough + crack * 0.4;
 	} else if (style == 5) {
 		// Steel with a hazard-striped cap.
 		float stripe = step(0.5, fract((wpos.x + wpos.z) * 2.2));
@@ -271,19 +192,10 @@ void fragment() {
 		col *= 1.0 - 0.3 * smoothstep(0.46, 0.5, max(abs(pf.x - 0.5), abs(pf.y - 0.5))) * (1.0 - top);
 		m = mix(metal, 0.1, top);
 		r = mix(rough, 0.6, top);
-	} else if (style == 6) {
-		// Painted planking with dark seams.
-		float v = luv.y * 5.0;
-		float seam = smoothstep(0.42, 0.5, abs(fract(v) - 0.5));
-		float bh = hash(vec2(floor(v), floor(wpos.x * 0.5 + wpos.z * 0.5)));
-		float grain = texture(noise_tex, vec2(uv.x * 0.4, uv.y * 6.0)).r;
-		col *= (0.85 + 0.2 * bh) * (0.88 + 0.2 * grain);
-		col *= 1.0 - 0.5 * seam * (1.0 - top);
 	}
 	ALBEDO = col;
 	ROUGHNESS = clamp(r, 0.04, 1.0);
 	METALLIC = m;
-	EMISSION = emit;
 }
 """
 
@@ -363,7 +275,8 @@ void fragment() {
 }
 """
 
-const PAD_SHADER := """
+## A pulsing ring on the floor: where a hazard's bomb is about to land.
+const RING_SHADER := """
 shader_type spatial;
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never;
 uniform vec3 tint : source_color = vec3(0.43, 0.94, 1.0);
@@ -415,7 +328,7 @@ static func _shader(key: String, code: String) -> Shader:
 	return s
 
 
-static func floor_mat(id: String, mask: Texture2D, edge_shadow: float) -> ShaderMaterial:
+static func floor_mat(id: String, edge_shadow: float) -> ShaderMaterial:
 	var f: Dictionary = THEMES[id]["floor"]
 	var m := ShaderMaterial.new()
 	m.shader = _shader("floor", FLOOR_SHADER)
@@ -431,8 +344,6 @@ static func floor_mat(id: String, mask: Texture2D, edge_shadow: float) -> Shader
 	m.set_shader_parameter("inner_half", Vector2((Cfg.COLS - 2) * 0.5, (Cfg.ROWS - 2) * 0.5))
 	m.set_shader_parameter("grid", Vector2(Cfg.COLS, Cfg.ROWS))
 	m.set_shader_parameter("noise_tex", noise_tex())
-	m.set_shader_parameter("cell_tex", cell_tex())
-	m.set_shader_parameter("mask_tex", mask)
 	return m
 
 
@@ -445,7 +356,6 @@ static func block_mat(key: String, spec: Dictionary) -> ShaderMaterial:
 	m.set_shader_parameter("style", spec.get("style", 0))
 	m.set_shader_parameter("side_col", spec["side"])
 	m.set_shader_parameter("top_col", spec["top"])
-	m.set_shader_parameter("glow_col", spec.get("glow", Color.BLACK))
 	m.set_shader_parameter("rough", spec.get("rough", 0.8))
 	m.set_shader_parameter("metal", spec.get("metal", 0.0))
 	m.set_shader_parameter("scale", spec.get("scale", 1.0))
@@ -493,9 +403,9 @@ static func belt_mat() -> ShaderMaterial:
 	return m
 
 
-static func pad_mat(tint: Color, phase: float) -> ShaderMaterial:
+static func ring_mat(tint: Color, phase: float) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
-	m.shader = _shader("pad", PAD_SHADER)
+	m.shader = _shader("ring", RING_SHADER)
 	m.set_shader_parameter("tint", tint)
 	m.set_shader_parameter("phase", phase)
 	return m
@@ -617,8 +527,6 @@ static func pillar_mesh(id: String) -> ArrayMesh:
 	match spec["style"]:
 		0:
 			m = Art.rounded_box(Vector3(0.94, 0.98, 0.94), 0.2, 4, 0.06, 17)
-		4:
-			m = Art.rounded_box(Vector3(0.92, 1.0, 0.92), 0.06, 3, 0.02, 23)
 		_:
 			m = Art.rounded_box(Vector3(0.95, 0.98, 0.95), 0.05, 3)
 	m.surface_set_material(0, block_mat(id + "_pillar", spec))
@@ -635,8 +543,6 @@ static func border_mesh(id: String, variant: int) -> ArrayMesh:
 	match spec["style"]:
 		0:
 			m = Art.rounded_box(Vector3(1.04, 1.06, 1.04), 0.26, 4, 0.09, 130 + variant * 11)
-		4:
-			m = Art.rounded_box(Vector3(1.0, 1.08, 1.0), 0.08, 3, 0.03, 140 + variant)
 		_:
 			m = Art.rounded_box(Vector3(1.0, 1.04, 1.0), 0.04, 3)
 	m.surface_set_material(0, block_mat(id + "_border", spec))
@@ -698,18 +604,10 @@ static func crate_meshes(id: String) -> Array:
 	match id:
 		"beach":
 			out = [plank_crate("beach", Color("ffd35c"), Color("f0ad2b"), Color("c2810f"))]
-		"glacier":
-			out = [ice_block()]
 		"haunted":
 			out = [casket()]
-		"haunted-train":
-			out = [trunk(Color("3c4c5c"), Color("9ab4c4")), trunk(Color("5a3c2a"), Color("c09a5a"))]
 		"factory":
 			out = [pallet()]
-		"circuit":
-			out = [chip_block()]
-		"pirate":
-			out = [plank_crate("pirate", Color("d99a42"), Color("b7782e"), Color("3d1d10")), barrel()]
 	_cache[key] = out
 	return out
 
@@ -743,19 +641,6 @@ static func plank_crate(key: String, light: Color, mid: Color, edge: Color) -> A
 	return build(parts, vmat("crate_" + key, 0.85, 0.0, 0.35))
 
 
-static func ice_block() -> ArrayMesh:
-	var m := Art.rounded_box(Vector3(0.86, 0.82, 0.86), 0.1, 3, 0.025, 55)
-	var arr := m.surface_get_arrays(0)
-	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-	for i in verts.size():
-		verts[i].y += 0.41
-	arr[Mesh.ARRAY_VERTEX] = verts
-	var out := ArrayMesh.new()
-	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
-	out.surface_set_material(0, block_mat("ice_crate", {"style": 4, "side": Color("cfe4f7"), "top": Color("f2f9ff"), "rough": 0.1, "scale": 1.3}))
-	return out
-
-
 ## A purple casket: panelled box, a stepped lid with a brass cross, brass corners.
 static func casket() -> ArrayMesh:
 	var purple := Color("9a4ae8")
@@ -781,21 +666,6 @@ static func casket() -> ArrayMesh:
 	return build(parts, vmat("casket", 0.55, 0.0, 0.3))
 
 
-static func trunk(body: Color, trim: Color) -> ArrayMesh:
-	var m := metal(trim)
-	var parts: Array = [
-		[box(Vector3(0.86, 0.66, 0.78), 0.05), xf(Vector3(0, 0.34, 0)), body],
-		[box(Vector3(0.88, 0.08, 0.8), 0.02), xf(Vector3(0, 0.56, 0)), body.darkened(0.3)],
-	]
-	for a in [-1.0, 1.0]:
-		for b in [-1.0, 1.0]:
-			parts.append([box(Vector3(0.1, 0.7, 0.1), 0.02), xf(Vector3(a * 0.41, 0.35, b * 0.37)), m])
-		parts.append([box(Vector3(0.06, 0.68, 0.8)), xf(Vector3(a * 0.22, 0.35, 0)), m.darkened(0.2)])
-	parts.append([box(Vector3(0.14, 0.12, 0.04), 0.02), xf(Vector3(0, 0.5, 0.4)), metal(Color("c9a14a"))])
-	parts.append([box(Vector3(0.3, 0.05, 0.08), 0.02), xf(Vector3(0, 0.71, 0)), Color("2a1c14")])
-	return build(parts, vmat("trunk", 0.7, 0.0, 0.25))
-
-
 static func pallet() -> ArrayMesh:
 	var wood := Color("b58a52")
 	var box_c := Color("e08a1e")
@@ -814,34 +684,3 @@ static func pallet() -> ArrayMesh:
 			parts.append([box(Vector3(0.4, hh, 0.4), 0.025), xf(Vector3(a * 0.21, 0.14 + hh * 0.5, b * 0.21)), c])
 			parts.append([box(Vector3(0.41, 0.03, 0.1)), xf(Vector3(a * 0.21, 0.14 + hh + 0.005, b * 0.21)), tape])
 	return build(parts, vmat("pallet", 0.8, 0.0, 0.3))
-
-
-static func chip_block() -> ArrayMesh:
-	var m := Art.rounded_box(Vector3(0.86, 0.8, 0.86), 0.06, 2)
-	var arr := m.surface_get_arrays(0)
-	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-	for i in verts.size():
-		verts[i].y += 0.4
-	arr[Mesh.ARRAY_VERTEX] = verts
-	var out := ArrayMesh.new()
-	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
-	out.surface_set_material(0, block_mat("chip_crate", {"style": 3, "side": Color("d41f80"), "top": Color("ff3fa4"),
-		"glow": Color("ff6ec0"), "rough": 0.3, "metal": 0.2}))
-	return out
-
-
-static func barrel() -> ArrayMesh:
-	var wood := Color("9a5a28")
-	var wood2 := Color("b77a40")
-	var hoop := metal(Color("4a4640"))
-	var parts: Array = [
-		[cyl(0.37, 0.31, 0.26, 16), xf(Vector3(0, 0.13, 0)), wood],
-		[cyl(0.37, 0.37, 0.26, 16), xf(Vector3(0, 0.39, 0)), wood2],
-		[cyl(0.31, 0.37, 0.26, 16), xf(Vector3(0, 0.65, 0)), wood],
-		[cyl(0.3, 0.3, 0.02, 16), xf(Vector3(0, 0.785, 0)), Color("c48a4e")],
-		[cyl(0.33, 0.33, 0.05, 16), xf(Vector3(0, 0.08, 0)), hoop],
-		[cyl(0.33, 0.33, 0.05, 16), xf(Vector3(0, 0.72, 0)), hoop],
-		[cyl(0.38, 0.38, 0.05, 16), xf(Vector3(0, 0.39, 0)), hoop],
-		[cyl(0.05, 0.05, 0.03, 8), xf(Vector3(0.15, 0.8, 0.05)), Color("3a2410")],
-	]
-	return build(parts, vmat("barrel", 0.8, 0.0, 0.35))

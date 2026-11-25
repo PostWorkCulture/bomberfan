@@ -24,7 +24,7 @@ os.makedirs(OUT, exist_ok=True)
 # ---- scene -------------------------------------------------------------------
 
 def reset():
-    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.wm.read_homefile(use_empty=True, use_factory_startup=True)
     sc = bpy.context.scene
     sc.render.engine = 'BLENDER_EEVEE'
     sc.render.resolution_x = 1100
@@ -61,7 +61,7 @@ _mats = {}
 
 
 def mat(name, color, rough=0.35, metal=0.0, coat=0.0, emit=None, emit_strength=0.0, transmission=0.0, alpha=1.0):
-    key = (name, tuple(round(c, 3) for c in color), rough, metal, coat, emit, emit_strength, transmission)
+    key = (name, tuple(round(c, 3) for c in color), rough, metal, coat, emit, emit_strength, transmission, alpha)
     if key in _mats:
         return _mats[key]
     m = bpy.data.materials.new(name)
@@ -78,6 +78,13 @@ def mat(name, color, rough=0.35, metal=0.0, coat=0.0, emit=None, emit_strength=0
     if transmission:
         set_input(b, ['Transmission Weight', 'Transmission'], transmission)
         set_input(b, 'IOR', 1.45)
+    if alpha < 1.0:
+        set_input(b, 'Alpha', alpha)
+        try:
+            m.surface_render_method = 'BLENDED'
+            m.use_transparency_overlap = True
+        except Exception:
+            m.blend_method = 'BLEND'
     _mats[key] = m
     return m
 
@@ -190,13 +197,30 @@ def cyl(name, r1, r2, h, material, parent, loc=(0, 0, 0), rot=(0, 0, 0), seg=40,
     return place(ob, loc, rot)
 
 
-def torus(name, R, r, material, parent, loc=(0, 0, 0), rot=(0, 0, 0), scale=(1, 1, 1), major=48, minor=16):
-    bpy.ops.mesh.primitive_torus_add(major_segments=major, minor_segments=minor, major_radius=R, minor_radius=r)
-    ob = bpy.context.active_object
-    ob.name = name
-    ob.data.materials.append(material)
-    ob.data.polygons.foreach_set('use_smooth', [True] * len(ob.data.polygons))
-    ob.parent = parent
+def torus(name, R, r, material, parent, loc=(0, 0, 0), rot=(0, 0, 0), scale=(1, 1, 1), major=48, minor=16, arc=1.0):
+    """Built with bmesh rather than an operator, so it needs no UI context.
+    `arc` < 1 makes an open bend (a headband, a smile) starting at +X."""
+    bm = bmesh.new()
+    rings = []
+    closed = arc >= 1.0
+    n = major if closed else major + 1
+    for i in range(n):
+        a = 2 * math.pi * arc * i / major
+        ring = []
+        for j in range(minor):
+            b = 2 * math.pi * j / minor
+            d = R + r * math.cos(b)
+            ring.append(bm.verts.new((d * math.cos(a), d * math.sin(a), r * math.sin(b))))
+        rings.append(ring)
+    for i in range(major if closed else major):
+        for j in range(minor):
+            a0, a1 = rings[i], rings[(i + 1) % n]
+            bm.faces.new((a0[j], a1[j], a1[(j + 1) % minor], a0[(j + 1) % minor]))
+    if not closed:
+        for ring in (rings[0], rings[-1]):
+            bm.faces.new(ring)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    ob = _obj(name, bm, material, parent)
     return place(ob, loc, rot, scale)
 
 
@@ -293,12 +317,13 @@ def bot_sparky():
     box('Head', (0.64, 0.5, 0.48), yellow, p, (0, 0, 0.98), r=0.11)
     box('Bezel', (0.54, 0.06, 0.38), trim, p, (0, -0.24, 0.98), r=0.06)
     sphere('Screen', 0.3, SCREEN, p, (0, -0.205, 0.98), scale=(0.82, 0.16, 0.56))
-    mirror(lambda s: box('Eye', (0.075, 0.03, 0.11), eye, p, (s * 0.1, -0.262, 1.01), r=0.018))
-    torus('Smile', 0.07, 0.012, eye, p, (0, -0.262, 0.94), rot=(math.pi / 2, 0, 0), scale=(1, 1, 1))
-    box('SmileMask', (0.2, 0.05, 0.07), SCREEN, p, (0, -0.268, 0.975), r=0.01)
+    mirror(lambda s: sphere('Eye', 0.068, eye, p, (s * 0.105, -0.262, 1.03), scale=(0.75, 0.25, 1.1)))
+    mirror(lambda s: sphere('EyeShine', 0.014, glow('#ffffff', 12), p, (s * 0.105 - 0.016, -0.28, 1.07)))
+    torus('Smile', 0.075, 0.014, eye, p, (0, -0.264, 0.95), rot=(math.pi / 2, math.pi, 0), arc=0.5, major=24, minor=10)
+    mirror(lambda s: sphere('Cheek', 0.024, glow('#ff7aa8', 3), p, (s * 0.17, -0.252, 0.95), scale=(1.2, 0.3, 0.7)))
     mirror(lambda s: cyl('Knob', 0.035, 0.035, 0.04, CHROME, p, (0.33 * s, -0.12, 0.88), rot=(0, math.pi / 2, 0)))
     # headphones
-    torus('Band', 0.34, 0.025, trim, p, (0, 0.02, 1.0), rot=(0, math.pi / 2, 0), scale=(1, 1, 1))
+    torus('Band', 0.37, 0.028, trim, p, (0, 0.02, 0.98), rot=(math.pi / 2, 0, 0), arc=0.5)
     mirror(lambda s: cyl('Cup', 0.11, 0.11, 0.08, trim, p, (0.36 * s, 0.02, 0.98), rot=(0, math.pi / 2, 0), bev=0.025))
     mirror(lambda s: cyl('CupPad', 0.075, 0.075, 0.02, yellow, p, (0.405 * s, 0.02, 0.98), rot=(0, math.pi / 2, 0)))
     # antennae
@@ -383,8 +408,8 @@ def bot_volt():
     cyan = plastic('#1fc7e8')
     visor_glass = mat('visor', C('#04070c'), 0.04, 0.0, 1.0)
     sphere('Helmet', 0.27, WHITE, p, (0, 0, 1.0), scale=(0.92, 1.0, 1.05))
-    sphere('Visor', 0.272, visor_glass, p, (0, -0.035, 0.99), scale=(0.9, 0.9, 0.5))
-    box('LEDStrip', (0.3, 0.02, 0.025), glow('#5ff3ff', 10), p, (0, -0.255, 1.0), r=0.01)
+    sphere('Visor', 0.272, visor_glass, p, (0, -0.04, 0.98), scale=(0.92, 0.92, 0.62))
+    mirror(lambda s: box('EyeLED', (0.075, 0.02, 0.045), glow('#5ff3ff', 10), p, (0.075 * s, -0.285, 1.0), rot=(0, 0, -0.18 * s), r=0.018))
     box('Fin', (0.035, 0.24, 0.1), cyan, p, (0, 0.04, 1.27), r=0.015)
     mirror(lambda s: cyl('EarPod', 0.06, 0.06, 0.05, cyan, p, (0.245 * s, 0, 1.0), rot=(0, math.pi / 2, 0), bev=0.015))
     cyl('Neck', 0.05, 0.06, 0.08, DARK, p, (0, 0, 0.76))
@@ -444,23 +469,24 @@ def bot_pixel():
     p = root('Pixel')
     green = plastic('#4cd964')
     eye = glow('#f6fffb', 7)
-    squircle('Head', (0.62, 0.56, 0.54), green, p, (0, 0, 0.88))
-    squircle('Screen', (0.48, 0.05, 0.36), SCREEN, p, (0, -0.255, 0.88), crease=0.8)
+    box('Head', (0.62, 0.54, 0.52), green, p, (0, 0, 0.9), r=0.16, seg=8)
+    box('Screen', (0.48, 0.05, 0.34), SCREEN, p, (0, -0.255, 0.9), r=0.07, seg=6)
     for s in (-1, 1):
-        squircle('Eye', (0.1, 0.03, 0.15), eye, p, (0.11 * s, -0.29, 0.9), crease=0.9)
-        sphere('Blush', 0.03, glow('#ff7aa8', 3), p, (0.18 * s, -0.285, 0.81), scale=(1.2, 0.3, 0.6))
-        cyl('Ear', 0.05, 0.05, 0.08, DARK, p, (0.33 * s, 0, 0.95), rot=(0, math.pi / 2, 0), bev=0.015)
-        cyl('EarNub', 0.02, 0.012, 0.1, CHROME, p, (0.33 * s, 0, 1.06), bev=0)
-        sphere('EarLight', 0.022, glow('#ffe15a', 8), p, (0.33 * s, 0, 1.12))
-    torus('Mouth', 0.035, 0.01, eye, p, (0, -0.29, 0.79), rot=(math.pi / 2, 0, 0))
-    box('MouthCut', (0.1, 0.04, 0.04), SCREEN, p, (0, -0.292, 0.805), r=0.005)
-    squircle('Body', (0.3, 0.24, 0.24), DARK, p, (0, 0, 0.45))
-    box('Belly', (0.16, 0.02, 0.1), green, p, (0, -0.12, 0.45), r=0.02)
+        box('Eye', (0.085, 0.02, 0.13), eye, p, (0.11 * s, -0.284, 0.93), r=0.035, seg=4)
+        sphere('Blush', 0.028, glow('#ff7aa8', 3), p, (0.18 * s, -0.282, 0.83), scale=(1.3, 0.25, 0.6))
+        cyl('Ear', 0.055, 0.055, 0.08, DARK, p, (0.33 * s, 0, 0.95), rot=(0, math.pi / 2, 0), bev=0.015)
+        cyl('EarNub', 0.018, 0.012, 0.12, CHROME, p, (0.33 * s, 0, 1.06), bev=0)
+        sphere('EarLight', 0.024, glow('#ffe15a', 8), p, (0.33 * s, 0, 1.13))
+    torus('Mouth', 0.045, 0.011, eye, p, (0, -0.282, 0.83), rot=(math.pi / 2, math.pi, 0), arc=0.5, major=24, minor=10)
+    box('Neck', (0.14, 0.12, 0.08), DARK, p, (0, 0, 0.62), r=0.03)
+    box('Body', (0.32, 0.24, 0.26), DARK, p, (0, 0, 0.46), r=0.09, seg=6)
+    box('Belly', (0.18, 0.02, 0.11), green, p, (0, -0.122, 0.46), r=0.03)
+    sphere('BellyLight', 0.022, glow('#ffe15a', 6), p, (0, -0.135, 0.46))
     for s in (-1, 1):
-        sphere('Hand', 0.06, green, p, (0.22 * s, -0.02, 0.42))
-        cyl('Arm', 0.025, 0.025, 0.08, DARK, p, (0.17 * s, 0, 0.46), rot=(0, math.pi / 2, 0), bev=0)
-        cyl('Leg', 0.035, 0.035, 0.14, DARK, p, (0.08 * s, 0, 0.26), bev=0)
-        squircle('Foot', (0.17, 0.25, 0.12), green, p, (0.09 * s, -0.04, 0.07), crease=0.7)
+        sphere('Hand', 0.065, green, p, (0.24 * s, -0.02, 0.42))
+        cyl('Arm', 0.026, 0.026, 0.1, GUNMETAL, p, (0.18 * s, 0, 0.46), rot=(0, math.pi / 2, 0), bev=0)
+        cyl('Leg', 0.035, 0.035, 0.16, GUNMETAL, p, (0.08 * s, 0, 0.25), bev=0)
+        box('Foot', (0.17, 0.25, 0.12), green, p, (0.09 * s, -0.04, 0.07), r=0.05, seg=5)
     return p
 
 
@@ -493,11 +519,15 @@ def bot_mortar():
 def bot_nova():
     p = root('Nova')
     orange = plastic('#ff8a00')
-    glass = mat('bowl_glass', C('#cfe9ff'), 0.02, 0.0, 0.0, None, 0.0, 1.0)
+    glass = mat('bowl_glass', C('#dff2ff'), 0.02, 0.0, 1.0, None, 0.0, 0.0, 0.16)
     sphere('Bowl', 0.27, glass, p, (0, 0, 1.0))
-    sphere('Core', 0.1, glow('#ff9a2a', 9), p, (0, 0.02, 0.97))
-    box('FaceBar', (0.2, 0.02, 0.06), mat('faceplate', C('#11141a'), 0.2, 0.6), p, (0, -0.1, 1.0), r=0.02)
-    mirror(lambda s: sphere('Eye', 0.022, glow('#7dfcff', 10), p, (0.05 * s, -0.115, 1.0)))
+    # a little round robot head floating inside the bowl
+    sphere('InnerHead', 0.16, mat('inner_head', C('#2a2f3a'), 0.25, 0.6), p, (0, 0.0, 0.98), scale=(1.05, 1.0, 0.95))
+    box('FaceBar', (0.22, 0.03, 0.09), mat('faceplate', C('#0b0d12'), 0.1, 0.2, 1.0), p, (0, -0.14, 0.99), r=0.035)
+    mirror(lambda s: sphere('Eye', 0.026, glow('#7dfcff', 10), p, (0.055 * s, -0.158, 0.995), scale=(1, 0.5, 1.2)))
+    cyl('Antenna', 0.01, 0.006, 0.12, GUNMETAL, p, (0.0, 0.0, 1.17), bev=0)
+    sphere('AntennaTip', 0.022, glow('#ff9a2a', 9), p, (0, 0, 1.23))
+    sphere('Core', 0.05, glow('#ff9a2a', 9), p, (0, -0.16, 0.66), scale=(1, 0.4, 1))
     torus('Collar', 0.22, 0.05, WHITE, p, (0, 0, 0.77))
     torus('CollarTrim', 0.25, 0.015, orange, p, (0, 0, 0.75))
     box('Torso', (0.42, 0.32, 0.36), WHITE, p, (0, 0, 0.56), r=0.12)
@@ -534,15 +564,25 @@ BOTS = [
 
 def studio():
     sc = bpy.context.scene
-    floor_m = mat('floor', C('#2a2e36'), 0.55)
+    # one seamless cyclorama: floor that bends up into the back wall, so
+    # there is no horizon line behind the model
+    cyc_m = mat('cyc', C('#3a404b'), 0.6)
     bm = bmesh.new()
-    bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=12)
-    _obj('Floor', bm, floor_m, None, smooth=False)
-    # curved backdrop
-    bm = bmesh.new()
-    bmesh.ops.create_cone(bm, cap_ends=False, segments=64, radius1=6.5, radius2=6.5, depth=6)
-    back = _obj('Backdrop', bm, mat('backdrop', C('#1d2129'), 0.7), None)
-    back.location = (0, 2.0, 3)
+    prof = [(-9.0, 0.0), (1.0, 0.0)]
+    for i in range(1, 13):
+        a = (math.pi / 2) * i / 12
+        prof.append((1.0 + 3.0 * math.sin(a), 3.0 - 3.0 * math.cos(a)))
+    prof.append((4.0, 10.0))
+    rows = []
+    for x in (-12.0, 12.0):
+        rows.append([bm.verts.new((x, y, z)) for y, z in prof])
+    for i in range(len(prof) - 1):
+        bm.faces.new((rows[0][i], rows[0][i + 1], rows[1][i + 1], rows[1][i]))
+    bm.normal_update()
+    bm.faces.ensure_lookup_table()
+    if bm.faces[0].normal.z < 0:   # floor must face up, the wall towards the camera
+        bmesh.ops.reverse_faces(bm, faces=bm.faces)
+    _obj('Cyclorama', bm, cyc_m, None)
 
     def light(name, kind, loc, energy, color, size=2.0, target=(0, 0, 0.6)):
         ld = bpy.data.lights.new(name, kind)

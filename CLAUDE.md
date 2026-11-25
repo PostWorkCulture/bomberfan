@@ -31,9 +31,9 @@ Bomber Fan is a 3D bomber-arena game (Bomberman-style: grid arena, crates, bombs
 ├── play/                 Godot web build — written ONLY by the godot-build workflow
 ├── .github/workflows/    godot-build.yml (check + export + publish play/)
 ├── tests/                standalone HTML review pages + preview-server.py
-├── tools/                render_sfx.py (sound effects), render_music.py (music loops)
-│   └── legacy-patches/   retired one-off patch scripts/workflows (not run by CI)
-└── archive/              unused files kept for reference only — never load from here
+├── tools/                render_sfx.py (sound effects), render_music.py (music loops),
+│                         brand_refresh.py (regenerate PWA icons from the logo)
+└── build/                local scratch, git-ignored: music previews, Blender concept renders
 ```
 
 ## Naming conventions
@@ -85,4 +85,4 @@ A scheduled task runs each evening (UK time). It reviews that day's commits, rec
 - Browser build: playable, live on Pages (build `standard-arenas-review-20260924`).
 - Godot rebuild: vertical slice playable (Forest, you vs 3 bots, Bomb/Fire/Speed as 3D pick-ups) with the full Forest art, effects and v2 sound pass, raised arena edge, sudden death (walls closing in) and Arcade Drive round music, at https://postworkculture.github.io/bomberfan/play/. See DESIGN.md "Not yet ported" for what's next.
 - Waiting on Pete: bomber-bot roster designs (in code behind `USE_BOTS = false`; eight Blender concepts on branch `art/bot-concepts`).
-- 2026-11-24: repo tidied (see `DESIGN.md` change log).
+- 2026-11-25: repo tidied again — `archive/` and retired patch scripts removed (still in git history; see `DESIGN.md` change log).

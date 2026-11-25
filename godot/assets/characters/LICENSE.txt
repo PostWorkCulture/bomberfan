@@ -7,3 +7,7 @@ https://creativecommons.org/publicdomain/zero/1.0/
 
 The colour-enhanced texture variants and Bomberfan integration are part of
 this project. No attribution is required by CC0; this notice records provenance.
+
+sparky.glb, rivet.glb, pixel.glb
+Original Bomber Fan bomber-bots, modelled in Blender by
+tools/blender/bomber_bots.py (branch art/bot-concepts) and exported as glTF.

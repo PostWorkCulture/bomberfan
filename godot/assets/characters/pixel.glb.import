@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://iv66k5ata3xw"
-path="res://.godot/imported/orc.gltf-88bdf4bacbbb9a017d5243d49076917f.scn"
+uid="uid://r1uea4eoedmf"
+path="res://.godot/imported/pixel.glb-d0913ede9a87aeafba2f5ff25f38c9bc.scn"
 
 [deps]
 
-source_file="res://assets/characters/orc.gltf"
-dest_files=["res://.godot/imported/orc.gltf-88bdf4bacbbb9a017d5243d49076917f.scn"]
+source_file="res://assets/characters/pixel.glb"
+dest_files=["res://.godot/imported/pixel.glb-d0913ede9a87aeafba2f5ff25f38c9bc.scn"]
 
 [params]
 

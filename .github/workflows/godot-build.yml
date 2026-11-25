@@ -95,9 +95,9 @@ jobs:
           # Every arena in turn, two seconds each: one frame from each.
           mkdir -p tour
           xvfb-run -s "-screen 0 1280x720x24" ~/godot-bin/godot --path godot --rendering-driver opengl3 \
-            --resolution 1280x720 --fixed-fps 30 --write-movie "$GITHUB_WORKSPACE/tour/t.png" --quit-after 490 -- --tour 2>&1 | tail -3
+            --resolution 1280x720 --fixed-fps 30 --write-movie "$GITHUB_WORKSPACE/tour/t.png" --quit-after 250 -- --tour 2>&1 | tail -3
           i=0
-          for lv in forest beach glacier haunted haunted-train factory circuit pirate; do
+          for lv in forest beach haunted factory; do
             cp "tour/t$(printf '%08d' $((i * 60 + 51))).png" "pick/arena-$lv.png" 2>/dev/null || true
             i=$((i + 1))
           done

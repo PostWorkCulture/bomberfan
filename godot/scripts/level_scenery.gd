@@ -4,7 +4,6 @@ extends RefCounted
 
 const Art := preload("res://scripts/art.gd")
 const LA := preload("res://scripts/level_art.gd")
-const Levels := preload("res://scripts/levels.gd")
 const Cfg := preload("res://scripts/config.gd")
 
 const GROUND_Y := -0.34
@@ -12,22 +11,15 @@ const GROUND_Y := -0.34
 static var _cache := {}
 
 
-## voids/hard: PackedByteArrays over the grid. skip: tiles whose walls are drawn
+## hard: a PackedByteArray over the grid. skip: tiles whose walls are drawn
 ## elsewhere (the clockwork sections).
-static func build(root: Node3D, level: Dictionary, hard: PackedByteArray, voids: PackedByteArray, skip: Dictionary) -> void:
+static func build(root: Node3D, level: Dictionary, hard: PackedByteArray, skip: Dictionary) -> void:
 	var id: String = level["id"]
-	var shaped: bool = Levels.SHAPES.has(level.get("layout", ""))
-	# Floor, with void tiles cut out of it.
-	var img := Image.create(Cfg.COLS, Cfg.ROWS, false, Image.FORMAT_L8)
-	for y in Cfg.ROWS:
-		for x in Cfg.COLS:
-			img.set_pixel(x, y, Color(0, 0, 0) if voids[y * Cfg.COLS + x] == 1 else Color(1, 1, 1))
-	var mask := ImageTexture.create_from_image(img)
 	var fm := PlaneMesh.new()
 	fm.size = Vector2(Cfg.COLS, Cfg.ROWS)
 	var floor_mi := MeshInstance3D.new()
 	floor_mi.mesh = fm
-	floor_mi.material_override = LA.floor_mat(id, mask, 0.0 if shaped else 0.38)
+	floor_mi.material_override = LA.floor_mat(id, 0.38)
 	floor_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(floor_mi)
 	# Walls
@@ -38,13 +30,13 @@ static func build(root: Node3D, level: Dictionary, hard: PackedByteArray, voids:
 	for y in Cfg.ROWS:
 		for x in Cfg.COLS:
 			var i := y * Cfg.COLS + x
-			if hard[i] == 0 or voids[i] == 1 or skip.has(Vector2i(x, y)):
+			if hard[i] == 0 or skip.has(Vector2i(x, y)):
 				continue
 			var p := tile_pos(x, y)
-			var edge: bool = not shaped and (x == 0 or y == 0 or x == Cfg.COLS - 1 or y == Cfg.ROWS - 1)
+			var edge: bool = x == 0 or y == 0 or x == Cfg.COLS - 1 or y == Cfg.ROWS - 1
 			if edge:
 				var b := Basis(Vector3.UP, r.randi_range(0, 3) * PI / 2.0)
-				if THEMES_ROUGH.has(id):
+				if id == "beach":   # coral rocks sit any which way
 					b = Basis(Vector3.UP, r.randf() * TAU).scaled(Vector3(1.0, r.randf_range(0.94, 1.12), 1.0))
 				borders[r.randi_range(0, 2)].append(Transform3D(b, p + Vector3(0, 0.52, 0)))
 			else:
@@ -54,43 +46,23 @@ static func build(root: Node3D, level: Dictionary, hard: PackedByteArray, voids:
 	for v in 3:
 		if not borders[v].is_empty():
 			root.add_child(Art.multimesh(LA.border_mesh(id, v), borders[v]))
-	# Base and surroundings
-	if shaped:
-		match level["layout"]:
-			"twin-islands":
-				_glacier_base(root)
-			"pirate-fleet":
-				_pirate_base(root)
-			"haunted-train":
-				_train_base(root)
-	else:
-		var th: Dictionary = LA.theme(id)
-		var base := Vector3(Cfg.COLS + 0.36, -GROUND_Y + 0.02, Cfg.ROWS + 0.36)
-		var pm := Art.rounded_box(base, 0.07, 6, 0.0)
-		pm.surface_set_material(0, LA.block_mat(id + "_plinth", {"style": 0 if id == "beach" else (2 if id in ["factory", "circuit"] else 1),
-			"side": th["plinth"], "top": th["plinth"].lightened(0.2), "rough": 0.85, "metal": 0.3 if id in ["factory", "circuit"] else 0.0,
-			"glow": Color("6ef0ff") if id == "circuit" else Color.BLACK}))
-		var pmi := MeshInstance3D.new()
-		pmi.mesh = pm
-		pmi.position = Vector3(0, GROUND_Y * 0.5 - 0.012, 0)
-		root.add_child(pmi)
+	# The raised base the arena stands on, then the world around it
+	var th: Dictionary = LA.theme(id)
+	var base := Vector3(Cfg.COLS + 0.36, -GROUND_Y + 0.02, Cfg.ROWS + 0.36)
+	var pm := Art.rounded_box(base, 0.07, 6, 0.0)
+	pm.surface_set_material(0, LA.block_mat(id + "_plinth", {"style": {"beach": 0, "factory": 2}.get(id, 1),
+		"side": th["plinth"], "top": th["plinth"].lightened(0.2), "rough": 0.85, "metal": 0.3 if id == "factory" else 0.0}))
+	var pmi := MeshInstance3D.new()
+	pmi.mesh = pm
+	pmi.position = Vector3(0, GROUND_Y * 0.5 - 0.012, 0)
+	root.add_child(pmi)
 	match id:
 		"beach":
 			_beach(root)
-		"glacier":
-			_glacier(root)
 		"haunted":
 			_haunted(root)
-		"haunted-train":
-			_train(root)
 		"factory":
 			_factory(root)
-		"circuit":
-			_circuit(root)
-		"pirate":
-			_pirate(root)
-
-const THEMES_ROUGH := {"beach": true, "glacier": true}
 
 
 static func tile_pos(x: float, y: float) -> Vector3:
@@ -249,58 +221,6 @@ static func _starfish() -> Mesh:
 	return LA.build(parts, LA.vmat("starfish", 0.8, 0.0, 0.5))
 
 
-# ---- Glacier ---------------------------------------------------------------------------
-
-static func _glacier_base(root: Node3D) -> void:
-	var cliff := LA.block_mat("glacier_cliff", {"style": 4, "side": Color("8fc0e4"), "top": Color("e8f4ff"), "rough": 0.2, "scale": 0.4})
-	for rect in Levels.SHAPES["twin-islands"]["floors"]:
-		var w: float = rect[2] - rect[0] + 1
-		var h: float = rect[3] - rect[1] + 1
-		var c := (tile_pos(rect[0], rect[1]) + tile_pos(rect[2], rect[3])) * 0.5
-		var m := Art.rounded_box(Vector3(w + 0.3, 2.2, h + 0.3), 0.14, 6, 0.08, int(c.x * 10.0))
-		m.surface_set_material(0, cliff)
-		_mi(root, m, c + Vector3(0, -1.11, 0))
-	# Rope bridge over the gap
-	var parts: Array = []
-	var wood := Color("8a6440")
-	for p in Levels.SHAPES["twin-islands"]["paths"]:
-		var pos := tile_pos(p[0], p[1])
-		for k in 5:
-			parts.append([LA.box(Vector3(0.18, 0.06, 0.96), 0.01), LA.xf(pos + Vector3(-0.4 + k * 0.2, -0.03, 0)), wood.lerp(Color("a8805a"), (k % 2) * 0.5)])
-	var a := tile_pos(5.5, 6)
-	var b := tile_pos(8.5, 6)
-	for s in [-1.0, 1.0]:
-		for x in [a.x, b.x]:
-			parts.append([LA.cyl(0.05, 0.06, 0.7, 8), LA.xf(Vector3(x, 0.3, a.z + s * 0.52)), Color("5a3a20")])
-		parts.append([LA.cyl(0.018, 0.018, b.x - a.x, 6), Transform3D(Basis(Vector3.BACK, PI / 2.0), Vector3((a.x + b.x) * 0.5, 0.55, a.z + s * 0.52)), Color("c8b08a")])
-	_mi(root, LA.build(parts, LA.vmat("bridge", 0.85, 0.0, 0.35)), Vector3.ZERO)
-
-
-static func _glacier(root: Node3D) -> void:
-	_mi(root, _plane(Vector2(160, 160), 40), Vector3(0, -1.0, 0), LA.water_mat(Color("031428"), Color("0d3a5e"), 0.04), Vector3.ZERO, Vector3.ONE, false)
-	var r := RandomNumberGenerator.new()
-	r.seed = 11
-	var ice := LA.block_mat("iceberg", {"style": 4, "side": Color("a9d2f0"), "top": Color("f4fbff"), "rough": 0.18, "scale": 0.5})
-	var placed: Array = [[Vector2(0, 0), 0.0]]
-	for i in 3:
-		var m := Art.rounded_box(Vector3(1.6, 1.4 + i * 0.6, 1.3), 0.3, 4, 0.22, 60 + i)
-		m.surface_set_material(0, ice)
-		_mm(root, m, _scatter(r, 6, 1.6, 11.0, 2.6, placed), r, -1.0, 0.7, 1.6)
-	var floe := Art.rounded_box(Vector3(1.4, 0.18, 1.0), 0.08, 3, 0.05, 77)
-	floe.surface_set_material(0, ice)
-	_mm(root, floe, _scatter(r, 18, 0.9, 8.0, 1.1, placed), r, -0.96, 0.5, 1.4, false)
-	# frosty spikes along the island edges
-	var P := load("res://scripts/level_props.gd")
-	var spike: Mesh = P.icespike_mesh()
-	var xs: Array = []
-	for rect in Levels.SHAPES["twin-islands"]["floors"]:
-		for k in 10:
-			var x := r.randf_range(rect[0] - 0.4, rect[2] + 0.4)
-			var y: float = rect[1] - 0.62 if k % 2 == 0 else rect[3] + 0.62
-			xs.append(Transform3D(Basis(Vector3.UP, r.randf() * TAU).scaled(Vector3.ONE * r.randf_range(0.3, 0.55)), tile_pos(x, y) + Vector3(0, -0.5, 0)))
-	root.add_child(Art.multimesh(spike, xs))
-
-
 # ---- Haunted House -----------------------------------------------------------------
 
 static func _haunted(root: Node3D) -> void:
@@ -379,80 +299,6 @@ static func _fence_post() -> Mesh:
 	return LA.build(parts, LA.vmat("fence", 0.6, 0.0, 0.2))
 
 
-# ---- Haunted Train -----------------------------------------------------------------
-
-const TRACK_SHADER := """
-shader_type spatial;
-uniform float speed = 2.6;
-uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
-varying vec3 wpos;
-void vertex() { wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
-void fragment() {
-	// The ground streams past under a train that never stops.
-	float x = wpos.x + TIME * speed;
-	vec2 p = vec2(x, wpos.z);
-	float gravel = texture(noise_tex, p * 0.9).r;
-	vec3 col = mix(vec3(0.05, 0.06, 0.07), vec3(0.14, 0.15, 0.16), gravel);
-	float bed = 1.0 - smoothstep(3.6, 4.0, abs(wpos.z));
-	float grass = texture(noise_tex, p * 0.15).r;
-	col = mix(mix(vec3(0.03, 0.06, 0.05), vec3(0.06, 0.1, 0.07), grass), col, bed);
-	float sleeper = step(0.62, fract(x * 1.2)) * (1.0 - smoothstep(3.0, 3.1, abs(wpos.z)));
-	col = mix(col, vec3(0.12, 0.08, 0.06), sleeper);
-	float rail = 0.0;
-	for (int i = 0; i < 2; i++) {
-		float rz = i == 0 ? -1.6 : 1.6;
-		rail += 1.0 - smoothstep(0.05, 0.08, abs(abs(wpos.z) - abs(rz)) );
-	}
-	col = mix(col, vec3(0.55, 0.6, 0.65), clamp(rail, 0.0, 1.0));
-	ALBEDO = col;
-	ROUGHNESS = mix(0.95, 0.25, clamp(rail, 0.0, 1.0));
-	METALLIC = clamp(rail, 0.0, 1.0) * 0.8;
-}
-"""
-
-
-static func _train_base(root: Node3D) -> void:
-	var body := LA.block_mat("train_body", {"style": 2, "side": Color("1d2832"), "top": Color("425464"), "rough": 0.5, "metal": 0.7})
-	var red := LA.block_mat("train_trim", {"style": 2, "side": Color("5a1414"), "top": Color("8a2020"), "rough": 0.5, "metal": 0.5})
-	var wheel := LA.build([[LA.cyl(0.3, 0.3, 0.12, 16), LA.xf(Vector3.ZERO, Vector3(PI / 2.0, 0, 0)), LA.metal(Color("2a2e33"))],
-		[LA.cyl(0.12, 0.12, 0.16, 10), LA.xf(Vector3.ZERO, Vector3(PI / 2.0, 0, 0)), LA.metal(Color("8a1e1e"))]], LA.vmat("wheel", 0.5, 0.0, 0.2))
-	var wheels: Array = []
-	for rect in Levels.SHAPES["haunted-train"]["floors"]:
-		var w: float = rect[2] - rect[0] + 1
-		var h: float = rect[3] - rect[1] + 1
-		var c := (tile_pos(rect[0], rect[1]) + tile_pos(rect[2], rect[3])) * 0.5
-		var m := Art.rounded_box(Vector3(w + 0.2, 1.0, h + 0.2), 0.08, 3)
-		m.surface_set_material(0, body)
-		_mi(root, m, c + Vector3(0, -0.52, 0))
-		var t := Art.rounded_box(Vector3(w + 0.26, 0.12, h + 0.26), 0.04, 2)
-		t.surface_set_material(0, red)
-		_mi(root, t, c + Vector3(0, -0.12, 0))
-		# Bogies: wheels showing under each end of the carriage, either side of the rails
-		for zs in [-1.0, 1.0]:
-			for xo in [-0.6, 0.6]:
-				wheels.append(Transform3D(Basis(), c + Vector3(xo * (w * 0.35), -1.05, zs * 1.6 + (0.35 if zs > 0 else -0.35))))
-	root.add_child(Art.multimesh(wheel, wheels))
-	# Gangways between carriages
-	var gw: Array = []
-	for p in Levels.SHAPES["haunted-train"]["paths"]:
-		gw.append([LA.box(Vector3(1.02, 0.08, 1.0), 0.02), LA.xf(tile_pos(p[0], p[1]) + Vector3(0, -0.04, 0)), LA.metal(Color("3a4450"))])
-		gw.append([LA.box(Vector3(1.0, 0.5, 1.0)), LA.xf(tile_pos(p[0], p[1]) + Vector3(0, -0.36, 0)), Color("15191e")])
-	_mi(root, LA.build(gw, LA.vmat("gangway", 0.6, 0.0, 0.3)), Vector3.ZERO)
-
-
-static func _train(root: Node3D) -> void:
-	var m := ShaderMaterial.new()
-	var sh := Shader.new()
-	sh.code = TRACK_SHADER
-	m.shader = sh
-	m.set_shader_parameter("noise_tex", LA.noise_tex())
-	_mi(root, _plane(Vector2(120, 80)), Vector3(0, -1.36, 0), m, Vector3.ZERO, Vector3.ONE, false)
-	# Distant hills, a dark silhouette line behind the train
-	var hills := Art.rounded_box(Vector3(70, 3.0, 4), 1.4, 8, 0.9, 3)
-	hills.surface_set_material(0, Art.flat_mat(Color(0.02, 0.03, 0.05), 1.0))
-	_mi(root, hills, Vector3(0, -0.6, -17.0), null, Vector3.ZERO, Vector3.ONE, false)
-
-
 # ---- Factory -----------------------------------------------------------------------
 
 static func _factory(root: Node3D) -> void:
@@ -497,120 +343,3 @@ static func _machine() -> Mesh:
 		[LA.box(Vector3(1.46, 0.08, 0.96), 0.02), LA.xf(Vector3(0, 0.04, 0)), Color("ffcc1a")],
 	]
 	return LA.build(parts, LA.vmat("machine", 0.55, 0.3, 0.25))
-
-
-# ---- Circuit -----------------------------------------------------------------------
-
-static func _circuit(root: Node3D) -> void:
-	var img := Image.create(4, 4, false, Image.FORMAT_L8)
-	img.fill(Color(1, 1, 1))
-	var mask := ImageTexture.create_from_image(img)
-	var m := LA.floor_mat("circuit", mask, 0.0)
-	m.set_shader_parameter("col_a", Color("0c1a16"))
-	m.set_shader_parameter("col_b", Color("11261f"))
-	m.set_shader_parameter("line_col", Color("2fd6a0"))
-	m.set_shader_parameter("line_alpha", 0.12)
-	m.set_shader_parameter("grid", Vector2(4.0, 4.0))
-	_mi(root, _plane(Vector2(90, 90)), Vector3(0, GROUND_Y, 0), m, Vector3.ZERO, Vector3.ONE, false)
-	var r := RandomNumberGenerator.new()
-	r.seed = 19
-	var placed: Array = []
-	_mm(root, _cached("chip", _chip), _scatter(r, 10, 1.3, 7.0, 2.4, placed), r, GROUND_Y, 0.8, 1.5)
-	var cap := LA.build([[LA.cyl(0.18, 0.18, 0.6, 14), LA.xf(Vector3(0, 0.3, 0)), Color("2a3cff")],
-		[LA.cyl(0.185, 0.185, 0.05, 14), LA.xf(Vector3(0, 0.6, 0)), LA.metal(Color("c8ccd4"))],
-		[LA.box(Vector3(0.06, 0.62, 0.05)), LA.xf(Vector3(0.15, 0.3, 0.1)), Color("dfe6ff")]], LA.vmat("capacitor", 0.4, 0.0, 0.15))
-	_mm(root, cap, _scatter(r, 14, 0.5, 6.0, 0.7, placed), r, GROUND_Y, 0.8, 1.3)
-	var led := LA.build([[LA.cyl(0.06, 0.06, 0.12, 10), LA.xf(Vector3(0, 0.08, 0)), LA.lit(Color("ff3fa4"))],
-		[LA.sphere(0.06, 10, 6), LA.xf(Vector3(0, 0.14, 0)), LA.lit(Color("ff6ec0"))]], LA.vmat("led", 0.3, 0.0, 0.0, 3.0))
-	_mm(root, led, _scatter(r, 20, 0.3, 5.0, 0.45, placed), r, GROUND_Y, 0.8, 1.3, false)
-
-
-static func _chip() -> Mesh:
-	var parts: Array = [[LA.box(Vector3(1.6, 0.22, 1.2), 0.03), LA.xf(Vector3(0, 0.13, 0)), Color("15161c")],
-		[LA.box(Vector3(0.5, 0.01, 0.2)), LA.xf(Vector3(-0.4, 0.245, -0.35)), Color("c8ccd4")]]
-	for k in 8:
-		for s in [-1.0, 1.0]:
-			parts.append([LA.box(Vector3(0.07, 0.04, 0.22)), LA.xf(Vector3(-0.7 + k * 0.2, 0.05, s * 0.68)), LA.metal(Color("d0d4dc"))])
-	parts.append([LA.sphere(0.04, 8, 4), LA.xf(Vector3(0.62, 0.24, 0.4)), LA.lit(Color("6ef0ff"))])
-	return LA.build(parts, LA.vmat("chip", 0.35, 0.0, 0.2))
-
-
-# ---- Pirate Fleet ------------------------------------------------------------------
-
-static func _pirate_base(root: Node3D) -> void:
-	var hull := LA.block_mat("hull", {"style": 6, "side": Color("4a2412"), "top": Color("6b3a1c"), "rough": 0.75})
-	var trim := LA.block_mat("hull_trim", {"style": 6, "side": Color("c8a050"), "top": Color("e0c070"), "rough": 0.5, "metal": 0.4})
-	var rails: Array = []
-	for rect in Levels.SHAPES["pirate-fleet"]["floors"]:
-		var w: float = rect[2] - rect[0] + 1
-		var h: float = rect[3] - rect[1] + 1
-		var c := (tile_pos(rect[0], rect[1]) + tile_pos(rect[2], rect[3])) * 0.5
-		var m := Art.rounded_box(Vector3(w + 0.4, 1.8, h + 0.4), 0.3, 6)
-		_taper_hull(m)
-		m.surface_set_material(0, hull)
-		_mi(root, m, c + Vector3(0, -0.91, 0))
-		var bow := Art.rounded_box(Vector3(w * 0.7, 1.4, 2.0), 0.3, 5)
-		bow.surface_set_material(0, hull)
-		_mi(root, bow, c + Vector3(0, -0.85, -h * 0.5 - 0.6), null, Vector3(0, PI / 4.0, 0), Vector3(1.0, 1.0, 0.75))
-		var band := Art.rounded_box(Vector3(w + 0.46, 0.1, h + 0.46), 0.05, 2)
-		band.surface_set_material(0, trim)
-		_mi(root, band, c + Vector3(0, -0.1, 0))
-		# Gunwale rails along the long sides, open where the gangplanks meet
-		for x in range(rect[0], rect[2] + 1):
-			for side in [rect[1] - 0.55, rect[3] + 0.55]:
-				rails.append(Transform3D(Basis(), tile_pos(x, side)))
-		for y in range(rect[1], rect[3] + 1):
-			for xs in [rect[0] - 0.55, rect[2] + 0.55]:
-				var open := false
-				for p in Levels.SHAPES["pirate-fleet"]["paths"]:
-					if p[1] == y and absf(p[0] - xs) < 1.0:
-						open = true
-				if not open:
-					rails.append(Transform3D(Basis(Vector3.UP, PI / 2.0), tile_pos(xs, y)))
-	var rail := LA.build([[LA.box(Vector3(1.0, 0.07, 0.1), 0.02), LA.xf(Vector3(0, 0.36, 0)), Color("6b3a1c")],
-		[LA.cyl(0.035, 0.04, 0.36, 6), LA.xf(Vector3(-0.25, 0.18, 0)), Color("8a5226")],
-		[LA.cyl(0.035, 0.04, 0.36, 6), LA.xf(Vector3(0.25, 0.18, 0)), Color("8a5226")]], LA.vmat("rail", 0.75, 0.0, 0.3))
-	root.add_child(Art.multimesh(rail, rails))
-	var planks: Array = []
-	for p in Levels.SHAPES["pirate-fleet"]["paths"]:
-		if p[0] != 7:
-			continue
-		var pos := tile_pos(p[0], p[1])
-		planks.append([LA.box(Vector3(3.1, 0.08, 0.9), 0.02), LA.xf(pos + Vector3(0, -0.05, 0)), Color("9a6a3a")])
-		for k in 6:
-			planks.append([LA.box(Vector3(0.05, 0.09, 0.92)), LA.xf(pos + Vector3(-1.25 + k * 0.5, -0.045, 0)), Color("5a3a1a")])
-	_mi(root, LA.build(planks, LA.vmat("gangplank", 0.8, 0.0, 0.35)), Vector3.ZERO)
-
-
-## Pull the bottom of a hull box in so it reads as a boat, not a crate.
-static func _taper_hull(m: ArrayMesh) -> void:
-	var arr := m.surface_get_arrays(0)
-	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-	for i in verts.size():
-		var v := verts[i]
-		if v.y < 0.0:
-			var t := clampf(-v.y / 0.9, 0.0, 1.0)
-			v.x *= 1.0 - 0.35 * t
-			v.z *= 1.0 - 0.08 * t
-		verts[i] = v
-	arr[Mesh.ARRAY_VERTEX] = verts
-	m.clear_surfaces()
-	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
-
-
-static func _pirate(root: Node3D) -> void:
-	_mi(root, _plane(Vector2(160, 160), 48), Vector3(0, -1.05, 0), LA.water_mat(Color("03223f"), Color("0e5a7a"), 0.09), Vector3.ZERO, Vector3.ONE, false)
-	var r := RandomNumberGenerator.new()
-	r.seed = 23
-	# A small island with palms off to one side, rocks in the swell
-	var sand := LA.block_mat("sand", {"style": 0, "side": Color("b8955c"), "top": Color("cfb07a"), "rough": 0.95, "scale": 0.5})
-	var isl := Art.rounded_box(Vector3(7, 1.2, 5), 0.5, 5, 0.3, 9)
-	isl.surface_set_material(0, sand)
-	_mi(root, isl, Vector3(-13.5, -1.2, -9.0))
-	var palm: Mesh = _cached("palm", _palm_mesh)
-	for k in 3:
-		_mi(root, palm, Vector3(-14.5 + k * 1.3, -0.65, -9.5 + (k % 2) * 0.9), null, Vector3(0, k * 2.0, 0), Vector3.ONE * (0.9 + k * 0.1))
-	var rock := Art.rounded_box(Vector3(1.0, 0.9, 0.8), 0.3, 4, 0.15, 41)
-	rock.surface_set_material(0, Art.stone_mat("searock", Color(0.5, 0.52, 0.55), 0.1))
-	var placed: Array = [[Vector2(-13.5, -9.0), 4.5]]
-	_mm(root, rock, _scatter(r, 10, 1.5, 10.0, 2.0, placed), r, -1.2, 0.6, 1.4)

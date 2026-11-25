@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://ds766tgkyb5y4"
-path="res://.godot/imported/bunny.gltf-d93017957827fc08157d0a7582a8dbb9.scn"
+uid="uid://b8g3q7dtsx8gk"
+path="res://.godot/imported/sparky.glb-43e7af244ba20d27689070834795b34d.scn"
 
 [deps]
 
-source_file="res://assets/characters/bunny.gltf"
-dest_files=["res://.godot/imported/bunny.gltf-d93017957827fc08157d0a7582a8dbb9.scn"]
+source_file="res://assets/characters/sparky.glb"
+dest_files=["res://.godot/imported/sparky.glb-43e7af244ba20d27689070834795b34d.scn"]
 
 [params]
 

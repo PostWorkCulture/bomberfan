@@ -3,7 +3,7 @@ extends Node3D
 ## Movement is a port of Player.update / slide / blockedAt in ../index.html.
 
 const Cfg := preload("res://scripts/config.gd")
-const Robot := preload("res://scripts/robot.gd")
+const ModelBot := preload("res://scripts/model_bot.gd")
 const Levels := preload("res://scripts/levels.gd")
 const R := Cfg.PLAYER_RADIUS
 const TARGET_HEIGHT := 1.25   # every fighter stands the same height (uniform-height rule); sized to read on a phone
@@ -24,14 +24,13 @@ var max_bombs := Cfg.START_BOMBS
 var fire := Cfg.START_FIRE
 var active_bombs := 0
 var ignore_bombs := {}     # bomb tiles we are allowed to walk off
-var pad_cool := 0.0        # teleport pads won't take us again until this runs out
 var face_yaw := 0.0
 var moving := false
 var celebrating := false
 
 var model: Node3D = null
 var anim: AnimationPlayer = null
-var robot = null            # set when this fighter is one of the code-built bots
+var robot = null            # set for the Blender bomber-bots, which animate in code (model_bot.gd)
 var _anim_names := {}
 var _cur := ""
 var _death_t := 0.0
@@ -49,11 +48,13 @@ func setup(g, id_: int, info: Dictionary, bot: bool) -> void:
 
 
 func _build_model() -> void:
-	if char_id.begins_with("bot_"):
+	var glb := "res://assets/characters/%s.glb" % char_id
+	if ResourceLoader.exists(glb):
+		# A rigid Blender bomber-bot: no skeleton, so model_bot.gd moves it.
 		model = Node3D.new()
 		add_child(model)
-		robot = Robot.new()
-		robot.setup(char_id.substr(4), color)
+		robot = ModelBot.new()
+		robot.setup(load(glb))
 		model.add_child(robot)
 		_normalise_height()
 		return
@@ -135,7 +136,6 @@ func spawn_at(t: Vector2i) -> void:
 	fire = Cfg.START_FIRE
 	active_bombs = 0
 	ignore_bombs.clear()
-	pad_cool = 0.0
 	moving = false
 	celebrating = false
 	face_yaw = 0.0
@@ -251,21 +251,10 @@ func step(dt: float, dir: Vector2i, alt: Vector2i, want_bomb: bool) -> void:
 		game.try_place_bomb(self)
 
 
-## Teleport pads and conveyor belts, judged on the tile under your centre.
-## A belt only carries: it never steers you, so walking across one works.
+## Conveyor belts, judged on the tile under your centre. A belt only
+## carries: it never steers you, so walking across one works.
 func _floor_rules(dt: float) -> void:
-	if pad_cool > 0.0:
-		pad_cool -= dt
 	var t := tile()
-	if pad_cool <= 0.0:
-		var twin: Vector2i = game.pad_target(t.x, t.y)
-		if twin.x >= 0:
-			gx = twin.x
-			gy = twin.y
-			pad_cool = Levels.PAD_COOLDOWN
-			ignore_bombs.clear()
-			game.on_teleport(self, t, twin)
-			return
 	var belt: Vector2i = game.belt_at(t.x, t.y)
 	if belt != Vector2i.ZERO:
 		var carry: float = Levels.BELT_SPEED * dt

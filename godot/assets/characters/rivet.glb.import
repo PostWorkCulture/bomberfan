@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://colfsoc0uggnf"
-path="res://.godot/imported/dino.gltf-8b9a2bfac5831ceff8829918e7127345.scn"
+uid="uid://dskqsuojctuxu"
+path="res://.godot/imported/rivet.glb-23bbd4228dd634715de16156501c3378.scn"
 
 [deps]
 
-source_file="res://assets/characters/dino.gltf"
-dest_files=["res://.godot/imported/dino.gltf-8b9a2bfac5831ceff8829918e7127345.scn"]
+source_file="res://assets/characters/rivet.glb"
+dest_files=["res://.godot/imported/rivet.glb-23bbd4228dd634715de16156501c3378.scn"]
 
 [params]
 

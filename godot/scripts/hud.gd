@@ -211,7 +211,7 @@ func set_frame(cinematic: bool, sub: String, show_hint: bool, delta: float) -> v
 	_sub.text = sub
 	_sub.visible = sub != ""
 	if hint_bar:
-		hint_bar.modulate.a = move_toward(hint_bar.modulate.a, 1.0 if show_hint else 0.0, delta * 2.0)
+		hint_bar.modulate.a = move_toward(hint_bar.modulate.a, 1.0 if show_hint and not cinematic else 0.0, delta * 3.0)
 
 
 func update(delta: float, fighters: Array, wins: Array, human_pid: int, round_no: int, arena: String,

@@ -3,7 +3,7 @@ extends Node3D
 ## Movement is a port of Player.update / slide / blockedAt in ../index.html.
 
 const Cfg := preload("res://scripts/config.gd")
-const Robot := preload("res://scripts/robot.gd")
+const ModelBot := preload("res://scripts/model_bot.gd")
 const Levels := preload("res://scripts/levels.gd")
 const R := Cfg.PLAYER_RADIUS
 const TARGET_HEIGHT := 1.25   # every fighter stands the same height (uniform-height rule); sized to read on a phone
@@ -30,7 +30,7 @@ var celebrating := false
 
 var model: Node3D = null
 var anim: AnimationPlayer = null
-var robot = null            # set when this fighter is one of the code-built bots
+var robot = null            # set for the Blender bomber-bots, which animate in code (model_bot.gd)
 var _anim_names := {}
 var _cur := ""
 var _death_t := 0.0
@@ -48,11 +48,13 @@ func setup(g, id_: int, info: Dictionary, bot: bool) -> void:
 
 
 func _build_model() -> void:
-	if char_id.begins_with("bot_"):
+	var glb := "res://assets/characters/%s.glb" % char_id
+	if ResourceLoader.exists(glb):
+		# A rigid Blender bomber-bot: no skeleton, so model_bot.gd moves it.
 		model = Node3D.new()
 		add_child(model)
-		robot = Robot.new()
-		robot.setup(char_id.substr(4), color)
+		robot = ModelBot.new()
+		robot.setup(load(glb))
 		model.add_child(robot)
 		_normalise_height()
 		return

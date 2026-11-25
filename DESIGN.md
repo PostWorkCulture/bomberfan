@@ -72,7 +72,7 @@ Bomb Up, Fire Up, Full Fire, Speed, Kick, Punch, Glove (pick up & throw), Remote
 - Fighters are normalised to one height (1.25 tiles, larger than the browser build so they read on a phone).
 
 ### Vertical slice (2026-11-24) — what's in
-Forest arena (15×13, 70% crates), you vs 3 bots (Ninja, Orc, Bunny, Dino), bombs with chain reactions, Bomb Up / Fire Up / Speed (temporary) at the browser drop rates, rounds to first-to-3, round intro/outro, HUD, keyboard + gamepad + touch.
+Forest arena (15×13, 70% crates), you vs 3 bots (originally Ninja, Orc, Bunny, Dino; see Fighters for today's roster), bombs with chain reactions, Bomb Up / Fire Up / Speed (temporary) at the browser drop rates, rounds to first-to-3, round intro/outro, HUD, keyboard + gamepad + touch.
 
 Bots: Normal-tier port of the browser AI — danger map with chain timing, never bomb without a timed escape (escape slack 0.52 s, +0.35 s on the opening bomb), greed 0.34 / range 4, hunt 0.48, bomb gap 0.6 s.
 
@@ -109,7 +109,12 @@ Ported from the browser build (`updateEndgame`, tuning in `config.gd`):
 ### Fighters
 No coloured circles under fighters. The human player keeps the "YOU" tag.
 
-**New characters (Pete, 2026-11-25): Sparky Mk II, Rivet and Pixel only.** These are concepts 1, 5 and 6 of the eight Blender concepts on the `art/bot-concepts` branch. The other five (Fuse, Boomer, Volt, Mortar, Nova) are dropped. The first-pass code bots in `godot/scripts/robot.gd` (Bolt, Tank, Pip, Sparky) were rejected and stay off (`USE_BOTS = false`). Next: refine the three and bring them into Godot alongside the existing fighters.
+**Godot roster (Pete, 2026-11-25): Razor, Sparky Mk II, Rivet and Pixel.**
+- From the browser roster, only Razor (the ninja) and Bomberman are kept. The rest are dropped from the Godot build, and their models are removed from `godot/assets/characters` (the browser game still has them).
+- Bomberman is held back. Pete wants it "seriously upgraded", but it is Konami's character, so the plan is an original bomber hero for that slot.
+- New characters are concepts 1, 5 and 6 from the Blender set (`tools/blender/bomber_bots.py`, branch `art/bot-concepts`), exported as `sparky.glb`, `rivet.glb` and `pixel.glb`. They are rigid models; `godot/scripts/model_bot.gd` animates them in code (bob, waddle, lean, squash, hop-and-spin cheer, topple). The other five concepts are dropped.
+- The first-pass code bots (`robot.gd`: Bolt, Tank, Pip, Sparky) were rejected and deleted.
+- Slots: you are Razor (blue); the bots are Sparky (yellow), Rivet (red) and Pixel (green).
 
 ### Arenas (Godot)
 **Four arenas (Pete, 2026-11-25): Forest, Beach, Haunted House and Factory.** These are the ones to keep working on. Glacier, Haunted Train, Circuit and Pirate Fleet were ported, then dropped from the Godot build (teleport pads and shaped/void layouts went with them). They stay in the browser game, but don't bring them back to Godot unless Pete asks.
@@ -137,7 +142,7 @@ Newest first. One dated heading per day; bullets say what changed, why, and wher
 
 ### 2026-11-25
 - **Down to four arenas** (Pete: keep Forest, Beach, Factory and Haunted House "which we can further work on. The rest can go"). Glacier, Haunted Train, Circuit and Pirate Fleet are removed from the Godot build, together with the code only they used: teleport pads (fighters and bots), shaped/void layouts, the snowman and cannon hazards, and their art. The smoke test plays each arena twice (8 rounds). Files: `levels.gd`, `level_art.gd`, `level_scenery.gd`, `level_props.gd`, `game.gd`, `fighter.gd`, `bot_brain.gd`, `godot-build.yml`.
-- **Character pick:** Sparky Mk II, Rivet and Pixel are the only new characters; the other five concepts are dropped. Pete was sent the existing 21-fighter roster to choose from alongside them.
+- **Roster cut** (Pete: keep concepts 1, 5, 6; of the existing fighters "keep Razor and Bomberman … get rid of the rest"). The Godot roster is now Razor + Sparky Mk II, Rivet and Pixel; their models (`sparky/rivet/pixel.glb`) are exported from Blender and animated by the new `model_bot.gd`. Orc, Bunny and Dino were removed from `godot/assets/characters`, and the rejected `robot.gd` bots were deleted. Bomberman is not in the Godot build yet: rather than upgrading Konami's character, the plan is an original bomber hero for that slot. Files: `game.gd`, `fighter.gd`, `model_bot.gd` (new), `assets/characters/`.
 - **The other seven arenas are in the Godot build** (Pete: "let's get the rest of the maps in"): Beach, Glacier, Haunted House, Haunted Train, Factory, Circuit and Pirate Fleet, with their rules (belts, pads, clockwork walls), hazards (snowmen, witch, cannons) and shaped decks, ported from `LEVELS` and friends in `index.html`. A random arena each round; L skips to the next. See "Arenas (Godot)". Files: `godot/scripts/levels.gd`, `level_art.gd`, `level_scenery.gd`, `level_props.gd` (new); `game.gd`, `fighter.gd`, `bot_brain.gd`, `fx.gd`; `.github/workflows/godot-build.yml` (arena screenshots).
 - **Parity fix — spawn pockets and crate density:** Godot only kept each spawn and its four neighbours clear and dealt crates at 70%. It now matches the browser: everything within three steps of a spawn stays clear, and density is the level's + 0.16.
 - **Smoke test** now plays one round on each of the eight arenas.

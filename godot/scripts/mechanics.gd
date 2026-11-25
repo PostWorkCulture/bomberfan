@@ -226,7 +226,7 @@ func is_flooded(t: Vector2i) -> bool:
 
 ## Standing in tall grass: bots further than GRASS_SEE tiles cannot see you.
 func hidden(f) -> bool:
-	if grass.is_empty() or not f.alive:
+	if grass.is_empty() or not f.alive or game.phase == "gallery":
 		return false
 	var t: Vector2i = f.tile()
 	return grass.has(game.idx(t.x, t.y))

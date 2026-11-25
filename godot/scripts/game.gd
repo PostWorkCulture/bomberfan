@@ -45,6 +45,7 @@ const ROSTER := [
 	{"id": "gumball", "name": "GUMBALL", "color": Color(1.0, 0.46, 0.72)},
 	{"id": "snap", "name": "SNAP", "color": Color(0.92, 0.93, 0.96)},
 	{"id": "arcade", "name": "ARCADE", "color": Color(0.7, 0.52, 1.0)},
+	{"id": "tick", "name": "TICK", "color": Color(0.36, 0.86, 0.82)},
 ]
 
 # Forest backdrop colour behind everything (LEVELS[0].sky in index.html)

@@ -39,12 +39,14 @@ const TIDE_RISE := 1.6          # the water creeping in is the warning
 const TIDE_HIGH := 5.0
 const TIDE_FALL := 1.4
 const TIDE_SLOW := 0.6          # wading speed
+const TIDE_WARN := 3.0          # banner and wet sand before the water starts rising
+const CRAB_MIN_FUSE := 0.6      # crabs leave a bomb alone this close to going off
 const CRAB_COUNT := 2
 const CRAB_SPEED := 1.3         # tiles/s
 const CRAB_RESPAWN := 6.0
 # ---- Haunted House
 const GHOST_FIRST := 8.0
-const GHOST_EVERY := 11.0
+const GHOST_EVERY := 16.0      # AAA review: the Haunted House was running three systems at once
 const GHOST_WARN := 1.3
 const WITCH_ORBIT := Vector2(8.7, 7.4)
 const WITCH_HEIGHT := 2.3
@@ -66,6 +68,7 @@ var _root: Node3D = null
 var grass := {}          # tile index -> true while the grass stands
 var _grass_mm: MultiMeshInstance3D = null
 var _grass_inst := {}    # tile index -> [instance indices]
+var _grass_base: Array = []   # resting transforms of every tuft
 var beaver := {}         # {"t", "tile", "warn", "built"}
 var _beaver_node: Node3D = null
 var tide_t := 0.0
@@ -258,6 +261,7 @@ func visual(delta: float, t: float) -> void:
 	match id:
 		"forest":
 			_visual_beaver(t)
+			_visual_grass(t)
 		"beach":
 			_visual_tide(delta, t)
 			for c in crabs:
@@ -280,16 +284,54 @@ func _build_grass() -> void:
 	for k in grass.keys():
 		var t := Vector2i(k % Cfg.COLS, k / Cfg.COLS)
 		var ids: Array = []
-		for i in 7:
-			var off := Vector3(r.randf_range(-0.42, 0.42), 0.0, r.randf_range(-0.42, 0.42))
-			var s := r.randf_range(0.9, 1.25)
+		for i in 14:
+			var off := Vector3(r.randf_range(-0.46, 0.46), 0.0, r.randf_range(-0.46, 0.46))
+			var s := r.randf_range(1.0, 1.2)
 			ids.append(xs.size())
-			xs.append(Transform3D(Basis(Vector3.UP, r.randf() * TAU).scaled(Vector3(s * 1.3, s * 2.6, s * 1.3)), game.tile_pos(t.x, t.y) + off))
-			var tint := r.randf_range(0.85, 1.1)
-			cols.append(Color(tint, tint, tint * 0.9))
+			xs.append(Transform3D(Basis(Vector3.UP, r.randf() * TAU).scaled(Vector3(s * 1.35, s * 3.0, s * 1.35)), game.tile_pos(t.x, t.y) + off))
+			var tint := r.randf_range(0.97, 1.03)
+			cols.append(Color(tint * 1.25, tint * 1.35, tint * 0.85))
 		_grass_inst[k] = ids
+	_grass_base = xs
 	_grass_mm = Art.multimesh(Art.grass_tuft_mesh(), xs, cols, false)
 	_root.add_child(_grass_mm)
+
+
+var _rustling := {}   # tile index -> true while its tufts are bent
+
+
+## Tufts sway over anyone in the grass, so a hidden fighter still gives itself
+## away by moving.
+func _visual_grass(t: float) -> void:
+	if _grass_mm == null:
+		return
+	var now := {}
+	for f in game.fighters:
+		if f.alive:
+			var ft: Vector2i = f.tile()
+			var k: int = game.idx(ft.x, ft.y)
+			if _grass_inst.has(k):
+				now[k] = f.moving
+	for k in _rustling.keys():
+		if not now.has(k):
+			_set_tufts(k, 0.0, t)
+	for k in now.keys():
+		_set_tufts(k, 1.0 if now[k] else 0.35, t)
+	_rustling = now
+
+
+func _set_tufts(k: int, amt: float, t: float) -> void:
+	if not _grass_inst.has(k):
+		return
+	var mm := _grass_mm.multimesh
+	var i := 0
+	for inst in _grass_inst[k]:
+		var xf: Transform3D = _grass_base[inst]
+		if amt > 0.0:
+			var lean := sin(t * 14.0 + i * 1.7) * 0.32 * amt
+			xf.basis = Basis(Vector3(1, 0, 0.3).normalized(), lean) * xf.basis
+		mm.set_instance_transform(inst, xf)
+		i += 1
 
 
 func _burn_grass(k: int) -> void:
@@ -353,6 +395,25 @@ func _beaver_tile() -> Vector2i:
 			elif cover == best_score:
 				best.append(t)
 	return best[_rng.randi() % best.size()] if not best.is_empty() else Vector2i(-1, -1)
+
+
+func _tile_clear_of_fighters(t: Vector2i, margin: int) -> bool:
+	for f in game.fighters:
+		if f.alive:
+			var ft: Vector2i = f.tile()
+			if absi(ft.x - t.x) <= margin and absi(ft.y - t.y) <= margin:
+				return false
+	return true
+
+
+## Seconds until the tide starts rising, while the warning is up (else 0).
+func tide_warning() -> float:
+	if id != "beach" or game.sudden_death or tide_t < -TIDE_WARN:
+		return 0.0
+	var c := fmod(tide_t, _tide_cycle()) if tide_t >= 0.0 else tide_t - TIDE_LOW
+	if c >= TIDE_LOW - TIDE_WARN and c < TIDE_LOW:
+		return TIDE_LOW - c
+	return 0.0
 
 
 ## Empty, no bomb / pick-up / flame, and no fighter within `margin` tiles.
@@ -461,9 +522,14 @@ func _build_water() -> void:
 func _visual_tide(_delta: float, _t: float) -> void:
 	if _water == null:
 		return
-	_water.visible = tide_level > 0.01
-	_water.position.y = -0.06 + 0.2 * tide_level
-	(_water.material_override as ShaderMaterial).set_shader_parameter("level", tide_level)
+	# During the warning the lane goes dark and glossy: wet sand, water coming.
+	var warn := tide_warning()
+	var lvl := tide_level
+	if warn > 0.0:
+		lvl = maxf(lvl, 0.12 * (1.0 - warn / TIDE_WARN) + 0.04)
+	_water.visible = lvl > 0.01
+	_water.position.y = -0.06 + 0.2 * lvl
+	(_water.material_override as ShaderMaterial).set_shader_parameter("level", lvl)
 
 
 const TIDE_SHADER := """
@@ -562,8 +628,11 @@ func _step_crabs(dt: float) -> void:
 				continue
 			var k: int = game.idx(n.x, n.y)
 			if game.bomb_at.has(k):
-				if not game.push_bomb(game.bomb_at[k], d):
+				var bomb: Dictionary = game.bomb_at[k]
+				if bomb["fuse"] < CRAB_MIN_FUSE or not game.push_bomb(bomb, d):
 					continue
+				if not game.smoke:
+					game.fx.crate_dust(game.tile_pos(n.x, n.y))
 			c["dir"] = d
 			c["to"] = n
 			break
@@ -626,7 +695,7 @@ func _step_ghost(dt: float) -> void:
 	var opts: Array = []
 	for y in range(1, Cfg.ROWS - 1):
 		for x in range(1, Cfg.COLS - 1):
-			if game.cell_at(x, y) != SOFT:
+			if game.cell_at(x, y) != SOFT or not _tile_clear_of_fighters(Vector2i(x, y), 2):
 				continue
 			for d in DIRS:
 				var t: Vector2i = Vector2i(x, y) + d
@@ -777,6 +846,7 @@ func _build_press(p: Dictionary) -> void:
 	var mark := _mark(Color(1.0, 0.25, 0.15))
 	mark.position = n.position + Vector3(0, 0.025, 0)
 	p["node"] = n
+	p["bed"] = bm
 	p["jaws"] = jaws
 	p["lamps"] = lamps
 	p["mark"] = mark
@@ -785,14 +855,17 @@ func _build_press(p: Dictionary) -> void:
 const PRESS_BED_SHADER := """
 shader_type spatial;
 render_mode blend_mix, depth_draw_never, cull_disabled;
+uniform float warn = 0.0;
 void fragment() {
 	vec2 p = UV * 2.0 - 1.0;
 	float edge = max(abs(p.x), abs(p.y));
 	float stripe = step(0.5, fract((UV.x + UV.y) * 4.0));
 	vec3 col = mix(vec3(0.85, 0.65, 0.08), vec3(0.06), stripe);
 	float border = smoothstep(0.78, 0.82, edge) * (1.0 - smoothstep(0.95, 0.99, edge));
-	ALBEDO = col;
-	ALPHA = border * 0.85 + (1.0 - smoothstep(0.78, 0.82, edge)) * 0.08;
+	float inner = 1.0 - smoothstep(0.78, 0.82, edge);
+	float pulse = warn * (0.55 + 0.45 * sin(TIME * 14.0));
+	ALBEDO = mix(col, vec3(1.0, 0.12, 0.06), inner * pulse);
+	ALPHA = border * 0.85 + inner * max(0.08, pulse * 0.75);
 	ROUGHNESS = 0.6;
 }
 """
@@ -813,7 +886,8 @@ func _visual_presses(_delta: float, t: float) -> void:
 			gap = lerpf(0.07, 0.47, k * k * (3.0 - 2.0 * k))   # opening
 		elif left < PRESS_WARN and not game.sudden_death:
 			var k2 := 1.0 - left / PRESS_WARN
-			gap = 0.47 - 0.05 * k2 + sin(t * 45.0) * 0.012 * k2   # straining, juddering
+			# Closing in three hydraulic steps, juddering between them.
+			gap = 0.47 - 0.07 * floorf(k2 * 3.0) / 2.0 + sin(t * 45.0) * 0.012 * k2
 		if left < 0.1 and not game.sudden_death:
 			gap = lerpf(0.07, 0.42, left / 0.1)            # the slam
 		var i := 0
@@ -825,6 +899,8 @@ func _visual_presses(_delta: float, t: float) -> void:
 		var on: bool = warn and fmod(t * 6.0, 1.0) < 0.6
 		for lamp in p["lamps"]:
 			(lamp as Node3D).visible = on
+		var bedm: ShaderMaterial = p["bed"]
+		bedm.set_shader_parameter("warn", 1.0 if warn else 0.0)
 		var mark: MeshInstance3D = p["mark"]
 		mark.visible = warn
 		mark.scale = Vector3.ONE * (0.85 + 0.1 * sin(t * 12.0))

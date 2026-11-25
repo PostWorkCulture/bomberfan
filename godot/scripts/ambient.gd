@@ -21,6 +21,8 @@ var _bursts: Array = []     # periodic emitters: {node, every, t, light}
 var _flash := 0.0           # lightning, 0..1
 var _next_flash := 6.0
 var _rng := RandomNumberGenerator.new()
+var _movers: Array = []     # forklifts: ping-pong along an aisle
+var _fog: Array = []        # drifting ground-fog cards
 
 
 func setup(g) -> void:
@@ -32,6 +34,8 @@ func build(level_id: String) -> void:
 	for c in get_children():
 		c.queue_free()
 	_flyers.clear()
+	_movers.clear()
+	_fog.clear()
 	_lights.clear()
 	_bursts.clear()
 	_flash = 0.0
@@ -71,6 +75,19 @@ func _process(delta: float) -> void:
 			fm.albedo_color = Color(1.0, 0.72, 0.4, 0.55 * b["k"])
 	if id == "haunted":
 		_lightning(delta)
+	for m in _movers:
+		var n: Node3D = m["node"]
+		var span: float = m["z1"] - m["z0"]
+		m["u"] += delta * m["speed"] * m["dir"] / span
+		if m["u"] > 1.0 or m["u"] < 0.0:
+			m["dir"] = -m["dir"]
+			m["u"] = clampf(m["u"], 0.0, 1.0)
+		var e: float = m["u"]
+		n.position = Vector3(m["x"], GROUND_Y, lerpf(m["z0"], m["z1"], e))
+		n.rotation.y = lerp_angle(n.rotation.y, 0.0 if m["dir"] > 0.0 else PI, clampf(delta * 3.0, 0.0, 1.0))
+	for f in _fog:
+		var fn: Node3D = f["node"]
+		fn.position.x = f["x0"] + fmod(_t * f["v"] + f["off"], 28.0) - 14.0
 
 
 # ---- Flyers: a body and two wings that flap ----------------------------------------
@@ -284,6 +301,24 @@ func _haunted() -> void:
 		f["c"] = Vector3(-10.0 if i % 2 == 0 else 10.0, 2.6 + i * 0.4, -1.5 + i)
 		f["flap"] = 22.0
 		_flyers.append(f)
+	# Ground fog drifting across the graveyard and through the house.
+	var fm := StandardMaterial3D.new()
+	fm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	fm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fm.albedo_texture = Art.soft_dot()
+	fm.albedo_color = Color(0.6, 0.55, 0.78, 0.13)
+	for i in 7:
+		var mi := MeshInstance3D.new()
+		var q := QuadMesh.new()
+		q.size = Vector2(6.5, 3.5)
+		mi.mesh = q
+		mi.material_override = fm
+		mi.rotation.x = -PI / 2.0
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mi)
+		var zz := -8.0 + i * 2.6
+		mi.position = Vector3(0, GROUND_Y + 0.25 + 0.03 * i, zz)
+		_fog.append({"node": mi, "x0": 0.0, "v": 0.35 + 0.08 * (i % 3), "off": i * 4.1})
 	# Will-o'-the-wisps in the graveyard either side.
 	_motes(Color(0.55, 1.0, 0.7, 0.8), 10, Vector3(2.0, 0.6, 6.0), Vector3(-10.0, 0.4, 0), 0.16, 0.04, 5.0)
 	_motes(Color(0.55, 1.0, 0.7, 0.8), 10, Vector3(2.0, 0.6, 6.0), Vector3(10.0, 0.4, 0), 0.16, 0.04, 5.0)
@@ -334,6 +369,13 @@ func _factory() -> void:
 	for p in [Vector3(-hx - 2.0, GROUND_Y + 0.02, -1.0), Vector3(hx + 2.0, GROUND_Y + 0.02, 3.5), Vector3(hx + 1.8, GROUND_Y + 0.02, -5.5)]:
 		_pool(p, Color(1.0, 0.66, 0.3, 0.22), 4.0)
 	_pool(Vector3(-hx - 3.0, GROUND_Y + 0.02, -2.0), Color(1.0, 0.45, 0.15, 0.4), 5.0, true)
+	# A forklift working the aisle between the machines and the racks.
+	for s in [-1.0, 1.0]:
+		var fk := MeshInstance3D.new()
+		fk.mesh = _forklift_mesh()
+		add_child(fk)
+		_movers.append({"node": fk, "x": s * (hx + 3.2), "z0": -Cfg.ROWS * 0.5 - 1.0, "z1": Cfg.ROWS * 0.5 + 0.5,
+			"speed": 1.6, "u": 0.5 + s * 0.3, "dir": s})
 
 
 func _lightning(delta: float) -> void:
@@ -371,3 +413,25 @@ func _candelabra_mesh() -> Mesh:
 		parts.append([LA.cyl(0.04, 0.04, h, 8), LA.xf(Vector3(x, 1.04 + h * 0.5, 0)), wax])
 		parts.append([LA.sphere(0.035, 8, 5), LA.xf(Vector3(x, 1.06 + h + 0.03, 0), Vector3.ZERO, Vector3(1, 1.8, 1)), flame])
 	return LA.build(parts, LA.vmat("candelabra", 0.6, 0.0, 0.2, 5.0))
+
+
+func _forklift_mesh() -> Mesh:
+	var body := Color("d8a818")
+	var dark := Color("2a2a2e")
+	var parts: Array = [
+		[LA.box(Vector3(0.8, 0.5, 1.1), 0.05), LA.xf(Vector3(0, 0.4, -0.1)), body],
+		[LA.box(Vector3(0.7, 0.06, 0.7)), LA.xf(Vector3(0, 1.25, -0.25)), dark],
+		[LA.box(Vector3(0.05, 0.6, 0.05)), LA.xf(Vector3(-0.32, 0.95, -0.55)), dark],
+		[LA.box(Vector3(0.05, 0.6, 0.05)), LA.xf(Vector3(0.32, 0.95, -0.55)), dark],
+		[LA.box(Vector3(0.05, 0.6, 0.05)), LA.xf(Vector3(-0.32, 0.95, 0.05)), dark],
+		[LA.box(Vector3(0.05, 0.6, 0.05)), LA.xf(Vector3(0.32, 0.95, 0.05)), dark],
+		[LA.box(Vector3(0.6, 1.5, 0.08)), LA.xf(Vector3(0, 0.8, 0.5)), dark],
+		[LA.box(Vector3(0.1, 0.04, 0.7)), LA.xf(Vector3(-0.18, 0.3, 0.88)), LA.metal(Color("9aa2ac"))],
+		[LA.box(Vector3(0.1, 0.04, 0.7)), LA.xf(Vector3(0.18, 0.3, 0.88)), LA.metal(Color("9aa2ac"))],
+		[LA.box(Vector3(0.6, 0.45, 0.6), 0.02), LA.xf(Vector3(0, 0.55, 0.9)), Color("c39a62")],
+		[LA.sphere(0.06, 8, 5), LA.xf(Vector3(0, 1.32, -0.25)), LA.lit(Color("ffa020"))],
+	]
+	for x in [-0.42, 0.42]:
+		for z in [-0.45, 0.3]:
+			parts.append([LA.cyl(0.16, 0.16, 0.12, 10), LA.xf(Vector3(x, 0.16, z), Vector3(0, 0, PI / 2.0)), Color("141416")])
+	return LA.build(parts, LA.vmat("forklift", 0.55, 0.1, 0.2, 3.0))

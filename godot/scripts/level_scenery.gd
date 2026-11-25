@@ -102,7 +102,9 @@ static func _ground(root: Node3D, c1: Color, c2: Color, y := GROUND_Y, rough := 
 
 
 ## Points outside the arena rectangle (plus margin), at least `spacing` apart.
-static func _scatter(r: RandomNumberGenerator, count: int, margin: float, reach: float, spacing: float, placed: Array, near_only := false) -> Array:
+## `far_only`: nothing on the camera side of the arena, where tall props would
+## sit on top of the near wall row.
+static func _scatter(r: RandomNumberGenerator, count: int, margin: float, reach: float, spacing: float, placed: Array, near_only := false, far_only := false) -> Array:
 	var out: Array = []
 	var hx := Cfg.COLS * 0.5
 	var hz := Cfg.ROWS * 0.5
@@ -110,7 +112,7 @@ static func _scatter(r: RandomNumberGenerator, count: int, margin: float, reach:
 	while out.size() < count and tries < count * 80:
 		tries += 1
 		var x := r.randf_range(-hx - reach, hx + reach)
-		var z := r.randf_range(-hz - reach, hz + 1.5)
+		var z := r.randf_range(-hz - reach, hz - 1.2 if far_only else hz + 1.5)
 		if absf(x) < hx + margin and absf(z) < hz + margin:
 			continue
 		if near_only and absf(x) > hx + reach * 0.6 and absf(z) > hz + reach * 0.6:
@@ -147,7 +149,7 @@ static func _cached(key: String, fn: Callable) -> Mesh:
 
 static func _beach(root: Node3D) -> void:
 	# A sandbar island in open water.
-	var sand := LA.block_mat("sand", {"style": 9, "side": Color("8e7450"), "top": Color("a88a5e"), "rough": 0.95, "scale": 0.5})
+	var sand := LA.block_mat("sand", {"style": 9, "side": Color("6e5636"), "top": Color("86683f"), "rough": 0.95, "scale": 0.5})
 	var isl := Art.rounded_box(Vector3(25, 1.0, 20), 0.45, 8, 0.2, 5)
 	isl.surface_set_material(0, sand)
 	_mi(root, isl, Vector3(0, GROUND_Y - 0.5, -1.0), null, Vector3.ZERO, Vector3.ONE, false)
@@ -163,18 +165,18 @@ static func _beach(root: Node3D) -> void:
 	var r := RandomNumberGenerator.new()
 	r.seed = 7
 	var placed: Array = []
-	_mm(root, _cached("palm", _palm_mesh), _scatter(r, 16, 1.2, 8.0, 1.8, placed), r, GROUND_Y, 0.85, 1.25)
+	_mm(root, _cached("palm", _palm_mesh), _scatter(r, 16, 1.2, 8.0, 1.8, placed, false, true), r, GROUND_Y, 0.85, 1.25)
 	var P := load("res://scripts/level_props.gd")
-	for pt in _scatter(r, 5, 0.8, 4.5, 1.6, placed):
+	for pt in _scatter(r, 5, 0.8, 4.5, 1.6, placed, false, true):
 		var n: Node3D = P.make("parasol")
 		n.position = Vector3(pt.x, GROUND_Y, pt.y)
 		n.rotation.y = r.randf() * TAU
 		root.add_child(n)
-	for pt in _scatter(r, 6, 0.5, 4.0, 1.0, placed):
+	for pt in _scatter(r, 6, 0.5, 4.0, 1.0, placed, false, true):
 		var n: Node3D = P.make("beachball")
 		n.position = Vector3(pt.x, GROUND_Y, pt.y)
 		n.rotation.y = r.randf() * TAU
-		n.scale = Vector3.ONE * 0.8
+		n.scale = Vector3.ONE * 0.7
 		root.add_child(n)
 	var towels := _scatter(r, 5, 0.7, 4.0, 1.4, placed)
 	for k in towels.size():
@@ -197,25 +199,11 @@ static func _palm_mesh() -> Mesh:
 		var p := lean * t * t * 3.0 + Vector3(0, t * 2.7, 0)
 		parts.append([LA.cyl(0.11 - t * 0.04, 0.13 - t * 0.04, 0.34, 8), LA.xf(p + Vector3(0, 0.15, 0), Vector3(0, 0, -0.18 * t)), trunk_c.lerp(Color("b08a58"), (i % 2) * 0.4)])
 	var top := lean * 3.0 + Vector3(0, 2.85, 0)
-	# Fronds: tapering, arching blades made of short segments, with leaflets.
+	# Fronds: curved, tapering ribbons folded along the midrib (a shallow V),
+	# with a serrated edge for the leaflets. Both faces, so they read from above.
 	for k in 9:
 		var a := TAU * k / 9.0 + (0.17 if k % 2 else 0.0)
-		var dir := Vector3(cos(a), 0, sin(a))
-		var side := dir.cross(Vector3.UP).normalized()
-		var length := 1.15 if k % 2 == 0 else 0.95
-		var p := top
-		var pitch := 0.55
-		for j in 5:
-			var seg := length / 5.0
-			var d := (dir * cos(pitch) + Vector3.UP * sin(pitch)).normalized()
-			var mid := p + d * seg * 0.5
-			var w := 0.36 * (1.0 - j * 0.16)
-			var bas := Basis(side, -pitch) * Basis(Vector3.UP, -a + PI / 2.0)
-			var col := Color("2f7a32").lerp(Color("74b84c"), 0.2 + j * 0.15)
-			parts.append([LA.box(Vector3(w, 0.018, seg * 1.05)), Transform3D(bas, mid), col])
-			parts.append([LA.box(Vector3(0.03, 0.03, seg * 1.05)), Transform3D(bas, mid + Vector3(0, 0.012, 0)), Color("5a8a3a")])
-			p += d * seg
-			pitch -= 0.38
+		parts.append([_frond(a, 1.25 if k % 2 == 0 else 1.05), Transform3D(Basis(), top), null])
 	for k in 3:
 		parts.append([LA.sphere(0.09, 8, 5), LA.xf(top + Vector3(cos(k * 2.1) * 0.12, -0.12, sin(k * 2.1) * 0.12)), Color("5a3a1a")])
 	return LA.build(parts, LA.vmat("palm", 0.8, 0.0, 0.3))
@@ -292,6 +280,18 @@ static func _haunted(root: Node3D) -> void:
 		fence.append(Transform3D(Basis(Vector3.UP, PI / 2.0), Vector3(hx, GROUND_Y, z)))
 		z += 0.5
 	root.add_child(Art.multimesh(_cached("fence", _fence_post), fence))
+	# The house itself behind the far wall (seen in the arrival flyover), and
+	# graves in ordered rows either side instead of only a scatter.
+	_mi(root, _cached("mansion", _mansion), Vector3(0.5, GROUND_Y, -hz - 6.0), null, Vector3.ZERO, Vector3.ONE, true)
+	var rows: Array = []
+	for s in [-1.0, 1.0]:
+		for col in 2:
+			var gx: float = s * (hx + 2.6 + col * 1.3)
+			var gz := -hz + 0.4
+			while gz < hz - 0.6:
+				rows.append(Transform3D(Basis(Vector3.UP, r.randf_range(-0.12, 0.12)).scaled(Vector3.ONE * r.randf_range(0.85, 1.05)), Vector3(gx, GROUND_Y, gz)))
+				gz += 1.5
+	root.add_child(Art.multimesh(P.gravestone_mesh(), rows))
 	# low mist
 	var mist := StandardMaterial3D.new()
 	mist.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -342,33 +342,180 @@ static func _fence_post() -> Mesh:
 # ---- Factory -----------------------------------------------------------------------
 
 static func _factory(root: Node3D) -> void:
-	_ground(root, Color("26282c"), Color("3c3f45"), GROUND_Y, 0.8, "factory")
-	var r := RandomNumberGenerator.new()
-	r.seed = 17
-	var placed: Array = []
-	_mm(root, _cached("machine", _machine), _scatter(r, 8, 1.4, 6.0, 2.2, placed, true), r, GROUND_Y, 0.9, 1.15)
-	var drum := LA.build([[LA.cyl(0.3, 0.3, 0.86, 14), LA.xf(Vector3(0, 0.43, 0)), Color("2f6fb0")],
-		[LA.cyl(0.31, 0.31, 0.04, 14), LA.xf(Vector3(0, 0.3, 0)), LA.metal(Color("8a9099"))],
-		[LA.cyl(0.31, 0.31, 0.04, 14), LA.xf(Vector3(0, 0.6, 0)), LA.metal(Color("8a9099"))]], LA.vmat("drum", 0.55, 0.0, 0.25))
-	_mm(root, drum, _scatter(r, 16, 0.5, 5.0, 0.75, placed), r, GROUND_Y, 0.9, 1.05)
+	# An organised hall (AAA review: not props scattered on a void):
+	# corrugated walls with lit clerestory windows and I-beam columns either
+	# side, rows of machines facing the arena, pallet racks against the walls,
+	# painted floor bays and walkways, pipes along the far side.
+	_ground(root, Color("1e2024"), Color("33363c"), GROUND_Y, 0.8, "factory")
+	var hx := Cfg.COLS * 0.5
+	var hz := Cfg.ROWS * 0.5
+	var wall_x := hx + 5.2
+	var steel := Color("3a4048")
+	var ribs: Array = []
+	var z := -16.0
+	while z <= 16.0:
+		for s in [-1.0, 1.0]:
+			ribs.append(Transform3D(Basis(), Vector3(s * wall_x, GROUND_Y + 2.2, z)))
+		z += 0.45
+	var rib := LA.build([[LA.box(Vector3(0.12, 4.4, 0.24)), LA.xf(Vector3.ZERO), steel],
+		[LA.box(Vector3(0.06, 4.4, 0.22)), LA.xf(Vector3(0.05, 0, 0.0)), steel.lightened(0.12)]], LA.vmat("hall_rib", 0.6, 0.4, 0.2))
+	root.add_child(Art.multimesh(rib, ribs))
+	for s in [-1.0, 1.0]:
+		var win := MeshInstance3D.new()
+		win.mesh = LA.build([[LA.box(Vector3(0.05, 0.7, 32.0)), LA.xf(Vector3.ZERO), LA.lit(Color("9fd0ff"))]], LA.vmat("hall_window", 0.3, 0.0, 0.0, 1.6))
+		win.position = Vector3(s * (wall_x - 0.1), GROUND_Y + 3.4, 0)
+		root.add_child(win)
+	# I-beam columns with yellow feet, every 3 m in front of each wall.
+	var beam := LA.build([
+		[LA.box(Vector3(0.36, 5.0, 0.06)), LA.xf(Vector3(0, 2.5, -0.15)), Color("4a525c")],
+		[LA.box(Vector3(0.36, 5.0, 0.06)), LA.xf(Vector3(0, 2.5, 0.15)), Color("4a525c")],
+		[LA.box(Vector3(0.06, 5.0, 0.3)), LA.xf(Vector3(0, 2.5, 0)), Color("40474f")],
+		[LA.box(Vector3(0.46, 0.5, 0.42), 0.02), LA.xf(Vector3(0, 0.25, 0)), Color("d8a818")],
+	], LA.vmat("ibeam", 0.55, 0.35, 0.2))
+	var cols: Array = []
+	z = -15.0
+	while z <= 15.0:
+		for s in [-1.0, 1.0]:
+			cols.append(Transform3D(Basis(), Vector3(s * (wall_x - 0.25), GROUND_Y, z)))
+		z += 3.0
+	root.add_child(Art.multimesh(beam, cols))
+	# Machines in a row each side, facing the arena, on painted bays.
+	var mxs: Array = []
+	var bay := StandardMaterial3D.new()
+	bay.albedo_color = Color(0.17, 0.19, 0.22)
+	bay.roughness = 0.75
+	var line := StandardMaterial3D.new()
+	line.albedo_color = Color(0.85, 0.66, 0.08)
+	line.roughness = 0.7
+	for s in [-1.0, 1.0]:
+		var mx: float = s * (hx + 2.2)
+		var zz := -hz + 0.6
+		while zz < hz + 0.5:
+			mxs.append(Transform3D(Basis(Vector3.UP, -s * PI / 2.0), Vector3(mx, GROUND_Y, zz)))
+			zz += 2.3
+		_mi(root, _plane(Vector2(2.2, Cfg.ROWS + 3.0)), Vector3(mx, GROUND_Y + 0.004, 0), bay, Vector3.ZERO, Vector3.ONE, false)
+		for e in [-1.0, 1.0]:
+			_mi(root, _plane(Vector2(0.1, Cfg.ROWS + 3.0)), Vector3(mx + e * 1.1, GROUND_Y + 0.006, 0), line, Vector3.ZERO, Vector3.ONE, false)
+	_mm_fixed(root, _cached("machine", _machine), mxs)
+	# Pallet racks against the walls, stocked with the arena's crates.
+	var racks: Array = []
+	var stock: Array = []
 	var crates: Array = LA.crate_meshes("factory")
-	_mm(root, crates[0], _scatter(r, 10, 0.6, 5.0, 1.1, placed), r, GROUND_Y, 0.9, 1.0)
-	# Pipes running round the hall
+	for s in [-1.0, 1.0]:
+		var rx: float = s * (wall_x - 1.0)
+		var zz := -hz - 1.0
+		while zz < hz + 2.0:
+			racks.append(Transform3D(Basis(Vector3.UP, s * PI / 2.0), Vector3(rx, GROUND_Y, zz)))
+			for lvl in [0.12, 1.32]:
+				stock.append(Transform3D(Basis(), Vector3(rx, GROUND_Y + lvl, zz - 0.5)))
+				stock.append(Transform3D(Basis(), Vector3(rx, GROUND_Y + lvl, zz + 0.5)))
+			zz += 2.3
+	root.add_child(Art.multimesh(_cached("rack", _rack), racks))
+	root.add_child(Art.multimesh(crates[0], stock))
+	# Pipes running along the far side
 	var pipe := LA.build([[LA.cyl(0.14, 0.14, 1.0, 12), LA.xf(Vector3.ZERO, Vector3(0, 0, PI / 2.0)), LA.metal(Color("7a828c"))],
 		[LA.cyl(0.17, 0.17, 0.06, 12), LA.xf(Vector3(0.48, 0, 0), Vector3(0, 0, PI / 2.0)), LA.metal(Color("c9a020"))]], LA.vmat("pipe", 0.45, 0.0, 0.2))
 	var px: Array = []
 	for i in 30:
 		var x := -15.0 + i
-		px.append(Transform3D(Basis(), Vector3(x, GROUND_Y + 0.3, -Cfg.ROWS * 0.5 - 2.4)))
-		px.append(Transform3D(Basis(), Vector3(x, GROUND_Y + 0.75, -Cfg.ROWS * 0.5 - 2.4)))
+		px.append(Transform3D(Basis(), Vector3(x, GROUND_Y + 0.3, -hz - 2.4)))
+		px.append(Transform3D(Basis(), Vector3(x, GROUND_Y + 0.75, -hz - 2.4)))
 	root.add_child(Art.multimesh(pipe, px))
-	# Painted safety lines round the plinth
-	var line := StandardMaterial3D.new()
-	line.albedo_color = Color(1.0, 0.8, 0.05)
-	line.roughness = 0.7
+	# Walkway lines round the plinth
 	for s in [-1.0, 1.0]:
-		_mi(root, _plane(Vector2(Cfg.COLS + 2.2, 0.12)), Vector3(0, GROUND_Y + 0.005, s * (Cfg.ROWS * 0.5 + 1.0)), line, Vector3.ZERO, Vector3.ONE, false)
-		_mi(root, _plane(Vector2(0.12, Cfg.ROWS + 2.1)), Vector3(s * (Cfg.COLS * 0.5 + 1.0), GROUND_Y + 0.005, 0), line, Vector3.ZERO, Vector3.ONE, false)
+		_mi(root, _plane(Vector2(Cfg.COLS + 2.2, 0.12)), Vector3(0, GROUND_Y + 0.005, s * (hz + 1.0)), line, Vector3.ZERO, Vector3.ONE, false)
+		_mi(root, _plane(Vector2(0.12, Cfg.ROWS + 2.1)), Vector3(s * (hx + 1.0), GROUND_Y + 0.005, 0), line, Vector3.ZERO, Vector3.ONE, false)
+
+
+static func _mm_fixed(root: Node3D, mesh: Mesh, xs: Array) -> void:
+	root.add_child(Art.multimesh(mesh, xs))
+
+
+## A two-level pallet rack: orange uprights, blue beams, plank decks.
+## The haunted house: a tall dark manor with two towers, a steep roof and a
+## few lit windows.
+static func _mansion() -> Mesh:
+	var wall := Color("2a2230")
+	var roof := Color("1a1420")
+	var trim := Color("3a3040")
+	var win := LA.lit(Color("ffb050"))
+	var dark_win := Color("101015")
+	var parts: Array = [
+		[LA.box(Vector3(7.0, 3.6, 3.0), 0.05), LA.xf(Vector3(0, 1.8, 0)), wall],
+		[LA.box(Vector3(7.4, 0.2, 3.3)), LA.xf(Vector3(0, 3.6, 0)), trim],
+		[LA.box(Vector3(7.2, 2.2, 2.2)), LA.xf(Vector3(0, 4.3, 0), Vector3(PI / 4.0, 0, 0), Vector3(1, 0.72, 0.72)), roof],
+		[LA.box(Vector3(0.5, 1.4, 0.5)), LA.xf(Vector3(1.6, 5.2, 0.3)), trim],
+	]
+	for tx in [-3.9, 3.9]:
+		parts.append([LA.box(Vector3(1.8, 5.0, 1.8), 0.04), LA.xf(Vector3(tx, 2.5, 0.4)), wall.lightened(0.04)])
+		parts.append([LA.cone(1.35, 2.4, 8), LA.xf(Vector3(tx, 6.2, 0.4)), roof])
+	var lit := [[-2.2, 2.4], [0.8, 1.0], [2.4, 2.4], [-3.9, 3.6], [3.9, 1.4]]
+	for wx in [-2.2, -0.7, 0.8, 2.4]:
+		for wy in [1.0, 2.4]:
+			var on := false
+			for l in lit:
+				if is_equal_approx(l[0], wx) and is_equal_approx(l[1], wy):
+					on = true
+			parts.append([LA.box(Vector3(0.55, 0.8, 0.05)), LA.xf(Vector3(wx, wy, 1.52)), win if on else dark_win])
+	for tx in [-3.9, 3.9]:
+		for wy in [1.4, 3.6]:
+			parts.append([LA.box(Vector3(0.45, 0.7, 0.05)), LA.xf(Vector3(tx, wy, 1.32)), win if (tx < 0.0) == (wy > 2.0) else dark_win])
+	parts.append([LA.box(Vector3(1.1, 1.6, 0.08)), LA.xf(Vector3(0.0, 0.8, 1.52)), Color("1a1010")])
+	return LA.build(parts, LA.vmat("mansion", 0.9, 0.0, 0.3, 3.0))
+
+
+static func _rack() -> Mesh:
+	var up := Color("d0641c")
+	var beam := Color("2c5a9a")
+	var deck := Color("8a6a44")
+	var parts: Array = []
+	for x in [-1.05, 1.05]:
+		for zz in [-0.45, 0.45]:
+			parts.append([LA.box(Vector3(0.08, 2.5, 0.08)), LA.xf(Vector3(x, 1.25, zz)), up])
+	for y in [0.1, 1.3, 2.45]:
+		for zz in [-0.45, 0.45]:
+			parts.append([LA.box(Vector3(2.2, 0.1, 0.06)), LA.xf(Vector3(0, y, zz)), beam])
+		parts.append([LA.box(Vector3(2.1, 0.03, 0.9)), LA.xf(Vector3(0, y + 0.05, 0)), deck])
+	return LA.build(parts, LA.vmat("rack", 0.6, 0.2, 0.2))
+
+
+static func _frond(a: float, length: float) -> ArrayMesh:
+	var dir := Vector3(cos(a), 0, sin(a))
+	var side := dir.cross(Vector3.UP).normalized()
+	var rows: Array = []
+	var p := Vector3.ZERO
+	var pitch := 0.6
+	var n := 8
+	for i in n + 1:
+		var t := float(i) / n
+		var w := 0.34 * sin(clampf(t * 1.15, 0.0, 1.0) * PI) * (0.82 + 0.18 * float(i % 2)) + 0.02
+		var droop := 0.07 * w / 0.34
+		var col := Color("2a6e2c").lerp(Color("78bc4e"), t * 0.8)
+		rows.append([p + side * w - Vector3(0, droop, 0), p, p - side * w - Vector3(0, droop, 0), col])
+		var d := (dir * cos(pitch) + Vector3.UP * sin(pitch)).normalized()
+		p += d * (length / n)
+		pitch -= 0.27
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in n:
+		var r0: Array = rows[i]
+		var r1: Array = rows[i + 1]
+		for half in 2:
+			var a0: Vector3 = r0[half]
+			var a1: Vector3 = r0[half + 1]
+			var b0: Vector3 = r1[half]
+			var b1: Vector3 = r1[half + 1]
+			for tri in [[a0, b0, a1], [a1, b0, b1]]:
+				var nrm: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0]).normalized()
+				if nrm.y < 0.0:
+					nrm = -nrm
+				for face in 2:
+					var order: Array = tri if face == 0 else [tri[0], tri[2], tri[1]]
+					for v in order:
+						st.set_color(r0[3] if v == a0 or v == a1 else r1[3])
+						st.set_normal(nrm if face == 0 else -nrm)
+						st.add_vertex(v)
+	return st.commit()
 
 
 static func _machine() -> Mesh:

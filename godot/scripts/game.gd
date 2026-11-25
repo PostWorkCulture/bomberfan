@@ -14,6 +14,7 @@ const Cfg := preload("res://scripts/config.gd")
 const Fighter := preload("res://scripts/fighter.gd")
 const BotBrain := preload("res://scripts/bot_brain.gd")
 const TouchControls := preload("res://scripts/touch_controls.gd")
+const Hud := preload("res://scripts/hud.gd")
 const Art := preload("res://scripts/art.gd")
 const Fx := preload("res://scripts/fx.gd")
 const AudioScript := preload("res://scripts/audio.gd")
@@ -103,6 +104,15 @@ var _tour_i := 0
 var tour_secs := 2.0
 # Arrival flyover: the camera swings in over a new arena before the countdown.
 const FLY_TIME := 2.3
+## One line per arena under its name before each round: what is special here.
+const ARENA_HINTS := {
+	"forest": "Hide in the tall grass  ·  the beaver rebuilds crates",
+	"beach": "The tide floods the outer lane  ·  crabs shove bombs",
+	"haunted": "The walls turn  ·  the witch throws  ·  ghosts shove crates",
+	"factory": "Crushers slam their tile  ·  blast the lever to reverse the belts",
+}
+var _win_cam := -1.0        # time into the winner close-up, -1 when off
+var _win_target := Vector3.ZERO
 const CAM_POS := Vector3(0.0, 15.2, 6.6)
 const CAM_TARGET := Vector3(0.0, 0.0, 0.55)
 var _fly := -1.0
@@ -113,7 +123,6 @@ var env: Environment
 var sun: DirectionalLight3D
 var sky_mat: ProceduralSkyMaterial
 var sun_base_energy := 1.0
-var hud_sd: Label
 var msg_text := ""
 var msg_t := 0.0
 
@@ -130,11 +139,10 @@ var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0, "sudden_dea
 var static_root: Node3D
 var round_root: Node3D
 var camera: Camera3D
-var hud_round: Label
-var hud_msg: Label
-var hud_scores_box: HBoxContainer
-var hud_scores: Array = []
 var touch = null
+var hud = null          # player cards, timer pill, call-outs (hud.gd)
+var _hud_layer: CanvasLayer
+var _hud_hint := false
 
 var _acc := 0.0
 var _time := 0.0
@@ -201,6 +209,11 @@ func _ready() -> void:
 	mech = Mechanics.new()
 	mech.setup(self)
 	_create_fighters()
+	# Built in the smoke test too (and refreshed each round there), so CI
+	# catches HUD script errors.
+	hud = Hud.new()
+	add_child(hud)
+	hud.setup(self, fighters, Cfg.WINS_NEEDED, _hud_hint)
 	start_round()
 	if tour:
 		phase = "play"
@@ -581,6 +594,8 @@ func _apply_level(id: String) -> void:
 	hazards.clear()
 	_apply_env(id)
 	audio.set_arena(id)
+	for f in fighters:
+		f.set_outline(id == "haunted" or id == "factory")
 	fx.debris_color = LA.theme(id).get("debris", Color(0, 0, 0, 0))
 	fx.theme = id
 	fx.pale_bombs = level.get("pale_bomb", false)
@@ -662,51 +677,15 @@ func _set_fog(begin: float, end: float) -> void:
 
 
 func _build_hud() -> void:
-	var layer := CanvasLayer.new()
-	add_child(layer)
-	hud_scores_box = HBoxContainer.new()
-	hud_scores_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(hud_scores_box)
-	hud_scores_box.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	hud_scores_box.offset_top = 10.0
-	hud_scores_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	hud_scores_box.add_theme_constant_override("separation", 34)
-	hud_round = _label(20, Color(1.0, 0.96, 0.9))
-	layer.add_child(hud_round)
-	hud_round.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	hud_round.offset_top = 44.0
-	hud_round.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hud_sd = _label(30, Color(1.0, 0.35, 0.25))
-	layer.add_child(hud_sd)
-	hud_sd.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	hud_sd.offset_top = 74.0
-	hud_sd.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hud_msg = _label(72, Color(1.0, 0.92, 0.5))
-	layer.add_child(hud_msg)
-	hud_msg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	hud_msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hud_msg.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# The HUD proper is built once the fighters exist (it needs their names and
+	# colours); this layer holds the touch controls.
+	_hud_layer = CanvasLayer.new()
+	add_child(_hud_layer)
 	if not smoke and DisplayServer.is_touchscreen_available():
 		touch = TouchControls.new()
-		layer.add_child(touch)
+		_hud_layer.add_child(touch)
 	else:
-		var hint := _label(16, Color(1, 1, 1, 0.7))
-		hint.text = "Move: WASD / Arrows    Bomb: Space    Restart: R    Next arena: L"
-		layer.add_child(hint)
-		hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-		hint.offset_top = -34.0
-		hint.offset_bottom = -8.0
-		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-
-
-func _label(font_size: int, c: Color) -> Label:
-	var l := Label.new()
-	l.add_theme_font_size_override("font_size", font_size)
-	l.add_theme_color_override("font_color", c)
-	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	l.add_theme_constant_override("outline_size", maxi(4, int(font_size / 6.0)))
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return l
+		_hud_hint = not smoke
 
 
 func _pick_cast() -> Array:
@@ -739,9 +718,6 @@ func _create_fighters() -> void:
 			var b = BotBrain.new()
 			b.setup(self, f, 1000 + k * 7919 + (0 if smoke else rng.randi() % 100000))
 			brains[k] = b
-		var l := _label(22, cast[k]["color"])
-		hud_scores_box.add_child(l)
-		hud_scores.append(l)
 
 
 # ---- Rounds ---------------------------------------------------------------------
@@ -784,6 +760,10 @@ func start_round() -> void:
 		fighters[k].spawn_at(sp[k][0])
 		if brains.has(k):
 			brains[k].reset()
+	if _win_cam >= 0.0:
+		_win_cam = -1.0
+		camera.position = CAM_POS
+		camera.look_at(CAM_TARGET, Vector3.UP)
 	phase = "intro"
 	phase_t = Cfg.ROUND_INTRO
 	if fresh and not (smoke or tour or gallery or lineup or _quit_at >= 0.0):
@@ -1045,6 +1025,10 @@ func crush(f) -> void:
 	stats["crushed"] += 1
 
 
+func human_fighter():
+	return fighters[human_pid] if human_pid >= 0 and human_pid < fighters.size() else null
+
+
 ## Speed on this tile: the Beach tide slows wading.
 func move_mult(t: Vector2i) -> float:
 	return mech.move_mult(t)
@@ -1108,7 +1092,11 @@ func _end_round(winner, why: String) -> void:
 	phase = "outro"
 	phase_t = Cfg.ROUND_OUTRO
 	stats["rounds"] += 1
+	if winner != null and not smoke and _quit_at < 0.0:
+		_win_cam = 0.0
+		_win_target = winner.position
 	if smoke:
+		_update_hud()
 		print("ROUND %d %s %s %ds%s" % [stats["rounds"], level_id, "draw" if winner == null else winner.display_name,
 			int(round_elapsed), " sudden-death" if sudden_death else ""])
 	audio.music(false)
@@ -1368,7 +1356,8 @@ func _step_flames(dt: float) -> void:
 				node.queue_free()
 			flames.erase(k)
 		elif node != null and is_instance_valid(node):
-			node.scale = Vector3.ONE * (0.6 + 0.65 * fl["t"] / Cfg.BLAST_LIFE)
+			# Full size for the lethal window, snapping shut in the last 0.1 s.
+			node.scale = Vector3.ONE * (1.12 * clampf(fl["t"] / 0.1, 0.25, 1.0))
 
 
 func _break_crate(c: Vector2i) -> void:
@@ -1419,7 +1408,9 @@ func _step_pickups(dt: float) -> void:
 		var ci := idx(t.x, t.y)
 		if not pickups.has(ci):
 			continue
-		match pickups[ci]["id"]:
+		var pid: String = pickups[ci]["id"]
+		fx.pickup_burst(f.position, Art.PICKUP_TINT.get(pid, Color.WHITE), {"bomb": "+BOMB", "fire": "+FIRE", "speed": "+SPEED", "shield": "+SHIELD"}.get(pid, ""))
+		match pid:
 			"bomb":
 				f.max_bombs = mini(f.max_bombs + 1, Cfg.MAX_BOMBS)
 			"fire":
@@ -1809,6 +1800,7 @@ func _update_visuals(delta: float) -> void:
 		for cn in _clock_nodes:
 			cn["pivot"].rotation.y = clock["angle"]
 			var w: Node3D = cn["warn"]
+			w.visible = warning > 0.01
 			w.scale = Vector3(maxf(0.08, 0.18 + warning * (0.82 + 0.16 * sin(clock["pulse"] * 18.0))), 1.0, 0.7 + warning * 0.8)
 			var gi := 0
 			for g in cn["gears"]:
@@ -1849,6 +1841,15 @@ func _update_visuals(delta: float) -> void:
 ## The arrival flyover: from high and round to the side, swinging in to the
 ## play camera. Eased, and only on a fresh arena.
 func _update_camera(delta: float) -> void:
+	if _win_cam >= 0.0 and _fly < 0.0:
+		# Winner close-up: ease in to the winner while they celebrate.
+		_win_cam += delta
+		var wk := clampf(_win_cam / 0.7, 0.0, 1.0)
+		var we := 1.0 - pow(1.0 - wk, 3.0)
+		var tgt := CAM_TARGET.lerp(_win_target + Vector3(0, 0.6, 0), we)
+		camera.position = CAM_POS.lerp(_win_target + Vector3(0, 5.2, 3.6), we)
+		camera.look_at(tgt, Vector3.UP)
+		return
 	if _fly < 0.0:
 		return
 	_fly += delta
@@ -1872,35 +1873,35 @@ func _knockout_pause() -> void:
 	if smoke or not fx.enabled:
 		return
 	Engine.time_scale = 0.12
-	get_tree().create_timer(0.11, true, false, true).timeout.connect(func(): Engine.time_scale = 1.0)
+	get_tree().create_timer(0.2, true, false, true).timeout.connect(func(): Engine.time_scale = 1.0)
 
 
 func _update_hud() -> void:
-	for k in fighters.size():
-		var f = fighters[k]
-		var nm: String = f.display_name + (" (YOU)" if k == human_pid else "")
-		var lab: Label = hud_scores[k]
-		lab.text = "%s  %d" % [nm, wins[k]]
-		lab.modulate = Color(1, 1, 1, 1.0 if f.alive else 0.45)
+	if hud == null:
+		return
 	var secs := maxi(0, ceili(round_t))
-	hud_round.text = "ROUND %d  ·  %s     %d:%02d     FIRST TO %d" % [round_no, String(level.get("name", "")).to_upper(),
-		floori(secs / 60.0), secs % 60, Cfg.WINS_NEEDED]
+	var banner := ""
 	if phase == "play" and sudden_death:
-		hud_sd.text = "SUDDEN DEATH"
+		banner = "SUDDEN DEATH"
 	elif phase == "play" and sd_warned:
-		hud_sd.text = "WALLS CLOSING IN  %d" % ceili(sd_countdown)
-	else:
-		hud_sd.text = ""
+		banner = "WALLS CLOSING IN  %d" % ceili(sd_countdown)
+	elif phase == "play" and mech.tide_warning() > 0.0:
+		banner = "TIDE COMING IN  %d" % ceili(mech.tide_warning())
+	var msg := ""
 	if phase == "intro":
 		var n := ceili(phase_t - 0.35)
 		if n > 3:
-			hud_msg.text = String(level.get("name", "")).to_upper()
+			msg = String(level.get("name", "")).to_upper()
 		else:
-			hud_msg.text = str(n) if n >= 1 else "GO!"
+			msg = str(n) if n >= 1 else "GO!"
 	elif msg_t > 0.0:
-		hud_msg.text = msg_text
-	else:
-		hud_msg.text = ""
+		msg = msg_text
+	var dt := get_process_delta_time()
+	var sub := ""
+	if phase == "intro" and ceili(phase_t - 0.35) >= 1:
+		sub = ARENA_HINTS.get(level_id, "")
+	hud.set_frame(_fly >= 0.0, sub, round_no == 1 and (phase == "intro" or round_elapsed < 6.0), dt)
+	hud.update(dt, fighters, wins, human_pid, round_no, String(level.get("name", "")), secs, banner, msg)
 
 
 # ---- Character line-up: plain ground, soft light, the four fighters side by

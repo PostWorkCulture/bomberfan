@@ -6,7 +6,7 @@ const Cfg := preload("res://scripts/config.gd")
 const ModelBot := preload("res://scripts/model_bot.gd")
 const Levels := preload("res://scripts/levels.gd")
 const R := Cfg.PLAYER_RADIUS
-const TARGET_HEIGHT := 1.25   # every fighter stands the same height (uniform-height rule); sized to read on a phone
+const TARGET_HEIGHT := 1.45   # every fighter stands the same height (uniform-height rule); sized to read on a phone (1.25 → 1.45, AAA review)
 
 var game = null
 var pid := 0
@@ -37,6 +37,7 @@ var robot = null            # set for the Blender bomber-bots, which animate in 
 var _anim_names := {}
 var _cur := ""
 var _death_t := 0.0
+var _model_base_y := 0.0
 
 
 func setup(g, id_: int, info: Dictionary, bot: bool) -> void:
@@ -47,6 +48,7 @@ func setup(g, id_: int, info: Dictionary, bot: bool) -> void:
 	color = info["color"]
 	is_bot = bot
 	_build_model()
+	_apply_outline()
 	_build_marker()
 	_build_bubble()
 
@@ -111,6 +113,77 @@ func _normalise_height() -> void:
 	var s := TARGET_HEIGHT / box.size.y
 	model.scale = Vector3.ONE * s
 	model.position.y = -box.position.y * s
+	_model_base_y = model.position.y
+
+
+## Every fighter wears an outline and a rim light in their colour, so they are
+## the clearest thing on any floor (AAA review: fighters must out-read the
+## arena). Inverted hull in world space, plus an additive fresnel pass. The
+## outline is dark on light arenas and light on dark ones (set_outline).
+const OUTLINE_SHADER := """
+shader_type spatial;
+render_mode unshaded, cull_front, world_vertex_coords, depth_draw_opaque;
+uniform vec4 line_col : source_color = vec4(0.0, 0.0, 0.0, 1.0);
+uniform float thick = 0.035;
+void vertex() { VERTEX += normalize(NORMAL) * thick; }
+void fragment() { ALBEDO = line_col.rgb; }
+"""
+const RIM_SHADER := """
+shader_type spatial;
+render_mode unshaded, blend_add, depth_draw_never, cull_back;
+uniform vec4 rim_col : source_color = vec4(1.0);
+uniform float power = 2.2;
+uniform float strength = 0.9;
+uniform float lift = 0.0;   // a soft fill in the fighter's colour on dark arenas
+void fragment() {
+	float f = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), power);
+	ALBEDO = rim_col.rgb * (f * strength + lift);
+}
+"""
+var _outline_mat: ShaderMaterial
+var _rim_mat: ShaderMaterial
+
+
+var _ghost_level := 0.0
+
+
+func _set_ghost(v: float) -> void:
+	if is_equal_approx(v, _ghost_level) or model == null:
+		return
+	_ghost_level = v
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		(node as MeshInstance3D).transparency = v if v < 1.0 else 0.0
+
+
+func _apply_outline() -> void:
+	_outline_mat = ShaderMaterial.new()
+	var sh := Shader.new()
+	sh.code = OUTLINE_SHADER
+	_outline_mat.shader = sh
+	_rim_mat = ShaderMaterial.new()
+	var rs := Shader.new()
+	rs.code = RIM_SHADER
+	_rim_mat.shader = rs
+	_rim_mat.set_shader_parameter("rim_col", color.lightened(0.25))
+	_outline_mat.next_pass = _rim_mat
+	if model == null:
+		return
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		(node as MeshInstance3D).material_overlay = _outline_mat
+	set_outline(false)
+
+
+var _dark_arena := false
+
+
+func set_outline(dark_arena: bool) -> void:
+	_dark_arena = dark_arena
+	if _outline_mat == null:
+		return
+	_outline_mat.set_shader_parameter("line_col", color.lightened(0.1) if dark_arena else color.darkened(0.75))
+	_outline_mat.set_shader_parameter("thick", 0.022 if dark_arena else 0.026)
+	_rim_mat.set_shader_parameter("strength", 0.85 if dark_arena else 0.45)
+	_rim_mat.set_shader_parameter("lift", 0.1 if dark_arena else 0.0)
 
 
 func _build_marker() -> void:
@@ -170,6 +243,10 @@ func spawn_at(t: Vector2i) -> void:
 	face_yaw = 0.0
 	rotation.y = 0.0
 	_death_t = 0.0
+	if model:
+		model.position.y = _model_base_y
+		model.rotation.y = 0.0
+	set_outline(_dark_arena)
 	_cur = ""
 	_play("idle")
 	if robot:
@@ -190,6 +267,8 @@ func die() -> void:
 	alive = false
 	moving = false
 	_death_t = 0.0
+	if model:
+		model.position.y = _model_base_y
 	_play("death")
 	if robot:
 		robot.die()
@@ -310,9 +389,16 @@ func update_visual(delta: float) -> void:
 		rotation.y = face_yaw
 	if robot:
 		robot.animate(delta, moving and alive, speed / Cfg.BASE_SPEED)
-	# Tall grass (Forest) hides a bot from view; you can still see yourself.
+	# Tall grass (Forest): a bot in it is hidden from you, unless you are close
+	# enough that a bot would see you (the same GRASS_SEE rule): then it shows
+	# as a faint ghost. The grass rustles over anyone moving in it.
 	if model:
-		model.visible = not (is_bot and alive and game.mech.hidden(self))
+		var ghost := 0.0
+		if is_bot and alive and game.mech.hidden(self):
+			var me = game.human_fighter()
+			ghost = 0.6 if me != null and game.mech.can_see(me, self) else 1.0
+		_set_ghost(ghost)
+		model.visible = ghost < 1.0
 		if invuln_t > 0.0 and alive:
 			model.visible = model.visible and fmod(invuln_t * 14.0, 1.0) < 0.6
 	if _bubble:
@@ -321,6 +407,13 @@ func update_visual(delta: float) -> void:
 			_bubble.scale = Vector3.ONE * (1.0 + 0.03 * sin(Time.get_ticks_msec() * 0.006))
 	if not alive:
 		_death_t += delta
+		# Knocked out: a white flash, tossed up spinning, then down to the ground.
+		if model:
+			var k := clampf(_death_t / 0.55, 0.0, 1.0)
+			model.position.y = _model_base_y + sin(k * PI) * 0.9
+			model.rotation.y = k * TAU * 1.5
+		if _rim_mat:
+			_rim_mat.set_shader_parameter("strength", maxf(0.0, 3.5 - _death_t * 8.0))
 		if _death_t > 2.0:
 			visible = false
 		return

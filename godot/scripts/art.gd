@@ -410,7 +410,7 @@ static func pillar_mesh() -> ArrayMesh:
 	if _cache.has("pillar"):
 		return _cache["pillar"]
 	var m := rounded_box(Vector3(0.94, 0.98, 0.94), 0.09, 3, 0.025, 3)
-	m.surface_set_material(0, stone_mat("pillar", Color(0.84, 0.83, 0.8), 0.4))
+	m.surface_set_material(0, stone_mat("pillar", Color(0.56, 0.57, 0.53), 0.4))
 	_cache["pillar"] = m
 	return m
 
@@ -421,7 +421,7 @@ static func boulder_mesh(variant: int) -> ArrayMesh:
 	if _cache.has(key):
 		return _cache[key]
 	var m := rounded_box(Vector3(1.04, 1.1, 1.04), 0.28, 4, 0.09, 100 + variant * 17)
-	m.surface_set_material(0, stone_mat("border", Color(0.82, 0.82, 0.8), 0.6))
+	m.surface_set_material(0, stone_mat("border", Color(0.5, 0.52, 0.47), 0.6))
 	_cache[key] = m
 	return m
 
@@ -454,6 +454,11 @@ static func log_pile_mesh(variant := 0) -> ArrayMesh:
 			var centre := Vector3(shift, y, off) if along_x else Vector3(off, y, shift)
 			var axis := Vector3.RIGHT if along_x else Vector3.BACK
 			_add_log(side, ends, centre, axis, rr, ln, 10)
+	# Four corner stakes hold the pile square (AAA review: crates should fill
+	# about 90% of the tile from above).
+	for cx in [-0.42, 0.42]:
+		for cz in [-0.42, 0.42]:
+			_add_log(side, ends, Vector3(cx, 0.44, cz), Vector3.UP, 0.045, 0.88, 6)
 	var mesh := ArrayMesh.new()
 	side.commit(mesh)
 	ends.commit(mesh)

@@ -27,12 +27,12 @@ const THEMES := {
 	"beach": {
 		# High noon on a sandbar: bright, warm, a little haze off the water.
 		"sky": Color("0b3550"), "fog": Color(0.55, 0.72, 0.8), "fog_begin": 22.0, "fog_end": 50.0,
-		"sun": Color(1.0, 0.95, 0.86), "sun_energy": 1.0, "sun_rot": Vector3(-58, -30, 0), "ambient": 0.36,
+		"sun": Color(1.0, 0.94, 0.82), "sun_energy": 1.05, "sun_rot": Vector3(-48, -34, 0), "ambient": 0.3,
 		"sky_top": Color(0.32, 0.58, 0.88), "sky_horizon": Color(0.8, 0.88, 0.92), "ground_horizon": Color(0.62, 0.56, 0.44),
-		"exposure": 0.8, "saturation": 1.06, "contrast": 1.1, "glow": 0.3,
-		"floor": {"pattern": 5, "a": Color("a3845a"), "b": Color("b8996a"), "line": Color("6a5030"), "line_alpha": 0.1, "rough": 0.95},
-		"block": {"style": 0, "side": Color("6f6256"), "top": Color("8a7a68"), "rough": 0.9, "scale": 0.9},
-		"border": {"style": 0, "side": Color("8a4a40"), "top": Color("a8665a"), "rough": 0.85, "scale": 0.9},
+		"exposure": 0.74, "saturation": 1.08, "contrast": 1.06, "glow": 0.3,
+		"floor": {"pattern": 5, "a": Color("8c6c44"), "b": Color("9c7b4f"), "line": Color("5a4028"), "line_alpha": 0.12, "rough": 0.95},
+		"block": {"style": 0, "side": Color("564a40"), "top": Color("6a5e50"), "rough": 0.9, "scale": 0.9},
+		"border": {"style": 0, "side": Color("6e3c34"), "top": Color("86524a"), "rough": 0.85, "scale": 0.9},
 		"plinth": Color("a88e62"), "debris": Color("b89c6e"),
 	},
 	"haunted": {
@@ -42,19 +42,19 @@ const THEMES := {
 		"sky_top": Color(0.09, 0.08, 0.13), "sky_horizon": Color(0.21, 0.18, 0.26), "ground_horizon": Color(0.08, 0.07, 0.1),
 		"exposure": 1.06, "saturation": 0.92, "contrast": 1.14, "glow": 0.55,
 		"floor": {"pattern": 3, "a": Color("201819"), "b": Color("312628"), "line": Color("8a70c0"), "line_alpha": 0.05, "rough": 0.8, "plank": 0.25},
-		"block": {"style": 1, "side": Color("4e4852"), "top": Color("6a6470"), "rough": 0.9, "scale": 1.0},
-		"border": {"style": 1, "side": Color("302b35"), "top": Color("4a4450"), "rough": 0.92, "scale": 1.0},
+		"block": {"style": 1, "side": Color("38343e"), "top": Color("4a4552"), "rough": 0.9, "scale": 1.0},
+		"border": {"style": 1, "side": Color("28242c"), "top": Color("3a3540"), "rough": 0.92, "scale": 1.0},
 		"plinth": Color("2a2428"), "debris": Color("6a4a7c"),
 	},
 	"factory": {
 		# Indoors: cool overhead strip light from almost straight above, warm
 		# furnace glow round the edges.
 		"sky": Color("0b0d11"), "fog": Color(0.08, 0.085, 0.1), "fog_begin": 17.0, "fog_end": 36.0,
-		"sun": Color(0.92, 0.96, 1.0), "sun_energy": 1.0, "sun_rot": Vector3(-74, -18, 0), "ambient": 0.42,
+		"sun": Color(0.92, 0.96, 1.0), "sun_energy": 1.1, "sun_rot": Vector3(-62, -24, 0), "ambient": 0.32,
 		"sky_top": Color(0.16, 0.18, 0.22), "sky_horizon": Color(0.34, 0.33, 0.32), "ground_horizon": Color(0.12, 0.12, 0.13),
-		"exposure": 1.02, "saturation": 0.95, "contrast": 1.12, "glow": 0.45,
+		"exposure": 1.04, "saturation": 1.0, "contrast": 1.2, "glow": 0.45,
 		"floor": {"pattern": 4, "a": Color("272b32"), "b": Color("323741"), "line": Color("ffd60a"), "line_alpha": 0.06, "rough": 0.5, "metal": 0.55},
-		"block": {"style": 2, "side": Color("66717f"), "top": Color("8e98a6"), "rough": 0.42, "metal": 0.75, "scale": 1.0},
+		"block": {"style": 2, "side": Color("4a525e"), "top": Color("5e6672"), "rough": 0.65, "metal": 0.45, "scale": 1.0},
 		"border": {"style": 5, "side": Color("363c46"), "top": Color("ffc21a"), "rough": 0.5, "metal": 0.6, "scale": 1.0},
 		"plinth": Color("3e434c"), "debris": Color("b08a5a"),
 	},
@@ -293,7 +293,7 @@ void fragment() {
 const BELT_SHADER := """
 shader_type spatial;
 uniform vec3 belt_col : source_color = vec3(0.09, 0.1, 0.12);
-uniform vec3 arrow_col : source_color = vec3(1.0, 0.8, 0.05);
+uniform vec3 arrow_col : source_color = vec3(0.55, 0.5, 0.32);
 uniform float speed = 1.5;
 uniform float dir = 1.0;   // -1 when the Factory lever has reversed the loop
 void fragment() {
@@ -603,7 +603,7 @@ static func drop_block_mesh(id: String) -> Mesh:
 static func clockwork_mesh() -> ArrayMesh:
 	if _cache.has("clockwork"):
 		return _cache["clockwork"]
-	var copper := Color("c8763a")
+	var copper := Color("96582c")
 	var dark := Color("5a2c12")
 	var brass := metal(Color("e0a84a"))
 	var parts: Array = []
@@ -648,7 +648,7 @@ static func crate_meshes(id: String) -> Array:
 			out = [Art.log_pile_mesh(0), Art.log_pile_mesh(1), Art.log_pile_mesh(2)]
 		"beach":
 			# Sun-bleached driftwood crates and rope-bound barrels.
-			out = [plank_crate("beach", Color("cbb58f"), Color("a8916b"), Color("6c5a42")), barrel("beach")]
+			out = [plank_crate("beach", Color("d8bf92"), Color("b89a6a"), Color("6c5a42")), barrel("beach")]
 		"haunted":
 			out = [casket(), trunk()]
 		"factory":
@@ -688,17 +688,17 @@ static func plank_crate(key: String, light: Color, mid: Color, edge: Color) -> A
 
 ## A purple casket: panelled box, a stepped lid with a brass cross, brass corners.
 static func casket() -> ArrayMesh:
-	var purple := Color("6e3448")
-	var dark := Color("3e1c2a")
-	var light := Color("8a4860")
-	var brass := metal(Color("b8955a"))
+	var purple := Color("84405a")
+	var dark := Color("4a2232")
+	var light := Color("a05874")
+	var brass := metal(Color("735428"))
 	var parts: Array = [
 		[box(Vector3(0.8, 0.5, 0.84), 0.04), xf(Vector3(0, 0.29, 0)), purple],
 		[box(Vector3(0.86, 0.07, 0.9), 0.02), xf(Vector3(0, 0.04, 0)), dark],
 		[box(Vector3(0.86, 0.1, 0.9), 0.03), xf(Vector3(0, 0.58, 0)), dark],
 		[box(Vector3(0.7, 0.1, 0.76), 0.04), xf(Vector3(0, 0.67, 0)), light],
-		[box(Vector3(0.1, 0.03, 0.56)), xf(Vector3(0, 0.73, 0.02)), brass],
-		[box(Vector3(0.36, 0.03, 0.1)), xf(Vector3(0, 0.73, -0.1)), brass],
+		[box(Vector3(0.07, 0.025, 0.42)), xf(Vector3(0, 0.73, 0.02)), brass],
+		[box(Vector3(0.26, 0.025, 0.07)), xf(Vector3(0, 0.73, -0.08)), brass],
 	]
 	for a in [-1.0, 1.0]:
 		for b in [-1.0, 1.0]:
@@ -712,8 +712,8 @@ static func casket() -> ArrayMesh:
 
 
 static func pallet() -> ArrayMesh:
-	var wood := Color("a8814e")
-	var box_c := Color("c39a62")
+	var wood := Color("b48a55")
+	var box_c := Color("d0a66c")
 	var tape := Color("e6d6b0")
 	var parts: Array = []
 	for k in 5:
@@ -728,6 +728,8 @@ static func pallet() -> ArrayMesh:
 			var c := box_c.lerp(Color("9c7444"), r.randf() * 0.6)
 			parts.append([box(Vector3(0.4, hh, 0.4), 0.025), xf(Vector3(a * 0.21, 0.14 + hh * 0.5, b * 0.21)), c])
 			parts.append([box(Vector3(0.41, 0.03, 0.1)), xf(Vector3(a * 0.21, 0.14 + hh + 0.005, b * 0.21)), tape])
+	parts.append([box(Vector3(0.38, 0.22, 0.38), 0.02), xf(Vector3(-0.21, 0.93, -0.21)), box_c.lightened(0.08)])
+	parts.append([box(Vector3(0.39, 0.025, 0.09)), xf(Vector3(-0.21, 1.045, -0.21)), tape])
 	return build(parts, vmat("pallet", 0.8, 0.0, 0.3))
 
 
@@ -748,6 +750,15 @@ static func barrel(key: String) -> ArrayMesh:
 	for k in 10:
 		var a := TAU * k / 10.0
 		parts.append([box(Vector3(0.012, 0.66, 0.02)), xf(Vector3(cos(a), 0, sin(a)) * 0.375 + Vector3(0, 0.43, 0), Vector3(0, -a, 0)), dark])
+	# Seated in a square driftwood frame, so it reads as a full block.
+	parts.append([box(Vector3(0.9, 0.08, 0.9), 0.015), xf(Vector3(0, 0.04, 0)), dark])
+	for side in 4:
+		var yaw := side * PI / 2.0
+		var nrm := Vector3(sin(yaw), 0, cos(yaw))
+		parts.append([box(Vector3(0.9, 0.07, 0.06), 0.01), Transform3D(Basis(Vector3.UP, yaw), nrm * 0.42 + Vector3(0, 0.78, 0)), wood.darkened(0.1)])
+	for cx in [-0.42, 0.42]:
+		for cz in [-0.42, 0.42]:
+			parts.append([box(Vector3(0.07, 0.8, 0.07), 0.01), xf(Vector3(cx, 0.4, cz)), dark])
 	return build(parts, vmat("barrel_" + key, 0.85, 0.0, 0.35))
 
 
@@ -789,6 +800,12 @@ static func drums() -> ArrayMesh:
 			parts.append([cyl(0.17, 0.17, 0.02, 14), xf(p + Vector3(0, 0.625, 0)), cols[i].darkened(0.3)])
 			parts.append([cyl(0.03, 0.03, 0.02, 8), xf(p + Vector3(0.08, 0.635, 0.05)), rim])
 			i += 1
+	# Shrink-wrap band round the four, and the strap that ties them.
+	for side in 4:
+		var yaw := side * PI / 2.0
+		var nrm := Vector3(sin(yaw), 0, cos(yaw))
+		parts.append([box(Vector3(0.82, 0.22, 0.02)), Transform3D(Basis(Vector3.UP, yaw), nrm * 0.405 + Vector3(0, 0.46, 0)), Color(0.75, 0.8, 0.85)])
+		parts.append([box(Vector3(0.84, 0.04, 0.025)), Transform3D(Basis(Vector3.UP, yaw), nrm * 0.41 + Vector3(0, 0.62, 0)), Color("d0a020")])
 	return build(parts, vmat("drums", 0.55, 0.0, 0.25))
 
 

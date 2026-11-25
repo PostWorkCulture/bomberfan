@@ -7,7 +7,7 @@ const Art := preload("res://scripts/art.gd")
 const Cfg := preload("res://scripts/config.gd")
 
 const MAX_FLASH_LIGHTS := 2
-const SCORCH_LIFE := 7.0
+const SCORCH_LIFE := 3.5    # AAA review: 7 s left the lanes grimy
 
 var enabled := true
 var shake := 0.0
@@ -20,6 +20,8 @@ var _fire_mat: StandardMaterial3D
 var _smoke_mat: StandardMaterial3D
 var _glow_mat: StandardMaterial3D
 var _scorch_mat: StandardMaterial3D
+var _flame_tile_mat: ShaderMaterial
+var _shock_mat: ShaderMaterial
 var _debris_mesh: BoxMesh
 var _fire_ramp: Gradient
 var _flash_ramp: Gradient
@@ -45,16 +47,25 @@ func _ready() -> void:
 	_smoke_mat = _particle_mat(false)
 	_glow_mat = _particle_mat(true, false)
 	_glow_mat.albedo_color = Color(1.0, 0.45, 0.12, 0.6)
+	_flame_tile_mat = ShaderMaterial.new()
+	var fs := Shader.new()
+	fs.code = FLAME_TILE_SHADER
+	_flame_tile_mat.shader = fs
+	_flame_tile_mat.set_shader_parameter("noise_tex", Art.dapple_tex())
+	_shock_mat = ShaderMaterial.new()
+	var ss := Shader.new()
+	ss.code = SHOCK_SHADER
+	_shock_mat.shader = ss
 	_scorch_mat = StandardMaterial3D.new()
 	_scorch_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_scorch_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_scorch_mat.albedo_texture = Art.soft_dot("scorch", 0.3)
-	_scorch_mat.albedo_color = Color(0.05, 0.04, 0.03, 0.62)
+	_scorch_mat.albedo_color = Color(0.05, 0.04, 0.03, 0.35)
 	_debris_mesh = BoxMesh.new()
 	_debris_mesh.size = Vector3(0.09, 0.07, 0.2)
 	_debris_mesh.material = Art.bark_mat()
-	_fire_ramp = _ramp([0.0, 0.1, 0.3, 0.62, 1.0], [Color(1.15, 0.92, 0.5, 1.0), Color(1.0, 0.62, 0.18, 1.0),
-		Color(0.95, 0.36, 0.06, 0.95), Color(0.32, 0.1, 0.04, 0.7), Color(0.12, 0.08, 0.06, 0.0)])
+	_fire_ramp = _ramp([0.0, 0.1, 0.4, 0.75, 1.0], [Color(1.15, 0.92, 0.5, 1.0), Color(1.0, 0.66, 0.2, 1.0),
+		Color(1.0, 0.42, 0.08, 0.95), Color(0.7, 0.2, 0.05, 0.75), Color(0.2, 0.08, 0.05, 0.0)])
 	_flash_ramp = _ramp([0.0, 0.4, 1.0], [Color(1.2, 0.9, 0.5, 0.35), Color(1.0, 0.5, 0.15, 0.2), Color(1, 0.4, 0.1, 0.0)])
 	_spark_ramp = _ramp([0.0, 0.5, 1.0], [Color(1.25, 1.0, 0.6, 1.0), Color(1.0, 0.5, 0.12, 0.9), Color(0.8, 0.2, 0.05, 0.0)])
 	_smoke_ramp = _ramp([0.0, 0.18, 0.6, 1.0], [Color(0.3, 0.28, 0.25, 0.0), Color(0.22, 0.21, 0.2, 0.6),
@@ -246,7 +257,7 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	for c in cells:
 		var p: Vector3 = c
 		var is_centre := p.distance_to(centre) < 0.1
-		var f := _emitter(p + Vector3(0, 0.35, 0), _fire_mat, 5 if is_centre else 4, 0.6)
+		var f := _emitter(p + Vector3(0, 0.35, 0), _fire_mat, 8 if is_centre else 7, 0.6)
 		f.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 		f.emission_sphere_radius = 0.28
 		f.direction = Vector3.UP
@@ -288,6 +299,20 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	sp.color_ramp = _spark_ramp
 	sp.emitting = true
 	_flash_light(centre + Vector3(0, 0.8, 0))
+	# Shockwave: a bright ring racing out over the floor.
+	var ring := MeshInstance3D.new()
+	ring.mesh = _quad
+	ring.material_override = _shock_mat
+	ring.rotation.x = -PI / 2.0
+	ring.position = centre + Vector3(0, 0.06, 0)
+	ring.scale = Vector3.ONE * 0.3
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(ring)
+	var tw := ring.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ring, "scale", Vector3.ONE * 4.4, 0.28).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(ring, "transparency", 1.0, 0.28)
+	tw.chain().tween_callback(ring.queue_free)
 
 
 func _flash_light(pos: Vector3) -> void:
@@ -313,13 +338,16 @@ func _release_light(l: OmniLight3D) -> void:
 
 
 ## A glowing floor patch that marks a tile as lethal while its flame is live.
+## The lethal tile: a sheet of flame that fills the tile edge to edge (so a
+## blast arm reads as one continuous band), white-hot in the middle, held at
+## full size for the whole lethal window.
 func flame_glow(parent: Node3D, pos: Vector3) -> MeshInstance3D:
 	var g := MeshInstance3D.new()
 	g.mesh = _quad
-	g.material_override = _glow_mat
+	g.material_override = _flame_tile_mat
 	g.rotation.x = -PI / 2.0
-	g.position = pos + Vector3(0, 0.03, 0)
-	g.scale = Vector3.ONE * 1.25
+	g.position = pos + Vector3(0, 0.05 + randf() * 0.01, 0)
+	g.scale = Vector3.ONE * 1.12
 	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(g)
 	return g
@@ -532,6 +560,7 @@ func shield_pop(pos: Vector3) -> void:
 func death_puff(pos: Vector3) -> void:
 	if not enabled:
 		return
+	_burst(pos + Vector3(0, 0.7, 0), Color(1.0, 0.95, 0.8), 16, 3.5, 0.6)
 	var s := _emitter(pos + Vector3(0, 0.6, 0), _smoke_mat, 8, 1.3)
 	s.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 	s.emission_sphere_radius = 0.3
@@ -544,3 +573,90 @@ func death_puff(pos: Vector3) -> void:
 	s.scale_amount_curve = _grow
 	s.color_ramp = _smoke_ramp
 	s.emitting = true
+
+
+const FLAME_TILE_SHADER := """
+shader_type spatial;
+render_mode unshaded, blend_mix, depth_draw_never, cull_disabled;
+uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
+varying vec3 wpos;
+void vertex() { wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
+void fragment() {
+	vec2 p = UV * 2.0 - 1.0;
+	float r = max(abs(p.x), abs(p.y)) * 0.7 + length(p) * 0.3;
+	float n = texture(noise_tex, wpos.xz * 0.6 + vec2(0.0, TIME * 1.8)).r;
+	float n2 = texture(noise_tex, wpos.xz * 1.3 - vec2(TIME * 1.1, 0.0)).r;
+	float heat = clamp(1.15 - r * 1.05 + (n - 0.5) * 0.55 + (n2 - 0.5) * 0.3, 0.0, 1.0);
+	vec3 col = mix(vec3(0.75, 0.1, 0.02), vec3(1.0, 0.45, 0.06), smoothstep(0.1, 0.45, heat));
+	col = mix(col, vec3(1.0, 0.85, 0.42), smoothstep(0.55, 0.85, heat));
+	col = mix(col, vec3(1.0, 0.97, 0.82), smoothstep(0.88, 1.0, heat));
+	ALBEDO = col;
+	ALPHA = smoothstep(0.02, 0.22, heat) * 0.95;
+}
+"""
+
+const SHOCK_SHADER := """
+shader_type spatial;
+render_mode unshaded, blend_add, depth_draw_never, cull_disabled;
+void fragment() {
+	float d = length(UV * 2.0 - 1.0);
+	float ring = smoothstep(0.7, 0.9, d) * (1.0 - smoothstep(0.9, 1.0, d));
+	ALBEDO = vec3(1.0, 0.75, 0.4) * ring * 1.2;
+}
+"""
+
+
+## A ring of sparks in a colour: pick-ups, knockouts.
+func _burst(pos: Vector3, c: Color, amount: int, speed: float, life: float) -> void:
+	var p := _emitter(pos, _add_mat, amount, life)
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 0.15
+	p.direction = Vector3.UP
+	p.spread = 180.0
+	p.initial_velocity_min = speed * 0.6
+	p.initial_velocity_max = speed
+	p.gravity = Vector3(0, -4.0, 0)
+	p.damping_min = 2.0
+	p.damping_max = 3.0
+	p.scale_amount_min = 0.1
+	p.scale_amount_max = 0.18
+	p.color_ramp = _ramp([0.0, 0.3, 1.0], [Color(c.r * 1.3, c.g * 1.3, c.b * 1.3, 1.0), c, Color(c, 0.0)])
+	p.emitting = true
+
+
+## Collecting a pick-up: a burst and ring in its colour and a "+BOMB" that
+## floats up off the fighter.
+func pickup_burst(pos: Vector3, c: Color, text: String) -> void:
+	if not enabled:
+		return
+	_burst(pos + Vector3(0, 0.6, 0), c, 14, 3.0, 0.5)
+	var ring := MeshInstance3D.new()
+	ring.mesh = _quad
+	ring.material_override = _shock_mat
+	ring.rotation.x = -PI / 2.0
+	ring.position = pos + Vector3(0, 0.08, 0)
+	ring.scale = Vector3.ONE * 0.4
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(ring)
+	var tw := ring.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ring, "scale", Vector3.ONE * 1.8, 0.3).set_ease(Tween.EASE_OUT)
+	tw.tween_property(ring, "transparency", 1.0, 0.3)
+	tw.chain().tween_callback(ring.queue_free)
+	var l := Label3D.new()
+	l.text = text
+	l.font = load("res://assets/fonts/lilita-one.ttf")
+	l.font_size = 64
+	l.pixel_size = 0.006
+	l.modulate = c.lightened(0.3)
+	l.outline_size = 14
+	l.outline_modulate = Color(0.03, 0.03, 0.06)
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.no_depth_test = true
+	l.position = pos + Vector3(0, 1.5, 0)
+	add_child(l)
+	var lt := l.create_tween()
+	lt.set_parallel(true)
+	lt.tween_property(l, "position", l.position + Vector3(0, 0.9, 0), 0.7).set_ease(Tween.EASE_OUT)
+	lt.tween_property(l, "modulate:a", 0.0, 0.7).set_delay(0.25)
+	lt.chain().tween_callback(l.queue_free)

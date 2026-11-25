@@ -109,12 +109,14 @@ Ported from the browser build (`updateEndgame`, tuning in `config.gd`):
 ### Fighters
 No coloured circles under fighters. The human player keeps the "YOU" tag.
 
-**Godot roster (Pete, 2026-11-25): Razor, Sparky Mk II, Rivet and Pixel.**
+**Godot roster (Pete, 2026-11-25): Razor, plus seven bots: Sparky Mk II, Rivet, Pixel, Boiler, Gumball, Snap and Arcade.**
 - From the browser roster, only Razor (the ninja) and Bomberman are kept. The rest are dropped from the Godot build, and their models are removed from `godot/assets/characters` (the browser game still has them).
 - Bomberman is held back. Pete wants it "seriously upgraded", but it is Konami's character, so the plan is an original bomber hero for that slot.
 - New characters are concepts 1, 5 and 6 from the Blender set (`tools/blender/bomber_bots.py`, branch `art/bot-concepts`), exported as `sparky.glb`, `rivet.glb` and `pixel.glb`. They are rigid models; `godot/scripts/model_bot.gd` animates them in code (bob, waddle, lean, squash, hop-and-spin cheer, topple). The other five concepts are dropped.
 - The first-pass code bots (`robot.gd`: Bolt, Tank, Pip, Sparky) were rejected and deleted.
-- Slots: you are Razor (blue); the bots are Sparky (yellow), Rivet (red) and Pixel (green).
+- Round-2 bots (Pete picked 1, 3, 7 and 8 of eight: `tools/blender/bomber_bots_2.py`, branch `art/bot-concepts`): Boiler (copper steam boiler), Gumball (gumball machine), Snap (box camera) and Arcade (arcade cabinet), exported as `boiler/gumball/snap/arcade.glb` and animated by `model_bot.gd`. Dial, Crumb, Reel and Lumen are dropped.
+- Slots: you are always Razor (blue). Each match the three bots are drawn at random from the seven. Every fighter has its own HUD colour: Sparky yellow, Rivet red, Pixel green, Boiler orange, Gumball pink, Snap white, Arcade purple. `-- --cast id,id,id` or autotest `"cast"` picks them by hand.
+- Tick (from the darker set) is still awaiting Pete's call.
 
 ### Arenas (Godot)
 **Four arenas (Pete, 2026-11-25): Forest, Beach, Haunted House and Factory.** These are the ones to keep working on. Glacier, Haunted Train, Circuit and Pirate Fleet were ported, then dropped from the Godot build (teleport pads and shaped/void layouts went with them). They stay in the browser game, but don't bring them back to Godot unless Pete asks.
@@ -141,6 +143,7 @@ Kick (and the other power-ups), character select / Loadout / Prize Locker, menus
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
 ### 2026-11-25
+- **Four more bots** (Pete: "1, 3, 7 and 8 can stay" from the round-2 set in the Sparky/Rivet/Pixel style). Boiler, Gumball, Snap and Arcade are added to the Godot roster. Each match the three bot slots are filled at random from the seven bots, and each fighter brings its own HUD colour. Files: `godot/scripts/game.gd` (`ROSTER`, `_pick_cast`, autotest `"cast"`), `godot/assets/characters/{boiler,gumball,snap,arcade}.glb`; `tools/blender/bomber_bots_2.py` (branch `art/bot-concepts`).
 - **Repo tidy** (Pete: "delete anything we don't need"): removed `archive/` (27 unreferenced legacy portraits), the retired patch workflows/scripts in `tools/legacy-patches/`, and the unused `assets/portraits/birb.webp` (Birb uses `bomber-og.webp`). `brand_refresh.py` moved to `tools/`. All still recoverable from git history. `.gitignore` now also covers `node_modules/`, `*.blend1` and `*.backup.*`. No runtime files changed. Files: `CLAUDE.md`, `.gitignore`.
 - **Down to four arenas** (Pete: keep Forest, Beach, Factory and Haunted House "which we can further work on. The rest can go"). Glacier, Haunted Train, Circuit and Pirate Fleet are removed from the Godot build, together with the code only they used: teleport pads (fighters and bots), shaped/void layouts, the snowman and cannon hazards, and their art. The smoke test plays each arena twice (8 rounds). Files: `levels.gd`, `level_art.gd`, `level_scenery.gd`, `level_props.gd`, `game.gd`, `fighter.gd`, `bot_brain.gd`, `godot-build.yml`.
 - **Roster cut** (Pete: keep concepts 1, 5, 6; of the existing fighters "keep Razor and Bomberman … get rid of the rest"). The Godot roster is now Razor + Sparky Mk II, Rivet and Pixel; their models (`sparky/rivet/pixel.glb`) are exported from Blender and animated by the new `model_bot.gd`. Orc, Bunny and Dino were removed from `godot/assets/characters`, and the rejected `robot.gd` bots were deleted. Bomberman is not in the Godot build yet: rather than upgrading Konami's character, the plan is an original bomber hero for that slot. Files: `game.gd`, `fighter.gd`, `model_bot.gd` (new), `assets/characters/`.

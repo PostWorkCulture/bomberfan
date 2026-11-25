@@ -175,8 +175,8 @@ static func _cached(key: String, fn: Callable) -> Mesh:
 
 static func _beach(root: Node3D) -> void:
 	# A sandbar island in open water.
-	var sand := LA.block_mat("sand", {"style": 0, "side": Color("d9bf86"), "top": Color("f0dcaa"), "rough": 0.95, "scale": 0.5})
-	var isl := Art.rounded_box(Vector3(30, 1.0, 24), 0.45, 8, 0.2, 5)
+	var sand := LA.block_mat("sand", {"style": 0, "side": Color("b8955c"), "top": Color("cfb07a"), "rough": 0.95, "scale": 0.5})
+	var isl := Art.rounded_box(Vector3(25, 1.0, 20), 0.45, 8, 0.2, 5)
 	isl.surface_set_material(0, sand)
 	_mi(root, isl, Vector3(0, GROUND_Y - 0.5, -1.0), null, Vector3.ZERO, Vector3.ONE, false)
 	_mi(root, _plane(Vector2(160, 160), 40), Vector3(0, GROUND_Y - 0.3, 0), LA.water_mat(Color("06415e"), Color("1aa0c4"), 0.05), Vector3.ZERO, Vector3.ONE, false)
@@ -603,8 +603,8 @@ static func _pirate(root: Node3D) -> void:
 	var r := RandomNumberGenerator.new()
 	r.seed = 23
 	# A small island with palms off to one side, rocks in the swell
-	var sand := LA.block_mat("sand", {"style": 0, "side": Color("d9bf86"), "top": Color("f0dcaa"), "rough": 0.95, "scale": 0.5})
-	var isl := Art.rounded_box(Vector3(7, 1.2, 5), 2.0, 5, 0.3, 9)
+	var sand := LA.block_mat("sand", {"style": 0, "side": Color("b8955c"), "top": Color("cfb07a"), "rough": 0.95, "scale": 0.5})
+	var isl := Art.rounded_box(Vector3(7, 1.2, 5), 0.5, 5, 0.3, 9)
 	isl.surface_set_material(0, sand)
 	_mi(root, isl, Vector3(-13.5, -1.2, -9.0))
 	var palm: Mesh = _cached("palm", _palm_mesh)

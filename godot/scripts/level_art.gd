@@ -663,7 +663,7 @@ static func clockwork_mesh() -> ArrayMesh:
 		var x := float(i - 1)
 		parts.append([box(Vector3(0.94, 0.9, 0.94), 0.06), xf(Vector3(x, 0.45, 0)), copper])
 		parts.append([box(Vector3(0.98, 0.08, 0.98), 0.02), xf(Vector3(x, 0.06, 0)), dark])
-		parts.append([box(Vector3(0.98, 0.06, 0.98), 0.02), xf(Vector3(x, 0.88, 0)), dark])
+		parts.append([box(Vector3(0.8, 0.03, 0.8), 0.01), xf(Vector3(x, 0.905, 0)), Color("e09a5a")])
 		for s in [-1.0, 1.0]:
 			for k in 3:
 				parts.append([sphere(0.03, 8, 4), xf(Vector3(x - 0.3 + k * 0.3, 0.75, s * 0.475)), brass])

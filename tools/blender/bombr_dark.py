@@ -333,54 +333,87 @@ def tick():
     porcelain = mat('porcelain', C('#ece6dc'), 0.2, 0, 1.0)
     black = mat('silk_black', C('#121114'), 0.4, 0, 0.6)
     plum = mat('waistcoat', C('#3a1530'), 0.6)
+    shirt = mat('shirt', C('#d9d2c4'), 0.7)
     brass = BRASS
     copper = mat('copper', C('#b8683a'), 0.3, 1.0)
     crack = mat('crack', C('#1a1416'), 0.8)
-    # porcelain head with cracks, red monocle, painted grin
-    sphere('Head', 0.2, porcelain, p, (0, -0.02, 0.98), scale=(0.95, 0.95, 1.05))
-    for i, (x, z, r) in enumerate([(0.05, 1.08, 0.6), (0.08, 1.04, -0.3), (0.1, 0.99, 0.9), (0.04, 1.12, -0.5)]):
-        box('Crack', (0.006, 0.006, 0.06), crack, p, (x, -0.19 + abs(x) * 0.25, z), rot=(0, r, 0), r=0)
-    sphere('EyeL', 0.038, mat('eye_black', C('#08080a'), 0.2, 0, 1.0), p, (-0.065, -0.175, 1.01), scale=(1, 0.45, 1.3))
-    sphere('EyeLEmber', 0.01, glow('#ff2a2a', 12), p, (-0.065, -0.195, 1.0))
-    box('Tear', (0.012, 0.006, 0.07), mat('eye_black', C('#08080a'), 0.2, 0, 1.0), p, (-0.07, -0.185, 0.95), r=0.004)
-    torus('Monocle', 0.045, 0.01, brass, p, (0.07, -0.185, 1.01), rot=(PI / 2, 0, 0))
-    sphere('MonocleGlow', 0.04, glow('#ff2a2a', 10), p, (0.07, -0.18, 1.01), scale=(1, 0.3, 1))
-    hose('MonocleChain', [(0.11, -0.17, 1.0), (0.15, -0.14, 0.9), (0.13, -0.17, 0.78)], 0.004, brass, p)
-    torus('Grin', 0.1, 0.012, crack, p, (0, -0.165, 0.93), rot=(PI / 2 - 0.2, PI, 0), arc=0.5, major=28, minor=8)
+    hollow = mat('eye_black', C('#08080a'), 0.2, 0, 1.0)
+    HZ = 0.95   # head centre: low enough to sit on the neck
+
+    # ---- neck: a brass column with gear rings, wrapped by a stiff collar and cravat
+    cyl('NeckColumn', 0.05, 0.06, 0.16, copper, p, (0, 0.0, 0.79), bev=0.008)
+    for z in (0.75, 0.81):
+        cyl('NeckGear', 0.075, 0.075, 0.018, brass, p, (0, 0.0, z), bev=0.004)
+        ring_of(10, 0.078, z, lambda i, x, y, zz, ang: box('Cog', (0.02, 0.02, 0.018), brass, p, (x, y, zz), rot=(0, 0, ang), r=0.003))
+    for side in (-1, 1):
+        box('WingCollar', (0.11, 0.025, 0.09), shirt, p, (0.07 * side, -0.07, 0.79), rot=(0.25, 0, -0.5 * side), r=0.012)
+    sphere('CravatKnot', 0.035, mat('cravat', C('#6a1a1a'), 0.55, 0, 0.3), p, (0, -0.1, 0.77), scale=(1.2, 0.7, 0.9))
+    for side in (-1, 1):
+        box('CravatTail', (0.05, 0.015, 0.09), mat('cravat', C('#6a1a1a'), 0.55, 0, 0.3), p, (0.018 * side, -0.112, 0.71), rot=(0, 0.25 * side, 0), r=0.01)
+    sphere('Pin', 0.012, glow('#ff2a2a', 6), p, (0, -0.125, 0.775))
+
+    # ---- porcelain head, seated on the column, with a brass jaw hinge each side
+    sphere('Head', 0.2, porcelain, p, (0, -0.01, HZ), scale=(0.95, 0.95, 1.05))
+    cyl('HeadSocket', 0.07, 0.06, 0.05, brass, p, (0, 0.0, HZ - 0.19), bev=0.008)
+    for side in (-1, 1):
+        cyl('JawHinge', 0.03, 0.03, 0.03, brass, p, (0.185 * side, 0.0, HZ - 0.04), rot=(0, PI / 2, 0), bev=0.005)
+        sphere('HingeScrew', 0.01, crack, p, (0.2 * side, 0.0, HZ - 0.04))
+    for i, (x, z, r) in enumerate([(0.05, 0.1, 0.6), (0.08, 0.06, -0.3), (0.11, 0.01, 0.9), (0.04, 0.14, -0.5), (-0.12, 0.08, 0.4)]):
+        box('Crack', (0.006, 0.006, 0.06), crack, p, (x, -0.185 + abs(x) * 0.25, HZ + z), rot=(0, r, 0), r=0)
+    # a chip knocked out of the cheek, showing the gears behind
+    sphere('Chip', 0.04, mat('chip_dark', C('#1e1410'), 0.6), p, (-0.12, -0.14, HZ - 0.03), scale=(1, 0.4, 0.8))
+    cyl('ChipGear', 0.028, 0.028, 0.01, brass, p, (-0.12, -0.152, HZ - 0.03), rot=(PI / 2 - 0.4, 0, 0.6), bev=0)
+    # eyes: one hollow with a red ember and a drip, one behind a red monocle
+    sphere('EyeL', 0.038, hollow, p, (-0.065, -0.165, HZ + 0.03), scale=(1, 0.45, 1.3))
+    sphere('EyeLEmber', 0.01, glow('#ff2a2a', 12), p, (-0.065, -0.185, HZ + 0.02))
+    box('Tear', (0.012, 0.006, 0.07), hollow, p, (-0.07, -0.178, HZ - 0.03), r=0.004)
+    torus('Monocle', 0.045, 0.01, brass, p, (0.07, -0.175, HZ + 0.03), rot=(PI / 2, 0, 0))
+    sphere('MonocleGlow', 0.04, glow('#ff2a2a', 10), p, (0.07, -0.17, HZ + 0.03), scale=(1, 0.3, 1))
+    hose('MonocleChain', [(0.11, -0.16, HZ + 0.02), (0.15, -0.13, HZ - 0.09), (0.11, -0.13, 0.74)], 0.004, brass, p)
+    torus('Grin', 0.1, 0.012, crack, p, (0, -0.155, HZ - 0.05), rot=(PI / 2 - 0.2, PI, 0), arc=0.5, major=28, minor=8)
     for i in range(6):
-        box('GrinTick', (0.005, 0.008, 0.035), crack, p, (-0.075 + i * 0.03, -0.18, 0.885 + abs(i - 2.5) * 0.008), r=0)
-    # top hat with a gear on the band
-    cyl('HatBrim', 0.24, 0.24, 0.02, black, p, (0, -0.01, 1.17), rot=(0.08, 0, 0.05), bev=0.008)
-    cyl('HatCrown', 0.15, 0.14, 0.3, black, p, (0, -0.005, 1.33), rot=(0.05, 0, 0.05), bev=0.015)
-    torus('HatBand', 0.146, 0.018, mat('hatband', C('#6a1a1a'), 0.5), p, (0, -0.01, 1.21))
-    cyl('HatGear', 0.05, 0.05, 0.015, brass, p, (0.1, -0.12, 1.22), rot=(PI / 2 - 0.4, 0, 0.6), bev=0.003)
-    # body: tail coat, plum waistcoat, a clock-bomb in the chest
+        box('GrinTick', (0.005, 0.008, 0.035), crack, p, (-0.075 + i * 0.03, -0.17, HZ - 0.095 + abs(i - 2.5) * 0.008), r=0)
+
+    # ---- top hat, tipped, with a gear on the band and a wind-up key through it
+    cyl('HatBrim', 0.24, 0.24, 0.02, black, p, (0, -0.01, HZ + 0.19), rot=(0.08, 0, 0.08), bev=0.008)
+    cyl('HatCrown', 0.15, 0.14, 0.3, black, p, (0.008, -0.005, HZ + 0.35), rot=(0.05, 0, 0.08), bev=0.015)
+    torus('HatBand', 0.146, 0.018, mat('hatband', C('#6a1a1a'), 0.5), p, (0.002, -0.01, HZ + 0.23), rot=(0.05, 0, 0.08))
+    cyl('HatGear', 0.05, 0.05, 0.015, brass, p, (0.1, -0.12, HZ + 0.24), rot=(PI / 2 - 0.4, 0, 0.6), bev=0.003)
+    cyl('KeyShaft', 0.012, 0.012, 0.16, brass, p, (0.0, 0.17, HZ + 0.33), rot=(PI / 2, 0, 0), bev=0)
+    for side in (-1, 1):
+        torus('KeyLobe', 0.035, 0.01, brass, p, (0.035 * side, 0.26, HZ + 0.33), rot=(PI / 2, 0, 0))
+
+    # ---- body: tail coat, plum waistcoat, a clock-bomb ticking in the chest
     box('Torso', (0.36, 0.26, 0.36), black, p, (0, 0.01, 0.56), r=0.1)
     box('Waistcoat', (0.24, 0.03, 0.3), plum, p, (0, -0.125, 0.55), r=0.04)
-    for s in (-1, 1):
-        box('Lapel', (0.06, 0.02, 0.2), black, p, (0.12 * s, -0.13, 0.63), rot=(0, 0.25 * s, 0), r=0.01)
-        box('Tail', (0.1, 0.03, 0.34), black, p, (0.08 * s, 0.13, 0.32), rot=(0.25, 0, 0.08 * s), r=0.02)
+    for side in (-1, 1):
+        box('Lapel', (0.06, 0.02, 0.2), black, p, (0.12 * side, -0.13, 0.63), rot=(0, 0.25 * side, 0), r=0.01)
+        box('Tail', (0.1, 0.03, 0.34), black, p, (0.08 * side, 0.13, 0.32), rot=(0.25, 0, 0.08 * side), r=0.02)
+        cyl('Epaulet', 0.07, 0.07, 0.02, brass, p, (0.19 * side, 0.0, 0.74), rot=(0, 0.3 * side, 0), bev=0.005)
+    for k in range(3):
+        sphere('VestButton', 0.012, brass, p, (0.0, -0.145, 0.44 - k * 0.04))
     cyl('ClockRim', 0.1, 0.1, 0.04, brass, p, (0, -0.15, 0.57), rot=(PI / 2, 0, 0), bev=0.008)
     cyl('ClockFace', 0.085, 0.085, 0.01, mat('clock_face', C('#f4ecd8'), 0.4), p, (0, -0.172, 0.57), rot=(PI / 2, 0, 0), bev=0)
     for i in range(12):
-        a = 2 * PI * i / 12
-        box('Hour', (0.006, 0.004, 0.016 if i % 3 else 0.026), crack, p, (0.07 * math.sin(a), -0.179, 0.57 + 0.07 * math.cos(a)), rot=(0, a, 0), r=0)
+        ang = 2 * PI * i / 12
+        box('Hour', (0.006, 0.004, 0.016 if i % 3 else 0.026), crack, p, (0.07 * math.sin(ang), -0.179, 0.57 + 0.07 * math.cos(ang)), rot=(0, ang, 0), r=0)
     box('HourHand', (0.008, 0.004, 0.045), crack, p, (0.012, -0.181, 0.59), rot=(0, 0.5, 0), r=0)
     box('MinuteHand', (0.006, 0.004, 0.065), mat('red_hand', C('#c81a1a'), 0.4), p, (-0.02, -0.182, 0.6), rot=(0, -0.6, 0), r=0)
     sphere('ClockCore', 0.05, glow('#ff3a1a', 4), p, (0, -0.13, 0.57), scale=(1, 0.4, 1))
     hose('WireRed', [(0.08, -0.15, 0.52), (0.16, -0.1, 0.44), (0.2, 0.05, 0.4)], 0.008, mat('wire_red', C('#c81a1a'), 0.4), p)
     hose('WireBlue', [(-0.08, -0.15, 0.53), (-0.17, -0.1, 0.46), (-0.2, 0.05, 0.42)], 0.008, mat('wire_blue', C('#1a4ac8'), 0.4), p)
-    # jointed brass limbs
-    for s in (-1, 1):
-        sphere('Shoulder', 0.05, brass, p, (0.21 * s, 0, 0.7))
-        cyl('UpperArm', 0.03, 0.028, 0.14, copper, p, (0.24 * s, -0.01, 0.62), rot=(0, 0.25 * s, 0), bev=0.005)
-        sphere('Elbow', 0.035, brass, p, (0.27 * s, -0.03, 0.54))
-        cyl('Forearm', 0.028, 0.025, 0.12, copper, p, (0.28 * s, -0.06, 0.47), rot=(0.35, 0.1 * s, 0), bev=0.005)
-        sphere('Hand', 0.042, mat('glove_white', C('#e8e4da'), 0.6), p, (0.29 * s, -0.09, 0.4))
-        cyl('Leg', 0.03, 0.028, 0.24, copper, p, (0.08 * s, 0, 0.25), bev=0.005)
-        sphere('Knee', 0.036, brass, p, (0.08 * s, -0.01, 0.25))
-        box('Shoe', (0.11, 0.22, 0.07), black, p, (0.08 * s, -0.05, 0.035), r=0.03)
-        box('Spat', (0.12, 0.13, 0.06), mat('spat', C('#d9d2c4'), 0.7), p, (0.08 * s, -0.02, 0.09), r=0.02)
+
+    # ---- jointed brass limbs, white gloves, spats
+    for side in (-1, 1):
+        sphere('Shoulder', 0.05, brass, p, (0.21 * side, 0, 0.7))
+        cyl('UpperArm', 0.03, 0.028, 0.14, copper, p, (0.24 * side, -0.01, 0.62), rot=(0, 0.25 * side, 0), bev=0.005)
+        sphere('Elbow', 0.035, brass, p, (0.27 * side, -0.03, 0.54))
+        cyl('Forearm', 0.028, 0.025, 0.12, copper, p, (0.28 * side, -0.06, 0.47), rot=(0.35, 0.1 * side, 0), bev=0.005)
+        sphere('Hand', 0.042, mat('glove_white', C('#e8e4da'), 0.6), p, (0.29 * side, -0.09, 0.4))
+        cyl('Leg', 0.03, 0.028, 0.24, copper, p, (0.08 * side, 0, 0.25), bev=0.005)
+        sphere('Knee', 0.036, brass, p, (0.08 * side, -0.01, 0.25))
+        box('Shoe', (0.11, 0.22, 0.07), black, p, (0.08 * side, -0.05, 0.035), r=0.03)
+        box('Spat', (0.12, 0.13, 0.06), shirt, p, (0.08 * side, -0.02, 0.09), r=0.02)
     # detonator plunger in the right hand
     box('Detonator', (0.13, 0.1, 0.09), mat('det_wood', C('#5a3a20'), 0.6), p, (0.3, -0.14, 0.33), r=0.012)
     cyl('Plunger', 0.01, 0.01, 0.12, GUNMETAL, p, (0.3, -0.14, 0.42), bev=0)

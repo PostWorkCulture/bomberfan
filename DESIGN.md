@@ -69,7 +69,7 @@ Bomb Up, Fire Up, Full Fire, Speed, Kick, Punch, Glove (pick up & throw), Remote
 - Web build: single-threaded export (GitHub Pages can't send the headers threads need), published to **/play/** — https://postworkculture.github.io/bomberfan/play/
 - Tuning lives in `godot/scripts/config.gd`, copied from `CFG`.
 - Controls: WASD/arrows + Space (R restarts, L skips to the next arena), gamepad d-pad/stick + A (Back = next arena); on touchscreens a floating thumbstick (left half) and BOMB button (right half).
-- Fighters are normalised to one height (1.45 tiles since the AAA review on 2026-11-25; was 1.25), larger than the browser build so they read on a phone. Every fighter has an outline and a rim light in its HUD colour: a dark outline on Forest and Beach, a light one on Haunted House and Factory. Fighters are the clearest thing on any floor. A knocked-out fighter flashes white and is tossed up spinning before landing.
+- Fighters are normalised to one height (1.45 tiles since the AAA review on 2026-11-25; was 1.25), larger than the browser build so they read on a phone. Every fighter has an outline in its HUD colour: a dark body always gets a light line; light bodies get a dark line on Forest and Beach and a line in their own colour on Haunted House and Factory. The rim light runs on every fighter on the dark floors (pale, as the body fill) but elsewhere only on dark bodies and your own fighter (AAA review rounds 5–8). Fighters are the clearest thing on any floor. A knocked-out fighter flashes white and is tossed up spinning before landing.
 
 ### Vertical slice (2026-11-24) — what's in
 Forest arena (15×13, 70% crates), you vs 3 bots (originally Ninja, Orc, Bunny, Dino; see Fighters for today's roster), bombs with chain reactions, Bomb Up / Fire Up / Speed (temporary) at the browser drop rates, rounds to first-to-3, round intro/outro, HUD, keyboard + gamepad + touch.
@@ -119,7 +119,7 @@ Ported from the browser build (`updateEndgame`, tuning in `config.gd`):
 - Sounds: an ominous horn for the warning, an impact chord when it starts, and a stone slam for each block landing.
 
 ### Fighters
-No coloured circles under fighters. The human player keeps the "YOU" tag.
+No coloured circles under the bots. Your own fighter is marked in your colour (AAA review rounds 7–11, `fighter.gd`): a pulsing ring on the floor, a bordered chevron and a "YOU" tag (Lilita One) above the head that drops to your feet in the top two rows, and an x-ray silhouette (stencil-masked) wherever something stands in front of you.
 
 **Godot roster (Pete, 2026-11-25): Razor, plus eight bots: Sparky Mk II, Rivet, Pixel, Boiler, Gumball, Snap, Arcade and Tick.**
 - From the browser roster, only Razor (the ninja) and Bomberman are kept. The rest are dropped from the Godot build, and their models are removed from `godot/assets/characters` (the browser game still has them).
@@ -197,6 +197,7 @@ Newest first. One dated heading per day; bullets say what changed, why, and wher
   - **Forest:** olive moss (`5f7a34`) in blobs of varied size (two noise scales); pillar caps get four moss cushions textured in world space.
   - **Flyers:** birds have a beak, tail and swept two-part wings; gulls long bent wings with black tips; bats scalloped membranes and ears. The Beach gulls circle clear of the lifeguard tower.
   - **HUD:** the shield chip shows a larger, tilted icon and no count.
+- **Spec refresh (daily upkeep):** "Godot rebuild" (outline/rim rules) and "Fighters" (your marker and x-ray) updated to match rounds 5–11. `DESIGN.md` only.
 
 ### 2026-11-25
 - **AAA review round 4** (a fresh reviewer; the first one could not be resumed): FAIL, mostly 7s, technical polish 5. Blockers: bot triangle counts (20–73k each, frames at 1.4–1.7M triangles), the 44° lens making corner fighters look knocked out, and the witch over the near rows. Fixes:

@@ -212,15 +212,21 @@ static func _ghost() -> Mesh:
 
 
 static func _witch(angry: bool) -> Mesh:
-	var robe := Color("2a1a3a")
-	var skin := Color("7fbf5a")
+	# AAA review round 6: a silhouette you read at a glance from above, a wide
+	# brim with a bright band, a flaring cape, a lighter face.
+	var robe := Color("3a2250")
+	var skin := Color("9ad86a")
+	var cape := Color("5a1e3a")
 	var parts: Array = [
 		[LA.cyl(0.12, 0.3, 0.8, 14), LA.xf(Vector3(0, 0.4, 0)), robe],
+		[LA.box(Vector3(0.62, 0.04, 0.85)), LA.xf(Vector3(0, 0.62, -0.42), Vector3(-1.05, 0, 0), Vector3(1.0, 1.0, 1.0)), cape],
+		[LA.box(Vector3(0.9, 0.03, 0.5)), LA.xf(Vector3(0, 0.38, -0.78), Vector3(-0.55, 0, 0)), cape.darkened(0.15)],
 		[LA.sphere(0.17, 14, 8), LA.xf(Vector3(0, 0.95, 0)), skin],
 		[LA.cone(0.05, 0.14, 6), LA.xf(Vector3(0, 0.93, 0.2), Vector3(PI / 2.0 - 0.3, 0, 0)), skin],
-		[LA.cyl(0.32, 0.32, 0.03, 18), LA.xf(Vector3(0, 1.08, 0), Vector3(0.12, 0, 0)), Color("1a1022")],
-		[LA.cone(0.16, 0.55, 12), LA.xf(Vector3(0, 1.36, -0.03), Vector3(-0.25, 0, 0.1)), Color("1a1022")],
-		[LA.cyl(0.165, 0.165, 0.05, 12), LA.xf(Vector3(0, 1.12, 0)), Color("7a37d6")],
+		[LA.cyl(0.46, 0.46, 0.035, 20), LA.xf(Vector3(0, 1.08, 0), Vector3(0.12, 0, 0)), Color("221430")],
+		[LA.cone(0.17, 0.62, 12), LA.xf(Vector3(0, 1.38, -0.03), Vector3(-0.3, 0, 0.12)), Color("221430")],
+		[LA.cyl(0.18, 0.18, 0.07, 12), LA.xf(Vector3(0, 1.13, 0)), LA.lit(Color("c070ff"))],
+		[LA.box(Vector3(0.09, 0.09, 0.03)), LA.xf(Vector3(0, 1.13, 0.17)), LA.lit(Color("ffd040"))],
 		[LA.cyl(0.015, 0.02, 1.2, 6), LA.xf(Vector3(-0.3, 0.6, 0.15), Vector3(0, 0, 0.35)), Color("6a4a2a")],
 		[LA.cone(0.1, 0.3, 8), LA.xf(Vector3(-0.5, 0.08, 0.15), Vector3(0, 0, 0.35 + PI)), Color("c8a060")],
 	]

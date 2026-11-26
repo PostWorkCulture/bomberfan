@@ -100,7 +100,7 @@ static func stone_tex() -> NoiseTexture2D:
 
 static func moss_tex() -> NoiseTexture2D:
 	return noise_tex("moss", 41, 0.045,
-		PackedColorArray([Color("26391a"), Color("37541f"), Color("4a6a2a")]),
+		PackedColorArray([Color("3f5524"), Color("5f7a34"), Color("7d8f46")]),
 		PackedFloat32Array([0.0, 0.5, 1.0]), 256, 5)
 
 
@@ -195,7 +195,9 @@ void fragment() {
 		+ texture(stone_tex, wpos.xz * scale).rgb * b.y
 		+ texture(stone_tex, wpos.xy * scale).rgb * b.z;
 	float m = smoothstep(0.62, 0.97, wnrm.y) * moss_amount;
-	m *= smoothstep(0.42, 0.62, texture(moss_tex, wpos.xz * 0.55).g * 2.2);
+	// Two scales, so moss sits in blobs of varied size, not an even fur.
+	float mn = texture(moss_tex, wpos.xz * 0.55).g * 0.65 + texture(moss_tex, wpos.xz * 0.19 + 0.37).g * 0.35;
+	m *= smoothstep(0.4, 0.64, mn * 2.0);
 	vec3 moss = texture(moss_tex, wpos.xz * 1.4).rgb;
 	vec3 col = mix(s * tint, moss, clamp(m, 0.0, 1.0));
 	// Built, not noise cubes (AAA review round 3): worn, lighter bevels, a
@@ -467,8 +469,18 @@ static func pillar_mesh() -> ArrayMesh:
 	cap.rings = 4
 	moss.append_from(cap, 0, Transform3D(Basis().scaled(Vector3(1.0, 1.0, 0.8)), Vector3(0.12, 0.985, -0.1)))
 	moss.append_from(cap, 0, Transform3D(Basis().scaled(Vector3(0.6, 0.8, 0.7)), Vector3(-0.2, 0.98, 0.18)))
+	moss.append_from(cap, 0, Transform3D(Basis().scaled(Vector3(0.35, 0.7, 0.45)), Vector3(0.3, 0.975, 0.28)))
+	moss.append_from(cap, 0, Transform3D(Basis().scaled(Vector3(0.3, 0.5, 0.25)), Vector3(-0.42, 0.7, -0.05)))
 	moss.commit(m)
-	m.surface_set_material(2, flat_mat(Color(0.3, 0.46, 0.18), 0.95))
+	# Olive moss, textured in world space so no two pillars match (round 6).
+	var mm := StandardMaterial3D.new()
+	mm.albedo_texture = moss_tex()
+	mm.albedo_color = Color(1.05, 1.05, 1.0)
+	mm.uv1_triplanar = true
+	mm.uv1_world_triplanar = true
+	mm.uv1_scale = Vector3(1.3, 1.3, 1.3)
+	mm.roughness = 0.95
+	m.surface_set_material(2, mm)
 	_cache["pillar"] = m
 	return m
 

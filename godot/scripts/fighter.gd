@@ -201,9 +201,9 @@ func set_outline(dark_arena: bool) -> void:
 	# solid figures rather than neon line drawings (AAA review round 3).
 	if dark_body:
 		line = color.lightened(0.3)
-		thick = 0.024
+		thick = 0.028 if dark_arena else 0.024
 		rim = 0.5
-		lift = 0.18
+		lift = 0.32 if dark_arena else 0.18
 	elif dark_arena:
 		line = color
 		rim = 0.45
@@ -215,9 +215,9 @@ func set_outline(dark_arena: bool) -> void:
 	if not is_bot:
 		lift += 0.15
 		rim = maxf(rim, 0.7)
-	# The rim is a second pass per surface: only where it earns it (dark
-	# floors, dark bodies, your own fighter). AAA review round 3, draw calls.
-	_outline_mat.next_pass = _rim_mat if (dark_arena or dark_body or not is_bot) else null
+	# The rim is a second pass per surface: only your own fighter, and a dark
+	# body on a dark floor (where it is the body fill). AAA review round 6.
+	_outline_mat.next_pass = _rim_mat if (not is_bot or (dark_body and dark_arena)) else null
 	_outline_mat.set_shader_parameter("line_col", line)
 	_outline_mat.set_shader_parameter("thick", thick)
 	_rim_mat.set_shader_parameter("strength", rim)

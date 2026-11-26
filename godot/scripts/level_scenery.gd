@@ -56,6 +56,7 @@ static func build(root: Node3D, level: Dictionary, hard: PackedByteArray, skip: 
 	pmi.mesh = pm
 	pmi.position = Vector3(0, GROUND_Y * 0.5 - 0.012, 0)
 	root.add_child(pmi)
+	var first := root.get_child_count()
 	match id:
 		"beach":
 			_beach(root)
@@ -63,6 +64,14 @@ static func build(root: Node3D, level: Dictionary, hard: PackedByteArray, skip: 
 			_haunted(root)
 		"factory":
 			_factory(root)
+	# Nothing outside the walls casts a shadow (AAA review round 6, draw
+	# calls): the shadow pass is for the board, where it tells you depth.
+	for k in range(first, root.get_child_count()):
+		var c := root.get_child(k)
+		if c is GeometryInstance3D:
+			(c as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		for g in c.find_children("*", "GeometryInstance3D", true, false):
+			(g as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 static func tile_pos(x: float, y: float) -> Vector3:
@@ -321,8 +330,10 @@ static func _haunted(root: Node3D) -> void:
 				gz += 1.2
 	# Architecture where the camera looks during play: a mausoleum on the left,
 	# a broken wall with an arched gate and a lantern on the right.
-	_mi(root, _cached("mausoleum", _mausoleum), Vector3(-hx - 2.6, GROUND_Y, 1.2), null, Vector3(0, PI / 2.0, 0), Vector3.ONE, true)
-	_mi(root, _cached("gate", _gate), Vector3(hx + 2.5, GROUND_Y, 2.0), null, Vector3(0, -PI / 2.0, 0), Vector3.ONE, true)
+	# Both turned three-quarters to the camera so their fronts (door, columns,
+	# arch and lantern) read from the play view, not just their roofs.
+	_mi(root, _cached("mausoleum", _mausoleum), Vector3(-hx - 2.6, GROUND_Y, 1.2), null, Vector3(0, 0.55, 0), Vector3.ONE, true)
+	_mi(root, _cached("gate", _gate), Vector3(hx + 2.5, GROUND_Y, 2.0), null, Vector3(0, -0.55, 0), Vector3.ONE, true)
 	root.add_child(Art.multimesh(P.gravestone_mesh(), rows))
 	# low mist
 	var mist := StandardMaterial3D.new()
@@ -500,46 +511,76 @@ static func _mansion() -> Mesh:
 	return LA.build(parts, LA.vmat("mansion", 0.9, 0.0, 0.3, 3.0))
 
 
+## AAA review round 6: a temple front that reads from the play camera, cool
+## stone with moonlit edges, four columns, steps, a cross on the pediment and
+## a warm lit doorway (its glow pool is in ambient.gd).
 static func _mausoleum() -> Mesh:
-	var stone := Color("767080")
-	var dark := Color("4a4652")
+	var stone := Color("55506a")
+	var dark := Color("3a3648")
+	var moon := Color("8fa0d8")
 	var parts: Array = [
-		[LA.box(Vector3(2.6, 0.2, 2.4)), LA.xf(Vector3(0, 0.1, 0)), dark],
-		[LA.box(Vector3(2.2, 1.9, 1.8), 0.03), LA.xf(Vector3(0, 1.15, -0.1)), stone],
-		[LA.box(Vector3(2.5, 0.18, 2.2)), LA.xf(Vector3(0, 2.15, 0)), dark],
-		[LA.box(Vector3(1.3, 1.3, 2.3)), LA.xf(Vector3(0, 2.25, 0), Vector3(0, 0, PI / 4.0), Vector3(1.25, 0.55, 1.0)), stone.darkened(0.2)],
-		[LA.box(Vector3(0.8, 1.3, 0.06)), LA.xf(Vector3(0, 0.85, 0.82)), Color("120e14")],
-		[LA.box(Vector3(1.8, 0.12, 0.5)), LA.xf(Vector3(0, 0.26, 1.15)), dark],
-		[LA.box(Vector3(0.12, 0.5, 0.06)), LA.xf(Vector3(0, 2.85, 0.6)), Color("6a6470")],
-		[LA.box(Vector3(0.36, 0.1, 0.06)), LA.xf(Vector3(0, 2.95, 0.6)), Color("6a6470")],
-		[LA.box(Vector3(0.7, 0.12, 0.04)), LA.xf(Vector3(0, 1.62, 0.84)), LA.lit(Color("7dffb0"))],
-		[LA.box(Vector3(0.08, 1.2, 0.04)), LA.xf(Vector3(-0.44, 0.85, 0.84)), LA.lit(Color("7dffb0"))],
-		[LA.box(Vector3(0.08, 1.2, 0.04)), LA.xf(Vector3(0.44, 0.85, 0.84)), LA.lit(Color("7dffb0"))],
+		[LA.box(Vector3(2.9, 0.18, 2.7)), LA.xf(Vector3(0, 0.09, -0.1)), dark],
+		[LA.box(Vector3(2.3, 0.14, 0.36)), LA.xf(Vector3(0, 0.07, 1.38)), dark],
+		[LA.box(Vector3(2.5, 0.12, 0.34)), LA.xf(Vector3(0, 0.24, 1.08)), moon.darkened(0.35)],
+		[LA.box(Vector3(2.2, 2.0, 1.7), 0.03), LA.xf(Vector3(0, 1.18, -0.35)), stone],
+		[LA.box(Vector3(2.7, 0.22, 2.4)), LA.xf(Vector3(0, 2.29, 0.0)), dark],
+		[LA.box(Vector3(2.74, 0.05, 0.08)), LA.xf(Vector3(0, 2.41, 1.18)), moon],
+		[LA.box(Vector3(1.4, 1.4, 2.4)), LA.xf(Vector3(0, 2.42, 0), Vector3(0, 0, PI / 4.0), Vector3(1.32, 0.5, 1.0)), Color("2e2a3c")],
+		[LA.box(Vector3(0.07, 0.07, 2.44)), LA.xf(Vector3(0, 2.92, 0)), moon.darkened(0.2)],
+		[LA.box(Vector3(1.6, 0.06, 0.06)), LA.xf(Vector3(-0.66, 2.78, 1.2), Vector3(0, 0, 0.37)), moon],
+		[LA.box(Vector3(1.6, 0.06, 0.06)), LA.xf(Vector3(0.66, 2.78, 1.2), Vector3(0, 0, -0.37)), moon],
+		# cross on the apex
+		[LA.box(Vector3(0.11, 0.62, 0.11)), LA.xf(Vector3(0, 3.55, 1.0)), moon.darkened(0.1)],
+		[LA.box(Vector3(0.4, 0.11, 0.11)), LA.xf(Vector3(0, 3.65, 1.0)), moon.darkened(0.1)],
+		# doorway: dark frame, warm glow inside
+		[LA.box(Vector3(0.95, 1.45, 0.06)), LA.xf(Vector3(0, 1.0, 0.52)), Color("1a1418")],
+		[LA.box(Vector3(0.72, 1.25, 0.04)), LA.xf(Vector3(0, 0.95, 0.56)), LA.lit(Color("ffa850"))],
+		[LA.box(Vector3(1.1, 0.12, 0.1)), LA.xf(Vector3(0, 1.75, 0.55)), moon.darkened(0.25)],
 	]
-	for x in [-0.85, 0.85]:
-		parts.append([LA.cyl(0.13, 0.15, 1.9, 10), LA.xf(Vector3(x, 1.15, 0.95)), stone.lightened(0.08)])
+	for x in [-1.08, -0.62, 0.62, 1.08]:
+		parts.append([LA.cyl(0.11, 0.13, 1.92, 10), LA.xf(Vector3(x, 1.26, 1.0)), stone.lightened(0.18)])
+		parts.append([LA.box(Vector3(0.3, 0.1, 0.3)), LA.xf(Vector3(x, 2.17, 1.0)), moon.darkened(0.2)])
+		parts.append([LA.box(Vector3(0.3, 0.1, 0.3)), LA.xf(Vector3(x, 0.35, 1.0)), dark])
 	return LA.build(parts, LA.vmat("mausoleum", 0.9, 0.0, 0.4))
 
 
+## AAA review round 6: an arched gateway silhouette, moonlit stone, iron
+## bars rising to the arch, and a lantern hanging from the keystone.
 static func _gate() -> Mesh:
-	var stone := Color("6e6878")
+	var stone := Color("55506a")
+	var moon := Color("8fa0d8")
 	var iron := Color("1c1a20")
 	var parts: Array = [
-		[LA.box(Vector3(0.7, 2.6, 0.7), 0.03), LA.xf(Vector3(-1.1, 1.3, 0)), stone],
-		[LA.box(Vector3(0.7, 2.6, 0.7), 0.03), LA.xf(Vector3(1.1, 1.3, 0)), stone],
-		[LA.box(Vector3(0.8, 0.15, 0.8)), LA.xf(Vector3(-1.1, 2.68, 0)), stone.darkened(0.2)],
-		[LA.box(Vector3(0.8, 0.15, 0.8)), LA.xf(Vector3(1.1, 2.68, 0)), stone.darkened(0.2)],
-		[LA.box(Vector3(2.3, 0.3, 0.4)), LA.xf(Vector3(0, 2.4, 0)), stone.darkened(0.1)],
+		[LA.box(Vector3(0.62, 2.4, 0.62), 0.03), LA.xf(Vector3(-1.15, 1.2, 0)), stone],
+		[LA.box(Vector3(0.62, 2.4, 0.62), 0.03), LA.xf(Vector3(1.15, 1.2, 0)), stone],
+		[LA.box(Vector3(0.72, 0.12, 0.72)), LA.xf(Vector3(-1.15, 2.42, 0)), moon.darkened(0.3)],
+		[LA.box(Vector3(0.72, 0.12, 0.72)), LA.xf(Vector3(1.15, 2.42, 0)), moon.darkened(0.3)],
 		[LA.box(Vector3(2.2, 1.0, 0.45), 0.02), LA.xf(Vector3(-2.6, 0.5, 0.0), Vector3(0, 0, 0.05)), stone],
 		[LA.box(Vector3(1.4, 0.6, 0.45), 0.02), LA.xf(Vector3(2.4, 0.3, 0.0)), stone],
-		[LA.box(Vector3(0.3, 0.35, 0.3)), LA.xf(Vector3(1.1, 3.0, 0.0)), Color("2a2620")],
-		[LA.box(Vector3(0.2, 0.25, 0.2)), LA.xf(Vector3(1.1, 3.0, 0.0)), LA.lit(Color("ffb050"))],
+		[LA.box(Vector3(2.24, 0.05, 0.49)), LA.xf(Vector3(-2.6, 1.02, 0.0), Vector3(0, 0, 0.05)), moon.darkened(0.2)],
 	]
+	# The arch: voussoirs round a semicircle springing from the pillar tops.
+	var seg := 9
+	for k in seg:
+		var a := PI * (k + 0.5) / seg
+		var pos := Vector3(cos(a) * 1.15, 2.48 + sin(a) * 1.0, 0)
+		parts.append([LA.box(Vector3(0.4, 0.3, 0.44)), LA.xf(pos, Vector3(0, 0, a - PI / 2.0)), stone.lightened(0.1) if k == seg / 2 else stone])
+		parts.append([LA.box(Vector3(0.38, 0.03, 0.04)), LA.xf(pos + Vector3(cos(a), sin(a), 0) * 0.16 + Vector3(0, 0, 0.22), Vector3(0, 0, a - PI / 2.0)), moon.darkened(0.2)])
+	# Bars rise to the arch's inner curve.
 	for k in 7:
-		var x := -0.65 + k * 0.22
-		parts.append([LA.box(Vector3(0.04, 2.0, 0.04)), LA.xf(Vector3(x, 1.0, 0.05), Vector3(0, 0, 0.0 if k % 3 else 0.06)), iron])
-	parts.append([LA.box(Vector3(1.5, 0.05, 0.05)), LA.xf(Vector3(0, 1.7, 0.05)), iron])
-	parts.append([LA.box(Vector3(1.5, 0.05, 0.05)), LA.xf(Vector3(0, 0.4, 0.05)), iron])
+		var x := -0.66 + k * 0.22
+		var top := 2.48 + sqrt(maxf(0.0, 0.8 * 0.8 - x * x)) * 0.95
+		var h := top - 0.05
+		parts.append([LA.box(Vector3(0.045, h, 0.045)), LA.xf(Vector3(x, h * 0.5, 0.05), Vector3(0, 0, 0.0 if k % 3 else 0.05)), iron])
+		parts.append([LA.cone(0.04, 0.12, 4), LA.xf(Vector3(x, top + 0.04, 0.05)), iron])
+	parts.append([LA.box(Vector3(1.6, 0.05, 0.05)), LA.xf(Vector3(0, 1.8, 0.05)), iron])
+	parts.append([LA.box(Vector3(1.6, 0.05, 0.05)), LA.xf(Vector3(0, 0.4, 0.05)), iron])
+	# Lantern under the keystone, on the near face.
+	parts.append([LA.box(Vector3(0.03, 0.4, 0.03)), LA.xf(Vector3(0, 3.0, 0.32)), iron])
+	parts.append([LA.box(Vector3(0.3, 0.06, 0.3)), LA.xf(Vector3(0, 2.8, 0.32)), iron])
+	parts.append([LA.box(Vector3(0.22, 0.3, 0.22)), LA.xf(Vector3(0, 2.6, 0.32)), LA.lit(Color("ffb050"))])
+	parts.append([LA.cone(0.2, 0.16, 4), LA.xf(Vector3(0, 2.84, 0.32), Vector3(0, PI / 4.0, 0)), iron])
+	parts.append([LA.box(Vector3(0.26, 0.04, 0.26)), LA.xf(Vector3(0, 2.44, 0.32)), iron])
 	return LA.build(parts, LA.vmat("gate", 0.9, 0.0, 0.4, 3.0))
 
 

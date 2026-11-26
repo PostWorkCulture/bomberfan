@@ -224,9 +224,14 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			tr.custom_minimum_size = Vector2(22, 22)
+			if id == "shield":   # bigger and tilted: it has no count beside it
+				tr.custom_minimum_size = Vector2(28, 28)
+				tr.pivot_offset = Vector2(14, 14)
+				tr.rotation = -0.22
 			row2.add_child(tr)
 		var cl := _label(16, tint.lightened(0.5), 3)
-		cl.custom_minimum_size = Vector2(14 if id == "shield" else 20, 0)
+		cl.custom_minimum_size = Vector2(0 if id == "shield" else 20, 0)
+		cl.visible = id != "shield"
 		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		row2.add_child(cl)
 		chips_row.add_child(chip)

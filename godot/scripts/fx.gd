@@ -29,6 +29,8 @@ var _flame_free: Array = []
 var _scorch_mm: MultiMesh
 var _scorch_next := 0
 var _flame_pos := {}
+var _flame_shape := {}
+var _last_flash_ms := -1000
 var _shock_mat: ShaderMaterial
 var _debris_mesh: BoxMesh
 var _fire_ramp: Gradient
@@ -73,7 +75,7 @@ func _ready() -> void:
 	_debris_mesh = BoxMesh.new()
 	_debris_mesh.size = Vector3(0.09, 0.07, 0.2)
 	_debris_mesh.material = Art.bark_mat()
-	_fire_ramp = _ramp([0.0, 0.1, 0.35, 0.6, 1.0], [Color(0.95, 0.85, 0.55, 1.0), Color(1.0, 0.7, 0.25, 1.0),
+	_fire_ramp = _ramp([0.0, 0.1, 0.35, 0.6, 1.0], [Color(1.0, 0.72, 0.35, 1.0), Color(1.0, 0.7, 0.25, 1.0),
 		Color(1.0, 0.45, 0.1, 0.85), Color(0.35, 0.32, 0.3, 0.35), Color(0.25, 0.24, 0.23, 0.0)])
 	_flash_ramp = _ramp([0.0, 0.4, 1.0], [Color(1.0, 0.85, 0.5, 0.18), Color(1.0, 0.5, 0.15, 0.2), Color(1, 0.4, 0.1, 0.0)])
 	_spark_ramp = _ramp([0.0, 0.5, 1.0], [Color(1.25, 1.0, 0.6, 1.0), Color(1.0, 0.5, 0.12, 0.9), Color(0.8, 0.2, 0.05, 0.0)])
@@ -103,6 +105,7 @@ func _ready() -> void:
 	_fire_mat.albedo_texture = Art.flame_tex()
 	_pool_root = Node3D.new()
 	add_child(_pool_root)
+	_flame_tile_mat.render_priority = 2
 	_flame_mm = _make_pool(_flame_tile_mat, FLAME_POOL)
 	for k in FLAME_POOL:
 		_flame_free.append(FLAME_POOL - 1 - k)
@@ -271,11 +274,16 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	if not enabled:
 		return
 	shake = minf(0.45, shake + 0.11 * strength)
-	var flash := _emitter(centre + Vector3(0, 0.5, 0), _add_mat, 1, 0.14)
-	flash.color_ramp = _flash_ramp
-	flash.scale_amount_min = 0.8
-	flash.scale_amount_max = 0.8
-	flash.emitting = true
+	# One flash per moment: chains no longer stack flashes into white.
+	var now := Time.get_ticks_msec()
+	var skip_flash := now - _last_flash_ms < 100
+	_last_flash_ms = now
+	if not skip_flash:
+		var flash := _emitter(centre + Vector3(0, 0.5, 0), _add_mat, 1, 0.14)
+		flash.color_ramp = _flash_ramp
+		flash.scale_amount_min = 0.8
+		flash.scale_amount_max = 0.8
+		flash.emitting = true
 	# One fire and one smoke emitter for the whole blast (points on every
 	# cell), not two nodes per cell: AAA review round 3, draw calls.
 	var fire_pts := PackedVector3Array()
@@ -283,8 +291,11 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	for c in cells:
 		var p: Vector3 = c
 		var jitter := Vector3(randf_range(-0.25, 0.25), 0.0, randf_range(-0.25, 0.25))
-		for k in 3:
-			fire_pts.append(p - centre + Vector3(randf_range(-0.28, 0.28), randf_range(0.0, 0.2), randf_range(-0.28, 0.28)))
+		# Near rows: fire rising towards the camera projects over the wall, so
+		# only one low point there (the floor sheet already marks the tile).
+		var near := p.z >= (Cfg.ROWS - 3) * 0.5 - 0.1
+		for k in (1 if near else 3):
+			fire_pts.append(p - centre + Vector3(randf_range(-0.28, 0.28), -0.3 if near else randf_range(0.0, 0.2), randf_range(-0.28, 0.28)))
 		# No smoke beside the outer wall: it drifted out over the surroundings.
 		if absf(p.x) < (Cfg.COLS - 3) * 0.5 + 0.1 and absf(p.z) < (Cfg.ROWS - 3) * 0.5 + 0.1:
 			smoke_pts.append(p - centre + jitter)
@@ -319,7 +330,7 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 		s.scale_amount_curve = _grow
 		s.color_ramp = _smoke_ramp
 		s.emitting = true
-	var sp := _emitter(centre + Vector3(0, 0.4, 0), _add_mat, 22, 0.9)
+	var sp := _emitter(centre + Vector3(0, 0.4, 0), _add_mat, 12, 0.9)
 	sp.direction = Vector3.UP
 	sp.spread = 75.0
 	sp.initial_velocity_min = 3.5
@@ -387,7 +398,9 @@ func add_flame(pos: Vector3, shape := Color(0.5, 0.0, 0.5, 1.0)) -> int:
 		return -1
 	var i: int = _flame_free.pop_back()
 	_flame_mm.set_instance_color(i, shape)
-	_flame_pos[i] = pos + Vector3(0, 0.05 + randf() * 0.01, 0)
+	# Above the tide water (up to y 0.14): a lethal tile is never hidden.
+	_flame_pos[i] = pos + Vector3(0, 0.17 + randf() * 0.005, 0)
+	_flame_shape[i] = shape
 	set_flame(i, 1.12)
 	return i
 
@@ -395,7 +408,15 @@ func add_flame(pos: Vector3, shape := Color(0.5, 0.0, 0.5, 1.0)) -> int:
 func set_flame(i: int, s: float) -> void:
 	if i < 0:
 		return
-	_flame_mm.set_instance_transform(i, Transform3D(Basis(Vector3.RIGHT, -PI / 2.0).scaled(Vector3.ONE * s), _flame_pos[i]))
+	# Mid-arm tiles stretch along the arm so neighbours overlap: no seams.
+	var shp: Color = _flame_shape.get(i, Color(0.5, 0, 0.5, 1))
+	var sx := s
+	var sz := s
+	if shp.g < 0.5 and shp.r < 0.25:
+		sx = s * 1.1
+	elif shp.g < 0.5 and shp.r > 0.75:
+		sz = s * 1.1
+	_flame_mm.set_instance_transform(i, Transform3D(Basis(Vector3.RIGHT, -PI / 2.0).scaled(Vector3(sx, sz, 1.0)), _flame_pos[i]))
 
 
 func free_flame(i: int) -> void:
@@ -617,7 +638,7 @@ func death_puff(pos: Vector3) -> void:
 
 const FLAME_TILE_SHADER := """
 shader_type spatial;
-render_mode unshaded, blend_mix, depth_draw_never, cull_disabled;
+render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, fog_disabled;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 varying vec3 wpos;
 void vertex() { wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
@@ -638,15 +659,15 @@ void fragment() {
 	float heat = clamp(1.15 - r * 1.05 + (n - 0.5) * 0.55 + (n2 - 0.5) * 0.3, 0.0, 1.0);
 	vec3 col = mix(vec3(0.75, 0.1, 0.02), vec3(1.0, 0.45, 0.06), smoothstep(0.1, 0.45, heat));
 	col = mix(col, vec3(1.0, 0.85, 0.42), smoothstep(0.55, 0.85, heat));
-	col = mix(col, vec3(1.0, 0.97, 0.82), smoothstep(0.88, 1.0, heat));
-	ALBEDO = col;
+	col = mix(col, vec3(1.0, 0.93, 0.78), smoothstep(0.96, 1.0, heat));
+	ALBEDO = min(col, vec3(0.92));
 	ALPHA = smoothstep(0.02, 0.22, heat) * 0.95;
 }
 """
 
 const SHOCK_SHADER := """
 shader_type spatial;
-render_mode unshaded, blend_add, depth_draw_never, cull_disabled;
+render_mode unshaded, blend_add, depth_draw_never, cull_disabled, fog_disabled;
 uniform vec3 tint = vec3(1.0, 0.75, 0.4);
 void fragment() {
 	float d = length(UV * 2.0 - 1.0);

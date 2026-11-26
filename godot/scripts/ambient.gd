@@ -92,20 +92,46 @@ func _process(delta: float) -> void:
 
 # ---- Flyers: a body and two wings that flap ----------------------------------------
 
-func _flyer(body_col: Color, wing_col: Color, size: float) -> Dictionary:
+func _flyer(body_col: Color, wing_col: Color, size: float, style := "bird") -> Dictionary:
 	var root := Node3D.new()
 	add_child(root)
+	# AAA review round 6: silhouettes that read from above, a beak and a tail,
+	# swept wings with an elbow; gulls get black tips, bats scalloped edges.
+	var beak := Color("f0b030") if style == "gull" else body_col.darkened(0.4)
+	var bparts: Array = [
+		[LA.sphere(0.12, 10, 6), LA.xf(Vector3.ZERO, Vector3.ZERO, Vector3(0.62, 0.55, 1.5)), body_col],
+		[LA.sphere(0.07, 8, 5), LA.xf(Vector3(0, 0.03, 0.17)), body_col],
+	]
+	if style != "bat":
+		bparts.append([LA.cone(0.025, 0.09, 5), LA.xf(Vector3(0, 0.02, 0.27), Vector3(PI / 2.0, 0, 0)), beak])
+		bparts.append([LA.box(Vector3(0.16, 0.012, 0.14)), LA.xf(Vector3(0, 0.01, -0.22), Vector3(0, PI / 4.0, 0), Vector3(1.0, 1.0, 1.0)), wing_col])
+	else:
+		for s in [-1.0, 1.0]:
+			bparts.append([LA.cone(0.025, 0.07, 4), LA.xf(Vector3(s * 0.04, 0.09, 0.17)), body_col])
 	var body := MeshInstance3D.new()
-	body.mesh = LA.build([[LA.sphere(0.12, 10, 6), LA.xf(Vector3.ZERO, Vector3.ZERO, Vector3(0.7, 0.6, 1.4)), body_col],
-		[LA.sphere(0.07, 8, 5), LA.xf(Vector3(0, 0.03, 0.15)), body_col]], LA.vmat("flyer_body", 0.8, 0.0, 0.2))
+	body.mesh = LA.build(bparts, LA.vmat("flyer_body", 0.8, 0.0, 0.2))
 	root.add_child(body)
+	var tip := Color("1a1a1e") if style == "gull" else wing_col.darkened(0.25)
+	var wparts: Array
+	match style:
+		"gull":   # long, narrow, bent back at the wrist
+			wparts = [[LA.box(Vector3(0.3, 0.015, 0.13)), LA.xf(Vector3(0.15, 0, 0)), wing_col],
+				[LA.box(Vector3(0.34, 0.015, 0.1)), LA.xf(Vector3(0.44, 0, -0.06), Vector3(0, 0.32, 0)), wing_col],
+				[LA.box(Vector3(0.12, 0.016, 0.08)), LA.xf(Vector3(0.64, 0, -0.14), Vector3(0, 0.45, 0)), tip]]
+		"bat":    # membrane with a scalloped trailing edge
+			wparts = [[LA.box(Vector3(0.44, 0.015, 0.2)), LA.xf(Vector3(0.22, 0, 0.01)), wing_col]]
+			for k in 3:
+				wparts.append([LA.cone(0.07, 0.1, 3), LA.xf(Vector3(0.08 + k * 0.14, 0, -0.11), Vector3(-PI / 2.0, 0, 0), Vector3(1.0, 1.0, 0.15)), wing_col])
+			wparts.append([LA.box(Vector3(0.03, 0.02, 0.24)), LA.xf(Vector3(0.44, 0, 0.0), Vector3(0, -0.2, 0)), tip])
+		_:        # songbird: short, rounded, darker tip feathers
+			wparts = [[LA.box(Vector3(0.26, 0.015, 0.16)), LA.xf(Vector3(0.13, 0, 0)), wing_col],
+				[LA.box(Vector3(0.2, 0.015, 0.12)), LA.xf(Vector3(0.34, 0, -0.03), Vector3(0, 0.3, 0)), tip]]
 	var wings: Array = []
 	for s in [-1.0, 1.0]:
 		var pivot := Node3D.new()
 		root.add_child(pivot)
 		var w := MeshInstance3D.new()
-		w.mesh = LA.build([[LA.box(Vector3(0.42, 0.015, 0.16)), LA.xf(Vector3(0.21, 0, 0)), wing_col],
-			[LA.box(Vector3(0.2, 0.015, 0.1)), LA.xf(Vector3(0.46, 0, -0.03), Vector3(0, 0.3, 0)), wing_col]], LA.vmat("flyer_wing", 0.8, 0.0, 0.2))
+		w.mesh = LA.build(wparts, LA.vmat("flyer_wing", 0.8, 0.0, 0.2))
 		w.scale = Vector3(s, 1, 1)
 		pivot.add_child(w)
 		wings.append(pivot)
@@ -283,9 +309,10 @@ func _forest() -> void:
 func _beach() -> void:
 	# Gulls circling over the sand either side; glints on the water.
 	for i in 3:
-		var f := _flyer(Color("f2f2ee"), Color("dcdcd8"), 1.1)
+		var f := _flyer(Color("f2f2ee"), Color("c8ccd2"), 1.1, "gull")
 		f["kind"] = "circle"
-		f["c"] = Vector3(-10.5 if i % 2 == 0 else 10.5, 4.2 + i * 0.4, -2.0 + i * 2.0)
+		# Clear of the lifeguard tower (x -11, z -1.5): no gull "landing" on it.
+		f["c"] = [Vector3(-13.2, 4.4, -6.0), Vector3(12.0, 4.8, 0.0), Vector3(-13.2, 5.0, 4.0)][i]
 		f["r"] = 2.2 + i * 0.5
 		f["speed"] = 0.55 + i * 0.1
 		f["flap"] = 7.0
@@ -298,13 +325,14 @@ func _beach() -> void:
 
 func _haunted() -> void:
 	for i in 4:
-		var f := _flyer(Color("16121a"), Color("221a26"), 0.75)
+		var f := _flyer(Color("16121a"), Color("221a26"), 0.75, "bat")
 		f["kind"] = "flit"
 		f["c"] = Vector3(-10.0 if i % 2 == 0 else 10.0, 2.6 + i * 0.4, -1.5 + i)
 		f["flap"] = 22.0
 		_flyers.append(f)
-	_pool(Vector3(Cfg.COLS * 0.5 + 2.5, GROUND_Y + 0.02, 3.1), Color(1.0, 0.62, 0.3, 0.5), 3.4, true)
-	_pool(Vector3(-Cfg.COLS * 0.5 - 1.6, GROUND_Y + 0.02, 1.2), Color(0.55, 0.9, 0.7, 0.28), 3.4, true)
+	# Under the gate lantern, and spilling from the mausoleum doorway.
+	_pool(Vector3(Cfg.COLS * 0.5 + 2.9, GROUND_Y + 0.02, 2.4), Color(1.0, 0.62, 0.3, 0.5), 3.2, true)
+	_pool(Vector3(-Cfg.COLS * 0.5 - 2.6, GROUND_Y + 0.02, 2.3), Color(1.0, 0.6, 0.28, 0.42), 2.8, true)
 	# Ground fog drifting across the graveyard and through the house.
 	var fm := StandardMaterial3D.new()
 	fm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

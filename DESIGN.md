@@ -164,6 +164,15 @@ Kick (and the other power-ups), character select / Loadout / Prize Locker, menus
 
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
+### 2026-11-26
+- **AAA review rounds 5–6:** round 5 FAIL (art 7, readability 7, lighting 8, assets 7, life 7, VFX 7, mechanics 8, HUD 8, polish 6). Blockers: flames hidden under the Beach tide water, and phone performance still unproven. Fixes (`fx.gd`, `fighter.gd`, `level_scenery.gd`, `level_props.gd`, `ambient.gd`, `art.gd`, `hud.gd`, `mechanics.gd`):
+  - **Flames:** sheets sit at y 0.17, above the tide water, draw after it (`render_priority` 2) and ignore fog; mid-arm sheets stretch 1.1 along the arm so there are no seams; the core is capped below white and the fire ramp starts orange. One flash per 100 ms (chains no longer stack flashes); 12 sparks; fire in the two near rows stays low so it doesn't project over the near wall.
+  - **Draw calls:** the rim pass runs only on your own fighter and on dark bodies on dark floors (where it is the body fill: lift 0.32, line 0.028). Nothing outside the walls casts a shadow on Beach, Haunted or Factory. Measured peaks 334–398 (were 352–404).
+  - **Haunted:** the mausoleum is a temple front in cool stone (`55506a`) with moonlit edges (`8fa0d8`), four columns, steps, a cross on the pediment and a warm lit doorway with its own glow pool. The gate is an arched gateway with bars rising to the arch and a lantern under the keystone. Both turn three-quarters to the camera. The witch has a wide brim with a bright band and buckle, a flaring cape and a lighter face; she starts fading at z > −1.
+  - **Forest:** olive moss (`5f7a34`) in blobs of varied size (two noise scales); pillar caps get four moss cushions textured in world space.
+  - **Flyers:** birds have a beak, tail and swept two-part wings; gulls long bent wings with black tips; bats scalloped membranes and ears. The Beach gulls circle clear of the lifeguard tower.
+  - **HUD:** the shield chip shows a larger, tilted icon and no count.
+
 ### 2026-11-25
 - **AAA review round 4** (a fresh reviewer; the first one could not be resumed): FAIL, mostly 7s, technical polish 5. Blockers: bot triangle counts (20–73k each, frames at 1.4–1.7M triangles), the 44° lens making corner fighters look knocked out, and the witch over the near rows. Fixes:
   - **Bot LODs:** `tools/bake_bots.gd` (run with `--headless --script`) bakes each bot into `assets/characters/<id>-merged.res`: few surfaces, indexed, with generated LODs, so the web build needs no mesh simplifier at runtime. The game loads the bake; the raw `.glb` files are excluded from the web export (`export_presets.cfg`). Rerun the bake after changing a bot model. Forest frame: 1.37M → 0.43M triangles, about 320 draw calls.

@@ -42,7 +42,8 @@ static func make(kind: String, angry := false) -> Node3D:
 			n = _node(_m("pumpkin", _pumpkin), kind)
 		"ghost":
 			n = _node(_m("ghost", _ghost), kind)
-			(n.get_node("Model") as MeshInstance3D).transparency = 0.28
+			var gm := n.get_node("Model") as MeshInstance3D
+			gm.material_override = LA.fade_mat(gm.mesh.surface_get_material(0), 0.28)
 		"witch":
 			n = _node(_m("witch_angry" if angry else "witch", func(): return _witch(angry)), kind)
 		"pylon":

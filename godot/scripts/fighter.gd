@@ -155,10 +155,19 @@ const XRAY_SHADER := """
 shader_type spatial;
 render_mode unshaded, blend_mix, depth_draw_never, depth_test_inverted, cull_back, fog_disabled, shadows_disabled;
 uniform vec4 col : source_color = vec4(1.0);
+uniform float push = 0.45;
+void vertex() {
+	// Pulled towards the camera, so the fighter's own limbs and back faces
+	// (all within ~0.4 m) never count as "in front": only other things do
+	// (AAA review round 10).
+	vec4 v = MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
+	v.xyz += normalize(-v.xyz) * push;
+	POSITION = PROJECTION_MATRIX * v;
+}
 void fragment() {
 	float f = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 1.5);
-	ALBEDO = col.rgb * (0.75 + 0.6 * f);
-	ALPHA = col.a * (0.55 + 0.45 * f);
+	ALBEDO = col.rgb * (0.8 + 0.5 * f);
+	ALPHA = col.a * (0.6 + 0.4 * step(0.35, f));
 }
 """
 var _outline_mat: ShaderMaterial
@@ -169,12 +178,30 @@ var _xray_mat: ShaderMaterial
 var _ghost_level := 0.0
 
 
+var _ghost_mat: StandardMaterial3D = null
+
+
+## A bot seen in tall grass: a faint figure in its colour. Node transparency
+## does nothing in the Compatibility renderer, so the body swaps to a
+## see-through material and drops its outline while ghosted (round 10).
 func _set_ghost(v: float) -> void:
 	if is_equal_approx(v, _ghost_level) or model == null:
 		return
 	_ghost_level = v
+	var ghosted := v > 0.0 and v < 1.0
+	if ghosted and _ghost_mat == null:
+		_ghost_mat = StandardMaterial3D.new()
+		_ghost_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_ghost_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_ghost_mat.albedo_color = Color(color.lightened(0.25), 0.35)
 	for node in model.find_children("*", "MeshInstance3D", true, false):
-		(node as MeshInstance3D).transparency = v if v < 1.0 else 0.0
+		var mi := node as MeshInstance3D
+		if mi.name == "HatFace":
+			mi.visible = not ghosted
+			continue
+		mi.material_override = _ghost_mat if ghosted else null
+		mi.material_overlay = null if ghosted else _outline_mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if ghosted else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 
 
 func _apply_outline() -> void:
@@ -193,7 +220,7 @@ func _apply_outline() -> void:
 		var xs := Shader.new()
 		xs.code = XRAY_SHADER
 		_xray_mat.shader = xs
-		_xray_mat.set_shader_parameter("col", Color(color.lightened(0.15), 0.6))
+		_xray_mat.set_shader_parameter("col", Color(color.lightened(0.15), 0.45))
 		_xray_mat.render_priority = 4
 		_rim_mat.next_pass = _xray_mat
 	if model == null:

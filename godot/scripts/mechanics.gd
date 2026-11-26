@@ -777,9 +777,10 @@ func _visual_witch(delta: float, t: float) -> void:
 	var out_x := absf(p.x) - (Cfg.COLS * 0.5 - 0.5)
 	var out_z := absf(p.z) - (Cfg.ROWS * 0.5 - 0.5)
 	var fade := (1.0 - clampf(maxf(out_x, out_z) / 1.2, 0.0, 1.0)) * 0.66
-	for mi in n.find_children("*", "MeshInstance3D", true, false):
-		(mi as MeshInstance3D).transparency = fade
-		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# The fade is a shader uniform on her own material copies (transparency
+	# on the node does nothing in the Compatibility renderer; round 10).
+	for m in n.get_meta("fade_mats", []):
+		(m as ShaderMaterial).set_shader_parameter("fade", fade)
 	n.position = p
 	var face: float
 	if winding:
@@ -811,13 +812,13 @@ func _visual_witch(delta: float, t: float) -> void:
 		# of green sparks off the broom.
 		var line := ShaderMaterial.new()
 		var ls := Shader.new()
-		ls.code = Fighter.OUTLINE_SHADER
+		ls.code = Fighter.OUTLINE_SHADER.replace("depth_draw_opaque", "depth_draw_never, blend_mix").replace("uniform float thick", "uniform float fade = 0.0;\nuniform float thick").replace("ALBEDO = line_col.rgb; }", "ALBEDO = line_col.rgb; ALPHA = 1.0 - fade; }")
 		line.shader = ls
 		line.set_shader_parameter("line_col", Color(1.0, 0.28, 0.2))
 		line.set_shader_parameter("thick", 0.03)
 		var rim := ShaderMaterial.new()
 		var rs := Shader.new()
-		rs.code = Fighter.RIM_SHADER
+		rs.code = Fighter.RIM_SHADER.replace("uniform float lift", "uniform float fade = 0.0;\nuniform float lift").replace("* (f * strength + lift);", "* (f * strength + lift) * (1.0 - fade);")
 		rim.shader = rs
 		rim.set_shader_parameter("rim_col", Color(1.0, 0.35, 0.25))
 		rim.set_shader_parameter("strength", 0.8)
@@ -827,6 +828,15 @@ func _visual_witch(delta: float, t: float) -> void:
 		# An inverted hull on thin cloth fills it with line colour: the cape
 		# keeps its own colours and pale hem instead.
 		(n.get_node("Cape") as MeshInstance3D).material_overlay = null
+		var fade_mats: Array = [line, rim]
+		for mi in n.find_children("*", "MeshInstance3D", true, false):
+			var g := mi as MeshInstance3D
+			g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			if g.mesh and g.mesh.get_surface_count() > 0:
+				var fm := LA.fade_mat(g.mesh.surface_get_material(0), 0.0)
+				g.material_override = fm
+				fade_mats.append(fm)
+		n.set_meta("fade_mats", fade_mats)
 		var trail := CPUParticles3D.new()
 		trail.local_coords = false
 		trail.amount = 24

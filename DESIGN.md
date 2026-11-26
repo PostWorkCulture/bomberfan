@@ -165,6 +165,9 @@ Kick (and the other power-ups), character select / Loadout / Prize Locker, menus
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
 ### 2026-11-26
+- **AAA review round 10:** FAIL (readability 6, polish 7). The x-ray pass painted over your fighter's own limbs, so Razor looked like a hologram everywhere; and `GeometryInstance3D.transparency` does nothing in the Compatibility renderer (reviewer proved it in a minimal project), so the witch fade, the grass ghosts, the ghost props and the shock-ring fades never worked on the target. Fixes:
+  - **X-ray:** the pass is pulled 0.45 m towards the camera in the vertex shader, so only other things in front of you trigger it; alpha 0.45 with a crisp edge.
+  - **Fades in the shader:** `LA.fade_mat()` makes a see-through copy of the vertex-colour material (depth pre-pass, `fade` uniform). The witch's body, cape and broom, and her outline and rim, fade through uniforms; ghost props use it at 0.28; bots seen in grass swap to a faint unshaded figure in their colour with no outline; explosion and pick-up rings fade through a shader uniform.
 - **AAA review round 9:** FAIL on readability only (7); every other category at 8, budget met (273–351 draws, 230–333k triangles in play). Blockers: Boiler reading as a bomb on Beach, the witch hiding lanes at full opacity, your fighter hidden behind a bot. Fixes:
   - **X-ray silhouette:** your fighter draws a silhouette in your colour wherever something stands in front of it (an extra pass with an inverted depth test, `fighter.gd` `XRAY_SHADER`).
   - **Boiler** is a dark body: an orange line and rim on every floor. Your own fill uses your saturated colour, not a pale wash.

@@ -444,6 +444,22 @@ static func vmat(key: String, rough := 0.7, metalness := 0.0, grain := 0.22, glo
 	return m
 
 
+## A see-through copy of a vertex-colour material, for things that fade (the
+## witch over the board, ghosts). GeometryInstance3D.transparency does nothing
+## in the Compatibility renderer, so the fade lives in the shader (round 10).
+static func fade_mat(src: Material, fade: float) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	var code := VCOL_SHADER.replace("shader_type spatial;", "shader_type spatial;\nrender_mode depth_prepass_alpha;\nuniform float fade = 0.0;")
+	code = code.replace("	EMISSION = c * glow * is_glow;\n}", "	EMISSION = c * glow * is_glow;\n	ALPHA = 1.0 - fade;\n}")
+	m.shader = _shader("vcol_fade", code)
+	var sm := src as ShaderMaterial
+	for p in ["rough", "metal", "grain", "glow"]:
+		m.set_shader_parameter(p, sm.get_shader_parameter(p) if sm != null and sm.get_shader_parameter(p) != null else {"rough": 0.7, "metal": 0.0, "grain": 0.22, "glow": 2.5}[p])
+	m.set_shader_parameter("noise_tex", noise_tex())
+	m.set_shader_parameter("fade", fade)
+	return m
+
+
 static func water_mat(deep: Color, shallow: Color, wave := 0.06) -> ShaderMaterial:
 	var ck := "water:%s%s" % [deep.to_html(), shallow.to_html()]
 	if _cache.has(ck):

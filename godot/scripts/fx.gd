@@ -360,7 +360,8 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	# Shockwave: a bright ring racing out over the floor.
 	var ring := MeshInstance3D.new()
 	ring.mesh = _quad
-	ring.material_override = _shock_mat
+	var sm := _shock_mat.duplicate() as ShaderMaterial
+	ring.material_override = sm
 	ring.rotation.x = -PI / 2.0
 	ring.position = centre + Vector3(0, 0.06, 0)
 	ring.scale = Vector3.ONE * 0.3
@@ -369,7 +370,7 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	var tw := ring.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(ring, "scale", Vector3.ONE * 3.2, 0.24).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw.tween_property(ring, "transparency", 1.0, 0.28)
+	tw.tween_property(sm, "shader_parameter/fade", 1.0, 0.28)
 	tw.chain().tween_callback(ring.queue_free)
 
 
@@ -693,11 +694,12 @@ const SHOCK_SHADER := """
 shader_type spatial;
 render_mode unshaded, blend_add, depth_draw_never, cull_disabled, fog_disabled;
 uniform vec3 tint = vec3(1.0, 0.75, 0.4);
+uniform float fade = 0.0;
 void fragment() {
 	float d = length(UV * 2.0 - 1.0);
 	// Soft both sides, and dimmer: it read as a hard pale disc (round 8).
 	float ring = smoothstep(0.5, 0.85, d) * (1.0 - smoothstep(0.86, 1.0, d));
-	ALBEDO = tint * ring * 0.5;
+	ALBEDO = tint * ring * 0.5 * (1.0 - fade);
 }
 """
 
@@ -739,7 +741,7 @@ func pickup_burst(pos: Vector3, c: Color, text: String, below := false) -> void:
 	var tw := ring.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(ring, "scale", Vector3.ONE * 1.3, 0.3).set_ease(Tween.EASE_OUT)
-	tw.tween_property(ring, "transparency", 1.0, 0.3)
+	tw.tween_property(rm, "shader_parameter/fade", 1.0, 0.3)
 	tw.chain().tween_callback(ring.queue_free)
 	var l := Label3D.new()
 	l.text = text

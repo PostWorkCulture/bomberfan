@@ -188,6 +188,12 @@ func _ready() -> void:
 	if gallery and forced_level == "":
 		forced_level = "forest"   # the CI close-up is judged on the Forest
 	rng.randomize()
+	# `-- --seed N`: a repeatable match (with --fixed-fps / --write-movie, frame
+	# for frame), for A/B checks such as `--no-xray`.
+	var si := args.find("--seed")
+	if si >= 0 and si + 1 < args.size():
+		rng.seed = int(args[si + 1])
+		seed(int(args[si + 1]))
 	if smoke:
 		rng.seed = 20261124
 	_setup_input()

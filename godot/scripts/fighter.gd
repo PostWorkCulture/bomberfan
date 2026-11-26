@@ -154,16 +154,11 @@ void fragment() {
 const XRAY_SHADER := """
 shader_type spatial;
 render_mode unshaded, blend_mix, depth_draw_never, depth_test_inverted, cull_back, fog_disabled, shadows_disabled;
+// Your body's own pass writes stencil 7 wherever it is visible, so this pass
+// can never paint over your own limbs, only where something else hides you
+// (AAA review round 11: a depth push could not cover a steep camera).
+stencil_mode read, compare_not_equal, 7;
 uniform vec4 col : source_color = vec4(1.0);
-uniform float push = 0.45;
-void vertex() {
-	// Pulled towards the camera, so the fighter's own limbs and back faces
-	// (all within ~0.4 m) never count as "in front": only other things do
-	// (AAA review round 10).
-	vec4 v = MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
-	v.xyz += normalize(-v.xyz) * push;
-	POSITION = PROJECTION_MATRIX * v;
-}
 void fragment() {
 	float f = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 1.5);
 	ALBEDO = col.rgb * (0.8 + 0.5 * f);
@@ -215,7 +210,7 @@ func _apply_outline() -> void:
 	_rim_mat.shader = rs
 	_rim_mat.set_shader_parameter("rim_col", color.lightened(0.25))
 	_outline_mat.next_pass = _rim_mat
-	if not is_bot:   # your fighter always has the rim pass; the x-ray follows it
+	if not is_bot and not "--no-xray" in OS.get_cmdline_user_args():   # your fighter always has the rim pass; the x-ray follows it
 		_xray_mat = ShaderMaterial.new()
 		var xs := Shader.new()
 		xs.code = XRAY_SHADER
@@ -223,6 +218,17 @@ func _apply_outline() -> void:
 		_xray_mat.set_shader_parameter("col", Color(color.lightened(0.15), 0.45))
 		_xray_mat.render_priority = 4
 		_rim_mat.next_pass = _xray_mat
+		# Your body's materials mark the stencil where they are visible.
+		for node in (model.find_children("*", "MeshInstance3D", true, false) if model else []):
+			var mi := node as MeshInstance3D
+			for si in mi.mesh.get_surface_count():
+				var src := mi.get_active_material(si)
+				var bm := (src.duplicate() as BaseMaterial3D) if src is BaseMaterial3D else StandardMaterial3D.new()
+				bm.stencil_mode = BaseMaterial3D.STENCIL_MODE_CUSTOM
+				bm.stencil_flags = BaseMaterial3D.STENCIL_FLAG_WRITE
+				bm.stencil_compare = BaseMaterial3D.STENCIL_COMPARE_ALWAYS
+				bm.stencil_reference = 7
+				mi.set_surface_override_material(si, bm)
 	if model == null:
 		return
 	for node in model.find_children("*", "MeshInstance3D", true, false):

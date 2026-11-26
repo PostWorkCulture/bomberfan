@@ -165,6 +165,9 @@ Kick (and the other power-ups), character select / Loadout / Prize Locker, menus
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
 ### 2026-11-26
+- **AAA review round 11:** FAIL (readability 6, polish 7). The x-ray depth push could not cover a steep camera: Razor's head and shoulders sit 0.6–1 m nearer the camera than his legs and swords, so he still showed through himself. Fixes:
+  - **Stencil x-ray:** your fighter's own materials write stencil 7 where visible (`BaseMaterial3D` custom stencil, write, always); the x-ray pass reads `compare_not_equal 7` with an inverted depth test, so it only draws where something else hides you. No vertex push.
+  - **A/B check:** `-- --seed N` makes a match repeatable with `--fixed-fps`/`--write-movie`; `-- --no-xray` turns the pass off. `tools/xray_ab.sh` renders the same seeded Beach match both ways and writes side-by-side frames and a diff mask: differences must sit only where you are behind something.
 - **AAA review round 10:** FAIL (readability 6, polish 7). The x-ray pass painted over your fighter's own limbs, so Razor looked like a hologram everywhere; and `GeometryInstance3D.transparency` does nothing in the Compatibility renderer (reviewer proved it in a minimal project), so the witch fade, the grass ghosts, the ghost props and the shock-ring fades never worked on the target. Fixes:
   - **X-ray:** the pass is pulled 0.45 m towards the camera in the vertex shader, so only other things in front of you trigger it; alpha 0.45 with a crisp edge.
   - **Fades in the shader:** `LA.fade_mat()` makes a see-through copy of the vertex-colour material (depth pre-pass, `fade` uniform). The witch's body, cape and broom, and her outline and rim, fade through uniforms; ghost props use it at 0.28; bots seen in grass swap to a faint unshaded figure in their colour with no outline; explosion and pick-up rings fade through a shader uniform.

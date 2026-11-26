@@ -165,6 +165,11 @@ Kick (and the other power-ups), character select / Loadout / Prize Locker, menus
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
 ### 2026-11-26
+- **AAA review round 9:** FAIL on readability only (7); every other category at 8, budget met (273–351 draws, 230–333k triangles in play). Blockers: Boiler reading as a bomb on Beach, the witch hiding lanes at full opacity, your fighter hidden behind a bot. Fixes:
+  - **X-ray silhouette:** your fighter draws a silhouette in your colour wherever something stands in front of it (an extra pass with an inverted depth test, `fighter.gd` `XRAY_SHADER`).
+  - **Boiler** is a dark body: an orange line and rim on every floor. Your own fill uses your saturated colour, not a pale wash.
+  - **Witch:** a third opaque whenever she is over the board (outline included), solid outside the walls.
+  - Screenshot helper `shots_cast.sh` takes a cast for targeted checks.
 - **AAA review round 8:** FAIL (art 8, readability 7, lighting 8, assets 7, life 8, VFX 7, mechanics 8, HUD 8, polish 7). Blockers: dying flames still beaded at junctions, Haunted readability (Rivet vs caskets, small YOU tag, pick-up text on the tag), the witch not reading as a witch, the performance budget (≤ 400 draws, ≤ 450k triangles). Fixes:
   - **Flames:** sheets stay full size; thickness rides in the instance alpha and narrows the shader's cross-section, so arms and centre die together. The centre is a plus that meets each arm at its width (`fx.gd`).
   - **Triangles:** default `SphereMesh`/`CylinderMesh` segment counts (64×32 = 4,224 triangles) were in particle meshes and bombs: Factory's lamp sparks alone were 2 × 100k a frame. Explicit low counts everywhere; bots pick simpler LODs sooner (`lod_bias` 0.3); bevels under 6 cm use one subdivision. Play peaks now 230–333k triangles (were 400–625k).

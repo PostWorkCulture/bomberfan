@@ -148,8 +148,22 @@ void fragment() {
 	ALBEDO = rim_col.rgb * (f * strength + lift);
 }
 """
+## Your own fighter seen through whatever stands in front of it (a bot, a
+## wall): a flat silhouette in your colour, drawn only where the body is
+## hidden (inverted depth test), as Super Bomberman R 2 does.
+const XRAY_SHADER := """
+shader_type spatial;
+render_mode unshaded, blend_mix, depth_draw_never, depth_test_inverted, cull_back, fog_disabled, shadows_disabled;
+uniform vec4 col : source_color = vec4(1.0);
+void fragment() {
+	float f = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 1.5);
+	ALBEDO = col.rgb * (0.75 + 0.6 * f);
+	ALPHA = col.a * (0.55 + 0.45 * f);
+}
+"""
 var _outline_mat: ShaderMaterial
 var _rim_mat: ShaderMaterial
+var _xray_mat: ShaderMaterial
 
 
 var _ghost_level := 0.0
@@ -174,6 +188,14 @@ func _apply_outline() -> void:
 	_rim_mat.shader = rs
 	_rim_mat.set_shader_parameter("rim_col", color.lightened(0.25))
 	_outline_mat.next_pass = _rim_mat
+	if not is_bot:   # your fighter always has the rim pass; the x-ray follows it
+		_xray_mat = ShaderMaterial.new()
+		var xs := Shader.new()
+		xs.code = XRAY_SHADER
+		_xray_mat.shader = xs
+		_xray_mat.set_shader_parameter("col", Color(color.lightened(0.15), 0.6))
+		_xray_mat.render_priority = 4
+		_rim_mat.next_pass = _xray_mat
 	if model == null:
 		return
 	for node in model.find_children("*", "MeshInstance3D", true, false):
@@ -227,6 +249,8 @@ func set_outline(dark_arena: bool) -> void:
 	# On dark floors the rim goes pale, so a red bot never reads as a wine
 	# casket (AAA review round 8); your ring burns brighter there.
 	_rim_mat.set_shader_parameter("rim_col", color.lerp(Color(1.0, 0.96, 0.86), 0.5) if dark_arena else color.lightened(0.25))
+	if not is_bot:   # your fill stays your own saturated colour, not a pale wash
+		_rim_mat.set_shader_parameter("rim_col", color)
 	if _ring:
 		(_ring.material_override as ShaderMaterial).set_shader_parameter("col", Color(color.lightened(0.35 if dark_arena else 0.2), 1.0))
 

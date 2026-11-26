@@ -42,7 +42,7 @@ const ROSTER := [
 	{"id": "sparky", "name": "SPARKY", "color": Color(1.0, 0.78, 0.12)},
 	{"id": "rivet", "name": "RIVET", "color": Color(1.0, 0.34, 0.27)},
 	{"id": "pixel", "name": "PIXEL", "color": Color(0.33, 0.88, 0.45)},
-	{"id": "boiler", "name": "BOILER", "color": Color(0.96, 0.56, 0.24)},
+	{"id": "boiler", "name": "BOILER", "color": Color(0.96, 0.56, 0.24), "dark": true},   # dark round body: an orange line so he never reads as a bomb
 	{"id": "gumball", "name": "GUMBALL", "color": Color(1.0, 0.46, 0.72)},
 	{"id": "snap", "name": "SNAP", "color": Color(0.92, 0.93, 0.96)},
 	{"id": "arcade", "name": "ARCADE", "color": Color(0.7, 0.52, 1.0)},

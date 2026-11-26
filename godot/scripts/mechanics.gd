@@ -772,7 +772,11 @@ func _visual_witch(delta: float, t: float) -> void:
 		_witch_angle = lerp_angle(_witch_angle, -PI / 2.0, clampf(delta * 2.0, 0.0, 1.0))   # waits at the far side
 	var p := Vector3(cos(_witch_angle) * WITCH_ORBIT.x, WITCH_HEIGHT + sin(t * 1.7) * 0.15, WITCH_CENTRE_Z + sin(_witch_angle) * WITCH_ORBIT.y)
 	# Over the near rows she fades to half, so she never hides a fighter.
-	var fade := clampf((p.z + 1.0) / 2.5, 0.0, 1.0) * 0.5
+	# Over the board she goes to a third, so she never hides a lane, a bomb
+	# or a fighter (AAA review round 9); outside the walls she is solid.
+	var out_x := absf(p.x) - (Cfg.COLS * 0.5 - 0.5)
+	var out_z := absf(p.z) - (Cfg.ROWS * 0.5 - 0.5)
+	var fade := (1.0 - clampf(maxf(out_x, out_z) / 1.2, 0.0, 1.0)) * 0.66
 	for mi in n.find_children("*", "MeshInstance3D", true, false):
 		(mi as MeshInstance3D).transparency = fade
 		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

@@ -378,6 +378,10 @@ func _factory() -> void:
 		var sm := SphereMesh.new()
 		sm.radius = 0.02
 		sm.height = 0.04
+		# Default spheres are 4,224 triangles: x24 sparks was 100k a frame
+		# (AAA review round 8, Factory triangle budget).
+		sm.radial_segments = 6
+		sm.rings = 3
 		sp.mesh = sm
 		var m := StandardMaterial3D.new()
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

@@ -538,7 +538,8 @@ static func box(size: Vector3, r := 0.0) -> Mesh:
 	# A bevel under 2.5 cm can't be seen from the play camera: a plain box is
 	# 12 triangles instead of 108 (AAA review round 7, Beach triangle count).
 	if r >= 0.025:
-		m = Art.rounded_box(size, r, 2)
+		# Small bevels: one subdivision (48 triangles) is enough at this size.
+		m = Art.rounded_box(size, r, 2 if r >= 0.06 else 1)
 	else:
 		var b := BoxMesh.new()
 		b.size = size
@@ -712,9 +713,10 @@ static func plank_crate(key: String, light: Color, mid: Color, edge: Color) -> A
 
 ## A purple casket: panelled box, a stepped lid with a brass cross, brass corners.
 static func casket() -> ArrayMesh:
-	var purple := Color("84405a")
-	var dark := Color("4a2232")
-	var light := Color("a05874")
+	# Plum, not wine: red fighters must not read as caskets (round 8).
+	var purple := Color("6a4c74")
+	var dark := Color("3c2a46")
+	var light := Color("8a6a92")
 	var brass := metal(Color("735428"))
 	var parts: Array = [
 		[box(Vector3(0.8, 0.5, 0.84), 0.04), xf(Vector3(0, 0.29, 0)), purple],
@@ -819,11 +821,11 @@ static func drums() -> ArrayMesh:
 	for a in [-1.0, 1.0]:
 		for b in [-1.0, 1.0]:
 			var p := Vector3(a * 0.21, 0.14, b * 0.21)
-			parts.append([cyl(0.19, 0.19, 0.62, 14), xf(p + Vector3(0, 0.31, 0)), cols[i]])
-			parts.append([cyl(0.2, 0.2, 0.03, 14), xf(p + Vector3(0, 0.2, 0)), rim])
-			parts.append([cyl(0.2, 0.2, 0.03, 14), xf(p + Vector3(0, 0.44, 0)), rim])
-			parts.append([cyl(0.17, 0.17, 0.02, 14), xf(p + Vector3(0, 0.625, 0)), cols[i].darkened(0.3)])
-			parts.append([cyl(0.03, 0.03, 0.02, 8), xf(p + Vector3(0.08, 0.635, 0.05)), rim])
+			parts.append([cyl(0.19, 0.19, 0.62, 10), xf(p + Vector3(0, 0.31, 0)), cols[i]])
+			parts.append([cyl(0.2, 0.2, 0.03, 10), xf(p + Vector3(0, 0.2, 0)), rim])
+			parts.append([cyl(0.2, 0.2, 0.03, 10), xf(p + Vector3(0, 0.44, 0)), rim])
+			parts.append([cyl(0.17, 0.17, 0.02, 10), xf(p + Vector3(0, 0.625, 0)), cols[i].darkened(0.3)])
+			parts.append([cyl(0.03, 0.03, 0.02, 6), xf(p + Vector3(0.08, 0.635, 0.05)), rim])
 			i += 1
 	# Shrink-wrap band round the four, and the strap that ties them.
 	for side in 4:

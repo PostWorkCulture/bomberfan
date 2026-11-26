@@ -224,6 +224,11 @@ func set_outline(dark_arena: bool) -> void:
 	_outline_mat.set_shader_parameter("thick", thick)
 	_rim_mat.set_shader_parameter("strength", rim)
 	_rim_mat.set_shader_parameter("lift", lift)
+	# On dark floors the rim goes pale, so a red bot never reads as a wine
+	# casket (AAA review round 8); your ring burns brighter there.
+	_rim_mat.set_shader_parameter("rim_col", color.lerp(Color(1.0, 0.96, 0.86), 0.5) if dark_arena else color.lightened(0.25))
+	if _ring:
+		(_ring.material_override as ShaderMaterial).set_shader_parameter("col", Color(color.lightened(0.35 if dark_arena else 0.2), 1.0))
 
 
 const RING_SHADER := """
@@ -290,9 +295,11 @@ func _build_marker() -> void:
 	var tag := Label3D.new()
 	tag.text = "YOU"
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	tag.font_size = 44
+	tag.font = load("res://assets/fonts/lilita-one.ttf")
+	tag.font_size = 84
 	tag.pixel_size = 0.006
-	tag.outline_size = 14
+	tag.outline_size = 20
+	tag.outline_modulate = Color(0.03, 0.03, 0.06)
 	tag.modulate = color.lightened(0.35)
 	tag.no_depth_test = true
 	tag.top_level = true
@@ -313,7 +320,10 @@ func _place_marker() -> void:
 	_arrow.global_transform = Transform3D(Basis(), p + Vector3(0, TARGET_HEIGHT + 0.42 + bob, -0.1))
 	if tag:
 		tag.visible = on
-		tag.global_position = p + Vector3(0, TARGET_HEIGHT + 0.78 + bob, 0)
+		# In the top two rows the tag would sit on the timer pill: put it at
+		# your feet instead (the arrow stays overhead).
+		var top := p.z < -(Cfg.ROWS * 0.5 - 2.6)
+		tag.global_position = p + (Vector3(0, 0.3, 0.85) if top else Vector3(0, TARGET_HEIGHT + 0.95 + bob, -0.15))
 
 
 ## The Shield pick-up's bubble: a soft violet glass sphere round the fighter.

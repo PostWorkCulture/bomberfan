@@ -130,8 +130,8 @@ static func _beachball() -> Mesh:
 	var s := SphereMesh.new()
 	s.radius = r
 	s.height = r * 2.0
-	s.radial_segments = 36
-	s.rings = 18
+	s.radial_segments = 20
+	s.rings = 10
 	var arr := s.get_mesh_arrays()
 	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
 	var c := PackedColorArray()
@@ -216,20 +216,21 @@ static func _witch(angry: bool) -> Mesh:
 	# brim with a bright band, a flaring cape, a lighter face.
 	var robe := Color("3a2250")
 	var skin := Color("9ad86a")
-	var cape := Color("5a1e3a")
 	var parts: Array = [
 		[LA.cyl(0.12, 0.3, 0.8, 14), LA.xf(Vector3(0, 0.4, 0)), robe],
-		[LA.box(Vector3(0.62, 0.04, 0.85)), LA.xf(Vector3(0, 0.62, -0.42), Vector3(-1.05, 0, 0), Vector3(1.0, 1.0, 1.0)), cape],
-		[LA.box(Vector3(0.9, 0.03, 0.5)), LA.xf(Vector3(0, 0.38, -0.78), Vector3(-0.55, 0, 0)), cape.darkened(0.15)],
+		# (her cape is a separate fluttering mesh, added in mechanics.gd)
 		[LA.sphere(0.17, 14, 8), LA.xf(Vector3(0, 0.95, 0)), skin],
 		[LA.cone(0.05, 0.14, 6), LA.xf(Vector3(0, 0.93, 0.2), Vector3(PI / 2.0 - 0.3, 0, 0)), skin],
-		[LA.cyl(0.46, 0.46, 0.035, 20), LA.xf(Vector3(0, 1.08, 0), Vector3(0.12, 0, 0)), Color("221430")],
+		[LA.cyl(0.4, 0.4, 0.035, 20), LA.xf(Vector3(0, 1.08, 0), Vector3(0.12, 0, 0)), Color("221430")],
 		[LA.cone(0.17, 0.62, 12), LA.xf(Vector3(0, 1.38, -0.03), Vector3(-0.3, 0, 0.12)), Color("221430")],
 		[LA.cyl(0.18, 0.18, 0.07, 12), LA.xf(Vector3(0, 1.13, 0)), LA.lit(Color("c070ff"))],
 		[LA.box(Vector3(0.09, 0.09, 0.03)), LA.xf(Vector3(0, 1.13, 0.17)), LA.lit(Color("ffd040"))],
 		[LA.cyl(0.015, 0.02, 1.2, 6), LA.xf(Vector3(-0.3, 0.6, 0.15), Vector3(0, 0, 0.35)), Color("6a4a2a")],
 		[LA.cone(0.1, 0.3, 8), LA.xf(Vector3(-0.5, 0.08, 0.15), Vector3(0, 0, 0.35 + PI)), Color("c8a060")],
 	]
+	for s in [-1.0, 1.0]:
+		# hands out past the brim, gripping the broom
+		parts.append([LA.sphere(0.055, 8, 5), LA.xf(Vector3(s * 0.09, 0.36, 0.36)), skin])
 	for s in [-1.0, 1.0]:
 		parts.append([LA.sphere(0.03, 8, 4), LA.xf(Vector3(s * 0.06, 0.99, 0.15)), LA.lit(Color("ffe040"))])
 		parts.append([LA.cyl(0.04, 0.06, 0.35, 8), LA.xf(Vector3(s * 0.2, 0.68, 0.06), Vector3(0.4, 0, s * 0.6)), robe])

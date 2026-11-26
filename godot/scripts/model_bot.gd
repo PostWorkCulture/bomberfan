@@ -29,7 +29,33 @@ func setup(glb_path: String) -> void:
 			_merged[key] = _merge((load(glb_path) as PackedScene).instantiate())
 	_body = MeshInstance3D.new()
 	(_body as MeshInstance3D).mesh = _merged[key]
+	# A bot is ~45 px tall in play: pick the simpler LODs much sooner
+	# (AAA review round 8, triangle budget).
+	(_body as MeshInstance3D).lod_bias = 0.3
 	add_child(_body)
+
+
+## Every plain part in one surface: vertex colour is the albedo (sRGB), UV2
+## carries roughness and metallic. Each surface costs a draw in the main,
+## outline, rim and shadow passes, so 6 finish groups became 1.
+const PLAIN_SHADER := """
+shader_type spatial;
+render_mode blend_mix, cull_back;
+void fragment() {
+	vec3 c = COLOR.rgb;
+	vec3 lin = mix(pow((c + 0.055) / 1.055, vec3(2.4)), c / 12.92, step(c, vec3(0.04045)));
+	ALBEDO = lin;
+	SPECULAR = 0.5;
+	if (UV2.x < 0.0) {   // emissive part: UV2.x is minus its energy
+		EMISSION = lin * -UV2.x;
+		ROUGHNESS = 0.5;
+		METALLIC = 0.0;
+	} else {
+		ROUGHNESS = UV2.x;
+		METALLIC = UV2.y;
+	}
+}
+"""
 
 
 static func _merge(root: Node3D) -> ArrayMesh:
@@ -53,11 +79,11 @@ static func _merge(root: Node3D) -> ArrayMesh:
 		for si in mi.mesh.get_surface_count():
 			var mat: Material = mi.get_active_material(si)
 			var bm := mat as BaseMaterial3D
-			var plain: bool = bm != null and bm.albedo_texture == null and not bm.emission_enabled \
+			var plain: bool = bm != null and bm.albedo_texture == null and bm.emission_texture == null \
 				and bm.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED
 			var key: String
 			if plain:
-				key = "plain:%d:%d" % [int(bm.metallic > 0.4), int(clampf(bm.roughness, 0.0, 0.99) * 3.0)]
+				key = "plain"   # one surface: finish rides in UV2 (AAA review round 8)
 			else:
 				key = "own:%d" % mat.get_instance_id() if mat != null else "own:none"
 			if not groups.has(key):
@@ -65,12 +91,10 @@ static func _merge(root: Node3D) -> ArrayMesh:
 				st.begin(Mesh.PRIMITIVE_TRIANGLES)
 				var gm: Material = mat
 				if plain:
-					var nm := StandardMaterial3D.new()
-					nm.vertex_color_use_as_albedo = true
-					nm.vertex_color_is_srgb = true
-					nm.metallic = bm.metallic
-					nm.roughness = bm.roughness
-					nm.metallic_specular = bm.metallic_specular
+					var nm := ShaderMaterial.new()
+					var sh := Shader.new()
+					sh.code = PLAIN_SHADER
+					nm.shader = sh
 					gm = nm
 				st.set_material(gm)
 				groups[key] = st
@@ -84,9 +108,14 @@ static func _merge(root: Node3D) -> ArrayMesh:
 			var idxs = arr[Mesh.ARRAY_INDEX]
 			var nb := xf.basis.inverse().transposed()
 			var col := bm.albedo_color
+			var fin := Vector2(clampf(bm.roughness, 0.0, 1.0), clampf(bm.metallic, 0.0, 1.0))
+			if bm.emission_enabled:   # glowing parts: emission colour, energy as -UV2.x
+				col = bm.emission
+				fin = Vector2(-maxf(bm.emission_energy_multiplier, 0.01), 0.0)
 			var order: Array = Array(idxs) if idxs != null and idxs.size() > 0 else range(verts.size())
 			for i in order:
 				st2.set_color(col)
+				st2.set_uv2(fin)
 				if norms != null and norms.size() == verts.size():
 					st2.set_normal((nb * norms[i]).normalized())
 				st2.add_vertex(xf * verts[i])

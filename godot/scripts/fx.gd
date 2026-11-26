@@ -79,26 +79,35 @@ func _ready() -> void:
 		Color(1.0, 0.45, 0.1, 0.85), Color(0.35, 0.32, 0.3, 0.35), Color(0.25, 0.24, 0.23, 0.0)])
 	_flash_ramp = _ramp([0.0, 0.4, 1.0], [Color(1.0, 0.85, 0.5, 0.18), Color(1.0, 0.5, 0.15, 0.2), Color(1, 0.4, 0.1, 0.0)])
 	_spark_ramp = _ramp([0.0, 0.5, 1.0], [Color(1.25, 1.0, 0.6, 1.0), Color(1.0, 0.5, 0.12, 0.9), Color(0.8, 0.2, 0.05, 0.0)])
-	_smoke_ramp = _ramp([0.0, 0.18, 0.6, 1.0], [Color(0.35, 0.34, 0.33, 0.0), Color(0.26, 0.26, 0.26, 0.5),
-		Color(0.2, 0.2, 0.2, 0.28), Color(0.18, 0.18, 0.18, 0.0)])
+	# Lighter and thinner: dark smoke went muddy brown under coloured light
+	# (AAA review round 8).
+	_smoke_ramp = _ramp([0.0, 0.18, 0.6, 1.0], [Color(0.46, 0.45, 0.47, 0.0), Color(0.4, 0.4, 0.42, 0.36),
+		Color(0.34, 0.34, 0.36, 0.2), Color(0.3, 0.3, 0.32, 0.0)])
 	_dust_ramp = _ramp([0.0, 0.2, 1.0], [Color(0.55, 0.42, 0.28, 0.0), Color(0.5, 0.38, 0.25, 0.55), Color(0.45, 0.36, 0.26, 0.0)])
 	_grow = _curve([Vector2(0, 0.45), Vector2(0.25, 1.0), Vector2(1, 0.75)])
 	_shrink = _curve([Vector2(0, 1.0), Vector2(1, 0.2)])
 	_bomb_body = SphereMesh.new()
 	_bomb_body.radius = 0.29    # AAA review: bombs smaller than a fighter's footprint
 	_bomb_body.height = 0.58
+	_bomb_body.radial_segments = 24
+	_bomb_body.rings = 12
 	_bomb_cap = CylinderMesh.new()
 	_bomb_cap.top_radius = 0.1
 	_bomb_cap.bottom_radius = 0.12
 	_bomb_cap.height = 0.1
+	_bomb_cap.radial_segments = 14
+	_bomb_cap.rings = 1
 	_fuse = CylinderMesh.new()
 	_fuse.top_radius = 0.025
 	_fuse.bottom_radius = 0.03
 	_fuse.height = 0.18
 	_fuse.radial_segments = 6
+	_fuse.rings = 1
 	_spark_dot = SphereMesh.new()
 	_spark_dot.radius = 0.016
 	_spark_dot.height = 0.032
+	_spark_dot.radial_segments = 6
+	_spark_dot.rings = 3
 	_tip_mat = StandardMaterial3D.new()
 	_tip_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_tip_mat.albedo_color = Color(0.95, 0.55, 0.22)
@@ -414,19 +423,20 @@ func add_flame(pos: Vector3, shape := Color(0.5, 0.0, 0.5, 1.0)) -> int:
 func set_flame(i: int, s: float) -> void:
 	if i < 0:
 		return
-	# Mid-arm tiles stretch along the arm so neighbours overlap: no seams.
-	# As it dies an arm thins across its width but keeps its length, so it
-	# narrows to a line instead of breaking into dashes (AAA review round 7).
+	# Every sheet stays full size (mid-arm ones stretched 1.1 along the arm
+	# so neighbours overlap). Dying is done in the shader: instance alpha is
+	# the flame's thickness, so arms and the centre narrow together to a line
+	# and never break into beads (AAA review round 8).
 	var shp: Color = _flame_shape.get(i, Color(0.5, 0, 0.5, 1))
 	var along := 1.12 * (1.0 if shp.g >= 0.5 else 1.1)
-	var sx := s
-	var sz := s
+	var sx := 1.12
+	var sz := 1.12
 	if shp.r < 0.25:
 		sx = along
 	elif shp.r > 0.75:
 		sz = along
-	# World-axis scale after laying the quad flat (x stays x, its y becomes z).
 	_flame_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sx, 1.0, sz)) * Basis(Vector3.RIGHT, -PI / 2.0), _flame_pos[i]))
+	_flame_mm.set_instance_color(i, Color(shp.r, shp.g, shp.b, clampf(s / 1.12, 0.0, 1.0)))
 
 
 func free_flame(i: int) -> void:
@@ -661,7 +671,11 @@ void fragment() {
 	float along;
 	if (axis < 0.25) { across = abs(p.y); along = p.x * dir; }
 	else if (axis > 0.75) { across = abs(p.x); along = p.y * dir; }
-	else { across = length(p) * 0.78; along = -1.0; }
+	// Centre: a plus, so it meets each arm at the arm's own width.
+	else { across = min(abs(p.x), abs(p.y)); along = -1.0; }
+	// Thickness (instance alpha): narrows every sheet the same way as it dies.
+	float k = COLOR.a;
+	across /= mix(0.28, 1.0, k);
 	float r = across;
 	if (COLOR.g > 0.5 && along > 0.0) r = length(vec2(across, along * 1.1));
 	float n = texture(noise_tex, wpos.xz * 0.6 + vec2(0.0, TIME * 1.8)).r;
@@ -671,7 +685,7 @@ void fragment() {
 	col = mix(col, vec3(1.0, 0.85, 0.42), smoothstep(0.55, 0.85, heat));
 	col = mix(col, vec3(1.0, 0.93, 0.78), smoothstep(0.96, 1.0, heat));
 	ALBEDO = min(col, vec3(0.92));
-	ALPHA = smoothstep(0.02, 0.22, heat) * 0.95;
+	ALPHA = smoothstep(0.02, 0.22, heat) * smoothstep(0.0, 0.35, k);
 }
 """
 
@@ -681,8 +695,9 @@ render_mode unshaded, blend_add, depth_draw_never, cull_disabled, fog_disabled;
 uniform vec3 tint = vec3(1.0, 0.75, 0.4);
 void fragment() {
 	float d = length(UV * 2.0 - 1.0);
-	float ring = smoothstep(0.7, 0.9, d) * (1.0 - smoothstep(0.9, 1.0, d));
-	ALBEDO = tint * ring * 0.8;
+	// Soft both sides, and dimmer: it read as a hard pale disc (round 8).
+	float ring = smoothstep(0.5, 0.85, d) * (1.0 - smoothstep(0.86, 1.0, d));
+	ALBEDO = tint * ring * 0.5;
 }
 """
 
@@ -707,7 +722,7 @@ func _burst(pos: Vector3, c: Color, amount: int, speed: float, life: float) -> v
 
 ## Collecting a pick-up: a burst and ring in its colour and a "+BOMB" that
 ## floats up off the fighter.
-func pickup_burst(pos: Vector3, c: Color, text: String) -> void:
+func pickup_burst(pos: Vector3, c: Color, text: String, below := false) -> void:
 	if not enabled:
 		return
 	_burst(pos + Vector3(0, 0.6, 0), c, 12, 2.2, 0.45)
@@ -738,8 +753,11 @@ func pickup_burst(pos: Vector3, c: Color, text: String) -> void:
 	l.no_depth_test = true
 	# Near the top of the board the label would slide under the timer pill:
 	# put it below the fighter there.
-	var top_rows := pos.z < -(Cfg.ROWS * 0.5 - 2.6)
+	# Your own fighter wears the YOU tag up there, so yours drops below too.
+	var top_rows := below or pos.z < -(Cfg.ROWS * 0.5 - 2.6)
 	l.position = pos + (Vector3(0, 0.4, 1.1) if top_rows else Vector3(0, 1.5, 0))
+	if below and pos.z < -(Cfg.ROWS * 0.5 - 2.6):   # your YOU tag is at your feet there
+		l.position = pos + Vector3(1.2, 0.4, 0.4)
 	add_child(l)
 	var lt := l.create_tween()
 	lt.set_parallel(true)

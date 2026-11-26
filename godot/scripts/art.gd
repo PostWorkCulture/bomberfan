@@ -889,24 +889,34 @@ static func _bomb_item(m: Node3D) -> void:
 	var body := SphereMesh.new()
 	body.radius = 0.2
 	body.height = 0.4
+	body.radial_segments = 20
+	body.rings = 10
 	_part(m, body, flat_mat(Color(0.06, 0.065, 0.08), 0.4, 0.05), Vector3.ZERO)
 	var shine := SphereMesh.new()
 	shine.radius = 0.05
 	shine.height = 0.1
+	shine.radial_segments = 8
+	shine.rings = 4
 	_part(m, shine, flat_mat(Color(0.55, 0.6, 0.7), 0.2, 0.0), Vector3(-0.09, 0.1, 0.11), Vector3.ZERO, Vector3(1, 0.6, 0.6))
 	var cap := CylinderMesh.new()
 	cap.top_radius = 0.065
 	cap.bottom_radius = 0.075
 	cap.height = 0.07
+	cap.radial_segments = 12
+	cap.rings = 1
 	_part(m, cap, flat_mat(Color(0.6, 0.62, 0.66), 0.35, 0.8), Vector3(0, 0.205, 0))
 	var fuse := CylinderMesh.new()
 	fuse.top_radius = 0.018
 	fuse.bottom_radius = 0.022
 	fuse.height = 0.13
+	fuse.radial_segments = 6
+	fuse.rings = 1
 	_part(m, fuse, flat_mat(Color(0.8, 0.7, 0.5)), Vector3(0.03, 0.28, 0), Vector3(0, 0, -0.5))
 	var spark := SphereMesh.new()
 	spark.radius = 0.03
 	spark.height = 0.06
+	spark.radial_segments = 8
+	spark.rings = 4
 	_part(m, spark, _unshaded(Color(1.0, 0.78, 0.35)), Vector3(0.065, 0.335, 0))
 
 
@@ -981,4 +991,6 @@ static func _shield_item(m: Node3D) -> void:
 	var star := SphereMesh.new()
 	star.radius = 0.06
 	star.height = 0.12
+	star.radial_segments = 10
+	star.rings = 5
 	_part(m, star, boss, Vector3(0, 0.02, 0.04), Vector3.ZERO, Vector3(1.0, 1.0, 0.6))

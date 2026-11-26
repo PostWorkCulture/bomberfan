@@ -1429,7 +1429,7 @@ func _step_pickups(dt: float) -> void:
 		if not pickups.has(ci):
 			continue
 		var pid: String = pickups[ci]["id"]
-		fx.pickup_burst(f.position, Art.PICKUP_TINT.get(pid, Color.WHITE), {"bomb": "+BOMB", "fire": "+FIRE", "speed": "+SPEED", "shield": "+SHIELD"}.get(pid, ""))
+		fx.pickup_burst(f.position, Art.PICKUP_TINT.get(pid, Color.WHITE), {"bomb": "+BOMB", "fire": "+FIRE", "speed": "+SPEED", "shield": "+SHIELD"}.get(pid, ""), f.pid == human_pid)
 		match pid:
 			"bomb":
 				f.max_bombs = mini(f.max_bombs + 1, Cfg.MAX_BOMBS)
@@ -2013,6 +2013,9 @@ func _autotest_tick() -> void:
 		_perf["worst"] = maxf(_perf["worst"], get_process_delta_time())
 		_perf["draws"] = maxi(_perf["draws"], int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)))
 		_perf["prims"] = maxi(_perf["prims"], int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)))
+		if phase == "play":   # the play camera only, not the arrival flyover
+			_perf["play_draws"] = maxi(_perf.get("play_draws", 0), int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)))
+			_perf["play_prims"] = maxi(_perf.get("play_prims", 0), int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)))
 	if not _shots.is_empty() and _time >= float(_shots[0]):
 		var img := get_viewport().get_texture().get_image()
 		img.save_png("%s/shot_%02d.png" % [_shot_dir, int(float(_shots[0]))])
@@ -2020,8 +2023,9 @@ func _autotest_tick() -> void:
 	if _time >= _quit_at:
 		var f := FileAccess.open(_shot_dir + "/stats.txt", FileAccess.WRITE)
 		if f:
-			f.store_line("avg_fps=%.1f worst_frame_ms=%.1f max_draw_calls=%d max_primitives=%d" % [
-				_perf["frames"] / maxf(_time - 2.0, 0.001), _perf["worst"] * 1000.0, _perf["draws"], _perf["prims"]])
+			f.store_line("avg_fps=%.1f worst_frame_ms=%.1f max_draw_calls=%d max_primitives=%d play_draw_calls=%d play_primitives=%d" % [
+				_perf["frames"] / maxf(_time - 2.0, 0.001), _perf["worst"] * 1000.0, _perf["draws"], _perf["prims"],
+				_perf.get("play_draws", 0), _perf.get("play_prims", 0)])
 			f.close()
 		get_tree().quit()
 

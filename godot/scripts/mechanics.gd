@@ -783,14 +783,26 @@ func _visual_witch(delta: float, t: float) -> void:
 		face = atan2(tgt.x - p.x, tgt.z - p.z)
 	else:
 		face = atan2(-sin(_witch_angle) * WITCH_ORBIT.x, cos(_witch_angle) * WITCH_ORBIT.y)
-	n.rotation.y = lerp_angle(n.rotation.y, face, clampf(delta * 5.0, 0.0, 1.0))
-	n.rotation.z = 0.0 if winding else -0.18
+	# Leaned towards the camera like the fighters (face, cape and broom show,
+	# not just the hat; AAA review round 8), banking into her turn.
+	var yaw: float = lerp_angle(float(n.get_meta("yaw", face)), face, clampf(delta * 5.0, 0.0, 1.0))
+	n.set_meta("yaw", yaw)
+	n.basis = Basis(Vector3.RIGHT, 0.38) * Basis(Vector3.UP, yaw) * Basis(Vector3.FORWARD, 0.0 if winding else 0.18)
+	var cape := n.get_node_or_null("Cape") as Node3D
+	if cape:
+		cape.rotation.x = 0.1 + sin(t * 9.0) * 0.09 + sin(t * 13.7) * 0.04
+		cape.rotation.z = sin(t * 6.3) * 0.05
 	if not n.has_node("Broom"):
 		var broom := MeshInstance3D.new()
 		broom.name = "Broom"
 		broom.mesh = _broom_mesh()
 		broom.position = Vector3(0, 0.22, 0)
 		n.add_child(broom)
+		var cm := MeshInstance3D.new()
+		cm.name = "Cape"
+		cm.mesh = _cape_mesh()
+		cm.position = Vector3(0, 0.86, -0.12)
+		n.add_child(cm)
 		# The hazard reads like a fighter: a red outline and rim, and a trail
 		# of green sparks off the broom.
 		var line := ShaderMaterial.new()
@@ -808,6 +820,9 @@ func _visual_witch(delta: float, t: float) -> void:
 		line.next_pass = rim
 		for mi in n.find_children("*", "MeshInstance3D", true, false):
 			(mi as MeshInstance3D).material_overlay = line
+		# An inverted hull on thin cloth fills it with line colour: the cape
+		# keeps its own colours and pale hem instead.
+		(n.get_node("Cape") as MeshInstance3D).material_overlay = null
 		var trail := CPUParticles3D.new()
 		trail.local_coords = false
 		trail.amount = 24
@@ -1092,8 +1107,53 @@ func _make_crab() -> Node3D:
 
 
 func _broom_mesh() -> Mesh:
-	return LA.build([
-		[LA.cyl(0.022, 0.022, 1.3, 8), LA.xf(Vector3(0, 0, 0), Vector3(PI / 2.0, 0, 0)), Color("6a4a2a")],
-		[LA.cone(0.13, 0.36, 10), LA.xf(Vector3(0, 0, -0.78), Vector3(-PI / 2.0, 0, 0)), Color("c8a060")],
-		[LA.cyl(0.05, 0.05, 0.05, 10), LA.xf(Vector3(0, 0, -0.6), Vector3(PI / 2.0, 0, 0)), Color("7a37d6")],
-	], LA.vmat("broom", 0.8, 0.0, 0.3))
+	# A long handle and a splayed straw head that shows past her cape from
+	# above (AAA review round 8).
+	var parts: Array = [
+		[LA.cyl(0.032, 0.032, 1.7, 8), LA.xf(Vector3(0, 0, 0.1), Vector3(PI / 2.0, 0, 0)), Color("7a5430")],
+		[LA.cyl(0.06, 0.06, 0.07, 10), LA.xf(Vector3(0, 0, -0.72), Vector3(PI / 2.0, 0, 0)), LA.lit(Color("c070ff"))],
+	]
+	for k in 5:
+		var a := (k - 2) * 0.24
+		parts.append([LA.cone(0.08, 0.6, 6), LA.xf(Vector3(sin(a) * 0.14, 0, -1.2), Vector3(-PI / 2.0, a, 0), Vector3(1.0, 1.0, 0.7)), Color("f0c870").darkened(0.08 * (k % 2))])
+	return LA.build(parts, LA.vmat("broom", 0.8, 0.0, 0.3))
+
+
+## Her cape: a tapered, folded cloth from the shoulders, double-sided, with a
+## pale hem so it separates from the dark floor. Flutters in _visual_witch.
+func _cape_mesh() -> Mesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var rows := 6
+	var cols := 6
+	var grid: Array = []
+	for i in rows + 1:
+		var t := float(i) / rows
+		var w := lerpf(0.34, 1.0, t)
+		var row: Array = []
+		for j in cols + 1:
+			var u := float(j) / cols
+			var x := (u - 0.5) * w
+			var fold := sin(u * PI * 4.0) * 0.045 * t
+			row.append(Vector3(x, -t * 0.5 + fold - t * t * 0.08, -t * 0.95))
+		grid.append(row)
+	for i in rows:
+		var c0 := Color("8a2a62") if i < rows - 1 else Color("e0ccff")
+		for j in cols:
+			var a: Vector3 = grid[i][j]
+			var b: Vector3 = grid[i][j + 1]
+			var c: Vector3 = grid[i + 1][j]
+			var d: Vector3 = grid[i + 1][j + 1]
+			for tri in [[a, c, b], [b, c, d]]:
+				var nrm: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0]).normalized()
+				if nrm.y < 0.0:
+					nrm = -nrm
+				for face in 2:
+					var order: Array = tri if face == 0 else [tri[0], tri[2], tri[1]]
+					for v in order:
+						st.set_color(c0.darkened(0.12 * float(j % 2)))
+						st.set_normal(nrm)
+						st.add_vertex(v)
+	var m := st.commit()
+	m.surface_set_material(0, LA.vmat("cape", 0.85, 0.0, 0.1))
+	return m

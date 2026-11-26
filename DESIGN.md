@@ -123,7 +123,7 @@ No coloured circles under fighters. The human player keeps the "YOU" tag.
 
 **Godot roster (Pete, 2026-11-25): Razor, plus eight bots: Sparky Mk II, Rivet, Pixel, Boiler, Gumball, Snap, Arcade and Tick.**
 - From the browser roster, only Razor (the ninja) and Bomberman are kept. The rest are dropped from the Godot build, and their models are removed from `godot/assets/characters` (the browser game still has them).
-- Bomberman is held back. Pete wants it "seriously upgraded", but it is Konami's character, so the plan is an original bomber hero for that slot.
+- Bomberman is held back. Pete wants it "seriously upgraded", but it is Konami's character, so the plan is an original bomber hero for that slot ("Bombr"). Concepts are on branch `art/bot-concepts` (`tools/blender/bombr.py`, `bombr_dark.py`); none picked yet.
 - New characters are concepts 1, 5 and 6 from the Blender set (`tools/blender/bomber_bots.py`, branch `art/bot-concepts`), exported as `sparky.glb`, `rivet.glb` and `pixel.glb`. They are rigid models; `godot/scripts/model_bot.gd` animates them in code (bob, waddle, lean, squash, hop-and-spin cheer, topple). The other five concepts are dropped.
 - The first-pass code bots (`robot.gd`: Bolt, Tank, Pip, Sparky) were rejected and deleted.
 - Round-2 bots (Pete picked 1, 3, 7 and 8 of eight: `tools/blender/bomber_bots_2.py`, branch `art/bot-concepts`): Boiler (copper steam boiler), Gumball (gumball machine), Snap (box camera) and Arcade (arcade cabinet), exported as `boiler/gumball/snap/arcade.glb` and animated by `model_bot.gd`. Dial, Crumb, Reel and Lumen are dropped.
@@ -156,7 +156,7 @@ Code: `godot/scripts/levels.gd` holds layouts and rules; `level_art.gd`, `level_
 - **CI screenshots:** `-- --tour` shows every arena for two seconds, and CI saves one frame of each as `arena-<id>.png` on the `ci-screenshots` branch. Locally, use autotest `"mode": "tour"`, or `"level": "<id>"` to play one arena.
 
 ### Not yet ported
-Kick (and the other power-ups), character select / Loadout / Prize Locker, menus and options (level choice, difficulty, rounds, music volume), menu music, per-level music, the rest of the roster.
+Kick (and the other power-ups), character select / Loadout / Prize Locker, menus and options (level choice, difficulty, rounds, music volume), menu music, the original bomber hero. (Per-arena music is now in; see "Look and sound".)
 
 ---
 
@@ -165,6 +165,7 @@ Kick (and the other power-ups), character select / Loadout / Prize Locker, menus
 Newest first. One dated heading per day; bullets say what changed, why, and where.
 
 ### 2026-11-26
+- **AAA review round 12: PASS-CONDITIONAL.** An independent reviewer scored every category 8 (art, readability, lighting, assets, life, VFX, mechanics, HUD, polish/performance). The condition is real-device frame time, which can't be measured in the sandbox: on the Pages `play/` build, Chrome on a mid-range Android (Pixel 6a / Snapdragon 7 class) and Safari on an iPhone 11–12, 90 s per arena including a 3+ bomb chain, a full flame cross, belts reversing, the tide, a witch pass and sudden death. Pass if median ≤ 16.7 ms, p95 ≤ 33 ms, no frame over 50 ms in a chain, under 20% slower after 5 minutes, cold load ≤ 10 s on 4G, no crash on 3 GB devices. Sandbox play peaks: 259–319 draw calls, 231–343k triangles. Reviewer's non-blocking notes: drive the YOU-tag bob from game time so `tools/xray_ab.sh` diffs are clean, give that script a pass/fail and Razor-bounds check; Snap's white body is close to white bombs on Factory; exit-time leak warnings under `--quit-after`.
 - **AAA review round 11:** FAIL (readability 6, polish 7). The x-ray depth push could not cover a steep camera: Razor's head and shoulders sit 0.6–1 m nearer the camera than his legs and swords, so he still showed through himself. Fixes:
   - **Stencil x-ray:** your fighter's own materials write stencil 7 where visible (`BaseMaterial3D` custom stencil, write, always); the x-ray pass reads `compare_not_equal 7` with an inverted depth test, so it only draws where something else hides you. No vertex push.
   - **A/B check:** `-- --seed N` makes a match repeatable with `--fixed-fps`/`--write-movie`; `-- --no-xray` turns the pass off. `tools/xray_ab.sh` renders the same seeded Beach match both ways and writes side-by-side frames and a diff mask: differences must sit only where you are behind something.
@@ -231,6 +232,8 @@ Newest first. One dated heading per day; bullets say what changed, why, and wher
   - **Surroundings:** the Factory is now an organised hall (corrugated walls with lit windows, I-beam columns, machine rows on painted bays, pallet racks, a forklift working each aisle). Haunted House gets a manor behind the far wall, grave rows either side and drifting ground fog. Beach palms have curved ribbon fronds, beach balls are smaller, and nothing tall sits on the camera side. `level_scenery.gd`, `ambient.gd`.
   - **Mechanic fairness:** see "Arenas (Godot)" (grass zone and ghosting, tide warning, crab fuse rule, ghosts every 16 s and not near fighters, crusher warning).
   - **Light:** Beach lower sun with more contrast; Factory sun angled more, less ambient, more contrast.
+- **Original bomber hero ("Bombr") concepts** for the slot Bomberman held (branch `art/bot-concepts`, not merged): `tools/blender/bombr.py` renders three takes on one chibi kid (A Hard Hat, B Aviator, C Blast Suit); `tools/blender/bombr_dark.py` renders six darker, more detailed characters (Miasma, Rattlefuse, Blackdamp, Candlemass, Tick, Fathom), with Tick reworked as v2 (brass neck, collar, cravat). From these Pete took Tick as a bot (below); no hero has been picked yet.
+- **Gallery fix:** tall grass no longer hides fighters in the `--gallery` close-up. File: `godot/scripts/mechanics.gd`.
 - **Tick joins the roster** as the eighth bot (Pete: "Yes" to adding him). He is the clockwork gentleman from the darker set, exported from `build/bombr/tick/tick.blend`, with a teal HUD colour, and goes into the random bot draw. Files: `godot/scripts/game.gd` (`ROSTER`), `godot/assets/characters/tick.glb`.
 - **AAA pass on all four arenas** (Pete: "work through the whole list and make decisions based on what adds the most style, playability and meets our AAA goals"). Branch `arena-aaa-pass`. See "Look and sound", "Pick-ups" and "Arenas (Godot)" for the spec. In short:
   - Per-arena lighting and colour grade, a colour order on every arena (floor < walls < crates < fighters/hazards), and floor contact shadow from a live occupancy map. Files: `level_art.gd`, `art.gd`, `game.gd`.

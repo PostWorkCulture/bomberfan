@@ -131,6 +131,7 @@ var msg_t := 0.0
 var rng := RandomNumberGenerator.new()
 var smoke := false
 var demo := false   # `-- --demo`: four bots, full visuals (attract mode / CI screenshots)
+var autopilot := false   # `-- --autopilot` / autotest: you are Razor, steered by a bot brain (true-to-play screenshots)
 var gallery := false   # `-- --gallery`: close-up of the fighters for CI checks
 var forced_cast: Array = []   # bot ids from autotest "cast"
 var lineup := false    # autotest "lineup": the roster side by side on plain ground
@@ -171,6 +172,7 @@ var _perf := {"frames": 0, "worst": 0.0, "draws": 0, "prims": 0}
 func _ready() -> void:
 	smoke = "--smoke" in OS.get_cmdline_user_args()
 	demo = "--demo" in OS.get_cmdline_user_args()
+	autopilot = "--autopilot" in OS.get_cmdline_user_args()
 	gallery = "--gallery" in OS.get_cmdline_user_args()
 	tour = "--tour" in OS.get_cmdline_user_args()
 	var args := OS.get_cmdline_user_args()
@@ -713,14 +715,14 @@ func _pick_cast() -> Array:
 
 
 func _create_fighters() -> void:
-	human_pid = -1 if smoke or demo or gallery else 0
+	human_pid = -1 if (smoke or demo or gallery) and not autopilot else 0
 	var cast := _pick_cast()
 	for k in Cfg.MAX_PLAYERS:
 		var f = Fighter.new()
 		add_child(f)
 		f.setup(self, k, cast[k], k != human_pid)
 		fighters.append(f)
-		if f.is_bot:
+		if f.is_bot or autopilot:
 			var b = BotBrain.new()
 			b.setup(self, f, 1000 + k * 7919 + (0 if smoke else rng.randi() % 100000))
 			brains[k] = b
@@ -1223,7 +1225,7 @@ func _step_fighters(dt: float) -> void:
 	for f in fighters:
 		if not f.alive:
 			continue
-		if f.is_bot:
+		if brains.has(f.pid):
 			var out: Dictionary = brains[f.pid].update(dt)
 			f.step(dt, out["dir"], out["alt"], out["bomb"])
 		else:
@@ -1989,6 +1991,7 @@ func _load_autotest() -> void:
 		return
 	var mode: String = data.get("mode", "demo")
 	demo = mode == "demo" or mode == "tour"
+	autopilot = mode == "demo" and data.get("autopilot", true)
 	tour = mode == "tour"
 	if Levels.index_of(data.get("level", "")) >= 0:
 		forced_level = data["level"]

@@ -26,12 +26,14 @@ const THEMES := {
 	},
 	"beach": {
 		# High noon on a sandbar: bright, warm, a little haze off the water.
-		"sky": Color("0b3550"), "fog": Color(0.55, 0.72, 0.8), "fog_begin": 22.0, "fog_end": 50.0,
+		"sky": Color("0b3550"), "fog": Color(0.55, 0.72, 0.8), "fog_begin": 30.0, "fog_end": 70.0,
 		"sun": Color(1.0, 0.94, 0.82), "sun_energy": 1.05, "sun_rot": Vector3(-48, -34, 0), "ambient": 0.3,
 		"sky_top": Color(0.46, 0.56, 0.64), "sky_horizon": Color(0.84, 0.8, 0.72), "ground_horizon": Color(0.6, 0.52, 0.4),
-		"exposure": 0.74, "saturation": 1.08, "contrast": 1.06, "glow": 0.3,
-		"floor": {"pattern": 5, "a": Color("8c6c44"), "b": Color("9c7b4f"), "line": Color("5a4028"), "line_alpha": 0.12, "rough": 0.95},
-		"block": {"style": 6, "side": Color("6e5842"), "top": Color("86705a"), "rough": 0.9, "scale": 0.9},
+		"exposure": 0.74, "saturation": 1.1, "contrast": 1.12, "glow": 0.3,
+		# Value steps (AAA review round 7): floor a step darker, pillars a step
+		# paler, so the board reads in three values: floor, crates, stone.
+		"floor": {"pattern": 5, "a": Color("785a36"), "b": Color("866742"), "line": Color("4e3622"), "line_alpha": 0.14, "rough": 0.95},
+		"block": {"style": 6, "side": Color("7e6a52"), "top": Color("a08c70"), "rough": 0.9, "scale": 0.9},
 		"border": {"style": 0, "side": Color("6e5044"), "top": Color("8a6858"), "rough": 0.85, "scale": 0.9},
 		"plinth": Color("a88e62"), "debris": Color("b89c6e"),
 	},
@@ -533,7 +535,9 @@ static func box(size: Vector3, r := 0.0) -> Mesh:
 	if _cache.has(key):
 		return _cache[key]
 	var m: Mesh
-	if r > 0.0:
+	# A bevel under 2.5 cm can't be seen from the play camera: a plain box is
+	# 12 triangles instead of 108 (AAA review round 7, Beach triangle count).
+	if r >= 0.025:
 		m = Art.rounded_box(size, r, 2)
 	else:
 		var b := BoxMesh.new()
@@ -784,9 +788,10 @@ static func barrel(key: String) -> ArrayMesh:
 
 ## An old travelling trunk: domed lid, iron straps, a lock plate.
 static func trunk() -> ArrayMesh:
-	var wood := Color("7a5236")
-	var lid := Color("8e6342")
-	var iron := metal(Color("8a8490"))
+	# A value step above the dark floor (AAA review round 7).
+	var wood := Color("9a6a44")
+	var lid := Color("b47e52")
+	var iron := metal(Color("aaa4b4"))
 	var brass := metal(Color("b8955a"))
 	var parts: Array = [
 		[box(Vector3(0.84, 0.48, 0.66), 0.03), xf(Vector3(0, 0.25, 0)), wood],

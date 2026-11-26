@@ -162,6 +162,11 @@ static func _beach(root: Node3D) -> void:
 	var isl := Art.rounded_box(Vector3(25, 1.0, 20), 0.45, 8, 0.2, 5)
 	isl.surface_set_material(0, sand)
 	_mi(root, isl, Vector3(0, GROUND_Y - 0.5, -1.0), null, Vector3.ZERO, Vector3.ONE, false)
+	# A band of wet, darker sand where the island meets the surf: a step
+	# down in value towards the sea (AAA review round 7).
+	var wet := Art.rounded_box(Vector3(26.6, 1.0, 21.6), 0.5, 6, 0.12, 9)
+	wet.surface_set_material(0, LA.block_mat("wetsand", {"style": 9, "side": Color("4e3c26"), "top": Color("5e4a30"), "rough": 0.4, "scale": 0.5}))
+	_mi(root, wet, Vector3(0, GROUND_Y - 0.56, -1.0), null, Vector3.ZERO, Vector3.ONE, false)
 	_mi(root, _plane(Vector2(160, 160), 40), Vector3(0, GROUND_Y - 0.3, 0), LA.water_mat(Color("06415e"), Color("1aa0c4"), 0.05), Vector3.ZERO, Vector3.ONE, false)
 	# Surf where the sandbar meets the water: a band of foam that laps in and out.
 	var foam := ShaderMaterial.new()
@@ -213,15 +218,51 @@ static func _beach(root: Node3D) -> void:
 		n.rotation.y = r.randf() * TAU
 		n.scale = Vector3.ONE * 0.7
 		root.add_child(n)
-	var towels := _scatter(r, 5, 0.7, 4.0, 1.4, placed)
+	var towels := _scatter(r, 8, 0.7, 5.0, 1.4, placed)
+	var towel_xf := [[], [], []]
 	for k in towels.size():
-		var v := k % 3
 		var pt: Vector2 = towels[k]
-		_mi(root, _cached("towel%d" % v, func(): return _towel(v)), Vector3(pt.x, GROUND_Y + 0.01, pt.y), null, Vector3(0, r.randf() * TAU, 0))
+		towel_xf[k % 3].append(Transform3D(Basis(Vector3.UP, r.randf() * TAU), Vector3(pt.x, GROUND_Y + 0.01, pt.y)))
+	for v in 3:   # one draw per towel pattern
+		if not towel_xf[v].is_empty():
+			root.add_child(Art.multimesh(_cached("towel%d" % v, func(): return _towel(v)), towel_xf[v]))
 	var rock := Art.rounded_box(Vector3(0.8, 0.5, 0.6), 0.22, 4, 0.1, 12)
 	rock.surface_set_material(0, LA.block_mat("beach_border", LA.theme("beach")["border"]))
 	_mm(root, rock, _scatter(r, 14, 0.4, 7.0, 0.9, placed), r, GROUND_Y, 0.6, 1.3)
 	_mm(root, _cached("starfish", _starfish), _scatter(r, 10, 0.3, 5.0, 0.5, placed), r, GROUND_Y + 0.01, 0.8, 1.2, false)
+	# Sandcastles and a beached rowing boat: things people left on the sand.
+	_mm(root, _cached("sandcastle", _sandcastle), _scatter(r, 4, 0.8, 5.0, 1.6, placed), r, GROUND_Y, 0.8, 1.1, false)
+	_mi(root, _cached("rowboat", _rowboat), Vector3(Cfg.COLS * 0.5 + 4.2, GROUND_Y - 0.05, 4.6), null, Vector3(0.05, 0.7, 0.08), Vector3.ONE, false)
+
+
+static func _sandcastle() -> Mesh:
+	var s := Color("b8995e")
+	var parts: Array = [[LA.cyl(0.42, 0.48, 0.22, 10), LA.xf(Vector3(0, 0.11, 0)), s.darkened(0.08)]]
+	for k in 4:
+		var a := TAU * k / 4.0 + 0.4
+		var p := Vector3(cos(a), 0, sin(a)) * 0.3
+		parts.append([LA.cyl(0.1, 0.12, 0.3, 8), LA.xf(p + Vector3(0, 0.37, 0)), s])
+		parts.append([LA.cone(0.12, 0.14, 8), LA.xf(p + Vector3(0, 0.59, 0)), s.lightened(0.08)])
+	parts.append([LA.cyl(0.16, 0.18, 0.5, 8), LA.xf(Vector3(0, 0.47, 0)), s.lightened(0.04)])
+	parts.append([LA.cone(0.19, 0.22, 8), LA.xf(Vector3(0, 0.83, 0)), s.lightened(0.1)])
+	parts.append([LA.box(Vector3(0.015, 0.3, 0.015)), LA.xf(Vector3(0, 1.05, 0)), Color("6a5030")])
+	parts.append([LA.box(Vector3(0.16, 0.1, 0.01)), LA.xf(Vector3(0.08, 1.15, 0)), Color("e83a2a")])
+	return LA.build(parts, LA.vmat("sandcastle", 0.95, 0.0, 0.35))
+
+
+static func _rowboat() -> Mesh:
+	var hull := Color("2e6e8e")
+	var wood := Color("a07a4e")
+	var parts: Array = [
+		[LA.sphere(0.5, 14, 6), LA.xf(Vector3(0, 0.12, 0), Vector3.ZERO, Vector3(1.0, 0.5, 2.6)), hull],
+		[LA.sphere(0.46, 14, 6), LA.xf(Vector3(0, 0.2, 0), Vector3.ZERO, Vector3(0.92, 0.32, 2.45)), wood.darkened(0.35)],
+		[LA.box(Vector3(0.9, 0.04, 0.16)), LA.xf(Vector3(0, 0.3, 0.3)), wood],
+		[LA.box(Vector3(0.9, 0.04, 0.16)), LA.xf(Vector3(0, 0.3, -0.45)), wood],
+		[LA.box(Vector3(0.05, 0.03, 1.9)), LA.xf(Vector3(0.32, 0.34, 0.1), Vector3(0, 0.15, 0)), wood.lightened(0.1)],
+		[LA.box(Vector3(0.14, 0.02, 0.3)), LA.xf(Vector3(0.46, 0.34, 1.0), Vector3(0, 0.15, 0)), wood.lightened(0.1)],
+		[LA.box(Vector3(1.02, 0.05, 0.06)), LA.xf(Vector3(0, 0.27, 1.1)), Color("e8e2d6")],
+	]
+	return LA.build(parts, LA.vmat("rowboat", 0.7, 0.0, 0.3))
 
 
 static func _palm_mesh() -> Mesh:
@@ -332,7 +373,7 @@ static func _haunted(root: Node3D) -> void:
 	# a broken wall with an arched gate and a lantern on the right.
 	# Both turned three-quarters to the camera so their fronts (door, columns,
 	# arch and lantern) read from the play view, not just their roofs.
-	_mi(root, _cached("mausoleum", _mausoleum), Vector3(-hx - 2.6, GROUND_Y, 1.2), null, Vector3(0, 0.55, 0), Vector3.ONE, true)
+	_mi(root, _cached("mausoleum", _mausoleum), Vector3(-hx - 2.1, GROUND_Y, 0.6), null, Vector3(0, 0.85, 0), Vector3.ONE, true)
 	_mi(root, _cached("gate", _gate), Vector3(hx + 2.5, GROUND_Y, 2.0), null, Vector3(0, -0.55, 0), Vector3.ONE, true)
 	root.add_child(Art.multimesh(P.gravestone_mesh(), rows))
 	# low mist
@@ -533,12 +574,14 @@ static func _mausoleum() -> Mesh:
 		[LA.box(Vector3(0.11, 0.62, 0.11)), LA.xf(Vector3(0, 3.55, 1.0)), moon.darkened(0.1)],
 		[LA.box(Vector3(0.4, 0.11, 0.11)), LA.xf(Vector3(0, 3.65, 1.0)), moon.darkened(0.1)],
 		# doorway: dark frame, warm glow inside
-		[LA.box(Vector3(0.95, 1.45, 0.06)), LA.xf(Vector3(0, 1.0, 0.52)), Color("1a1418")],
-		[LA.box(Vector3(0.72, 1.25, 0.04)), LA.xf(Vector3(0, 0.95, 0.56)), LA.lit(Color("ffa850"))],
-		[LA.box(Vector3(1.1, 0.12, 0.1)), LA.xf(Vector3(0, 1.75, 0.55)), moon.darkened(0.25)],
+		[LA.box(Vector3(0.95, 1.1, 0.06)), LA.xf(Vector3(0, 0.82, 0.52)), Color("1a1418")],
+		[LA.cyl(0.475, 0.475, 0.06, 16), LA.xf(Vector3(0, 1.37, 0.52), Vector3(PI / 2.0, 0, 0)), Color("1a1418")],
+		[LA.box(Vector3(0.72, 0.95, 0.04)), LA.xf(Vector3(0, 0.78, 0.56)), LA.lit(Color("ffa850"))],
+		[LA.cyl(0.36, 0.36, 0.04, 16), LA.xf(Vector3(0, 1.25, 0.56), Vector3(PI / 2.0, 0, 0)), LA.lit(Color("ffa850"))],
+		[LA.box(Vector3(0.22, 0.9, 0.03)), LA.xf(Vector3(0, 0.77, 0.585)), LA.lit(Color("ffd890"))],
 	]
 	for x in [-1.08, -0.62, 0.62, 1.08]:
-		parts.append([LA.cyl(0.11, 0.13, 1.92, 10), LA.xf(Vector3(x, 1.26, 1.0)), stone.lightened(0.18)])
+		parts.append([LA.cyl(0.11, 0.13, 1.92, 10), LA.xf(Vector3(x, 1.26, 1.0)), moon.darkened(0.3)])
 		parts.append([LA.box(Vector3(0.3, 0.1, 0.3)), LA.xf(Vector3(x, 2.17, 1.0)), moon.darkened(0.2)])
 		parts.append([LA.box(Vector3(0.3, 0.1, 0.3)), LA.xf(Vector3(x, 0.35, 1.0)), dark])
 	return LA.build(parts, LA.vmat("mausoleum", 0.9, 0.0, 0.4))
@@ -631,7 +674,7 @@ static func _frond(a: float, length: float) -> ArrayMesh:
 		var t := float(i) / n
 		var w := 0.34 * sin(clampf(t * 1.15, 0.0, 1.0) * PI) * (0.82 + 0.18 * float(i % 2)) + 0.02
 		var droop := 0.07 * w / 0.34
-		var col := Color("2a6e2c").lerp(Color("78bc4e"), t * 0.8)
+		var col := Color("3a7e34").lerp(Color("84c458"), t * 0.8)
 		rows.append([p + side * w - Vector3(0, droop, 0), p, p - side * w - Vector3(0, droop, 0), col])
 		var d := (dir * cos(pitch) + Vector3.UP * sin(pitch)).normalized()
 		p += d * (length / n)
@@ -650,11 +693,14 @@ static func _frond(a: float, length: float) -> ArrayMesh:
 				var nrm: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0]).normalized()
 				if nrm.y < 0.0:
 					nrm = -nrm
+				# Both faces take the upward normal: a thin leaf is lit from
+				# above whichever side faces the camera (they rendered black
+				# from below-facing normals; AAA review round 7).
 				for face in 2:
 					var order: Array = tri if face == 0 else [tri[0], tri[2], tri[1]]
 					for v in order:
 						st.set_color(r0[3] if v == a0 or v == a1 else r1[3])
-						st.set_normal(nrm if face == 0 else -nrm)
+						st.set_normal(nrm)
 						st.add_vertex(v)
 	return st.commit()
 

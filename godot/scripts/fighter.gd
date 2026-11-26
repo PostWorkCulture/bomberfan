@@ -203,7 +203,7 @@ func set_outline(dark_arena: bool) -> void:
 		line = color.lightened(0.3)
 		thick = 0.028 if dark_arena else 0.024
 		rim = 0.5
-		lift = 0.32 if dark_arena else 0.18
+		lift = 0.2 if dark_arena else 0.12
 	elif dark_arena:
 		line = color
 		rim = 0.45
@@ -212,30 +212,108 @@ func set_outline(dark_arena: bool) -> void:
 		line = color.darkened(0.75)
 		thick = 0.026
 		rim = 0.45
+	# Your own fighter is found by the ring and arrow (_build_marker), not by
+	# washing the body out with lift (AAA review round 7).
 	if not is_bot:
-		lift += 0.15
-		rim = maxf(rim, 0.7)
-	# The rim is a second pass per surface: only your own fighter, and a dark
-	# body on a dark floor (where it is the body fill). AAA review round 6.
-	_outline_mat.next_pass = _rim_mat if (not is_bot or (dark_body and dark_arena)) else null
+		lift = 0.26 if dark_arena else 0.12
+		line = line.lightened(0.15)
+	# The rim is a second pass per surface: on dark floors it is every body's
+	# fill (without it metal bots go black); elsewhere only dark bodies and you.
+	_outline_mat.next_pass = _rim_mat if (dark_arena or dark_body or not is_bot) else null
 	_outline_mat.set_shader_parameter("line_col", line)
 	_outline_mat.set_shader_parameter("thick", thick)
 	_rim_mat.set_shader_parameter("strength", rim)
 	_rim_mat.set_shader_parameter("lift", lift)
 
 
+const RING_SHADER := """
+shader_type spatial;
+render_mode unshaded, blend_add, depth_draw_never, cull_disabled, fog_disabled, shadows_disabled;
+uniform vec4 col : source_color = vec4(1.0);
+void fragment() {
+	float d = length(UV - 0.5) * 2.0;
+	float ring = smoothstep(0.58, 0.68, d) * (1.0 - smoothstep(0.86, 0.97, d));
+	float pulse = 0.8 + 0.2 * sin(TIME * 4.0);
+	ALBEDO = col.rgb * 1.6;
+	ALPHA = clamp(ring * col.a * pulse + (1.0 - smoothstep(0.0, 0.62, d)) * 0.18 * col.a, 0.0, 1.0);
+}
+"""
+
+var _ring: MeshInstance3D = null
+var _arrow: MeshInstance3D = null
+
+
+## Your own fighter: a pulsing ring on the floor in your colour and a bobbing
+## arrow over your head (Super Bomberman R 2 style), so you find yourself at a
+## glance on a phone. Both ignore the fighter's lean (top_level).
 func _build_marker() -> void:
-	if not is_bot:
-		var tag := Label3D.new()
-		tag.text = "YOU"
-		tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		tag.font_size = 64
-		tag.pixel_size = 0.006
-		tag.outline_size = 16
-		tag.modulate = color
-		tag.no_depth_test = true
-		tag.position.y = 1.7
-		add_child(tag)
+	if is_bot:
+		return
+	_ring = MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2(1.35, 1.35)
+	q.orientation = PlaneMesh.FACE_Y
+	_ring.mesh = q
+	var rm := ShaderMaterial.new()
+	var rs := Shader.new()
+	rs.code = RING_SHADER
+	rm.shader = rs
+	rm.set_shader_parameter("col", Color(color.lightened(0.2), 1.0))
+	_ring.material_override = rm
+	_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_ring.top_level = true
+	add_child(_ring)
+	# A flat chevron lying level, pointing down the screen at you, with a dark
+	# border so it reads on any floor.
+	_arrow = MeshInstance3D.new()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for layer in 2:
+		var k := 1.0 if layer == 0 else 0.62
+		var y := 0.0 if layer == 0 else 0.01
+		st.set_color(Color(0.06, 0.06, 0.1) if layer == 0 else Color.WHITE)
+		for v in [Vector3(-0.3, y, -0.12), Vector3(0.3, y, -0.12), Vector3(0, y, 0.26)]:
+			st.set_normal(Vector3.UP)
+			st.add_vertex(Vector3(v.x * k, v.y, (v.z - 0.0) * k + (0.02 if layer == 1 else 0.0)))
+	_arrow.mesh = st.commit()
+	var am := StandardMaterial3D.new()
+	am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	am.albedo_color = color.lightened(0.45)
+	am.vertex_color_use_as_albedo = true
+	am.cull_mode = BaseMaterial3D.CULL_DISABLED
+	am.no_depth_test = true
+	am.render_priority = 3
+	_arrow.material_override = am
+	_arrow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_arrow.top_level = true
+	add_child(_arrow)
+	var tag := Label3D.new()
+	tag.text = "YOU"
+	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	tag.font_size = 44
+	tag.pixel_size = 0.006
+	tag.outline_size = 14
+	tag.modulate = color.lightened(0.35)
+	tag.no_depth_test = true
+	tag.top_level = true
+	tag.name = "YouTag"
+	add_child(tag)
+
+
+func _place_marker() -> void:
+	if _ring == null:
+		return
+	var on := alive and visible
+	_ring.visible = on
+	_arrow.visible = on
+	var tag := get_node_or_null("YouTag") as Label3D
+	var bob := sin(Time.get_ticks_msec() * 0.006) * 0.08
+	var p := global_position
+	_ring.global_transform = Transform3D(Basis(), p + Vector3(0, 0.03, 0))
+	_arrow.global_transform = Transform3D(Basis(), p + Vector3(0, TARGET_HEIGHT + 0.42 + bob, -0.1))
+	if tag:
+		tag.visible = on
+		tag.global_position = p + Vector3(0, TARGET_HEIGHT + 0.78 + bob, 0)
 
 
 ## The Shield pick-up's bubble: a soft violet glass sphere round the fighter.
@@ -428,6 +506,7 @@ func update_visual(delta: float) -> void:
 		_yaw = face_yaw
 	# A small lean towards the camera so faces and fronts show from above.
 	basis = Basis(Vector3.RIGHT, lean) * Basis(Vector3.UP, _yaw)
+	_place_marker()
 	if robot:
 		robot.animate(delta, moving and alive, speed / Cfg.BASE_SPEED)
 	# Tall grass (Forest): a bot in it is hidden from you, unless you are close

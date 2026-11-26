@@ -293,13 +293,19 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 		var jitter := Vector3(randf_range(-0.25, 0.25), 0.0, randf_range(-0.25, 0.25))
 		# Near rows: fire rising towards the camera projects over the wall, so
 		# only one low point there (the floor sheet already marks the tile).
+		# Near rows: no fire points at all (the beam marks the tile); points
+		# there glowed on the near wall (AAA review round 7). Elsewhere they
+		# stay inside the tile.
 		var near := p.z >= (Cfg.ROWS - 3) * 0.5 - 0.1
-		for k in (1 if near else 3):
-			fire_pts.append(p - centre + Vector3(randf_range(-0.28, 0.28), -0.3 if near else randf_range(0.0, 0.2), randf_range(-0.28, 0.28)))
+		if not near:
+			for k in 3:
+				fire_pts.append(p - centre + Vector3(randf_range(-0.22, 0.22), randf_range(0.0, 0.15), randf_range(-0.22, 0.22)))
 		# No smoke beside the outer wall: it drifted out over the surroundings.
-		if absf(p.x) < (Cfg.COLS - 3) * 0.5 + 0.1 and absf(p.z) < (Cfg.ROWS - 3) * 0.5 + 0.1:
+		if not near and absf(p.x) < (Cfg.COLS - 3) * 0.5 + 0.1 and absf(p.z) < (Cfg.ROWS - 3) * 0.5 + 0.1:
 			smoke_pts.append(p - centre + jitter)
 		scorch(p, 0.95 if p.distance_to(centre) < 0.1 else 0.7)
+	if fire_pts.is_empty():   # a blast wholly in the near rows
+		fire_pts.append(Vector3(0, -0.2, 0))
 	var f := _emitter(centre + Vector3(0, 0.35, 0), _fire_mat, fire_pts.size(), Cfg.BLAST_LIFE + 0.08)
 	f.emission_shape = CPUParticles3D.EMISSION_SHAPE_POINTS
 	f.emission_points = fire_pts
@@ -409,14 +415,18 @@ func set_flame(i: int, s: float) -> void:
 	if i < 0:
 		return
 	# Mid-arm tiles stretch along the arm so neighbours overlap: no seams.
+	# As it dies an arm thins across its width but keeps its length, so it
+	# narrows to a line instead of breaking into dashes (AAA review round 7).
 	var shp: Color = _flame_shape.get(i, Color(0.5, 0, 0.5, 1))
+	var along := 1.12 * (1.0 if shp.g >= 0.5 else 1.1)
 	var sx := s
 	var sz := s
-	if shp.g < 0.5 and shp.r < 0.25:
-		sx = s * 1.1
-	elif shp.g < 0.5 and shp.r > 0.75:
-		sz = s * 1.1
-	_flame_mm.set_instance_transform(i, Transform3D(Basis(Vector3.RIGHT, -PI / 2.0).scaled(Vector3(sx, sz, 1.0)), _flame_pos[i]))
+	if shp.r < 0.25:
+		sx = along
+	elif shp.r > 0.75:
+		sz = along
+	# World-axis scale after laying the quad flat (x stays x, its y becomes z).
+	_flame_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sx, 1.0, sz)) * Basis(Vector3.RIGHT, -PI / 2.0), _flame_pos[i]))
 
 
 func free_flame(i: int) -> void:

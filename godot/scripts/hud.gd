@@ -8,6 +8,8 @@ const FONT := preload("res://assets/fonts/lilita-one.ttf")
 const PANEL_BG := Color(0.05, 0.06, 0.09, 0.78)
 const TINTS := {"bomb": Color(0.35, 0.6, 1.0), "fire": Color(1.0, 0.55, 0.2), "speed": Color(0.3, 0.9, 0.45), "shield": Color(0.62, 0.45, 1.0)}
 const Cfg := preload("res://scripts/config.gd")
+const Art := preload("res://scripts/art.gd")
+static var _icons := {}   # pick-up id -> texture of its 3D model, rendered once
 
 var game = null
 var _cards: Array = []     # {panel, name, pips[], ko, badge, color}
@@ -26,6 +28,7 @@ var _top: Control
 var _bars: Array = []      # letterbox, top and bottom
 var _sub: Label            # the arena's one-line rules hint under the title
 var _cine := 0.0
+var _pill_warn := false
 
 
 func setup(g, fighters: Array, wins_needed: int, show_hint: bool) -> void:
@@ -119,7 +122,7 @@ func setup(g, fighters: Array, wins_needed: int, show_hint: bool) -> void:
 		hint_bar.offset_top = -40.0
 		hint_bar.offset_bottom = -10.0
 		var h := _label(15, Color(1, 1, 1, 0.82), 0)
-		h.text = "  MOVE  WASD / ARROWS     BOMB  SPACE     RESTART  R     NEXT ARENA  L  "
+		h.text = "  MOVE  WASD / ARROWS / STICK      BOMB  SPACE / A  "
 		hint_bar.add_child(h)
 		hint_bar.grow_horizontal = Control.GROW_DIRECTION_BOTH
 
@@ -211,10 +214,21 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 		csb.content_margin_bottom = 0
 		csb.shadow_size = 0
 		chip.add_theme_stylebox_override("panel", csb)
+		var row2 := HBoxContainer.new()
+		row2.add_theme_constant_override("separation", 1)
+		chip.add_child(row2)
+		var icon := _icon(id)
+		if icon != null:
+			var tr := TextureRect.new()
+			tr.texture = icon
+			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tr.custom_minimum_size = Vector2(22, 22)
+			row2.add_child(tr)
 		var cl := _label(16, tint.lightened(0.5), 3)
-		cl.custom_minimum_size = Vector2(26, 0)
+		cl.custom_minimum_size = Vector2(14 if id == "shield" else 20, 0)
 		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		chip.add_child(cl)
+		row2.add_child(cl)
 		chips_row.add_child(chip)
 		chips[id] = [chip, cl]
 	return {"panel": panel, "name": nm, "pips": pips, "ko": ko, "color": col, "won": -1, "chips": chips}
@@ -253,12 +267,12 @@ func update(delta: float, fighters: Array, wins: Array, human_pid: int, round_no
 		(c["ko"] as Label).visible = not f.alive and game.phase == "play"
 		# Four fixed chips (they dim when empty), so a card never changes width.
 		var chips: Dictionary = c["chips"]
-		(chips["bomb"][1] as Label).text = "B%d" % f.max_bombs
-		(chips["fire"][1] as Label).text = "F%d" % f.fire
+		(chips["bomb"][1] as Label).text = str(f.max_bombs)
+		(chips["fire"][1] as Label).text = str(f.fire)
 		var spd := int(round((f.speed - Cfg.BASE_SPEED) / Cfg.SPEED_STEP))
-		(chips["speed"][1] as Label).text = "S%d" % spd
+		(chips["speed"][1] as Label).text = str(spd)
 		(chips["speed"][0] as Control).modulate.a = 1.0 if spd > 0 else 0.3
-		(chips["shield"][1] as Label).text = "SH"
+		(chips["shield"][1] as Label).text = ""
 		(chips["shield"][0] as Control).modulate.a = 1.0 if f.shield else 0.3
 		if c["won"] != wins[k]:
 			c["won"] = wins[k]
@@ -283,10 +297,17 @@ func update(delta: float, fighters: Array, wins: Array, human_pid: int, round_no
 	if low and secs != _last_secs:
 		_pop(_time_pill, 1.1)
 	_last_secs = secs
-	_banner.visible = banner != ""
+	# Warnings (walls closing, tide) take over the timer pill's top line rather
+	# than a banner over row 1 (AAA review round 4).
+	_banner.visible = false
 	if banner != "":
-		_banner_lab.text = "  " + banner + "  "
-		_banner.modulate.a = 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.008)
+		_round_lab.text = banner
+		_round_lab.add_theme_color_override("font_color", Color(1.0, 0.5, 0.38).lerp(Color(1, 0.9, 0.8), 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.01)))
+		_time_pill.add_theme_stylebox_override("panel", _box(Color(0.35, 0.05, 0.04, 0.88), 16, Color(1.0, 0.45, 0.3), 2))
+	elif _pill_warn:
+		_round_lab.add_theme_color_override("font_color", Color(1, 0.95, 0.85, 0.9))
+		_time_pill.add_theme_stylebox_override("panel", _box(PANEL_BG, 16, Color(1, 1, 1, 0.18), 2))
+	_pill_warn = banner != ""
 	# Call-outs punch in from big, settle, and fade on their way out.
 	if msg != _last_msg:
 		_last_msg = msg
@@ -341,6 +362,44 @@ func _portrait(f) -> Texture2D:
 	env.environment = e
 	vp.add_child(env)
 	return vp.get_texture()
+
+
+## The pick-up's own 3D model, rendered once into a small viewport.
+func _icon(id: String) -> Texture2D:
+	if game.smoke:
+		return null
+	if _icons.has(id) and is_instance_valid(_icons[id]["vp"]):
+		return _icons[id]["tex"]
+	var vp := SubViewport.new()
+	vp.size = Vector2i(64, 64)
+	vp.own_world_3d = true
+	vp.transparent_bg = true
+	vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+	add_child(vp)
+	var item: Node3D = Art.pickup_model(id)
+	vp.add_child(item)
+	var glow := item.get_node_or_null("Glow")
+	if glow:
+		glow.visible = false
+	var cam := Camera3D.new()
+	cam.fov = 30.0
+	cam.position = Vector3(0, 0.75, 1.25)
+	vp.add_child(cam)
+	cam.look_at(Vector3(0, 0.42, 0), Vector3.UP)
+	var key := DirectionalLight3D.new()
+	key.rotation_degrees = Vector3(-35, 25, 0)
+	key.light_energy = 1.4
+	vp.add_child(key)
+	var env := WorldEnvironment.new()
+	var e := Environment.new()
+	e.background_mode = Environment.BG_CLEAR_COLOR
+	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	e.ambient_light_color = Color(0.6, 0.6, 0.65)
+	e.ambient_light_energy = 0.9
+	env.environment = e
+	vp.add_child(env)
+	_icons[id] = {"vp": vp, "tex": vp.get_texture()}
+	return _icons[id]["tex"]
 
 
 func _pop(c: Control, s: float) -> void:

@@ -304,7 +304,7 @@ func _haunted() -> void:
 		f["flap"] = 22.0
 		_flyers.append(f)
 	_pool(Vector3(Cfg.COLS * 0.5 + 2.5, GROUND_Y + 0.02, 3.1), Color(1.0, 0.62, 0.3, 0.5), 3.4, true)
-	_pool(Vector3(-Cfg.COLS * 0.5 - 2.0, GROUND_Y + 0.02, -2.5), Color(0.55, 0.9, 0.7, 0.22), 3.6, true)
+	_pool(Vector3(-Cfg.COLS * 0.5 - 1.6, GROUND_Y + 0.02, 1.2), Color(0.55, 0.9, 0.7, 0.28), 3.4, true)
 	# Ground fog drifting across the graveyard and through the house.
 	var fm := StandardMaterial3D.new()
 	fm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

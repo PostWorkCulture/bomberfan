@@ -14,12 +14,19 @@ var _step := 0.0
 static var _merged := {}   # scene path -> one ArrayMesh, built once per bot
 
 
-func setup(scene: PackedScene) -> void:
+func setup(glb_path: String) -> void:
 	# The Blender export is ~40 separate parts; drawing them one by one costs
 	# a draw call each. Fold them into one mesh with a surface per material.
-	var key := scene.resource_path
+	# The merged mesh with its LODs is baked by tools/bake_bots.gd into
+	# <id>-merged.res (LOD generation may not exist in web export templates);
+	# without the bake it is merged here, with LODs where the engine can.
+	var key := glb_path
 	if not _merged.has(key):
-		_merged[key] = _merge(scene.instantiate())
+		var baked := key.get_basename() + "-merged.res"
+		if ResourceLoader.exists(baked):
+			_merged[key] = load(baked)
+		else:
+			_merged[key] = _merge((load(glb_path) as PackedScene).instantiate())
 	_body = MeshInstance3D.new()
 	(_body as MeshInstance3D).mesh = _merged[key]
 	add_child(_body)
@@ -83,11 +90,73 @@ static func _merge(root: Node3D) -> ArrayMesh:
 				if norms != null and norms.size() == verts.size():
 					st2.set_normal((nb * norms[i]).normalized())
 				st2.add_vertex(xf * verts[i])
-	var out := ArrayMesh.new()
+	# Indexed, then simplified into LODs so a bot far from the camera draws a
+	# few thousand triangles, not 20-70k (AAA review round 4).
+	var im := ImporterMesh.new()
 	for key in groups:
-		(groups[key] as SurfaceTool).commit(out)
+		var st3: SurfaceTool = groups[key]
+		st3.index()
+		var arrays := st3.commit_to_arrays()
+		var tmp := ArrayMesh.new()
+		st3.commit(tmp)
+		im.add_surface(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, tmp.surface_get_material(0))
+	im.generate_lods(25.0, 60.0, [])
 	root.free()
-	return out
+	return im.get_mesh()
+
+
+## Tick: a clock face on top of the hat, so from above he reads as a clock
+## rather than a hat disc (AAA review round 4).
+func add_hat_face(col: Color) -> void:
+	var mesh: Mesh = (_body as MeshInstance3D).mesh
+	var box := mesh.get_aabb()
+	var top := box.end.y
+	var c := box.get_center()
+	var r := minf(box.size.x, box.size.z) * 0.17
+	var face := MeshInstance3D.new()
+	var parts: Array = [
+		[_cyl(r * 1.08, 0.02), Transform3D(Basis(), Vector3(0, 0.0, 0)), Color("c9a24a")],
+		[_cyl(r, 0.03), Transform3D(Basis(), Vector3(0, 0.012, 0)), col.lightened(0.35)],
+		[_boxm(Vector3(r * 0.12, 0.02, r * 0.75)), Transform3D(Basis(Vector3.UP, 0.4), Vector3(0, 0.03, 0) + Basis(Vector3.UP, 0.4) * Vector3(0, 0, -r * 0.35)), Color("1a1a22")],
+		[_boxm(Vector3(r * 0.12, 0.02, r * 0.5)), Transform3D(Basis(Vector3.UP, 2.2), Vector3(0, 0.03, 0) + Basis(Vector3.UP, 2.2) * Vector3(0, 0, -r * 0.22)), Color("1a1a22")],
+	]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for p in parts:
+		var arr: Array = (p[0] as Mesh).surface_get_arrays(0)
+		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var norms: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+		var idxs: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+		var xf: Transform3D = p[1]
+		for i in idxs:
+			st.set_color(p[2])
+			st.set_normal(xf.basis * norms[i])
+			st.add_vertex(xf * verts[i])
+	var m := StandardMaterial3D.new()
+	m.vertex_color_use_as_albedo = true
+	m.vertex_color_is_srgb = true
+	m.roughness = 0.4
+	m.emission_enabled = true
+	m.emission = col * 0.25
+	face.mesh = st.commit()
+	face.material_override = m
+	face.position = Vector3(c.x, top + 0.005, c.z)
+	_body.add_child(face)
+
+
+static func _cyl(r: float, h: float) -> Mesh:
+	var cm := CylinderMesh.new()
+	cm.top_radius = r
+	cm.bottom_radius = r
+	cm.height = h
+	cm.radial_segments = 20
+	return cm
+
+
+static func _boxm(s: Vector3) -> Mesh:
+	var bm := BoxMesh.new()
+	bm.size = s
+	return bm
 
 
 func die() -> void:

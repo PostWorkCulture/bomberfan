@@ -60,12 +60,15 @@ func setup(g, id_: int, info: Dictionary, bot: bool) -> void:
 
 func _build_model() -> void:
 	var glb := "res://assets/characters/%s.glb" % char_id
-	if ResourceLoader.exists(glb):
+	var baked := "res://assets/characters/%s-merged.res" % char_id
+	if ResourceLoader.exists(baked) or ResourceLoader.exists(glb):
 		# A rigid Blender bomber-bot: no skeleton, so model_bot.gd moves it.
 		model = Node3D.new()
 		add_child(model)
 		robot = ModelBot.new()
-		robot.setup(load(glb))
+		robot.setup(glb)
+		if char_id == "tick":
+			robot.add_hat_face(color)
 		model.add_child(robot)
 		_normalise_height()
 		return

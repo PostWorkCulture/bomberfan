@@ -73,9 +73,9 @@ func _ready() -> void:
 	_debris_mesh = BoxMesh.new()
 	_debris_mesh.size = Vector3(0.09, 0.07, 0.2)
 	_debris_mesh.material = Art.bark_mat()
-	_fire_ramp = _ramp([0.0, 0.1, 0.35, 0.6, 1.0], [Color(1.15, 0.95, 0.6, 1.0), Color(1.0, 0.7, 0.25, 1.0),
+	_fire_ramp = _ramp([0.0, 0.1, 0.35, 0.6, 1.0], [Color(0.95, 0.85, 0.55, 1.0), Color(1.0, 0.7, 0.25, 1.0),
 		Color(1.0, 0.45, 0.1, 0.85), Color(0.35, 0.32, 0.3, 0.35), Color(0.25, 0.24, 0.23, 0.0)])
-	_flash_ramp = _ramp([0.0, 0.4, 1.0], [Color(1.2, 0.9, 0.5, 0.35), Color(1.0, 0.5, 0.15, 0.2), Color(1, 0.4, 0.1, 0.0)])
+	_flash_ramp = _ramp([0.0, 0.4, 1.0], [Color(1.0, 0.85, 0.5, 0.18), Color(1.0, 0.5, 0.15, 0.2), Color(1, 0.4, 0.1, 0.0)])
 	_spark_ramp = _ramp([0.0, 0.5, 1.0], [Color(1.25, 1.0, 0.6, 1.0), Color(1.0, 0.5, 0.12, 0.9), Color(0.8, 0.2, 0.05, 0.0)])
 	_smoke_ramp = _ramp([0.0, 0.18, 0.6, 1.0], [Color(0.35, 0.34, 0.33, 0.0), Color(0.26, 0.26, 0.26, 0.5),
 		Color(0.2, 0.2, 0.2, 0.28), Color(0.18, 0.18, 0.18, 0.0)])
@@ -273,8 +273,8 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	shake = minf(0.45, shake + 0.11 * strength)
 	var flash := _emitter(centre + Vector3(0, 0.5, 0), _add_mat, 1, 0.14)
 	flash.color_ramp = _flash_ramp
-	flash.scale_amount_min = 1.2
-	flash.scale_amount_max = 1.2
+	flash.scale_amount_min = 0.8
+	flash.scale_amount_max = 0.8
 	flash.emitting = true
 	# One fire and one smoke emitter for the whole blast (points on every
 	# cell), not two nodes per cell: AAA review round 3, draw calls.
@@ -283,7 +283,7 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	for c in cells:
 		var p: Vector3 = c
 		var jitter := Vector3(randf_range(-0.25, 0.25), 0.0, randf_range(-0.25, 0.25))
-		for k in 5:
+		for k in 3:
 			fire_pts.append(p - centre + Vector3(randf_range(-0.28, 0.28), randf_range(0.0, 0.2), randf_range(-0.28, 0.28)))
 		# No smoke beside the outer wall: it drifted out over the surroundings.
 		if absf(p.x) < (Cfg.COLS - 3) * 0.5 + 0.1 and absf(p.z) < (Cfg.ROWS - 3) * 0.5 + 0.1:
@@ -294,9 +294,9 @@ func explosion(centre: Vector3, cells: Array, strength: float) -> void:
 	f.emission_points = fire_pts
 	f.direction = Vector3.UP
 	f.spread = 30.0
-	f.initial_velocity_min = 0.6
-	f.initial_velocity_max = 1.6
-	f.gravity = Vector3(0, 2.0, 0)
+	f.initial_velocity_min = 0.4
+	f.initial_velocity_max = 0.9
+	f.gravity = Vector3(0, 0.6, 0)
 	f.damping_min = 2.0
 	f.damping_max = 3.0
 	f.scale_amount_min = 0.5
@@ -382,10 +382,11 @@ func _make_pool(mat: Material, count: int) -> MultiMesh:
 
 ## Lethal-tile flame sheets from the pool: add returns a handle (or -1),
 ## set_flame scales it, free_flame hides it.
-func add_flame(pos: Vector3) -> int:
+func add_flame(pos: Vector3, shape := Color(0.5, 0.0, 0.5, 1.0)) -> int:
 	if not enabled or _flame_free.is_empty():
 		return -1
 	var i: int = _flame_free.pop_back()
+	_flame_mm.set_instance_color(i, shape)
 	_flame_pos[i] = pos + Vector3(0, 0.05 + randf() * 0.01, 0)
 	set_flame(i, 1.12)
 	return i
@@ -621,8 +622,17 @@ uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 varying vec3 wpos;
 void vertex() { wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 void fragment() {
+	// Instance colour: r axis (0 x, 1 z, 0.5 centre), g end-of-arm, b direction.
 	vec2 p = UV * 2.0 - 1.0;
-	float r = max(abs(p.x), abs(p.y)) * 0.7 + length(p) * 0.3;
+	float axis = COLOR.r;
+	float dir = COLOR.b * 2.0 - 1.0;
+	float across;
+	float along;
+	if (axis < 0.25) { across = abs(p.y); along = p.x * dir; }
+	else if (axis > 0.75) { across = abs(p.x); along = p.y * dir; }
+	else { across = length(p) * 0.78; along = -1.0; }
+	float r = across;
+	if (COLOR.g > 0.5 && along > 0.0) r = length(vec2(across, along * 1.1));
 	float n = texture(noise_tex, wpos.xz * 0.6 + vec2(0.0, TIME * 1.8)).r;
 	float n2 = texture(noise_tex, wpos.xz * 1.3 - vec2(TIME * 1.1, 0.0)).r;
 	float heat = clamp(1.15 - r * 1.05 + (n - 0.5) * 0.55 + (n2 - 0.5) * 0.3, 0.0, 1.0);
@@ -630,7 +640,7 @@ void fragment() {
 	col = mix(col, vec3(1.0, 0.85, 0.42), smoothstep(0.55, 0.85, heat));
 	col = mix(col, vec3(1.0, 0.97, 0.82), smoothstep(0.88, 1.0, heat));
 	ALBEDO = col;
-	ALPHA = smoothstep(0.02, 0.22, heat) * 0.95 * COLOR.a;
+	ALPHA = smoothstep(0.02, 0.22, heat) * 0.95;
 }
 """
 

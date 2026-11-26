@@ -443,8 +443,32 @@ static func merge(parts: Array) -> ArrayMesh:
 static func pillar_mesh() -> ArrayMesh:
 	if _cache.has("pillar"):
 		return _cache["pillar"]
-	var m := rounded_box(Vector3(0.94, 0.98, 0.94), 0.09, 3, 0.025, 3)
+	# A built pillar, not a noise cube (AAA review round 4): a wider plinth, a
+	# carved band two-thirds up, and a cushion of moss on the cap.
+	var m := rounded_box(Vector3(0.9, 0.98, 0.9), 0.09, 3, 0.025, 3)
 	m.surface_set_material(0, stone_mat("pillar", Color(0.55, 0.54, 0.51), 0.12))
+	var trim := SurfaceTool.new()
+	trim.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var plinth := BoxMesh.new()
+	plinth.size = Vector3(0.98, 0.14, 0.98)
+	trim.append_from(plinth, 0, Transform3D(Basis(), Vector3(0, 0.07, 0)))
+	var band := BoxMesh.new()
+	band.size = Vector3(0.93, 0.06, 0.93)
+	trim.append_from(band, 0, Transform3D(Basis(), Vector3(0, 0.6, 0)))
+	trim.generate_normals()
+	trim.commit(m)
+	m.surface_set_material(1, stone_mat("pillar_trim", Color(0.4, 0.4, 0.37), 0.05))
+	var moss := SurfaceTool.new()
+	moss.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var cap := SphereMesh.new()
+	cap.radius = 0.3
+	cap.height = 0.12
+	cap.radial_segments = 10
+	cap.rings = 4
+	moss.append_from(cap, 0, Transform3D(Basis().scaled(Vector3(1.0, 1.0, 0.8)), Vector3(0.12, 0.985, -0.1)))
+	moss.append_from(cap, 0, Transform3D(Basis().scaled(Vector3(0.6, 0.8, 0.7)), Vector3(-0.2, 0.98, 0.18)))
+	moss.commit(m)
+	m.surface_set_material(2, flat_mat(Color(0.3, 0.46, 0.18), 0.95))
 	_cache["pillar"] = m
 	return m
 

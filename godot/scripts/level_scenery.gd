@@ -190,7 +190,8 @@ static func _beach(root: Node3D) -> void:
 		placed.append([Vector2(bhx + 3.0, zz), 1.0])
 		placed.append([Vector2(bhx + 5.0, zz), 1.0])
 		placed.append([Vector2(bhx + 7.0, zz), 1.0])
-	_mm(root, _cached("palm", _palm_mesh), _scatter(r, 16, 1.2, 8.0, 1.8, placed, false, true), r, GROUND_Y, 0.85, 1.25)
+	# No palm shadows: off-screen palms were throwing blobs across the floor.
+	_mm(root, _cached("palm", _palm_mesh), _scatter(r, 16, 1.2, 8.0, 1.8, placed, false, true), r, GROUND_Y, 0.85, 1.25, false)
 	var P := load("res://scripts/level_props.gd")
 	for pt in _scatter(r, 5, 0.8, 4.5, 1.6, placed, false, true):
 		var n: Node3D = P.make("parasol")
@@ -314,13 +315,13 @@ static func _haunted(root: Node3D) -> void:
 			var gx: float = s * (hx + 2.4 + col * 1.1)
 			var gz := -hz + 0.4 + col * 0.4
 			while gz < hz - 0.6:
-				var skip: bool = (s < 0.0 and gz > -4.6 and gz < -0.4) or (s > 0.0 and gz > -0.4 and gz < 4.6)
+				var skip: bool = (s < 0.0 and gz > -0.9 and gz < 3.3) or (s > 0.0 and gz > -0.4 and gz < 4.6)
 				if not skip:
 					rows.append(Transform3D(Basis(Vector3.UP, r.randf_range(-0.12, 0.12)).scaled(Vector3.ONE * r.randf_range(0.85, 1.05)), Vector3(gx, GROUND_Y, gz)))
 				gz += 1.2
 	# Architecture where the camera looks during play: a mausoleum on the left,
 	# a broken wall with an arched gate and a lantern on the right.
-	_mi(root, _cached("mausoleum", _mausoleum), Vector3(-hx - 2.6, GROUND_Y, -2.5), null, Vector3(0, PI / 2.0, 0), Vector3.ONE, true)
+	_mi(root, _cached("mausoleum", _mausoleum), Vector3(-hx - 2.6, GROUND_Y, 1.2), null, Vector3(0, PI / 2.0, 0), Vector3.ONE, true)
 	_mi(root, _cached("gate", _gate), Vector3(hx + 2.5, GROUND_Y, 2.0), null, Vector3(0, -PI / 2.0, 0), Vector3.ONE, true)
 	root.add_child(Art.multimesh(P.gravestone_mesh(), rows))
 	# low mist
@@ -506,7 +507,7 @@ static func _mausoleum() -> Mesh:
 		[LA.box(Vector3(2.6, 0.2, 2.4)), LA.xf(Vector3(0, 0.1, 0)), dark],
 		[LA.box(Vector3(2.2, 1.9, 1.8), 0.03), LA.xf(Vector3(0, 1.15, -0.1)), stone],
 		[LA.box(Vector3(2.5, 0.18, 2.2)), LA.xf(Vector3(0, 2.15, 0)), dark],
-		[LA.box(Vector3(2.5, 1.2, 1.2)), LA.xf(Vector3(0, 2.3, 0), Vector3(0, 0, 0), Vector3(1, 0.6, 1)), stone.darkened(0.2)],
+		[LA.box(Vector3(1.3, 1.3, 2.3)), LA.xf(Vector3(0, 2.25, 0), Vector3(0, 0, PI / 4.0), Vector3(1.25, 0.55, 1.0)), stone.darkened(0.2)],
 		[LA.box(Vector3(0.8, 1.3, 0.06)), LA.xf(Vector3(0, 0.85, 0.82)), Color("120e14")],
 		[LA.box(Vector3(1.8, 0.12, 0.5)), LA.xf(Vector3(0, 0.26, 1.15)), dark],
 		[LA.box(Vector3(0.12, 0.5, 0.06)), LA.xf(Vector3(0, 2.85, 0.6)), Color("6a6470")],
@@ -514,7 +515,6 @@ static func _mausoleum() -> Mesh:
 		[LA.box(Vector3(0.7, 0.12, 0.04)), LA.xf(Vector3(0, 1.62, 0.84)), LA.lit(Color("7dffb0"))],
 		[LA.box(Vector3(0.08, 1.2, 0.04)), LA.xf(Vector3(-0.44, 0.85, 0.84)), LA.lit(Color("7dffb0"))],
 		[LA.box(Vector3(0.08, 1.2, 0.04)), LA.xf(Vector3(0.44, 0.85, 0.84)), LA.lit(Color("7dffb0"))],
-		[LA.box(Vector3(2.52, 0.04, 2.22)), LA.xf(Vector3(0, 2.25, 0)), Color("9aa8d8")],
 	]
 	for x in [-0.85, 0.85]:
 		parts.append([LA.cyl(0.13, 0.15, 1.9, 10), LA.xf(Vector3(x, 1.15, 0.95)), stone.lightened(0.08)])

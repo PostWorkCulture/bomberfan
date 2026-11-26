@@ -113,8 +113,10 @@ const ARENA_HINTS := {
 }
 var _win_cam := -1.0        # time into the winner close-up, -1 when off
 var _win_target := Vector3.ZERO
-const CAM_POS := Vector3(0.0, 15.2, 6.6)
-const CAM_TARGET := Vector3(0.0, 0.0, 0.55)
+# A longer lens (AAA review round 4): fov 44 → 30 with the camera pulled back
+# to keep the framing, so fighters in the corners stop leaning out.
+const CAM_POS := Vector3(0.0, 24.8, 10.4)
+const CAM_TARGET := Vector3(0.0, 0.0, 0.45)
 var _fly := -1.0
 var _hitstop := 0.0   # `-- --tour-secs 0.6`: a quicker tour for local previews
 var _smoke_levels: Array = []
@@ -462,11 +464,11 @@ func _build_environment() -> void:
 	sun.shadow_enabled = true
 	sun.shadow_blur = 1.6
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	sun.directional_shadow_max_distance = 26.0   # AAA review round 3: 42 put every far tree in the shadow pass
+	sun.directional_shadow_max_distance = 36.0   # AAA review round 3: 42 put every far tree in the shadow pass
 	sun.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY   # no sun disc to reflect and bloom
 	add_child(sun)
 	camera = Camera3D.new()
-	camera.fov = 44.0
+	camera.fov = 30.0
 	add_child(camera)
 	camera.position = CAM_POS
 	camera.look_at(CAM_TARGET, Vector3.UP)
@@ -1321,10 +1323,11 @@ func _explode(b: Dictionary) -> void:
 	var centre := Vector2i(b["x"], b["y"])
 	var world_cells: Array = []
 	var broke := false
-	for c in blast_cells(b["x"], b["y"], b["fire"]):
+	var bc: Array = blast_cells(b["x"], b["y"], b["fire"])
+	for c in bc:
 		var ci := idx(c.x, c.y)
 		world_cells.append(tile_pos(c.x, c.y))
-		_add_flame(c, pid)
+		_add_flame(c, pid, _arm_shape(c, centre, bc))
 		if cells[ci] == SOFT:
 			_break_crate(c)
 			broke = true
@@ -1340,13 +1343,27 @@ func _explode(b: Dictionary) -> void:
 		audio.play("break_block", -3.0, 0.08, 0.05)
 
 
-func _add_flame(c: Vector2i, pid: int) -> void:
+## How this blast cell's flame sheet is drawn: r = axis (0 along x, 1 along
+## z, 0.5 the centre), g = 1 on the end of an arm (rounded cap), b = which way
+## the arm runs. Sheets then join into one continuous beam per arm.
+func _arm_shape(c: Vector2i, centre: Vector2i, cells_: Array) -> Color:
+	var d := c - centre
+	if d == Vector2i.ZERO:
+		return Color(0.5, 0.0, 0.5, 1.0)
+	var step := Vector2i(signi(d.x), signi(d.y))
+	var end := not cells_.has(c + step)
+	if d.y == 0:
+		return Color(0.0, 1.0 if end else 0.0, 1.0 if step.x > 0 else 0.0, 1.0)
+	return Color(1.0, 1.0 if end else 0.0, 1.0 if step.y > 0 else 0.0, 1.0)
+
+
+func _add_flame(c: Vector2i, pid: int, shape := Color(0.5, 0.0, 0.5, 1.0)) -> void:
 	var ci := idx(c.x, c.y)
 	if flames.has(ci):
 		flames[ci]["t"] = Cfg.BLAST_LIFE
 		flames[ci]["pid"] = pid
 		return
-	flames[ci] = {"t": Cfg.BLAST_LIFE, "pid": pid, "fi": fx.add_flame(tile_pos(c.x, c.y))}
+	flames[ci] = {"t": Cfg.BLAST_LIFE, "pid": pid, "fi": fx.add_flame(tile_pos(c.x, c.y), shape)}
 
 
 func _step_flames(dt: float) -> void:
@@ -1848,7 +1865,7 @@ func _update_camera(delta: float) -> void:
 		var wk := clampf(_win_cam / 0.7, 0.0, 1.0)
 		var we := 1.0 - pow(1.0 - wk, 3.0)
 		var tgt := CAM_TARGET.lerp(_win_target + Vector3(0, 0.6, 0), we)
-		camera.position = CAM_POS.lerp(_win_target + Vector3(0, 5.2, 3.6), we)
+		camera.position = CAM_POS.lerp(_win_target + Vector3(0, 7.6, 5.3), we)
 		camera.look_at(tgt, Vector3.UP)
 		return
 	if _fly < 0.0:
@@ -1857,7 +1874,7 @@ func _update_camera(delta: float) -> void:
 	var k := clampf(_fly / FLY_TIME, 0.0, 1.0)
 	var e := 1.0 - pow(1.0 - k, 3.0)
 	var off := CAM_POS - CAM_TARGET
-	var start := Vector3(0.0, 24.0, 15.0)
+	var start := Vector3(0.0, 34.0, 22.0)
 	var yaw := lerpf(-1.25, 0.0, e)
 	var o := start.lerp(off, e)
 	var flat := Vector2(o.x, o.z).rotated(-yaw)
@@ -1901,7 +1918,7 @@ func _update_hud() -> void:
 	var sub := ""
 	if phase == "intro" and ceili(phase_t - 0.35) > 3:
 		sub = ARENA_HINTS.get(level_id, "")
-	hud.set_frame(_fly >= 0.0, sub, round_no == 1 and (phase == "intro" or round_elapsed < 6.0), dt)
+	hud.set_frame(_fly >= 0.0, sub, round_no == 1 and phase == "intro", dt)
 	hud.update(dt, fighters, wins, human_pid, round_no, String(level.get("name", "")), secs, banner, msg)
 
 

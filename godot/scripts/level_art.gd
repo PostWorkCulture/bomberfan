@@ -28,11 +28,11 @@ const THEMES := {
 		# High noon on a sandbar: bright, warm, a little haze off the water.
 		"sky": Color("0b3550"), "fog": Color(0.55, 0.72, 0.8), "fog_begin": 22.0, "fog_end": 50.0,
 		"sun": Color(1.0, 0.94, 0.82), "sun_energy": 1.05, "sun_rot": Vector3(-48, -34, 0), "ambient": 0.3,
-		"sky_top": Color(0.32, 0.58, 0.88), "sky_horizon": Color(0.8, 0.88, 0.92), "ground_horizon": Color(0.62, 0.56, 0.44),
+		"sky_top": Color(0.46, 0.56, 0.64), "sky_horizon": Color(0.84, 0.8, 0.72), "ground_horizon": Color(0.6, 0.52, 0.4),
 		"exposure": 0.74, "saturation": 1.08, "contrast": 1.06, "glow": 0.3,
 		"floor": {"pattern": 5, "a": Color("8c6c44"), "b": Color("9c7b4f"), "line": Color("5a4028"), "line_alpha": 0.12, "rough": 0.95},
-		"block": {"style": 0, "side": Color("564a40"), "top": Color("6a5e50"), "rough": 0.9, "scale": 0.9},
-		"border": {"style": 0, "side": Color("6e3c34"), "top": Color("86524a"), "rough": 0.85, "scale": 0.9},
+		"block": {"style": 6, "side": Color("6e5842"), "top": Color("86705a"), "rough": 0.9, "scale": 0.9},
+		"border": {"style": 0, "side": Color("6e5044"), "top": Color("8a6858"), "rough": 0.85, "scale": 0.9},
 		"plinth": Color("a88e62"), "debris": Color("b89c6e"),
 	},
 	"haunted": {
@@ -143,7 +143,7 @@ void fragment() {
 		col *= 0.93 + 0.1 * rip;
 		float damp = smoothstep(0.55, 0.78, texture(noise_tex, p * 0.09 + 0.3).r);
 		col = mix(col, col * vec3(0.8, 0.77, 0.74), damp * 0.6);
-		float fleck = step(0.986, hash(floor(p * 9.0)));
+		float fleck = step(0.986, hash(floor(p * 9.0))) * (1.0 - smoothstep(0.08, 0.2, length(fract(p * 9.0) - 0.5)));
 		col = mix(col, vec3(0.97, 0.93, 0.86), fleck * 0.55);
 		col *= 1.0 - 0.035 * chk;
 		col = mix(col, line_col, line * line_alpha);
@@ -223,6 +223,11 @@ void fragment() {
 		col = mix(col, top_col * 1.3, rivet * 0.8);
 		col *= 0.88 + 0.12 * n2;
 		r = mix(rough, rough + 0.3, n2 * 0.6);
+	} else if (style == 6) {
+		// Sandstone: horizontal strata on the sides, wind-smoothed top.
+		float strata = sin(wpos.y * 22.0 + n * 4.0) * 0.5 + 0.5;
+		col *= mix(1.0, 0.86 + 0.22 * strata, 1.0 - top);
+		col *= 0.92 + 0.14 * n2;
 	} else if (style == 5) {
 		// Steel with a hazard-striped rim round a dark tread-plate cap.
 		float stripe = step(0.5, fract((wpos.x + wpos.z) * 2.2));
@@ -620,13 +625,13 @@ static func clockwork_mesh() -> ArrayMesh:
 		return _cache["clockwork"]
 	var copper := Color("7c5a40")
 	var dark := Color("5a2c12")
-	var brass := metal(Color("e0a84a"))
+	var brass := metal(Color("8a6a40"))
 	var parts: Array = []
 	for i in 3:
 		var x := float(i - 1)
 		parts.append([box(Vector3(0.94, 0.9, 0.94), 0.06), xf(Vector3(x, 0.45, 0)), copper])
 		parts.append([box(Vector3(0.98, 0.08, 0.98), 0.02), xf(Vector3(x, 0.06, 0)), dark])
-		parts.append([box(Vector3(0.8, 0.03, 0.8), 0.01), xf(Vector3(x, 0.905, 0)), Color("e09a5a")])
+		parts.append([box(Vector3(0.8, 0.03, 0.8), 0.01), xf(Vector3(x, 0.905, 0)), Color("5e4030")])
 		for s in [-1.0, 1.0]:
 			for k in 3:
 				parts.append([sphere(0.03, 8, 4), xf(Vector3(x - 0.3 + k * 0.3, 0.75, s * 0.475)), brass])
@@ -640,7 +645,7 @@ static func gear_mesh(r: float, teeth: int) -> ArrayMesh:
 	var key := "gear:%s:%d" % [r, teeth]
 	if _cache.has(key):
 		return _cache[key]
-	var brass := metal(Color("e0a84a"))
+	var brass := metal(Color("8a6a40"))
 	var parts: Array = [[cyl(r, r, 0.06, 20), xf(Vector3.ZERO), brass],
 		[cyl(r * 0.3, r * 0.3, 0.09, 10), xf(Vector3.ZERO), Color("6a3a16")]]
 	for i in teeth:
@@ -663,7 +668,7 @@ static func crate_meshes(id: String) -> Array:
 			out = [Art.log_pile_mesh(0), Art.log_pile_mesh(1), Art.log_pile_mesh(2)]
 		"beach":
 			# Sun-bleached driftwood crates and rope-bound barrels.
-			out = [plank_crate("beach", Color("d8bf92"), Color("b89a6a"), Color("6c5a42")), barrel("beach")]
+			out = [plank_crate("beach", Color("9a6c44"), Color("7a5a3c"), Color("3e2c1e")), barrel("beach")]
 		"haunted":
 			out = [casket(), trunk()]
 		"factory":
@@ -750,9 +755,9 @@ static func pallet() -> ArrayMesh:
 
 ## A barrel bound with rope hoops, for the Beach.
 static func barrel(key: String) -> ArrayMesh:
-	var wood := Color("b39a74")
-	var dark := Color("7a6446")
-	var rope := Color("d8c69a")
+	var wood := Color("8a6440")
+	var dark := Color("4e3a28")
+	var rope := Color("e6d6aa")
 	var parts: Array = [
 		[cyl(0.34, 0.34, 0.12, 16), xf(Vector3(0, 0.06, 0)), dark],
 		[cyl(0.38, 0.34, 0.32, 16), xf(Vector3(0, 0.27, 0)), wood],

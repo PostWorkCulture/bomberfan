@@ -167,12 +167,12 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 	badge.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	var tex := _portrait(f)
 	if tex != null:
-		var tr := TextureRect.new()
-		tr.texture = tex
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		tr.custom_minimum_size = Vector2(56, 56)
-		badge.add_child(tr)
+		var trect := TextureRect.new()
+		trect.texture = tex
+		trect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		trect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		trect.custom_minimum_size = Vector2(56, 56)
+		badge.add_child(trect)
 	else:
 		var ini := _label(26, Color(1, 1, 1), 5)
 		ini.text = String(f.display_name).substr(0, 1)
@@ -219,16 +219,16 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 		chip.add_child(row2)
 		var icon := _icon(id)
 		if icon != null:
-			var tr := TextureRect.new()
-			tr.texture = icon
-			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			tr.custom_minimum_size = Vector2(22, 22)
+			var trect := TextureRect.new()
+			trect.texture = icon
+			trect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			trect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			trect.custom_minimum_size = Vector2(22, 22)
 			if id == "shield" or id == "kick":   # bigger and tilted: no count beside it
-				tr.custom_minimum_size = Vector2(28, 28)
-				tr.pivot_offset = Vector2(14, 14)
-				tr.rotation = -0.22
-			row2.add_child(tr)
+				trect.custom_minimum_size = Vector2(28, 28)
+				trect.pivot_offset = Vector2(14, 14)
+				trect.rotation = -0.22
+			row2.add_child(trect)
 		var cl := _label(16, tint.lightened(0.5), 3)
 		var flag: bool = id == "shield" or id == "kick"
 		cl.custom_minimum_size = Vector2(0 if flag else 20, 0)

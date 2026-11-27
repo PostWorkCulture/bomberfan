@@ -641,8 +641,8 @@ func _build_select(s: Control) -> void:
 	disc.position.y = -0.04
 	var dm := StandardMaterial3D.new()
 	dm.albedo_color = Color(0.08, 0.06, 0.12)
-	dm.metallic = 0.6
-	dm.roughness = 0.3
+	dm.metallic = 0.3
+	dm.roughness = 0.55
 	dm.emission_enabled = true
 	dm.emission = col0.darkened(0.4)
 	dm.emission_energy_multiplier = 0.25

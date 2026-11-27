@@ -43,7 +43,7 @@ static func label(text: String, font: Font, size: int, col: Color, outline := 0,
 	if shadow != Vector2.ZERO:
 		ls.shadow_color = Color(0, 0, 0, 0.55)
 		ls.shadow_offset = shadow
-		ls.shadow_size = maxi(1, outline / 2)
+		ls.shadow_size = maxi(1, int(outline * 0.5))
 	l.label_settings = ls
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l

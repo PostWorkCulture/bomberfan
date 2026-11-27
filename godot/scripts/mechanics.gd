@@ -588,15 +588,15 @@ func _spawn_crab(c: Dictionary) -> void:
 	var opts: Array = []
 	for y in range(3, Cfg.ROWS - 3):
 		for x in range(1, Cfg.COLS - 1):
-			var t := Vector2i(x, y)
-			if not _crab_ok(t) or game.bomb_at.has(game.idx(x, y)):
+			var spot := Vector2i(x, y)
+			if not _crab_ok(spot) or game.bomb_at.has(game.idx(x, y)):
 				continue
 			var near := false
 			for f in game.fighters:
-				if f.alive and (f.tile() - t).length() < 3.0:
+				if f.alive and (f.tile() - spot).length() < 3.0:
 					near = true
 			if not near:
-				opts.append(t)
+				opts.append(spot)
 	if opts.is_empty():
 		c["dead"] = 2.0
 		return
@@ -830,11 +830,11 @@ func _visual_witch(delta: float, t: float) -> void:
 		(n.get_node("Cape") as MeshInstance3D).material_overlay = null
 		var fade_mats: Array = [line, rim]
 		for mi in n.find_children("*", "MeshInstance3D", true, false):
-			var g := mi as MeshInstance3D
-			g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			if g.mesh and g.mesh.get_surface_count() > 0:
-				var fm := LA.fade_mat(g.mesh.surface_get_material(0), 0.0)
-				g.material_override = fm
+			var gi := mi as MeshInstance3D
+			gi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			if gi.mesh and gi.mesh.get_surface_count() > 0:
+				var fm := LA.fade_mat(gi.mesh.surface_get_material(0), 0.0)
+				gi.material_override = fm
 				fade_mats.append(fm)
 		n.set_meta("fade_mats", fade_mats)
 		var trail := CPUParticles3D.new()

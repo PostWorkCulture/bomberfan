@@ -18,6 +18,7 @@ const ARENA_MUSIC := {"forest": "music_arcade_drive", "beach": "music_tide_pop",
 	"haunted": "music_graveyard_swing", "factory": "music_tension_pulse"}
 const ARENA_AMBIENCE := {"forest": "ambience_forest", "beach": "ambience_beach",
 	"haunted": "ambience_haunted", "factory": "ambience_factory"}
+const SettingsScript := preload("res://scripts/settings.gd")
 const VARIANTS := {"explode": 3, "break_block": 2}
 const POOL_SIZE := 16
 const MUSIC := "music_arcade_drive"
@@ -37,8 +38,8 @@ var sfx_offset_db := 0.0    # the attract-mode match behind the menus plays quie
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS   # menu clicks still sound while paused
-	Settings.ensure_bus("Music")
-	Settings.ensure_bus("SFX")
+	SettingsScript.ensure_bus("Music")
+	SettingsScript.ensure_bus("SFX")
 	var music_bus := "Music"
 	var sfx_bus := "SFX"
 	for n in SFX + ARENA_MUSIC.values() + ARENA_AMBIENCE.values() + [MENU_MUSIC]:

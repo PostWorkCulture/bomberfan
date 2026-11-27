@@ -120,7 +120,6 @@ var _win_target := Vector3.ZERO
 const CAM_POS := Vector3(0.0, 24.8, 10.4)
 const CAM_TARGET := Vector3(0.0, 0.0, 0.45)
 var _fly := -1.0
-var _hitstop := 0.0   # `-- --tour-secs 0.6`: a quicker tour for local previews
 var _smoke_levels: Array = []
 var level_root: Node3D          # everything static that belongs to the arena
 var env: Environment

@@ -104,6 +104,7 @@ Real items, not lettered tiles. Each floats and spins over a soft glow in its co
 - **Fire Up:** a flickering flame with a yellow core and two side tongues (orange glow).
 - **Speed Up:** a green sneaker with white feathered wings, spread so they read from above (green glow).
 - **Shield (Godot, 2026-11-25):** a violet heater shield (violet glow). Soaks one blast, then 1 s of grace (the fighter flickers) to get clear. Drops at 2.5% per crate. The holder wears a faint violet bubble. Crushing (sudden death, Factory crushers) ignores it. Bots want one when they have none.
+- **Kick (ported 2026-11-27):** a gold boot mid-kick with speed streaks (pink glow). Drops at 4.73% per crate (`PU_DROPS` weight 20, so 0.26 × 20/110). Walk into a bomb while holding it and the bomb slides at 7.5 tiles/s (`CFG.KICK_SPEED`) until a wall, crate, bomb or fighter stops it. A sliding bomb leans into the slide, settles with a puff when it stops, and goes off at once if it slides into a blast. Kick is kept for the round, like the browser; a HUD chip lights while you hold it. Bots: they want Kick when they don't have it; the danger map counts where a kicked bomb will be when its fuse runs out; and a cornered bot kicks an adjacent bomb out of the way only when that opens an escape it doesn't otherwise have (`clearTheWay` in `index.html`). Crabs don't shove a bomb that is already sliding.
 
 ### Arena edge (Godot)
 The arena stands on a raised stone base, one step (0.34) above the woods. A contact shadow runs along the inside of the rock wall, and the forest floor outside is darker and browner. Together these show clearly what's inside the rocks and what's outside.
@@ -127,7 +128,7 @@ No coloured circles under the bots. Your own fighter is marked in your colour (A
 - New characters are concepts 1, 5 and 6 from the Blender set (`tools/blender/bomber_bots.py`, branch `art/bot-concepts`), exported as `sparky.glb`, `rivet.glb` and `pixel.glb`. They are rigid models; `godot/scripts/model_bot.gd` animates them in code (bob, waddle, lean, squash, hop-and-spin cheer, topple). The other five concepts are dropped.
 - The first-pass code bots (`robot.gd`: Bolt, Tank, Pip, Sparky) were rejected and deleted.
 - Round-2 bots (Pete picked 1, 3, 7 and 8 of eight: `tools/blender/bomber_bots_2.py`, branch `art/bot-concepts`): Boiler (copper steam boiler), Gumball (gumball machine), Snap (box camera) and Arcade (arcade cabinet), exported as `boiler/gumball/snap/arcade.glb` and animated by `model_bot.gd`. Dial, Crumb, Reel and Lumen are dropped.
-- Slots: you are always Razor (blue). Each match the three bots are drawn at random from the eight. Every fighter has its own HUD colour: Sparky yellow, Rivet red, Pixel green, Boiler orange, Gumball pink, Snap white, Arcade purple, Tick teal. `-- --cast id,id,id` or autotest `"cast"` picks them by hand.
+- Slots: you pick your fighter on the select screen (any of the nine; Razor by default), and the three bots are drawn at random from the other eight. Every fighter has its own HUD colour: Sparky yellow, Rivet red, Pixel green, Boiler orange, Gumball pink, Snap white, Arcade purple, Tick teal. `-- --cast id,id,id` or autotest `"cast"` picks them by hand.
 - Tick (Pete, 2026-11-25): the clockwork gentleman from the darker set (`tools/blender/bombr_dark.py`, Tick v2, branch `art/bot-concepts`), exported as `tick.glb` and animated by `model_bot.gd`. The other dark concepts are dropped.
 
 ### Arenas (Godot)
@@ -155,14 +156,32 @@ Code: `godot/scripts/levels.gd` holds layouts and rules; `level_art.gd`, `level_
   - **Factory, the lever:** on the north wall at (7,0). A blast reaching (7,1) throws it and the conveyor loop runs the other way ("BELTS REVERSED"). 2 s cooldown. (7,1) is kept crate-free.
 - **CI screenshots:** `-- --tour` shows every arena for two seconds, and CI saves one frame of each as `arena-<id>.png` on the `ci-screenshots` branch. Locally, use autotest `"mode": "tour"`, or `"level": "<id>"` to play one arena.
 
+### Front end (Godot, 2026-11-27)
+Pete: "a fun and exciting character select screen in the style of a 90's arcade game (but with today's modern graphic quality)" and "a professional, fun, coloured menu system". Built in code (`front_end.gd`, `match_menu.gd`, `ui_kit.gd`, `showcase.gd`, `settings.gd`).
+- **Attract mode:** a normal launch opens the menus over a live bots-only match, with the camera on a slow high orbit, the HUD hidden and the match's sound turned down 12 dB. Its own music loop, *Neon Select* (136 bpm, `tools/render_music.py neon_select`).
+- **Title:** the BF emblem over a slow light burst, the BOMBER FAN wordmark (Lilita One, yellow-to-orange gradient) slams in, PRESS START blinks (TAP TO START on touch screens), © line and FREE PLAY in the corners.
+- **Main menu:** emblem and wordmark top left; big skewed buttons with a raised lip (PLAY pink, OPTIONS cyan, HOW TO PLAY orange, QUIT purple on desktop only), a white border and coloured glow on the focused one; DEMO PLAY blinks top right; the current arena, difficulty and rounds along the bottom.
+- **Options** (saved to `user://settings.cfg` straight away): Arena (Random / Forest / Beach / Haunted House / Factory), Difficulty (Easy / Normal / Hard, the browser's `TIERS`), Rounds to win (1 / 2 / 3, `ROUND_OPTIONS`), Music and Sound FX (0–10, on their own audio buses).
+- **How to play:** controls, the goal, and the five pick-ups with their 3D models.
+- **Character select:** SELECT YOUR FIGHTER over an animated synthwave backdrop (gradient, moving stripes, a scrolling grid floor) tinted to the hovered fighter. A 3x3 grid of the nine fighters (portraits of their own models, rendered once), with a 1P cursor tag, a white border, a glow and a springy scale-up. The hovered fighter turns on a lit plinth in front of a rotating light burst, with a skewed name plate and a one-line blurb. A 30 s arcade countdown (red from 5) picks for you. Confirm: a white flash, the fighter cheers, READY! stamps in, the other tiles dim.
+- **VS screen:** your colour and a dark red half meet on a diagonal and slide in; your fighter full-length on the left, the three rivals (drawn now and played in the match) slide in on the right; VS slams in on the seam with a riser, an impact and a screen shake; STAGE / FIRST TO / DIFFICULTY along the bottom. Then a fade into the match (the scene reloads; the `Settings` autoload carries the choices across).
+- **In a match:** Esc / P / Start (or the touch pause button) opens PAUSED: Resume, Restart Match, Change Fighter, Main Menu. When the match is decided: VICTORY! (or "<NAME> WINS"), the final standings with win pips, then Rematch (same fighters), Change Fighter or Main Menu.
+- **Look:** three OFL fonts: Lilita One (titles), Russo One (interface), Press Start 2P (1P, TIME, PRESS START). Neon palette: pink, cyan, yellow, orange, purple, lime on deep purple. Every control works with keyboard, gamepad, mouse and touch.
+- **Sounds** (`tools/render_sfx.py ui`): cursor tick, confirm, back, PRESS START coin arpeggio, the lock-in stab and the VS slam.
+- **Checks:** `-- --screen title|main|options|howto|select|vs|pause|over` opens straight on a screen (autotest `"mode": "menu", "screen": ...`); `-- --flow` clicks through title, select and VS into a match, pauses and goes back to the main menu.
+
 ### Not yet ported
-Kick (and the other power-ups), character select / Loadout / Prize Locker, menus and options (level choice, difficulty, rounds, music volume), menu music, the original bomber hero. (Per-arena music is now in; see "Look and sound".)
+Punch, Glove, Remote and the other power-ups; the Loadout / Prize Locker; the original bomber hero (on hold, Pete 2026-11-27).
 
 ---
 
 ## Change log
 
 Newest first. One dated heading per day; bullets say what changed, why, and where.
+
+### 2026-11-27
+- **Kick ported** (Pete: "Just kick needs to be added"). Tuning from `index.html`: `KICK_SPEED` 7.5, drop rate 0.0473. See "Pick-ups (Godot)". Bots get the browser's three tiers too (`TIERS`: think, blunder, hunt, slack, bomb gap, greed), picked in Options. Files: `config.gd`, `game.gd` (`try_kick`, `_slide_bomb`, `_slide_end`, danger map), `fighter.gd`, `bot_brain.gd` (`_kick_escape`, tiers), `art.gd` (gold boot), `hud.gd` (Kick chip), `tools/render_sfx.py` (kick sound).
+- **Menus and character select** (Pete: a 90s-arcade character select at modern quality, and a professional, fun, coloured menu system). See "Front end (Godot)". A normal launch now opens the title screen over an attract-mode match instead of dropping straight into a round; CI modes (`--smoke`, `--demo`, `--tour`, `--gallery`, autotest) skip the menus as before. You now choose your fighter. New: `settings.gd` (autoload `Settings`), `front_end.gd`, `match_menu.gd`, `ui_kit.gd`, `showcase.gd`, `assets/fonts/russo-one.ttf`, `assets/fonts/press-start-2p.ttf` (OFL, licences beside them), `assets/ui/logo-emblem.png` (cut from `assets/branding/main-logo.png`), `music_neon_select.wav` and seven interface sounds. Gamepad Start now pauses (it used to restart; R still restarts on a keyboard).
 
 ### 2026-11-26
 - **AAA review round 12: PASS-CONDITIONAL.** An independent reviewer scored every category 8 (art, readability, lighting, assets, life, VFX, mechanics, HUD, polish/performance). The condition is real-device frame time, which can't be measured in the sandbox: on the Pages `play/` build, Chrome on a mid-range Android (Pixel 6a / Snapdragon 7 class) and Safari on an iPhone 11–12, 90 s per arena including a 3+ bomb chain, a full flame cross, belts reversing, the tide, a witch pass and sudden death. Pass if median ≤ 16.7 ms, p95 ≤ 33 ms, no frame over 50 ms in a chain, under 20% slower after 5 minutes, cold load ≤ 10 s on 4G, no crash on 3 GB devices. Sandbox play peaks: 259–319 draw calls, 231–343k triangles. Reviewer's non-blocking notes: drive the YOU-tag bob from game time so `tools/xray_ab.sh` diffs are clean, give that script a pass/fail and Razor-bounds check; Snap's white body is close to white bombs on Factory; exit-time leak warnings under `--quit-after`.

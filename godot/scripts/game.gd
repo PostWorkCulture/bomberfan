@@ -24,6 +24,8 @@ const Scenery := preload("res://scripts/level_scenery.gd")
 const Props := preload("res://scripts/level_props.gd")
 const Ambient := preload("res://scripts/ambient.gd")
 const Mechanics := preload("res://scripts/mechanics.gd")
+const FrontEnd := preload("res://scripts/front_end.gd")
+const MatchMenu := preload("res://scripts/match_menu.gd")
 const CRATE_SPARES := 8   # hidden crate instances per variant, for crates that appear mid-round
 
 const EMPTY := 0
@@ -135,9 +137,21 @@ var autopilot := false   # `-- --autopilot` / autotest: you are Razor, steered b
 var gallery := false   # `-- --gallery`: close-up of the fighters for CI checks
 var forced_cast: Array = []   # bot ids from autotest "cast"
 var lineup := false    # autotest "lineup": the roster side by side on plain ground
+# Front end (2026-11-27). A normal launch opens the menus over a bots-only
+# match (attract mode); picking a fighter reloads the scene as a match with
+# the chosen settings (Settings autoload carries them across the reload).
+var menu_mode := false
+var match_mode := false
+var wins_needed := Cfg.WINS_NEEDED
+var bot_tier := "normal"
+var front_end = null
+var match_menu = null
+var _menu_screen := "title"
+var _test_screen := ""      # `-- --screen <name>` / autotest "screen": open straight on a screen
+var _first_level := ""      # the arena the VS screen announced: round 1 plays it
 var human_pid := 0
 var stats := {"rounds": 0, "draws": 0, "deaths": 0, "self_kills": 0, "sudden_deaths": 0, "crushed": 0,
-	"bombs": 0, "crates": 0, "pickups": 0, "shields": 0, "doused": 0, "wins": [0, 0, 0, 0]}
+	"bombs": 0, "crates": 0, "pickups": 0, "shields": 0, "doused": 0, "kicks": 0, "wins": [0, 0, 0, 0]}
 
 var static_root: Node3D
 var round_root: Node3D
@@ -184,7 +198,26 @@ func _ready() -> void:
 		tour_secs = float(args[ts + 1])
 	if tour:
 		demo = true
+	var sa := args.find("--screen")
+	if sa >= 0 and sa + 1 < args.size():
+		_test_screen = args[sa + 1]
 	_load_autotest()
+	var interactive := not (smoke or demo or gallery or lineup or tour or autopilot) \
+		and (_quit_at < 0.0 or _test_screen != "")
+	if interactive:
+		if Settings.start_match or _test_screen in ["match", "pause", "over"]:
+			match_mode = true
+			Settings.start_match = false
+			wins_needed = Settings.wins
+			bot_tier = Settings.difficulty
+			if Settings.arena != "random":
+				forced_level = Settings.arena
+			_first_level = Settings.first_level
+		else:
+			menu_mode = true
+			demo = true
+			_menu_screen = _test_screen if _test_screen != "" else (Settings.open_screen if Settings.open_screen != "" else "title")
+			Settings.open_screen = ""
 	if gallery and forced_level == "":
 		forced_level = "forest"   # the CI close-up is judged on the Forest
 	rng.randomize()
@@ -223,7 +256,7 @@ func _ready() -> void:
 	# catches HUD script errors.
 	hud = Hud.new()
 	add_child(hud)
-	hud.setup(self, fighters, Cfg.WINS_NEEDED, _hud_hint)
+	hud.setup(self, fighters, wins_needed, _hud_hint)
 	start_round()
 	if tour:
 		phase = "play"
@@ -236,6 +269,30 @@ func _ready() -> void:
 	else:
 		audio.start_ambience()
 		fx.prewarm(round_root)
+	if menu_mode:
+		hud.visible = false
+		if touch != null:
+			touch.visible = false
+		audio.menu_music()
+		audio.sfx_offset_db = -12.0
+		front_end = FrontEnd.new()
+		add_child(front_end)
+		front_end.setup(self, _menu_screen)
+	elif match_mode:
+		match_menu = MatchMenu.new()
+		add_child(match_menu)
+		match_menu.setup(self)
+		if "--flow" in OS.get_cmdline_user_args():
+			# The --flow check continues: pause, then back to the main menu.
+			get_tree().create_timer(FLY_TIME + 3.0).timeout.connect(match_menu.open_pause)
+			get_tree().create_timer(FLY_TIME + 4.5, true).timeout.connect(func(): leave("main"))
+		if _test_screen == "pause":
+			get_tree().create_timer(FLY_TIME + 2.5).timeout.connect(match_menu.open_pause)
+		elif _test_screen == "over":
+			get_tree().create_timer(FLY_TIME + 2.5).timeout.connect(func():
+				wins = [1, wins_needed, 0, 2 if wins_needed > 2 else 0]
+				phase = "over"
+				_match_over())
 
 
 # ---- Grid helpers ---------------------------------------------------------------
@@ -282,7 +339,7 @@ func compute_danger(extra: Dictionary) -> PackedFloat32Array:
 			list.append({"x": b["x"], "y": b["y"], "fire": b["fire"], "t": b["fuse"]})
 			# Where a belt will have taken it by the time it goes off: both
 			# crosses count, since a belt can be blocked.
-			var drift := _belt_drift(b)
+			var drift := _slide_end(b) if b.has("vel") else _belt_drift(b)
 			if drift != Vector2i(b["x"], b["y"]):
 				list.append({"x": drift.x, "y": drift.y, "fire": b["fire"], "t": b["fuse"]})
 	# Thrown bombs still in the air, and the tile a hazard is winding up to hit
@@ -372,12 +429,15 @@ func _setup_input() -> void:
 		"move_left": [KEY_A, KEY_LEFT], "move_right": [KEY_D, KEY_RIGHT],
 		"move_up": [KEY_W, KEY_UP], "move_down": [KEY_S, KEY_DOWN],
 		"bomb": [KEY_SPACE, KEY_ENTER, KEY_J], "restart": [KEY_R], "next_level": [KEY_L],
+		"pause": [KEY_ESCAPE, KEY_P],
 	}
 	var pads := {
 		"move_left": JOY_BUTTON_DPAD_LEFT, "move_right": JOY_BUTTON_DPAD_RIGHT,
 		"move_up": JOY_BUTTON_DPAD_UP, "move_down": JOY_BUTTON_DPAD_DOWN,
-		"bomb": JOY_BUTTON_A, "restart": JOY_BUTTON_START, "next_level": JOY_BUTTON_BACK,
+		"bomb": JOY_BUTTON_A, "pause": JOY_BUTTON_START, "next_level": JOY_BUTTON_BACK,
 	}
+	if InputMap.has_action("pause"):
+		return   # already set up: the scene reloads between menus and matches
 	for action in keys:
 		if not InputMap.has_action(action):
 			InputMap.add_action(action, 0.3)
@@ -385,9 +445,10 @@ func _setup_input() -> void:
 			var ev := InputEventKey.new()
 			ev.physical_keycode = k
 			InputMap.action_add_event(action, ev)
-		var jb := InputEventJoypadButton.new()
-		jb.button_index = pads[action]
-		InputMap.action_add_event(action, jb)
+		if pads.has(action):
+			var jb := InputEventJoypadButton.new()
+			jb.button_index = pads[action]
+			InputMap.action_add_event(action, jb)
 	var axes := {
 		"move_left": [JOY_AXIS_LEFT_X, -1.0], "move_right": [JOY_AXIS_LEFT_X, 1.0],
 		"move_up": [JOY_AXIS_LEFT_Y, -1.0], "move_down": [JOY_AXIS_LEFT_Y, 1.0],
@@ -584,6 +645,10 @@ func _build_forest() -> void:
 ## Which arena this round: a forced one, every one in turn for the smoke test
 ## and the tour, otherwise a random one (the browser's Level: Random).
 func _pick_level() -> String:
+	if _first_level != "" and Levels.index_of(_first_level) >= 0:
+		var first := _first_level
+		_first_level = ""
+		return first
 	if forced_level != "":
 		return forced_level
 	if tour:
@@ -705,6 +770,16 @@ func _build_hud() -> void:
 func _pick_cast() -> Array:
 	var cast: Array = [ROSTER[0]]
 	var pool: Array = ROSTER.slice(1)
+	if match_mode:
+		# You are the fighter picked on the select screen; the VS screen named
+		# your rivals.
+		var mine: String = Settings.cast[0] if not Settings.cast.is_empty() else Settings.fighter
+		cast = [_roster_info(mine)]
+		pool = ROSTER.filter(func(r): return r["id"] != cast[0]["id"])
+		for id in Settings.cast.slice(1):
+			var info: Dictionary = _roster_info(id)
+			if not cast.has(info) and cast.size() < Cfg.MAX_PLAYERS:
+				cast.append(info)
 	var ids: Array = forced_cast
 	var args := OS.get_cmdline_user_args()
 	var ci := args.find("--cast")
@@ -720,6 +795,13 @@ func _pick_cast() -> Array:
 	return cast
 
 
+func _roster_info(id: String) -> Dictionary:
+	for r in ROSTER:
+		if r["id"] == id:
+			return r
+	return ROSTER[0]
+
+
 func _create_fighters() -> void:
 	human_pid = -1 if (smoke or demo or gallery) and not autopilot else 0
 	var cast := _pick_cast()
@@ -730,7 +812,7 @@ func _create_fighters() -> void:
 		fighters.append(f)
 		if f.is_bot or autopilot:
 			var b = BotBrain.new()
-			b.setup(self, f, 1000 + k * 7919 + (0 if smoke else rng.randi() % 100000))
+			b.setup(self, f, 1000 + k * 7919 + (0 if smoke else rng.randi() % 100000), bot_tier)
 			brains[k] = b
 
 
@@ -1010,6 +1092,8 @@ func douse_bomb(b: Dictionary) -> void:
 
 ## Slide a bomb one tile (Beach crabs shove them). False if it cannot go.
 func push_bomb(b: Dictionary, d: Vector2i) -> bool:
+	if b.has("vel"):
+		return false   # already sliding from a kick
 	var nx: int = b["x"] + d.x
 	var ny: int = b["y"] + d.y
 	if not bomb_can_enter(nx, ny, b):
@@ -1025,6 +1109,92 @@ func push_bomb(b: Dictionary, d: Vector2i) -> bool:
 		var tw := node.create_tween()
 		tw.tween_property(node, "position", tile_pos(nx, ny), 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	return true
+
+
+## Kick (ported from tryKick / Bomb.kick in index.html): walking into a bomb
+## with the Kick ability sends it sliding at Cfg.KICK_SPEED until something
+## stops it: a wall, a crate, another bomb or a fighter.
+func try_kick(f, d: Vector2i) -> bool:
+	if phase != "play":
+		return false
+	var t: Vector2i = f.tile() + d
+	var b = bomb_at.get(idx(t.x, t.y))
+	if b == null or b.has("vel"):
+		return false
+	if not bomb_can_enter(t.x + d.x, t.y + d.y, b):
+		return false
+	b["vel"] = d
+	b["fx"] = float(b["x"])
+	b["fy"] = float(b["y"])
+	stats["kicks"] += 1
+	audio.play("kick", 0.0, 0.06, 0.08)
+	return true
+
+
+## A kicked bomb slides tile to tile; it hands over to the next tile once it
+## has crossed it, and stops when the tile beyond will not take it.
+func _slide_bomb(b: Dictionary, dt: float) -> void:
+	var d: Vector2i = b["vel"]
+	var step := Cfg.KICK_SPEED * dt
+	var fxp: float = b["fx"] + d.x * step
+	var fyp: float = b["fy"] + d.y * step
+	var nx: int = b["x"] + d.x
+	var ny: int = b["y"] + d.y
+	var passed := (fxp >= nx if d.x > 0 else fxp <= nx) if d.x != 0 else (fyp >= ny if d.y > 0 else fyp <= ny)
+	if passed:
+		if not bomb_can_enter(nx, ny, b):
+			# Someone stepped in the way: stop where it is.
+			_stop_slide(b)
+			return
+		bomb_at.erase(idx(b["x"], b["y"]))
+		b["x"] = nx
+		b["y"] = ny
+		bomb_at[idx(nx, ny)] = b
+		fxp = float(nx)
+		fyp = float(ny)
+		# Slid into a blast: it goes off with the chain.
+		if flames.has(idx(nx, ny)):
+			b["fuse"] = minf(b["fuse"], Cfg.CHAIN_DELAY)
+		b["fx"] = fxp
+		b["fy"] = fyp
+		if not bomb_can_enter(nx + d.x, ny + d.y, b):
+			_stop_slide(b)
+			return
+	b["fx"] = fxp
+	b["fy"] = fyp
+	var node: Node3D = b["node"]
+	if is_instance_valid(node):
+		node.position = tile_pos(fxp, fyp)
+		# Leans into the slide and wobbles as it skids along
+		var axis := Vector3(d.y, 0, -d.x).normalized()
+		node.quaternion = Quaternion(axis, -0.3 - 0.08 * sin(b["age"] * 40.0))
+
+
+func _stop_slide(b: Dictionary) -> void:
+	b.erase("vel")
+	b.erase("fx")
+	b.erase("fy")
+	var node: Node3D = b["node"]
+	if is_instance_valid(node):
+		var tw := node.create_tween()
+		tw.set_parallel(true)
+		tw.tween_property(node, "position", tile_pos(b["x"], b["y"]), 0.08)
+		tw.tween_property(node, "quaternion", Quaternion.IDENTITY, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if not smoke:
+		fx.steam_puff(tile_pos(b["x"], b["y"]))
+
+
+## Where a kicked bomb will be when its fuse runs out (for the danger map).
+func _slide_end(b: Dictionary) -> Vector2i:
+	var at := Vector2i(b["x"], b["y"])
+	var d: Vector2i = b["vel"]
+	var tiles := int(maxf(0.0, b["fuse"]) * Cfg.KICK_SPEED) + 1
+	for i in mini(tiles, 14):
+		var n := at + d
+		if cell_at(n.x, n.y) != EMPTY or bomb_at.has(idx(n.x, n.y)):
+			break
+		at = n
+	return at
 
 
 ## A fighter caught by something other than fire (a press, falling walls).
@@ -1122,7 +1292,7 @@ func _end_round(winner, why: String) -> void:
 	stats["wins"][winner.pid] += 1
 	winner.celebrate()
 	var who: String = "YOU" if winner.pid == human_pid else winner.display_name
-	if wins[winner.pid] >= Cfg.WINS_NEEDED:
+	if wins[winner.pid] >= wins_needed:
 		_show_msg("%s WIN%s THE MATCH!" % [who, "" if who == "YOU" else "S"], Cfg.ROUND_OUTRO)
 		audio.play("match_win")
 	else:
@@ -1141,10 +1311,12 @@ func _process(delta: float) -> void:
 	if smoke:
 		return
 	_time += delta
-	if Input.is_action_just_pressed("restart"):
+	if menu_mode:
+		pass   # the front end owns the keys; the match behind plays itself
+	elif Input.is_action_just_pressed("restart"):
 		wins = [0, 0, 0, 0]
 		start_round()
-	if Input.is_action_just_pressed("next_level"):
+	if not menu_mode and Input.is_action_just_pressed("next_level"):
 		# Try the next arena (and stay on it until L again or R).
 		var i := Levels.index_of(level_id)
 		forced_level = Levels.LIST[(i + 1) % Levels.LIST.size()]["id"]
@@ -1156,7 +1328,7 @@ func _process(delta: float) -> void:
 			_tour_i += 1
 			start_round()
 			phase = "play"   # skip the countdown: the camera only has two seconds
-	if Input.is_action_just_pressed("bomb"):
+	if Input.is_action_just_pressed("bomb") and not menu_mode:
 		_want_bomb = true
 	if touch != null and touch.consume_bomb():
 		_want_bomb = true
@@ -1209,7 +1381,11 @@ func sim_step(dt: float) -> void:
 			_step_flames(dt)
 			phase_t -= dt
 			if phase_t <= 0.0:
-				if wins.max() >= Cfg.WINS_NEEDED:
+				if wins.max() >= wins_needed:
+					if match_mode:
+						phase = "over"
+						_match_over()
+						return
 					wins = [0, 0, 0, 0]
 				start_round()
 
@@ -1268,7 +1444,10 @@ func _step_bombs(dt: float) -> void:
 			continue
 		b["fuse"] -= dt
 		b["age"] += dt
-		_belt_carry_bomb(b, dt)
+		if b.has("vel"):
+			_slide_bomb(b, dt)
+		else:
+			_belt_carry_bomb(b, dt)
 		if b["fuse"] <= 0.0:
 			_explode(b)
 	bombs = bombs.filter(func(e): return e["alive"])
@@ -1404,6 +1583,8 @@ func _break_crate(c: Vector2i) -> void:
 		id = "speed"
 	elif r < Cfg.DROP_BOMB + Cfg.DROP_FIRE + Cfg.DROP_SPEED + Cfg.DROP_SHIELD:
 		id = "shield"
+	elif r < Cfg.DROP_BOMB + Cfg.DROP_FIRE + Cfg.DROP_SPEED + Cfg.DROP_SHIELD + Cfg.DROP_KICK:
+		id = "kick"
 	if id != "":
 		_spawn_pickup(c, id)
 
@@ -1435,7 +1616,7 @@ func _step_pickups(dt: float) -> void:
 		if not pickups.has(ci):
 			continue
 		var pid: String = pickups[ci]["id"]
-		fx.pickup_burst(f.position, Art.PICKUP_TINT.get(pid, Color.WHITE), {"bomb": "+BOMB", "fire": "+FIRE", "speed": "+SPEED", "shield": "+SHIELD"}.get(pid, ""), f.pid == human_pid)
+		fx.pickup_burst(f.position, Art.PICKUP_TINT.get(pid, Color.WHITE), {"bomb": "+BOMB", "fire": "+FIRE", "speed": "+SPEED", "shield": "+SHIELD", "kick": "+KICK"}.get(pid, ""), f.pid == human_pid)
 		match pid:
 			"bomb":
 				f.max_bombs = mini(f.max_bombs + 1, Cfg.MAX_BOMBS)
@@ -1446,6 +1627,8 @@ func _step_pickups(dt: float) -> void:
 				f.speed_t = Cfg.SPEED_DURATION
 			"shield":
 				f.shield = true
+			"kick":
+				f.kick = true
 		stats["pickups"] += 1
 		_remove_pickup(ci)
 		audio.play("pickup", 4.0)
@@ -1867,6 +2050,12 @@ func _update_visuals(delta: float) -> void:
 ## The arrival flyover: from high and round to the side, swinging in to the
 ## play camera. Eased, and only on a fresh arena.
 func _update_camera(delta: float) -> void:
+	if menu_mode:
+		# Attract mode: a slow, high orbit round the live match behind the menus.
+		var a := _time * 0.07
+		camera.position = Vector3(sin(a) * 15.5, 15.0, cos(a) * 15.5)
+		camera.look_at(Vector3(0, -1.0, 0.3), Vector3.UP)
+		return
 	if _win_cam >= 0.0 and _fly < 0.0:
 		# Winner close-up: ease in to the winner while they celebrate.
 		_win_cam += delta
@@ -1892,6 +2081,50 @@ func _update_camera(delta: float) -> void:
 		_fly = -1.0
 		camera.position = CAM_POS
 		camera.look_at(CAM_TARGET, Vector3.UP)
+
+
+## The front end picked a fighter: reload the scene as a match.
+func start_match() -> void:
+	Settings.start_match = true
+	_reload()
+
+
+## Leave a match from the pause or results menu: "rematch" (same fighters),
+## "select" (the select screen) or "main" (the main menu).
+func leave(where: String) -> void:
+	match where:
+		"rematch":
+			Settings.start_match = true
+			Settings.cast = []
+			for f in fighters:
+				Settings.cast.append(f.char_id)
+			if Settings.arena == "random":
+				Settings.first_level = Levels.LIST[rng.randi() % Levels.LIST.size()]["id"]
+		"select":
+			Settings.open_screen = "select"
+		_:
+			Settings.open_screen = "main"
+	_reload()
+
+
+func _reload() -> void:
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	get_tree().reload_current_scene()
+
+
+func can_pause() -> bool:
+	return match_mode and phase in ["intro", "play", "outro"] and _fly < 0.0
+
+
+func _match_over() -> void:
+	var best := 0
+	for k in fighters.size():
+		if wins[k] > wins[best]:
+			best = k
+	audio.music(false)
+	if match_menu != null:
+		match_menu.open_over(fighters[best] if wins[best] > 0 else null, fighters, wins, human_pid)
 
 
 ## A beat of slow motion when someone is caught: the hit lands.
@@ -1974,8 +2207,8 @@ func _setup_gallery() -> void:
 		f.moving = k >= 2
 		f.update_visual(0.0)
 	pickups.clear()
-	for i in 4:
-		_spawn_pickup(Vector2i(5 + i, 7), ["bomb", "fire", "speed", "shield"][i])
+	for i in 5:
+		_spawn_pickup(Vector2i(4 + i, 7), ["bomb", "fire", "speed", "shield", "kick"][i])
 	# A freshly laid bomb, to judge the fuse at close range
 	var bn: Node3D = fx.make_bomb(round_root, tile_pos(9, 7))
 	bombs.append({"x": 9, "y": 7, "fuse": 1.5, "fire": 2, "owner": fighters[0], "alive": true, "age": 0.4, "node": bn})
@@ -1996,6 +2229,8 @@ func _load_autotest() -> void:
 	if typeof(data) != TYPE_DICTIONARY or not data.get("enabled", false):
 		return
 	var mode: String = data.get("mode", "demo")
+	if mode == "menu":
+		_test_screen = String(data.get("screen", "title"))
 	demo = mode == "demo" or mode == "tour"
 	autopilot = mode == "demo" and data.get("autopilot", true)
 	tour = mode == "tour"
@@ -2049,7 +2284,7 @@ func _run_smoke() -> void:
 		t += Cfg.FIXED_DT
 	var decided: int = stats["rounds"] - stats["draws"]
 	var ok: bool = stats["rounds"] >= 3 and decided >= 1 and stats["bombs"] > 0 and stats["crates"] > 0
-	print("SMOKE %s levels=%s rounds=%d decided=%d draws=%d sudden_deaths=%d crushed=%d wins=%s deaths=%d self_kills=%d bombs=%d crates=%d pickups=%d shields=%d doused=%d sim_seconds=%d" % [
+	print("SMOKE %s levels=%s rounds=%d decided=%d draws=%d sudden_deaths=%d crushed=%d wins=%s deaths=%d self_kills=%d bombs=%d crates=%d pickups=%d shields=%d doused=%d kicks=%d sim_seconds=%d" % [
 		"OK" if ok else "FAIL", ",".join(PackedStringArray(_smoke_levels)), stats["rounds"], decided, stats["draws"], stats["sudden_deaths"], stats["crushed"], str(stats["wins"]),
-		stats["deaths"], stats["self_kills"], stats["bombs"], stats["crates"], stats["pickups"], stats["shields"], stats["doused"], int(t)])
+		stats["deaths"], stats["self_kills"], stats["bombs"], stats["crates"], stats["pickups"], stats["shields"], stats["doused"], stats["kicks"], int(t)])
 	get_tree().quit(0 if ok else 1)

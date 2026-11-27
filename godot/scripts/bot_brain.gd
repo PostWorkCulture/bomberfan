@@ -11,14 +11,20 @@ const DIRS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const SAFE := 999.0
 const TRAVEL_FACTOR := 1.45      # grid turns cost time; budget for it
 
-# Normal tier from TIERS in index.html
-const THINK := 0.14
-const BLUNDER := 0.06
-const HUNT := 0.48
-const ESCAPE_SLACK := 0.52
-const BOMB_GAP := 0.60
-const GREED := 0.34
-const GREED_RANGE := 4
+# TIERS in index.html (easy / normal / hard). Aggression comes from think
+# rate and hunger, never from cutting the escape margin.
+const TIERS := {
+	"easy": {"think": 0.40, "blunder": 0.34, "hunt": 0.10, "slack": 0.50, "gap": 1.80, "greed": 0.12, "range": 2},
+	"normal": {"think": 0.14, "blunder": 0.06, "hunt": 0.48, "slack": 0.52, "gap": 0.60, "greed": 0.34, "range": 4},
+	"hard": {"think": 0.07, "blunder": 0.02, "hunt": 0.80, "slack": 0.55, "gap": 0.28, "greed": 0.58, "range": 5},
+}
+var t_think := 0.14
+var t_blunder := 0.06
+var t_hunt := 0.48
+var t_escape_slack := 0.52
+var t_bomb_gap := 0.60
+var t_greed := 0.34
+var t_greed_range := 4
 const SAFE_OPENING_BOMBS := 1
 const OPENING_EXTRA_SLACK := 0.35
 const GOAL_REFRESH := 1.6
@@ -33,12 +39,22 @@ var goal_age := 0.0
 var bomb_cool := 0.0
 var bombs_laid := 0
 var _pending_bomb := false
+var _freed := Vector2i(-99, -99)   # a bomb tile treated as open while planning a kick
+var shove_cool := 0.0
 
 
-func setup(g, f, seed_value: int) -> void:
+func setup(g, f, seed_value: int, tier := "normal") -> void:
 	game = g
 	me = f
 	rng.seed = seed_value
+	var t: Dictionary = TIERS.get(tier, TIERS["normal"])
+	t_think = t["think"]
+	t_blunder = t["blunder"]
+	t_hunt = t["hunt"]
+	t_escape_slack = t["slack"]
+	t_bomb_gap = t["gap"]
+	t_greed = t["greed"]
+	t_greed_range = t["range"]
 
 
 func reset() -> void:
@@ -61,9 +77,10 @@ func _tile_time(cur: Vector2i, d: Vector2i) -> float:
 func update(dt: float) -> Dictionary:
 	timer -= dt
 	bomb_cool -= dt
+	shove_cool -= dt
 	goal_age += dt
 	if timer <= 0.0:
-		timer = THINK
+		timer = t_think
 		_think()
 	var bomb := _pending_bomb
 	_pending_bomb = false
@@ -71,7 +88,7 @@ func update(dt: float) -> Dictionary:
 
 
 func _slack() -> float:
-	return ESCAPE_SLACK + (OPENING_EXTRA_SLACK if bombs_laid < SAFE_OPENING_BOMBS else 0.0)
+	return t_escape_slack + (OPENING_EXTRA_SLACK if bombs_laid < SAFE_OPENING_BOMBS else 0.0)
 
 
 func _think() -> void:
@@ -82,6 +99,8 @@ func _think() -> void:
 	# 1. Standing somewhere that will burn: run.
 	if danger[hi] < SAFE:
 		var esc := _escape_path(here, danger, _slack())
+		if esc.is_empty():
+			esc = _kick_escape(here, danger)
 		if esc.is_empty():
 			esc = _escape_path(here, danger, 0.0)
 		path = esc
@@ -95,13 +114,13 @@ func _think() -> void:
 
 	# 2. Worth a bomb here, and a timed escape exists once it is down?
 	if bomb_cool <= 0.0 and me.active_bombs < me.max_bombs and _worth_bombing(here) \
-			and not game.mech.is_flooded(here) and rng.randf() >= BLUNDER:
+			and not game.mech.is_flooded(here) and rng.randf() >= t_blunder:
 		var extra := {"x": here.x, "y": here.y, "fire": me.fire, "fuse": Cfg.BOMB_FUSE}
 		var d2: PackedFloat32Array = game.compute_danger(extra)
 		var esc2 := _escape_path(here, d2, _slack())
 		if not esc2.is_empty():
 			_pending_bomb = true
-			bomb_cool = BOMB_GAP
+			bomb_cool = t_bomb_gap
 			bombs_laid += 1
 			path = esc2
 			goal = esc2.back()
@@ -117,13 +136,36 @@ func _passable(t: Vector2i, start: Vector2i) -> bool:
 	if game.cell_at(t.x, t.y) != 0:
 		return false
 	var k: int = game.idx(t.x, t.y)
-	if t != start and game.bomb_at.has(k):
+	if t != start and t != _freed and game.bomb_at.has(k):
 		return false
 	if game.flames.has(k):
 		return false
 	if game.mech.blocked(t):
 		return false
 	return true
+
+
+## Cornered with Kick: walk into an adjacent bomb (that is the kick) when
+## shoving it out of the way opens an escape we do not otherwise have. The
+## bomb's danger stays on the map while we check, which is pessimistic on
+## purpose (clearTheWay in index.html).
+func _kick_escape(here: Vector2i, danger: PackedFloat32Array) -> Array:
+	if not me.kick or shove_cool > 0.0:
+		return []
+	for d in DIRS:
+		var n: Vector2i = here + d
+		var b = game.bomb_at.get(game.idx(n.x, n.y))
+		if b == null or b.has("vel"):
+			continue
+		if not game.bomb_can_enter(n.x + d.x, n.y + d.y, b):
+			continue
+		_freed = n
+		var esc := _escape_path(here, danger, _slack())
+		_freed = Vector2i(-99, -99)
+		if not esc.is_empty():
+			shove_cool = 0.5
+			return [n]
+	return []
 
 
 func _path_ok(danger: PackedFloat32Array) -> bool:
@@ -191,6 +233,8 @@ func _wants(id: String) -> bool:
 			return me.speed_t <= 0.0 or me.speed < Cfg.MAX_SPEED
 		"shield":
 			return not me.shield
+		"kick":
+			return not me.kick
 	return true
 
 
@@ -217,17 +261,17 @@ func _choose_goal(here: Vector2i, danger: PackedFloat32Array) -> void:
 	var target := Vector2i(-1, -1)
 
 	# a) a pick-up worth the detour
-	if rng.randf() < GREED:
+	if rng.randf() < t_greed:
 		var best := 99
 		for k in game.pickups.keys():
 			var t := Vector2i(k % Cfg.COLS, k / Cfg.COLS)
-			if dist.has(t) and dist[t] <= GREED_RANGE and dist[t] < best \
+			if dist.has(t) and dist[t] <= t_greed_range and dist[t] < best \
 					and _wants(game.pickups[k]["id"]):
 				best = dist[t]
 				target = t
 
 	# b) come looking for someone
-	if target.x < 0 and rng.randf() < HUNT:
+	if target.x < 0 and rng.randf() < t_hunt:
 		var best_score := 1e9
 		for t in dist.keys():
 			for f in game.fighters:

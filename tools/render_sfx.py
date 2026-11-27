@@ -89,6 +89,8 @@ def osc(kind, freq, n, detune=0.0):
         return 2 / np.pi * np.arcsin(np.sin(ph))
     if kind == 'sawtooth':
         return 2 * ((ph / (2 * np.pi)) % 1.0) - 1
+    if kind == 'square':   # softened a touch so menu blips aren't harsh
+        return np.tanh(4.0 * np.sin(ph)) / np.tanh(4.0)
     raise ValueError(kind)
 
 
@@ -708,9 +710,112 @@ def render_arena(names):
         print(f'{name:14s} {len(amb) / SR:5.2f}s  (bed)')
 
 
+# ---- Kick and the front end (2026-11-27) -------------------------------------
+
+def v2_kick(m, r):
+    # The browser's kick (a rising sine blip and a band hiss) with a boot
+    # thud under it and a short scrape as the bomb starts rolling.
+    voice_n = int(0.18 * SR)
+    blip = sweep_tone(200, 420, 0.18, 0.09) * env_ad(voice_n, 0.006, 3)
+    m.add(0, blip * 0.3, 0.4)
+    k = int(0.12 * SR)
+    m.add(0, sat(sweep_tone(150, 55, 0.12, 0.05) * env_ad(k, 0.002, 3), 1.6) * 0.45, 0.2)
+    m.add(0, noise_band(r, 0.1, 900, 3000) * env_ad(int(0.1 * SR), 0.003, 3) * 0.16, 0.4)
+    m.add(0.05, noise_band(r, 0.25, 300, 1400) * env_ad(int(0.25 * SR), 0.03, 2) * 0.07, 0.3, 0.2)
+
+
+def v2_ui_move(m, r):
+    # Cursor tick: a clean square-ish blip, arcade style.
+    k = int(0.06 * SR)
+    m.add(0, osc('square', np.full(k, 880.0), k) * env_ad(k, 0.001, 4) * 0.12, 0.25)
+    m.add(0, osc('sine', np.full(k, 1760.0), k) * env_ad(k, 0.001, 6) * 0.08, 0.25)
+
+
+def v2_ui_select(m, r):
+    # Confirm: two quick rising notes and a sparkle.
+    for i, f in enumerate([659.25, 987.77]):
+        k = int(0.12 * SR)
+        tone = osc('square', np.full(k, f), k) * 0.6 + osc('sine', np.full(k, f * 2), k) * 0.3
+        m.add(i * 0.06, lowpass_sweep(tone, 5000, 1800, 0.12) * env_ad(k, 0.002, 3) * 0.16, 0.5)
+    metal_ping(m, 0.1, 2637.0, 0.4, 0.035, partials=(1.0, 2.0), room=0.8)
+
+
+def v2_ui_back(m, r):
+    for i, f in enumerate([587.33, 392.0]):
+        k = int(0.1 * SR)
+        tone = osc('square', np.full(k, f), k)
+        m.add(i * 0.055, lowpass_sweep(tone, 3000, 900, 0.1) * env_ad(k, 0.002, 3) * 0.12, 0.4)
+
+
+def v2_ui_start(m, r):
+    # PRESS START: a coin-drop arpeggio and a bright chord.
+    notes = [523.25, 659.25, 783.99, 1046.5]
+    for i, f in enumerate(notes):
+        k = int(0.09 * SR)
+        m.add(i * 0.045, osc('square', np.full(k, f), k) * env_ad(k, 0.002, 3) * 0.12, 0.5, -0.3 + 0.2 * i)
+    k = int(0.9 * SR)
+    chord = sum(osc('sawtooth', np.full(k, f), k, d) for f, d in [(523.25, 6), (659.25, -5), (783.99, 4)]) / 3
+    m.add(0.18, lowpass_sweep(chord, 4500, 700, 0.9) * env_ad(k, 0.01, 2.5) * 0.22, 0.9)
+    metal_ping(m, 0.18, 2093.0, 0.8, 0.05, partials=(1.0, 2.0, 3.0), room=1.0)
+
+
+def v2_ui_lock(m, r):
+    # Fighter locked in: a punchy impact, a power-chord stab and a shimmer.
+    k = int(0.5 * SR)
+    m.add(0, sat(sweep_tone(120, 40, 0.5, 0.12) * env_ad(k, 0.002, 2.5), 1.8) * 0.5, 0.4)
+    m.add(0, noise_band(r, 0.05, 2000, 9000) * env_ad(int(0.05 * SR), 0.001, 3) * 0.3, 0.5)
+    k = int(0.8 * SR)
+    stab = sum(osc('sawtooth', np.full(k, f), k, d) for f, d in [(146.83, 0), (146.83, 9), (220.0, -7), (293.66, 4)]) / 4
+    stab = lowpass_sweep(stab, 3500, 500, 0.8) * env_ad(k, 0.006, 2.4)
+    m.add(0.01, sat(stab, 1.8) * 0.3, 0.9, -0.2)
+    m.add(0.02, sat(stab, 1.8) * 0.3, 0.9, 0.2)
+    for i, f in enumerate([1174.66, 1479.98, 1760.0, 2349.32]):
+        metal_ping(m, 0.05 + i * 0.04, f, 0.6, 0.03, partials=(1.0, 2.0), pan=-0.4 + i * 0.25)
+
+
+def v2_vs_slam(m, r):
+    # The VS screen: a riser into a huge slam with a gong tail.
+    n = int(0.45 * SR)
+    t = np.arange(n) / SR
+    riser = biquad_tv(r.standard_normal(n), 'bandpass', param_curve(n, 400, 6000, 0.45), 1.4) * (t / 0.45) ** 2
+    m.add(0, riser * 0.25, 0.6)
+    k = int(1.6 * SR)
+    m.add(0.45, sat(sweep_tone(90, 28, 1.6, 0.3) * env_ad(k, 0.003, 2.0), 2.0) * 0.6, 0.5)
+    m.add(0.45, noise_band(r, 0.08, 1500, 12000) * env_ad(int(0.08 * SR), 0.0005, 3) * 0.4, 0.8)
+    m.add(0.45, lowpass_sweep(r.standard_normal(k), 2400, 120, 1.4) * env_ad(k, 0.002, 3) * 0.35, 1.2)
+    metal_ping(m, 0.45, 110.0, 2.4, 0.16, partials=(1.0, 2.41, 3.83, 5.2, 6.8), room=1.2)
+    metal_ping(m, 0.46, 164.81, 2.0, 0.08, partials=(1.0, 2.41, 3.83), pan=0.3, room=1.2)
+
+
+V2_UI = {
+    'kick': (v2_kick, -5.0),
+    'ui_move': (v2_ui_move, -14.0),
+    'ui_select': (v2_ui_select, -9.0),
+    'ui_back': (v2_ui_back, -12.0),
+    'ui_start': (v2_ui_start, -6.0),
+    'ui_lock': (v2_ui_lock, -4.0),
+    'vs_slam': (v2_vs_slam, -2.5),
+}
+
+
+def render_ui(names):
+    """python3 tools/render_sfx.py ui [name ...]: Kick and the front-end
+    sounds only, leaving every other WAV untouched."""
+    os.makedirs(OUT, exist_ok=True)
+    for i, (name, (fn, peak)) in enumerate(V2_UI.items()):
+        if names and name not in names:
+            continue
+        x = render_v2(name, fn, peak, 1300 + i * 7)
+        write_wav_stereo(os.path.join(OUT, name + '.wav'), x)
+        print(f'{name:14s} {len(x) / SR:5.2f}s  peak {peak:6.1f} dBFS  (ui)')
+
+
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == 'arena':
         render_arena(sys.argv[2:])
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == 'ui':
+        render_ui(sys.argv[2:])
         return
     os.makedirs(OUT, exist_ok=True)
     ir = room_impulse(np.random.default_rng(1))

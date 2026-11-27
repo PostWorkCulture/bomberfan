@@ -6,7 +6,7 @@ extends CanvasLayer
 
 const FONT := preload("res://assets/fonts/lilita-one.ttf")
 const PANEL_BG := Color(0.05, 0.06, 0.09, 0.78)
-const TINTS := {"bomb": Color(0.35, 0.6, 1.0), "fire": Color(1.0, 0.55, 0.2), "speed": Color(0.3, 0.9, 0.45), "shield": Color(0.62, 0.45, 1.0)}
+const TINTS := {"bomb": Color(0.35, 0.6, 1.0), "fire": Color(1.0, 0.55, 0.2), "speed": Color(0.3, 0.9, 0.45), "shield": Color(0.62, 0.45, 1.0), "kick": Color(1.0, 0.36, 0.7)}
 const Cfg := preload("res://scripts/config.gd")
 const Art := preload("res://scripts/art.gd")
 static var _icons := {}   # pick-up id -> texture of its 3D model, rendered once
@@ -204,7 +204,7 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 	chips_row.add_theme_constant_override("separation", 4)
 	v.add_child(chips_row)
 	var chips := {}
-	for id in ["bomb", "fire", "speed", "shield"]:
+	for id in ["bomb", "fire", "speed", "shield", "kick"]:
 		var chip := PanelContainer.new()
 		var tint: Color = TINTS[id]
 		var csb := _box(tint.darkened(0.55), 6, tint, 1)
@@ -224,14 +224,15 @@ func _build_card(f, wins_needed: int) -> Dictionary:
 			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			tr.custom_minimum_size = Vector2(22, 22)
-			if id == "shield":   # bigger and tilted: it has no count beside it
+			if id == "shield" or id == "kick":   # bigger and tilted: no count beside it
 				tr.custom_minimum_size = Vector2(28, 28)
 				tr.pivot_offset = Vector2(14, 14)
 				tr.rotation = -0.22
 			row2.add_child(tr)
 		var cl := _label(16, tint.lightened(0.5), 3)
-		cl.custom_minimum_size = Vector2(0 if id == "shield" else 20, 0)
-		cl.visible = id != "shield"
+		var flag: bool = id == "shield" or id == "kick"
+		cl.custom_minimum_size = Vector2(0 if flag else 20, 0)
+		cl.visible = not flag
 		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		row2.add_child(cl)
 		chips_row.add_child(chip)
@@ -279,6 +280,8 @@ func update(delta: float, fighters: Array, wins: Array, human_pid: int, round_no
 		(chips["speed"][0] as Control).modulate.a = 1.0 if spd > 0 else 0.3
 		(chips["shield"][1] as Label).text = ""
 		(chips["shield"][0] as Control).modulate.a = 1.0 if f.shield else 0.3
+		(chips["kick"][1] as Label).text = ""
+		(chips["kick"][0] as Control).modulate.a = 1.0 if f.kick else 0.3
 		if c["won"] != wins[k]:
 			c["won"] = wins[k]
 			var i := 0

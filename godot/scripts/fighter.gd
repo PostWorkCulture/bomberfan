@@ -28,6 +28,7 @@ var face_yaw := 0.0
 var moving := false
 var celebrating := false
 var shield := false       # Shield pick-up: soaks one blast
+var kick := false         # Kick pick-up: walking into a bomb sends it sliding
 var invuln_t := 0.0       # after the shield pops: a moment to get clear
 var _bubble: MeshInstance3D = null
 
@@ -419,6 +420,7 @@ func spawn_at(t: Vector2i) -> void:
 	fire = Cfg.START_FIRE
 	active_bombs = 0
 	shield = false
+	kick = false
 	invuln_t = 0.0
 	ignore_bombs.clear()
 	moving = false
@@ -510,13 +512,19 @@ func _slide(axis_x: bool, delta: float) -> bool:
 
 func _move(d: Vector2i, dt: float) -> bool:
 	var stp: float = speed * dt * game.move_mult(tile())
+	var ok: bool
 	if d.x != 0:
 		face_yaw = PI / 2.0 if d.x > 0 else -PI / 2.0
 		gy = move_toward(gy, float(roundi(gy)), stp * Cfg.TURN_SNAP)
-		return _slide(true, d.x * stp)
-	face_yaw = 0.0 if d.y > 0 else PI
-	gx = move_toward(gx, float(roundi(gx)), stp * Cfg.TURN_SNAP)
-	return _slide(false, d.y * stp)
+		ok = _slide(true, d.x * stp)
+	else:
+		face_yaw = 0.0 if d.y > 0 else PI
+		gx = move_toward(gx, float(roundi(gx)), stp * Cfg.TURN_SNAP)
+		ok = _slide(false, d.y * stp)
+	# Walking into a bomb with Kick shoves it away (tryKick in index.html).
+	if not ok and kick:
+		game.try_kick(self, d)
+	return ok
 
 
 ## dir is the main direction; alt is tried only when dir is blocked head-on

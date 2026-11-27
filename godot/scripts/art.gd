@@ -788,6 +788,7 @@ const PICKUP_TINT := {
 	"fire": Color(1.0, 0.42, 0.12),
 	"speed": Color(0.3, 0.9, 0.45),
 	"shield": Color(0.62, 0.45, 1.0),
+	"kick": Color(1.0, 0.36, 0.7),
 }
 
 
@@ -881,6 +882,8 @@ static func pickup_model(id: String) -> Node3D:
 			_wing_shoe(model)
 		"shield":
 			_shield_item(model)
+		"kick":
+			_kick_boot(model)
 	return root
 
 
@@ -969,6 +972,30 @@ static func _wing_shoe(m: Node3D) -> void:
 			var dir := Vector3(-sin(sweep), 0.45, side * cos(sweep)).normalized()
 			var feather := _part(m, _cache["feather"], white, root + dir * length * 0.5)
 			feather.basis = Basis.looking_at(dir, Vector3.UP) * Basis.from_scale(Vector3(0.75, 0.16, length / 0.1))
+
+
+## Kick: a gold boot mid-kick with speed streaks behind the heel (the
+## browser build's gold Kick shoes).
+static func _kick_boot(m: Node3D) -> void:
+	if not _cache.has("boot_shaft"):
+		_cache["boot_shaft"] = rounded_box(Vector3(0.17, 0.26, 0.17), 0.06, 2)
+		_cache["boot_foot"] = rounded_box(Vector3(0.3, 0.13, 0.18), 0.06, 2)
+		_cache["boot_sole"] = rounded_box(Vector3(0.33, 0.045, 0.19), 0.02, 1)
+		_cache["boot_cuff"] = rounded_box(Vector3(0.2, 0.05, 0.2), 0.02, 1)
+		_cache["boot_streak"] = rounded_box(Vector3(0.16, 0.022, 0.022), 0.01, 1)
+	var gold := flat_mat(Color(1.0, 0.76, 0.22), 0.28, 0.9)
+	var dark := flat_mat(Color(0.16, 0.1, 0.06), 0.7)
+	var pink := flat_mat(Color(1.0, 0.38, 0.72), 0.5)
+	var boot := Node3D.new()
+	boot.rotation.z = 0.32          # toe kicked up
+	boot.position = Vector3(0.02, -0.04, 0)
+	m.add_child(boot)
+	_part(boot, _cache["boot_shaft"], gold, Vector3(-0.07, 0.12, 0))
+	_part(boot, _cache["boot_foot"], gold, Vector3(0.03, -0.02, 0))
+	_part(boot, _cache["boot_sole"], dark, Vector3(0.04, -0.09, 0))
+	_part(boot, _cache["boot_cuff"], pink, Vector3(-0.07, 0.25, 0))
+	for i in 3:
+		_part(m, _cache["boot_streak"], flat_mat(Color(1.0, 0.9, 0.6), 0.6), Vector3(-0.27 - i * 0.03, -0.02 + i * 0.07, -0.05 + i * 0.05))
 
 
 ## Shield: a rounded heater shield, violet with a silver rim and a star boss.

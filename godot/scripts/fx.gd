@@ -169,13 +169,13 @@ func clear() -> void:
 		if c != _pool_root:
 			c.queue_free()
 	_scorches.clear()
-	var hide := Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0))
+	var hidden_xf := Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0))
 	_flame_free.clear()
 	for i in FLAME_POOL:
-		_flame_mm.set_instance_transform(i, hide)
+		_flame_mm.set_instance_transform(i, hidden_xf)
 		_flame_free.append(FLAME_POOL - 1 - i)
 	for i in SCORCH_POOL:
-		_scorch_mm.set_instance_transform(i, hide)
+		_scorch_mm.set_instance_transform(i, hidden_xf)
 	shake = 0.0
 
 
@@ -394,9 +394,9 @@ func _make_pool(mat: Material, count: int) -> MultiMesh:
 	mm.use_colors = true
 	mm.mesh = _quad
 	mm.instance_count = count
-	var hide := Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0))
+	var hidden_xf := Transform3D(Basis().scaled(Vector3.ZERO), Vector3(0, -50, 0))
 	for i in count:
-		mm.set_instance_transform(i, hide)
+		mm.set_instance_transform(i, hidden_xf)
 		mm.set_instance_color(i, Color(1, 1, 1, 1))
 	var mi := MultiMeshInstance3D.new()
 	mi.multimesh = mm

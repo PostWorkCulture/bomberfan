@@ -26,10 +26,12 @@ const BLAST_LIFE := 0.52
 const CHAIN_DELAY := 0.06
 
 # ---- Pick-ups: per-crate drop rates from PU_DROPS (POWERUP_CHANCE 0.26004,
-# weights Bomb 50 / Fire 24 / Speed 16 / Kick 20). Kick is not in the slice yet.
+# weights Bomb 50 / Fire 24 / Speed 16 / Kick 20).
 const DROP_BOMB := 0.1182
 const DROP_FIRE := 0.0567
 const DROP_SPEED := 0.0378
+const DROP_KICK := 0.0473      # Kick: walk into a bomb to send it sliding
+const KICK_SPEED := 7.5        # tiles per second for a kicked bomb (CFG.KICK_SPEED)
 const DROP_SHIELD := 0.025     # Godot-only pick-up (2026-11-25): soaks one blast
 const SHIELD_GRACE := 1.0      # seconds of safety after a shield pops
 

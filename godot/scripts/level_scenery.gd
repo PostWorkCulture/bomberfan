@@ -607,7 +607,7 @@ static func _gate() -> Mesh:
 	for k in seg:
 		var a := PI * (k + 0.5) / seg
 		var pos := Vector3(cos(a) * 1.15, 2.48 + sin(a) * 1.0, 0)
-		parts.append([LA.box(Vector3(0.4, 0.3, 0.44)), LA.xf(pos, Vector3(0, 0, a - PI / 2.0)), stone.lightened(0.1) if k == seg / 2 else stone])
+		parts.append([LA.box(Vector3(0.4, 0.3, 0.44)), LA.xf(pos, Vector3(0, 0, a - PI / 2.0)), stone.lightened(0.1) if k == int(seg / 2.0) else stone])
 		parts.append([LA.box(Vector3(0.38, 0.03, 0.04)), LA.xf(pos + Vector3(cos(a), sin(a), 0) * 0.16 + Vector3(0, 0, 0.22), Vector3(0, 0, a - PI / 2.0)), moon.darkened(0.2)])
 	# Bars rise to the arch's inner curve.
 	for k in 7:

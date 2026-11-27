@@ -8,13 +8,17 @@ const SFX := [
 	"pickup", "death", "countdown_lo", "countdown_hi", "go", "round_win", "match_win",
 	"sd_warning", "sd_start", "wall_slam",
 	"tide", "fizz", "press", "lever", "shield_pop", "ghost", "thunder", "whoosh", "build",
+	"kick", "ui_move", "ui_select", "ui_back", "ui_lock", "vs_slam", "ui_start",
 ]
+## Front end (2026-11-27): the menus and the select screen have their own loop.
+const MENU_MUSIC := "music_neon_select"
 ## Round music and ambience bed per arena (2026-11-25). Forest keeps Pete's
 ## pick, Arcade Drive.
 const ARENA_MUSIC := {"forest": "music_arcade_drive", "beach": "music_tide_pop",
 	"haunted": "music_graveyard_swing", "factory": "music_tension_pulse"}
 const ARENA_AMBIENCE := {"forest": "ambience_forest", "beach": "ambience_beach",
 	"haunted": "ambience_haunted", "factory": "ambience_factory"}
+const SettingsScript := preload("res://scripts/settings.gd")
 const VARIANTS := {"explode": 3, "break_block": 2}
 const POOL_SIZE := 16
 const MUSIC := "music_arcade_drive"
@@ -28,10 +32,17 @@ var _music: AudioStreamPlayer
 var _music_tween: Tween
 var _ambience: AudioStreamPlayer
 var _music_on := false
+var _menu := false          # menu music locked in: rounds behind the menus keep it
+var sfx_offset_db := 0.0    # the attract-mode match behind the menus plays quieter
 
 
 func _ready() -> void:
-	for n in SFX + ARENA_MUSIC.values() + ARENA_AMBIENCE.values():
+	process_mode = Node.PROCESS_MODE_ALWAYS   # menu clicks still sound while paused
+	SettingsScript.ensure_bus("Music")
+	SettingsScript.ensure_bus("SFX")
+	var music_bus := "Music"
+	var sfx_bus := "SFX"
+	for n in SFX + ARENA_MUSIC.values() + ARENA_AMBIENCE.values() + [MENU_MUSIC]:
 		var path := "res://assets/audio/%s.wav" % n
 		if ResourceLoader.exists(path):
 			_streams[n] = load(path)
@@ -39,11 +50,13 @@ func _ready() -> void:
 			push_warning("Missing sound %s" % path)
 	for i in POOL_SIZE:
 		var p := AudioStreamPlayer.new()
+		p.bus = sfx_bus
 		add_child(p)
 		_pool.append(p)
 	_music = AudioStreamPlayer.new()
 	_music.stream = _streams.get(MUSIC)
 	_music.volume_db = MUSIC_DB
+	_music.bus = music_bus
 	_music.finished.connect(_on_music_finished)   # backup if the loop point is ever lost
 	add_child(_music)
 	var ms = _music.stream
@@ -52,6 +65,7 @@ func _ready() -> void:
 	_ambience = AudioStreamPlayer.new()
 	_ambience.stream = _streams.get("ambience_forest")
 	_ambience.volume_db = -11.0
+	_ambience.bus = sfx_bus
 	_ambience.finished.connect(_ambience.play)
 	add_child(_ambience)
 	# Soft ceiling on the master bus, like the browser's soft clipper: four
@@ -84,7 +98,7 @@ func play(sound: String, volume_db := 0.0, pitch_var := 0.0, min_gap := 0.03) ->
 	for p in _pool:
 		if not p.playing:
 			p.stream = stream
-			p.volume_db = volume_db
+			p.volume_db = volume_db + sfx_offset_db
 			p.pitch_scale = 1.0 + randf_range(-pitch_var, pitch_var)
 			p.play()
 			return
@@ -93,6 +107,8 @@ func play(sound: String, volume_db := 0.0, pitch_var := 0.0, min_gap := 0.03) ->
 ## Music runs through the countdown and the round, and fades out for the
 ## win sting.
 func music(on: bool) -> void:
+	if _menu:
+		return
 	var want := on and enabled
 	if want == _music_on:
 		return
@@ -113,7 +129,7 @@ func music(on: bool) -> void:
 ## music(true); the bed crossfades straight away.
 func set_arena(id: String) -> void:
 	var m = _streams.get(ARENA_MUSIC.get(id, MUSIC))
-	if m != null and _music.stream != m:
+	if m != null and _music.stream != m and not _menu:
 		_music.stop()
 		_music_on = false
 		_music.stream = m
@@ -128,3 +144,26 @@ func set_arena(id: String) -> void:
 func _on_music_finished() -> void:
 	if _music_on:
 		_music.play()
+
+
+## The front end's loop, locked in until the scene changes: the attract-mode
+## rounds behind the menus never swap it for an arena track.
+func menu_music() -> void:
+	_menu = true
+	var m = _streams.get(MENU_MUSIC)
+	if m == null or not enabled:
+		return
+	if _music_tween:
+		_music_tween.kill()
+	_music.stream = m
+	_music.volume_db = MUSIC_DB
+	_music_on = true
+	_music.play()
+
+
+## Interface sounds ignore the attract-mode offset.
+func ui(sound: String, volume_db := 0.0) -> void:
+	var off := sfx_offset_db
+	sfx_offset_db = 0.0
+	play(sound, volume_db, 0.0, 0.04)
+	sfx_offset_db = off

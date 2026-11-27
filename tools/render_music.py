@@ -397,6 +397,47 @@ def graveyard_swing(tr, rng):
             tr.add(tr.at(bar, 0), pad([hz(n) for n in ch], tr.step * 32, 650, 1.0), 'music', 0.3, 0.0, 0.7)
 
 
+def neon_select(tr, rng):
+    """136 bpm: the menu and select-screen loop (2026-11-27). A 90s arcade
+    character-select feel with modern weight: driving octave bass, gated
+    snare, a 16th arpeggio and a heroic lead hook. D - Bb - C - A (D minor
+    with a raised fifth chord for lift)."""
+    chords = [['D3', 'F3', 'A3'], ['A#2', 'D3', 'F3'], ['C3', 'E3', 'G3'], ['A2', 'C#3', 'E3']]
+    roots = ['D2', 'A#1', 'C2', 'A1']
+    hook = ['A4', 'D5', 'F5', 'E5', 'D5', 'C5', 'D5', 'A4',
+            'A#4', 'D5', 'F5', 'G5', 'F5', 'E5', 'C#5', 'E5']
+    for bar in range(tr.bars):
+        ci = bar % 4
+        ch = chords[ci]
+        for beat in range(4):
+            tr.kick(tr.at(bar, beat * 4), kick808(0.3, 150, 50, rng=rng), 0.9)
+            tr.add(tr.at(bar, beat * 4 + 2), hat(rng, beat == 3), 'drums', 0.42, 0.35)
+        tr.add(tr.at(bar, 4), snare(rng), 'drums', 0.85, 0.0, 0.5)
+        tr.add(tr.at(bar, 12), snare(rng), 'drums', 0.85, 0.0, 0.5)
+        tr.add(tr.at(bar, 4), clap(rng), 'drums', 0.4, 0.0, 0.4)
+        tr.add(tr.at(bar, 12), clap(rng), 'drums', 0.4, 0.0, 0.4)
+        for st in (1, 3, 5, 7, 9, 11, 13, 15):
+            tr.add(tr.at(bar, st), hat(rng), 'drums', 0.16, -0.35)
+        if bar % 4 == 3:   # a snare run into the next phrase
+            for k in range(4):
+                tr.add(tr.at(bar, 12 + k), snare(rng), 'drums', 0.35 + 0.12 * k, 0.0, 0.4)
+        r = hz(roots[ci])
+        for st in range(16):
+            f = r * (2 if st % 2 else 1)
+            tr.add(tr.at(bar, st), sat(lead(f, tr.step * 0.9, 1100) * 2.4, 1.6), 'bass', 0.38)
+        arp = [hz(n) * 2 for n in ch] + [hz(ch[0]) * 4]
+        for st in range(16):
+            f = arp[[0, 1, 2, 3, 2, 1, 0, 2][st % 8]]
+            tr.add(tr.at(bar, st), lead(f, tr.step * 0.8, 3000 if st % 4 == 0 else 1900), 'music', 0.13, 0.4 * np.sin(st * 1.3), 0.35)
+        if bar % 2 == 0:
+            tr.add(tr.at(bar, 0), pad([hz(n) for n in ch], tr.step * 32, 1800, 0.25), 'music', 0.2, 0.0, 0.5)
+        if bar >= 4 or tr.bars <= 4:   # the hook enters after the intro bars
+            for k in range(4):
+                note = hook[((bar % 4) * 4 + k) % len(hook)]
+                tr.add(tr.at(bar, k * 4), sat(lead(hz(note), tr.step * 3.6, 3400) * 1.6, 1.3), 'music', 0.22, 0.0, 0.6)
+                tr.add(tr.at(bar, k * 4), fm_bell(hz(note) * 2, 0.5, 2.0, 1.2), 'music', 0.06, 0.3, 0.6)
+
+
 OPTIONS = {
     'dark_trap': (140, dark_trap),
     'arcade_drive': (128, arcade_drive),
@@ -404,6 +445,7 @@ OPTIONS = {
     'tension_pulse': (100, tension_pulse),
     'tide_pop': (116, tide_pop),
     'graveyard_swing': (104, graveyard_swing),
+    'neon_select': (136, neon_select),
 }
 
 

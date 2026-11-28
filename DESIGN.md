@@ -128,7 +128,7 @@ No coloured circles under the bots. Your own fighter is marked in your colour (A
 - New characters are concepts 1, 5 and 6 from the Blender set (`tools/blender/bomber_bots.py`, branch `art/bot-concepts`), exported as `sparky.glb`, `rivet.glb` and `pixel.glb`. They are rigid models; `godot/scripts/model_bot.gd` animates them in code (bob, waddle, lean, squash, hop-and-spin cheer, topple). The other five concepts are dropped.
 - The first-pass code bots (`robot.gd`: Bolt, Tank, Pip, Sparky) were rejected and deleted.
 - Round-2 bots (Pete picked 1, 3, 7 and 8 of eight: `tools/blender/bomber_bots_2.py`, branch `art/bot-concepts`): Boiler (copper steam boiler), Gumball (gumball machine), Snap (box camera) and Arcade (arcade cabinet), exported as `boiler/gumball/snap/arcade.glb` and animated by `model_bot.gd`. Dial, Crumb, Reel and Lumen are dropped.
-- Slots: you pick your fighter on the select screen (any of the nine; Razor by default), and the three bots are drawn at random from the other eight. Every fighter has its own HUD colour: Sparky yellow, Rivet red, Pixel green, Boiler orange, Gumball pink, Snap white, Arcade purple, Tick teal. `-- --cast id,id,id` or autotest `"cast"` picks them by hand.
+- Slots: you pick your fighter on the select screen (any of the nine; Razor by default), and the three bots are drawn at random from the other eight. Every fighter has its own HUD colour: Sparky yellow, Rivet red, Pixel green, Boiler orange, Gumball pink, Snap magenta (was white until 2026-11-28), Arcade purple, Tick teal. `-- --cast id,id,id` or autotest `"cast"` picks them by hand.
 - Tick (Pete, 2026-11-25): the clockwork gentleman from the darker set (`tools/blender/bombr_dark.py`, Tick v2, branch `art/bot-concepts`), exported as `tick.glb` and animated by `model_bot.gd`. The other dark concepts are dropped.
 
 ### Arenas (Godot)
@@ -178,6 +178,9 @@ Punch, Glove, Remote and the other power-ups; the Loadout / Prize Locker; the or
 ## Change log
 
 Newest first. One dated heading per day; bullets say what changed, why, and where.
+
+### 2026-11-28
+- **Snap recoloured white → magenta** (`Color(1.0, 0.24, 0.86)`, a camera's record light). Pete chose this over a dark outline or changing the pale bombs. Why: AAA review round 12 noted that Snap's white body was close to white bombs on Factory. On the dark arenas the outline and rim fill take the HUD colour, so Snap and the pale bombs were the two whitest things on the board. Lime was ruled out because Forest counts as a dark arena and the line would vanish on the grass. Checked on Factory and Haunted House with Gumball and Arcade in the cast: Snap no longer reads as a bomb. Snap and Gumball are now both in the pink family, but their shapes differ (box vs sphere); watch this in play. File: `godot/scripts/game.gd` (`ROSTER`).
 
 ### 2026-11-27
 - **Kick ported** (Pete: "Just kick needs to be added"). Tuning from `index.html`: `KICK_SPEED` 7.5, drop rate 0.0473. See "Pick-ups (Godot)". Bots get the browser's three tiers too (`TIERS`: think, blunder, hunt, slack, bomb gap, greed), picked in Options. Files: `config.gd`, `game.gd` (`try_kick`, `_slide_bomb`, `_slide_end`, danger map), `fighter.gd`, `bot_brain.gd` (`_kick_escape`, tiers), `art.gd` (gold boot), `hud.gd` (Kick chip), `tools/render_sfx.py` (kick sound).
